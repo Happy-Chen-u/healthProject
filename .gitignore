@@ -1,0 +1,9 @@
+# Visual Studio 暫存檔
+.vs/
+bin/
+obj/
+*.user
+*.suo
+
+# 設定檔(避免衝突)
+appsettings.*.json
