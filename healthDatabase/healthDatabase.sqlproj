@@ -58,4 +58,9 @@
   <ItemGroup>
     <Folder Include="Properties" />
   </ItemGroup>
+  <ItemGroup>
+    <Build Include="CaseManagement.sql" />
+    <Build Include="Today.sql" />
+    <Build Include="Users.sql" />
+  </ItemGroup>
 </Project>
