@@ -17,7 +17,7 @@ namespace healthProject.Models
             public string Password { get; set; }
             public string Role { get; set; } // "Case" 或 "Admin"
 
-            public virtual ICollection<DiseaseRecordDBModel> DiseaseRecords { get; set; }
+            public virtual ICollection<CaseManagementDBModel> DiseaseRecords { get; set; }
             public virtual ICollection<HealthRecordDBModel> HealthRecords { get; set; }
         
 

@@ -3,7 +3,7 @@
 namespace healthProject.Models
 {
     // 疾病管理紀錄（醫師/管理者/醫院端使用）
-    public class DiseaseRecordDBModel : Controller
+    public class CaseManagementDBModel : Controller
     {
         public IActionResult Index()
         {

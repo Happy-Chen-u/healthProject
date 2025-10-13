@@ -3,7 +3,7 @@
 namespace healthProject.Controllers
 {
     // 疾病管理紀錄表
-    public class DiseaseRecordController : Controller
+    public class CaseManagementController : Controller
     {
         public IActionResult Index()
         {
