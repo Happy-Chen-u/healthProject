@@ -1,5 +1,39 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@if (User.Identity.IsAuthenticated)
+{
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link text-dark" href="@Url.Action("Dashboard", "Home")">
+                🏠 功能選單
+            </a>
+        </li>
+        <li class="nav-item">
+            <span class="nav-link text-dark">
+                👤 歡迎, @User.Identity.Name
+            </span>
+        </li>
+        @if (User.IsInRole("Admin"))
+        {
+            <li class="nav-item">
+                <span class="badge bg-warning text-dark ms-2">管理者</span>
+            </li>
+        }
+        <li class="nav-item">
+            <form method="post" action="@Url.Action("Logout", "Account")" class="form-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="nav-link btn btn-link text-dark">
+                    🚪 登出
+                </button>
+            </form>
+        </li>
+    </ul>
+}
+else
+{
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link text-dark" href="@Url.Action("Login", "Account")">
+                🔐 登入
+            </a>
+        </li>
+    </ul>
 }

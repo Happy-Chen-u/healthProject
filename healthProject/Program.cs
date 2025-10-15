@@ -18,6 +18,8 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// 使用驗證和授權
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
