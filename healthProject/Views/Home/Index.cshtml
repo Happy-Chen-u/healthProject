@@ -19,7 +19,7 @@
     }
 
     body {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(#FFFCEC 100%);
         min-height: 100vh;
         font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
         margin: 0;
@@ -183,46 +183,13 @@
         border-top: 1px solid #e2e8f0;
     }
 
-    /* 大螢幕優化 */
-    @@media (min-width: 768px) {
-        .mobile-container {
-            padding: 2rem;
-            justify-content: center;
-        }
-
-        .main-card {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .system-title {
-            font-size: 1.8rem;
-        }
-
-        .features-section {
-            gap: 1.25rem;
-        }
-    }
-
-    /* 小螢幕優化 */
-    @@media (max-width: 375px) {
-        .system-title {
-            font-size: 1.3rem;
-        }
-
-        .feature-title {
-            font-size: 1rem;
-        }
-
-        .feature-description {
-            font-size: 0.85rem;
-        }
-    }
-
-    /* 防止橫向滾動 */
-    html, body {
-        overflow-x: hidden;
-        width: 100%;
+    /* 響應式 */
+    @@media (max-width: 768px) {
+        .dashboard-title { font-size: 1.8rem; }
+        .dashboard-content { padding: 2rem 1.25rem; }
+        .page-selection, .admin-cards { grid-template-columns: 1fr; }
+        .action-buttons { flex-direction: column; }
+        .btn-secondary, .btn-danger { width: 100%; }
     }
 </style>
 
@@ -236,53 +203,53 @@
 
         @if (User.Identity.IsAuthenticated)
         {
-            <!-- 已登入使用者 - 直接導向 Dashboard -->
-            <script>
-                window.location.href = '@Url.Action("Dashboard", "Home")';
-            </script>
+                <!-- 已登入使用者 - 直接導向 Dashboard -->
+                <script>
+                    window.location.href = '@Url.Action("Dashboard", "Home")';
+                </script>
         }
         else
         {
-            <div class="content-section">
-                <div class="welcome-box">
-                    <h2 class="welcome-title">歡迎使用</h2>
-                    <p class="welcome-desc">請先登入以使用完整功能</p>
-                    <a href="@Url.Action("Login", "Account")" class="login-btn">
-                        <span>🔐</span>
-                        <span>登入系統</span>
-                    </a>
+                <div class="content-section">
+                    <div class="welcome-box">
+                        <h2 class="welcome-title">歡迎使用</h2>
+                        <p class="welcome-desc">請先登入以使用完整功能</p>
+                        <a href="@Url.Action("Login", "Account")" class="login-btn">
+                            <span>🔐</span>
+                            <span>登入系統</span>
+                        </a>
+                    </div>
+
+                    <div class="features-section">
+                        <div class="feature-card">
+                            <div class="feature-icon">📊</div>
+                            <div class="feature-content">
+                                <h3 class="feature-title">疾病個管系統</h3>
+                                <p class="feature-description">追蹤您的健康狀況與治療進展</p>
+                            </div>
+                        </div>
+
+                        <div class="feature-card">
+                            <div class="feature-icon">📝</div>
+                            <div class="feature-content">
+                                <h3 class="feature-title">健康資訊上傳</h3>
+                                <p class="feature-description">記錄血壓、血糖、體重等指標</p>
+                            </div>
+                        </div>
+
+                        <div class="feature-card">
+                            <div class="feature-icon">📈</div>
+                            <div class="feature-content">
+                                <h3 class="feature-title">數據分析追蹤</h3>
+                                <p class="feature-description">查看健康趨勢與個人化建議</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="features-section">
-                    <div class="feature-card">
-                        <div class="feature-icon">📊</div>
-                        <div class="feature-content">
-                            <h3 class="feature-title">疾病個管系統</h3>
-                            <p class="feature-description">追蹤您的健康狀況與治療進展</p>
-                        </div>
-                    </div>
-
-                    <div class="feature-card">
-                        <div class="feature-icon">📝</div>
-                        <div class="feature-content">
-                            <h3 class="feature-title">健康資訊上傳</h3>
-                            <p class="feature-description">記錄血壓、血糖、體重等指標</p>
-                        </div>
-                    </div>
-
-                    <div class="feature-card">
-                        <div class="feature-icon">📈</div>
-                        <div class="feature-content">
-                            <h3 class="feature-title">數據分析追蹤</h3>
-                            <p class="feature-description">查看健康趨勢與個人化建議</p>
-                        </div>
-                    </div>
+                <div class="footer-info">
+                    © 2025 代謝症候群管理系統
                 </div>
-            </div>
-
-            <div class="footer-info">
-                © 2025 代謝症候群管理系統
-            </div>
         }
     </div>
 </div>

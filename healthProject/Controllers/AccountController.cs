@@ -170,7 +170,7 @@ namespace healthProject.Controllers
 
                 _logger.LogError(ex, "登入過程發生錯誤");
 
-                ModelState.AddModelError(string.Empty, "登入過程發生錯誤，請稍後再試");
+                ModelState.AddModelError(string.Empty, $"登入過程發生錯誤：{ex.Message}");
 
                 return View(model);
 

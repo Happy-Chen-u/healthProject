@@ -1,5 +1,6 @@
 ﻿@{
     ViewData["Title"] = "系統功能選單";
+    Layout = "_Layout";
 }
 
 <style>
@@ -57,6 +58,15 @@
             font-size: 1.3rem;
             font-weight: 600;
         }
+
+    .user-role-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.3rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
 
     .page-selection {
         display: grid;
@@ -156,6 +166,7 @@
         justify-content: center;
         gap: 1rem;
         margin-top: 2rem;
+        flex-wrap: wrap;
     }
 
     .btn-secondary {
@@ -175,6 +186,7 @@
             background: #475569;
             color: white;
             text-decoration: none;
+            transform: translateY(-2px);
         }
 
     .btn-danger {
@@ -190,9 +202,22 @@
 
         .btn-danger:hover {
             background: #dc2626;
+            transform: translateY(-2px);
         }
 
+    .success-message {
+        background: #d1fae5;
+        border: 1px solid #6ee7b7;
+        color: #065f46;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-weight: 500;
+    }
+
     @@media (max-width: 768px) {
+
         .dashboard-title {
             font-size: 1.8rem;
         }
@@ -209,6 +234,15 @@
         .dashboard-content {
             padding: 2rem 1.5rem;
         }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-secondary,
+        .btn-danger {
+            width: 100%;
+        }
     }
 </style>
 
@@ -219,8 +253,19 @@
             <p class="dashboard-subtitle">代謝症候群疾病管理與追蹤系統</p>
         </div>
 
+        @* 顯示成功訊息 *@
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="success-message">
+                ✅ @TempData["SuccessMessage"]
+            </div>
+        }
+
         <div class="user-welcome">
-            <h3>👋 歡迎回來，@User.Identity.Name</h3>
+            <h3>👋 歡迎回來,@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)</h3>
+            <div class="user-role-badge">
+                @(User.IsInRole("Admin") ? "👨‍⚕️ 管理者" : "👤 病患")
+            </div>
         </div>
 
         <!-- 一般使用者功能 -->
@@ -228,13 +273,17 @@
             <a href="@Url.Action("Index", "CaseManagement")" class="page-card">
                 <div class="page-card-icon">📊</div>
                 <h3 class="page-card-title">疾病個管系統</h3>
-                <p class="page-card-description">查看我的疾病管理紀錄</p>
+                <p class="page-card-description">
+                    @(User.IsInRole("Admin") ? "管理所有疾病管理紀錄" : "查看我的疾病管理紀錄")
+                </p>
             </a>
 
             <a href="@Url.Action("Index", "DailyHealth")" class="page-card">
                 <div class="page-card-icon">📝</div>
-                <h3 class="page-card-title">健康資訊管理</h3>
-                <p class="page-card-description">查看與上傳每日健康資訊</p>
+                <h3 class="page-card-title">今日健康資訊</h3>
+                <p class="page-card-description">
+                    @(User.IsInRole("Admin") ? "查看所有健康資訊" : "查看與上傳每日健康資訊")
+                </p>
             </a>
         </div>
 
@@ -242,7 +291,7 @@
         {
             <!-- 管理者專用功能 -->
             <div class="admin-section">
-                <h2 class="admin-title">👨‍⚕️ 管理者功能</h2>
+                <h2 class="admin-title">👨‍⚕️ 管理者專屬功能</h2>
                 <div class="admin-cards">
                     <a href="@Url.Action("AdminIndex", "CaseManagement")" class="admin-card">
                         <div class="admin-card-icon">📋</div>
