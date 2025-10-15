@@ -1,11 +1,11 @@
 ﻿@{
     ViewData["Title"] = "系統功能選單";
-    Layout = "_Layout";
+    Layout = null;
 }
 
 <style>
     body {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(#FFFCEC 100%);
         min-height: 100vh;
         font-family: 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
@@ -45,7 +45,7 @@
     }
 
     .user-welcome {
-        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        background: linear-gradient(#4F9D9D);
         color: white;
         padding: 1.5rem;
         border-radius: 15px;
@@ -182,12 +182,16 @@
         display: inline-block;
     }
 
+
+
         .btn-secondary:hover {
             background: #475569;
             color: white;
             text-decoration: none;
             transform: translateY(-2px);
         }
+
+
 
     .btn-danger {
         background: #ef4444;
@@ -242,6 +246,7 @@
         .btn-secondary,
         .btn-danger {
             width: 100%;
+            max-width: 300px
         }
     }
 </style>
