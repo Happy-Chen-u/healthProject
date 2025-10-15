@@ -14,6 +14,10 @@ namespace healthProject.Models
         public int UserId { get; set; }
         public virtual UserDBModel User { get; set; }
 
+        [ForeignKey("User")]
+        [Required, StringLength(12)]
+        public string IDNumber { get; set; } // 新增身分證字號，外鍵連接到 Users.IDNumber
+
         [Required, StringLength(100)]
         public string Name { get; set; }
 

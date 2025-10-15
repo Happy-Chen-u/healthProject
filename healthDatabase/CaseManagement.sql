@@ -5,10 +5,10 @@
     [Name] NVARCHAR(100) NOT NULL,              -- 姓名
     [Gender] NVARCHAR(10) NOT NULL,             -- 性別 (男/女)
     [BirthDate] DATE NOT NULL,                  -- 出生日期
-
+    [IDNumber] NVARCHAR(12) NOT NULL FOREIGN KEY REFERENCES [dbo].[Users](IDNumber), -- 身分證字號
     [Height] DECIMAL(5,2) NOT NULL,             -- 身高 (單位: 公分, 最多2位小數)
     [Weight] DECIMAL(5,2) NOT NULL,             -- 體重 (單位: 公斤, 最多2位小數)
-   [BMI] BIT NOT NULL DEFAULT 0,              -- BMI 是否勾選
+    [BMI] BIT NOT NULL DEFAULT 0,              -- BMI 是否勾選
     [BMI_Value] DECIMAL(5,2) NULL,                            -- BMI (單位: 無，計算值可為空)
     [SystolicBP] BIT NOT NULL DEFAULT 0,       -- 收縮壓 是否勾選
     [SystolicBP_Value] DECIMAL(5,2) NULL,                     -- 收縮壓 (單位: mmHg)
