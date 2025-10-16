@@ -202,6 +202,8 @@
         cursor: pointer;
         transition: all 0.3s ease;
         font-size: 1rem;
+        max-width: 250px; /* 新增：限制最大寬度 */
+        width: auto; /* 根據內容自動調整 */
     }
 
         .btn-danger:hover {
@@ -241,12 +243,13 @@
 
         .action-buttons {
             flex-direction: column;
+            align-items: center; /* 置中 */
         }
 
         .btn-secondary,
         .btn-danger {
-            width: 100%;
-            max-width: 300px
+            width: auto;
+            max-width: 250px
         }
     }
 </style>
@@ -267,7 +270,7 @@
         }
 
         <div class="user-welcome">
-            <h3>👋 歡迎回來,@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)</h3>
+            <h3>👋 您好,@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)</h3>
             <div class="user-role-badge">
                 @(User.IsInRole("Admin") ? "👨‍⚕️ 管理者" : "👤 病患")
             </div>

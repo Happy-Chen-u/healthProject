@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
 using System.Security.Claims;
+using Npgsql;
+
 
 namespace healthProject.Controllers
 
@@ -284,73 +286,43 @@ namespace healthProject.Controllers
 
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            using (var connection = new SqlConnection(connectionString))
-
+            using (var connection = new NpgsqlConnection(connectionString))
             {
-
                 await connection.OpenAsync();
 
-                // 查詢使用者 - 使用新的欄位名稱
-
                 var query = @"
+        SELECT Id, Username, PasswordHash, FullName, Role, IDNumber, IsActive
+        FROM Users
+        WHERE Username = @Username AND IsActive = true"; // PostgreSQL 用 true/false
 
-                    SELECT Id, Username, PasswordHash, FullName, Role, IDNumber, IsActive 
-
-                    FROM Users 
-
-                    WHERE Username = @Username AND IsActive = 1";
-
-                using (var command = new SqlCommand(query, connection))
-
+                using (var command = new NpgsqlCommand(query, connection))
                 {
-
                     command.Parameters.AddWithValue("@Username", username);
 
                     using (var reader = await command.ExecuteReaderAsync())
-
                     {
-
                         if (await reader.ReadAsync())
-
                         {
-
                             var user = new UserDBModel
-
                             {
-
                                 Id = reader.GetInt32(0),
-
                                 Username = reader.GetString(1),
-
                                 PasswordHash = reader.GetString(2),
-
                                 FullName = reader.IsDBNull(3) ? null : reader.GetString(3),
-
                                 Role = reader.IsDBNull(4) ? "Patient" : reader.GetString(4),
-
                                 IDNumber = reader.IsDBNull(5) ? null : reader.GetString(5),
-
                                 IsActive = reader.GetBoolean(6)
-
                             };
 
-                            // 驗證密碼
-
                             if (VerifyPassword(password, user.PasswordHash))
-
                             {
-
                                 return user;
-
                             }
-
                         }
-
                     }
-
                 }
-
             }
+
 
             return null;
 
@@ -364,7 +336,7 @@ namespace healthProject.Controllers
 
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            using (var connection = new SqlConnection(connectionString))
+            using (var connection = new NpgsqlConnection(connectionString))
 
             {
 
@@ -376,7 +348,8 @@ namespace healthProject.Controllers
 
                 string currentHash;
 
-                using (var command = new SqlCommand(checkQuery, connection))
+                using (var command = new NpgsqlCommand(checkQuery, connection))
+
 
                 {
 
@@ -398,7 +371,7 @@ namespace healthProject.Controllers
 
                 var updateQuery = "UPDATE Users SET PasswordHash = @NewPasswordHash WHERE Id = @Id";
 
-                using (var command = new SqlCommand(updateQuery, connection))
+                using (var command = new NpgsqlCommand(updateQuery, connection))
 
                 {
 
