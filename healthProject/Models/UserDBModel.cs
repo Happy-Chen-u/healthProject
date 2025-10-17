@@ -13,6 +13,8 @@ namespace healthProject.Models
         public string FullName { get; set; }
         public DateTime CreatedDate { get; set; }
         public bool IsActive { get; set; }
+        public string PhoneNumber{ get; set; }
+
 
         // 輔助屬性：判斷是否為管理者
         public bool IsAdmin => Role?.ToLower() == "admin";

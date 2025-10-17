@@ -373,10 +373,11 @@
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
 
-                    <div class="form-check">
-                        <input asp-for="RememberMe" type="checkbox" class="form-check-input" id="rememberMe" />
-                        <label asp-for="RememberMe" class="form-check-label" for="rememberMe">記住我</label>
+                    <!-- 忘記密碼超連結 -->
+                    <div style="margin-bottom: 1.5rem; text-align: right;">
+                        <a asp-controller="Account" asp-action="ForgotPassword" class="back-link">忘記密碼？</a>
                     </div>
+                    
 
                     <button type="submit" class="btn-login">
                         🔓 登入系統
