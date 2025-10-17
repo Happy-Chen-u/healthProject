@@ -32,7 +32,7 @@ namespace healthProject.Controllers
             return View();
         }
 
-        // POST: Account/Login
+        // POST: Account/Login 登入
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string returnUrl = null)
@@ -46,16 +46,13 @@ namespace healthProject.Controllers
 
             try
             {
-                // 從資料庫驗證使用者
                 var user = await ValidateUserAsync(model.Username, model.Password);
-
                 if (user == null)
                 {
                     ModelState.AddModelError(string.Empty, "帳號或密碼錯誤");
                     return View(model);
                 }
 
-                // 創建 Claims
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, user.Username),
@@ -73,21 +70,18 @@ namespace healthProject.Controllers
 
                 var authProperties = new AuthenticationProperties
                 {
-                    IsPersistent = model.RememberMe,
-                    ExpiresUtc = model.RememberMe
-                        ? DateTimeOffset.UtcNow.AddDays(30)
-                        : DateTimeOffset.UtcNow.AddHours(12)
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(12),
+                    IsPersistent = true
                 };
 
-                // 登入
                 await HttpContext.SignInAsync(
                     CookieAuthenticationDefaults.AuthenticationScheme,
                     new ClaimsPrincipal(claimsIdentity),
-                    authProperties);
+                    authProperties
+                );
 
                 _logger.LogInformation($"使用者 {user.Username} 登入成功");
 
-                // 導向指定頁面或 Dashboard
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 {
                     return Redirect(returnUrl);
@@ -103,7 +97,7 @@ namespace healthProject.Controllers
             }
         }
 
-        // POST: Account/Logout
+        // POST: Account/Logout 登出
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -114,7 +108,7 @@ namespace healthProject.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // GET: Account/ChangePassword
+        // GET: Account/ChangePassword 改密碼
         [HttpGet]
         [Authorize]
         public IActionResult ChangePassword()
@@ -122,7 +116,7 @@ namespace healthProject.Controllers
             return View();
         }
 
-        // POST: Account/ChangePassword
+        // POST: Account/ChangePassword 改密碼
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -136,7 +130,7 @@ namespace healthProject.Controllers
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var username = User.Identity.Name; // 保存使用者名稱用於 log
+                var username = User.Identity.Name;
 
                 var success = await ChangeUserPasswordAsync(int.Parse(userId), model.OldPassword, model.NewPassword);
 
@@ -144,13 +138,9 @@ namespace healthProject.Controllers
                 {
                     _logger.LogInformation($"使用者 {username} 密碼變更成功");
 
-                    // 登出使用者
                     await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
-                    // 設定成功訊息
                     TempData["SuccessMessage"] = "密碼變更成功!請使用新密碼重新登入。";
-
-                    // 導向登入頁面
                     return RedirectToAction("Login", "Account");
                 }
                 else
@@ -167,10 +157,119 @@ namespace healthProject.Controllers
             }
         }
 
-        // ============================================
-        // 資料庫查詢方法 (PostgreSQL)
-        // ============================================
+        // GET: Account/ForgotPassword 忘記密碼
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
 
+        // POST: Account/ForgotPassword 忘記密碼
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                var query = "SELECT * FROM public.\"Users\" WHERE \"IDNumber\" = @IDNumber AND \"FullName\" = @FullName AND \"PhoneNumber\" = @PhoneNumber";
+                using (var conn = new NpgsqlConnection(_configuration.GetConnectionString("DefaultConnection")))
+                {
+                    await conn.OpenAsync();
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@IDNumber", model.IDNumber);
+                        cmd.Parameters.AddWithValue("@FullName", model.FullName);
+                        cmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);
+
+                        using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                TempData["ResetUser"] = model.IDNumber;
+                                return RedirectToAction("ResetPassword");
+                            }
+                            else
+                            {
+                                ModelState.AddModelError(string.Empty, "查無此使用者，請確認資料是否正確");
+                                return View(model);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "忘記密碼處理失敗");
+                ModelState.AddModelError(string.Empty, "系統發生錯誤，請稍後再試");
+                return View(model);
+            }
+        }
+
+        // GET: Account/ResetPassword 重設密碼
+        [HttpGet]
+        public IActionResult ResetPassword()
+        {
+            var idNumber = TempData["ResetUser"] as string;
+            if (string.IsNullOrEmpty(idNumber))
+            {
+                return RedirectToAction("ForgotPassword");
+            }
+
+            ViewBag.IDNumber = idNumber;
+            return View();
+        }
+
+        // POST: Account/ResetPassword 重設密碼
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(string idNumber, string newPassword)
+        {
+            if (string.IsNullOrEmpty(newPassword))
+            {
+                ModelState.AddModelError(string.Empty, "密碼不能為空");
+                return View();
+            }
+
+            try
+            {
+                var query = "UPDATE public.\"Users\" SET \"PasswordHash\" = @PasswordHash WHERE \"IDNumber\" = @IDNumber";
+                using (var conn = new NpgsqlConnection(_configuration.GetConnectionString("DefaultConnection")))
+                {
+                    await conn.OpenAsync();
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@PasswordHash", newPassword);
+                        cmd.Parameters.AddWithValue("@IDNumber", idNumber);
+                        var rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+                        if (rowsAffected == 0)
+                        {
+                            ModelState.AddModelError(string.Empty, "找不到對應的使用者，密碼未更新");
+                            return View();
+                        }
+                    }
+                }
+
+                TempData["SuccessMessage"] = "密碼已成功重設，請使用新密碼登入";
+                return RedirectToAction("Login");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "重設密碼失敗");
+                ModelState.AddModelError(string.Empty, "系統發生錯誤，請稍後再試");
+                return View();
+            }
+        }
+
+
+        // =========================
+        // 資料庫操作
+        // =========================
         private async Task<UserDBModel> ValidateUserAsync(string username, string password)
         {
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
@@ -179,11 +278,8 @@ namespace healthProject.Controllers
             {
                 _logger.LogInformation($"嘗試驗證使用者: {username}");
 
-                // 使用 await using 確保連線正確釋放
                 await using var connection = new NpgsqlConnection(connectionString);
                 await connection.OpenAsync();
-
-                _logger.LogInformation("資料庫連線成功");
 
                 var query = @"
                     SELECT ""Id"", ""Username"", ""PasswordHash"", ""FullName"", ""Role"", ""IDNumber"", ""IsActive""
@@ -209,28 +305,11 @@ namespace healthProject.Controllers
                         IsActive = reader.GetBoolean(6)
                     };
 
-                    _logger.LogInformation($"找到使用者: {user.Username}, Role: {user.Role}");
-
-                    // 驗證密碼
                     if (VerifyPassword(password, user.PasswordHash))
                     {
-                        _logger.LogInformation("密碼驗證成功");
                         return user;
                     }
-                    else
-                    {
-                        _logger.LogWarning("密碼驗證失敗");
-                    }
                 }
-                else
-                {
-                    _logger.LogWarning($"找不到使用者: {username}");
-                }
-            }
-            catch (NpgsqlException ex)
-            {
-                _logger.LogError(ex, $"PostgreSQL 錯誤: {ex.Message}");
-                throw new Exception($"資料庫連線失敗: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
@@ -250,9 +329,7 @@ namespace healthProject.Controllers
                 await using var connection = new NpgsqlConnection(connectionString);
                 await connection.OpenAsync();
 
-                // 先驗證舊密碼
                 var checkQuery = @"SELECT ""PasswordHash"" FROM ""Users"" WHERE ""Id"" = @Id";
-
                 await using var checkCommand = new NpgsqlCommand(checkQuery, connection);
                 checkCommand.Parameters.AddWithValue("@Id", userId);
 
@@ -263,9 +340,7 @@ namespace healthProject.Controllers
                     return false;
                 }
 
-                // 更新新密碼
                 var updateQuery = @"UPDATE ""Users"" SET ""PasswordHash"" = @NewPasswordHash WHERE ""Id"" = @Id";
-
                 await using var updateCommand = new NpgsqlCommand(updateQuery, connection);
                 updateCommand.Parameters.AddWithValue("@Id", userId);
                 updateCommand.Parameters.AddWithValue("@NewPasswordHash", HashPassword(newPassword));
@@ -280,24 +355,15 @@ namespace healthProject.Controllers
             }
         }
 
-        // 密碼驗證（開發測試用 - 明文比對）
+        // 明文比對 (開發測試)
         private bool VerifyPassword(string password, string passwordHash)
         {
-            // 開發測試階段使用明文比對
             return password == passwordHash;
-
-            // 正式環境建議使用 BCrypt:
-            // return BCrypt.Net.BCrypt.Verify(password, passwordHash);
         }
 
-        // 密碼加密（開發測試用 - 明文儲存）
         private string HashPassword(string password)
         {
-            // 開發測試階段直接回傳明文
             return password;
-
-            // 正式環境建議使用 BCrypt:
-            // return BCrypt.Net.BCrypt.HashPassword(password);
         }
     }
 }
