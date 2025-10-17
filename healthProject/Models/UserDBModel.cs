@@ -16,6 +16,12 @@ namespace healthProject.Models
         public string PhoneNumber{ get; set; }
 
 
+        //是否第一次登入
+        public bool IsFirstLogin { get; set; } = true;
+
+        // LINE User ID，用來發推播
+        public string LineUserId { get; set; }
+
         // 輔助屬性：判斷是否為管理者
         public bool IsAdmin => Role?.ToLower() == "admin";
     }

@@ -1,0 +1,477 @@
+﻿@{
+    ViewData["Title"] = "驗證碼驗證";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 代謝症候群管理系統</title>
+    <style>
+        :root {
+            --primary-color: #06b6d4;
+            --primary-dark: #0891b2;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --text-dark: #1e293b;
+            --text-gray: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+        }
+
+        .header-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @@keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .header-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .header-subtitle {
+            font-size: 1rem;
+            opacity: 0.95;
+            line-height: 1.5;
+        }
+
+        .content {
+            padding: 2rem 1.5rem;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 2px solid #3b82f6;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .info-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: #1e40af;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .info-text {
+            color: #1e3a8a;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+            font-weight: 500;
+        }
+
+        .form-label {
+            display: block;
+            color: var(--text-dark);
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .code-input-container {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .code-digit {
+            width: 50px;
+            height: 60px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .code-digit:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+        }
+
+        .code-digit.filled {
+            border-color: var(--primary-color);
+            background: #f0f9ff;
+        }
+
+        .help-text {
+            text-align: center;
+            color: var(--text-gray);
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .countdown {
+            text-align: center;
+            color: var(--danger-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1.1rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+            margin-bottom: 0.75rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #64748b;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+            transform: translateY(-2px);
+        }
+
+        .footer-note {
+            text-align: center;
+            padding: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+            background: #fafafa;
+            color: var(--text-gray);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .resend-link {
+            color: var(--primary-color);
+            cursor: pointer;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+
+        .resend-link:hover {
+            color: var(--primary-dark);
+        }
+
+        @@media (min-width: 768px) {
+            body {
+                padding: 2rem;
+            }
+
+            .container {
+                max-width: 550px;
+            }
+
+            .header {
+                padding: 3rem 2rem;
+            }
+
+            .content {
+                padding: 2.5rem 2rem;
+            }
+
+            .code-digit {
+                width: 60px;
+                height: 70px;
+                font-size: 2rem;
+            }
+        }
+
+        /* 測試用 - 顯示驗證碼提示 */
+        .test-hint {
+            background: #fff7ed;
+            border: 2px dashed #fb923c;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .test-hint-title {
+            color: #c2410c;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .test-hint-code {
+            color: #ea580c;
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-icon">🔐</div>
+            <h1 class="header-title">輸入驗證碼</h1>
+            <p class="header-subtitle">驗證碼已透過 Line 發送<br>請在 5 分鐘內完成驗證</p>
+        </div>
+
+        <div class="content">
+            <div class="info-box">
+                <div class="info-title">
+                    <span>💡</span>
+                    <span>首次登入驗證</span>
+                </div>
+                <div class="info-text">
+                    為了確保帳號安全，首次登入需要透過 Line 驗證您的身分。
+                </div>
+            </div>
+
+            @* 測試用 - 顯示驗證碼 (正式環境請移除) *@
+            @if (TempData["VerificationCode"] != null)
+            {
+                <div class="test-hint">
+                    <div class="test-hint-title">🧪 測試模式 - 驗證碼</div>
+                    <div class="test-hint-code">@TempData["VerificationCode"]</div>
+                </div>
+            }
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    @Html.ValidationSummary(false)
+                </div>
+            }
+
+            <form asp-action="VerifyOtp" asp-controller="Account" method="post" id="otpForm">
+                @Html.AntiForgeryToken()
+
+                <label class="form-label">請輸入 6 位數驗證碼</label>
+
+                <div class="code-input-container">
+                    <input type="text" class="code-digit" maxlength="1" id="digit1" data-index="0" inputmode="numeric" pattern="[0-9]" autocomplete="off" />
+                    <input type="text" class="code-digit" maxlength="1" id="digit2" data-index="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" />
+                    <input type="text" class="code-digit" maxlength="1" id="digit3" data-index="2" inputmode="numeric" pattern="[0-9]" autocomplete="off" />
+                    <input type="text" class="code-digit" maxlength="1" id="digit4" data-index="3" inputmode="numeric" pattern="[0-9]" autocomplete="off" />
+                    <input type="text" class="code-digit" maxlength="1" id="digit5" data-index="4" inputmode="numeric" pattern="[0-9]" autocomplete="off" />
+                    <input type="text" class="code-digit" maxlength="1" id="digit6" data-index="5" inputmode="numeric" pattern="[0-9]" autocomplete="off" />
+                </div>
+
+                <!-- 隱藏欄位存放完整 OTP -->
+                <input type="hidden" name="otp" id="fullOtp" />
+
+                <div class="countdown" id="countdown">
+                    ⏱️ 驗證碼將在 <span id="timer">05:00</span> 後過期
+                </div>
+
+                <div class="help-text">
+                    請檢查您的 Line 訊息
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                    <span>✓</span>
+                    <span>確認驗證</span>
+                </button>
+
+                <a asp-controller="Account" asp-action="Login" class="btn btn-secondary">
+                    <span>←</span>
+                    <span>返回登入</span>
+                </a>
+            </form>
+        </div>
+
+        <div class="footer-note">
+            沒有收到驗證碼?<br>
+            <span class="resend-link" onclick="resendOtp()">點此重新發送</span>
+        </div>
+    </div>
+
+    <script>
+        // OTP 輸入框自動跳轉
+        const digits = document.querySelectorAll('.code-digit');
+        const fullOtpInput = document.getElementById('fullOtp');
+        const submitBtn = document.getElementById('submitBtn');
+
+        digits.forEach((digit, index) => {
+            // 自動 focus 第一個輸入框
+            if (index === 0) {
+                digit.focus();
+            }
+
+            // 輸入事件
+            digit.addEventListener('input', function(e) {
+                // 只允許數字
+                this.value = this.value.replace(/[^0-9]/g, '');
+
+                if (this.value.length === 1) {
+                    this.classList.add('filled');
+                    
+                    // 跳到下一個輸入框
+                    if (index < digits.length - 1) {
+                        digits[index + 1].focus();
+                    }
+                    
+                    // 檢查是否全部填完
+                    checkComplete();
+                } else {
+                    this.classList.remove('filled');
+                }
+            });
+
+            // 按下退格鍵
+            digit.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && this.value === '' && index > 0) {
+                    digits[index - 1].focus();
+                    digits[index - 1].value = '';
+                    digits[index - 1].classList.remove('filled');
+                }
+            });
+
+            // 貼上事件
+            digit.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pasteData = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+                
+                if (pasteData.length === 6) {
+                    pasteData.split('').forEach((char, i) => {
+                        if (digits[i]) {
+                            digits[i].value = char;
+                            digits[i].classList.add('filled');
+                        }
+                    });
+                    checkComplete();
+                }
+            });
+        });
+
+        // 檢查是否全部填完
+        function checkComplete() {
+            const otp = Array.from(digits).map(d => d.value).join('');
+            fullOtpInput.value = otp;
+            
+            if (otp.length === 6) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+
+        // 倒數計時器
+        let timeLeft = 300; // 5 分鐘 = 300 秒
+        const timerElement = document.getElementById('timer');
+        
+        const countdown = setInterval(() => {
+            timeLeft--;
+            
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            
+            timerElement.textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                alert('驗證碼已過期，請重新登入');
+                window.location.href = '@Url.Action("Login", "Account")';
+            }
+        }, 1000);
+
+        // 重新發送 OTP
+        function resendOtp() {
+            if (confirm('確定要重新發送驗證碼嗎?')) {
+                // 這裡可以實作重新發送的邏輯
+                // 或導回登入頁面
+                window.location.href = '@Url.Action("Login", "Account")';
+            }
+        }
+    </script>
+</body>
+</html>
