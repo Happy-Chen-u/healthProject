@@ -136,12 +136,22 @@ namespace healthProject.Controllers
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var username = User.Identity.Name; // 保存使用者名稱用於 log
+
                 var success = await ChangeUserPasswordAsync(int.Parse(userId), model.OldPassword, model.NewPassword);
 
                 if (success)
                 {
-                    TempData["SuccessMessage"] = "密碼變更成功";
-                    return RedirectToAction("Dashboard", "Home");
+                    _logger.LogInformation($"使用者 {username} 密碼變更成功");
+
+                    // 登出使用者
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+                    // 設定成功訊息
+                    TempData["SuccessMessage"] = "密碼變更成功!請使用新密碼重新登入。";
+
+                    // 導向登入頁面
+                    return RedirectToAction("Login", "Account");
                 }
                 else
                 {

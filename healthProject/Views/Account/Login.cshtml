@@ -26,7 +26,7 @@
         }
 
         body {
-            background: linear-gradient(#FFFCEC 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
         }
@@ -325,12 +325,24 @@
                         <span class="feature-icon">📈</span>
                         <span>智能健康分析報告</span>
                     </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">💡</span>
+                        <span>專業衛教知識庫</span>
+                    </div>
                 </div>
             </div>
 
             <!-- 右側登入表單 -->
             <div class="login-form-section">
                 <h2 class="form-title">登入系統</h2>
+
+                @* 成功訊息 (密碼變更成功) *@
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success">
+                        ✅ @TempData["SuccessMessage"]
+                    </div>
+                }
 
                 @if (!ViewData.ModelState.IsValid)
                 {
