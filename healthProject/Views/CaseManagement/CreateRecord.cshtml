@@ -398,17 +398,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">BMI</label>
-                        <div class="checkbox-group">
-                            <div class="checkbox-item">
-                                <input asp-for="BMI" type="checkbox" id="bmiCheck" onchange="toggleValueInput('bmiCheck', 'bmiValue')" />
-                                <label for="bmiCheck">勾選</label>
-                            </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="chkBMI" />
+                            <label for="chkBMI">BMI值</label>
                         </div>
-                        <div id="bmiValue" class="value-input">
-                            <input asp-for="BMI_Value" type="number" step="0.01" class="form-control" placeholder="BMI 數值" />
-                        </div>
+                        <input type="text" id="BMIValue" class="form-control value-input" placeholder="自動計算" readonly />
                     </div>
+
                 </div>
 
                 <!-- 日期資訊 -->
@@ -501,6 +497,45 @@
         document.getElementById('searchIdNumber')?.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 searchPatient();
+            }
+        });
+
+            //BMI值計算
+            document.addEventListener("DOMContentLoaded", function () {
+            const chkBMI = document.getElementById("chkBMI");
+            const bmiInput = document.getElementById("BMIValue");
+            const heightInput = document.getElementById("Height");
+            const weightInput = document.getElementById("Weight");
+
+            // 當勾選 BMI 時自動顯示與計算
+            chkBMI.addEventListener("change", function () {
+                if (chkBMI.checked) {
+                    bmiInput.classList.add("show");
+                    calculateBMI();
+                } else {
+                    bmiInput.classList.remove("show");
+                    bmiInput.value = "";
+                }
+            });
+
+            // 監聽身高與體重輸入變化
+            [heightInput, weightInput].forEach(input => {
+                input.addEventListener("input", function () {
+                    if (chkBMI.checked) calculateBMI();
+                });
+            });
+
+            // 計算 BMI
+            function calculateBMI() {
+                const height = parseFloat(heightInput.value);
+                const weight = parseFloat(weightInput.value);
+
+                if (height > 0 && weight > 0) {
+                    const bmi = weight / Math.pow(height / 100, 2);
+                    bmiInput.value = bmi.toFixed(1);
+                } else {
+                    bmiInput.value = "";
+                }
             }
         });
     </script>
