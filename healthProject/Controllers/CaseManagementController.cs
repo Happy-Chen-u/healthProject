@@ -1,8 +1,15 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using healthProject.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Npgsql;
-using healthProject.Models;
+using System;
+using System.Collections.Generic;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace healthProject.Controllers
 {
@@ -19,26 +26,100 @@ namespace healthProject.Controllers
         }
 
         // ========================================
-        // GET: CaseManagement/Index
-        // 主頁 - 根據角色顯示不同內容
+        // ✅ 建立新個案帳號（Users）
+        // ========================================
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Create(UserViewModel viewModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["ErrorMessage"] = "輸入資料格式錯誤，請重新檢查。";
+                return View(viewModel);
+            }
+
+            try
+            {
+                var model = new UserDBModel
+                {
+                    IDNumber = viewModel.IDNumber,
+                    Username = viewModel.IDNumber,
+                    PasswordHash = viewModel.IDNumber, // 預設密碼 = 身分證號
+                    Role = "Patient",
+                    FullName = viewModel.FullName,
+                    PhoneNumber = viewModel.PhoneNumber,
+                    CreatedDate = DateTime.Now,
+                    IsActive = true,
+                    IsFirstLogin = true,
+                    LineUserId = null
+                };
+
+                string connString = _configuration.GetConnectionString("DefaultConnection")
+                    + ";SSL Mode=Require;Trust Server Certificate=True;";
+
+                using (var conn = new NpgsqlConnection(connString))
+                {
+                    conn.Open();
+                    string sql = @"
+                        INSERT INTO public.""Users"" 
+                        (""IDNumber"", ""Username"", ""PasswordHash"", ""Role"", ""FullName"", 
+                         ""CreatedDate"", ""IsActive"", ""PhoneNumber"", ""IsFirstLogin"", ""LineUserId"")
+                        VALUES 
+                        (@idnumber, @username, @passwordhash, @role, @fullname, 
+                         @createddate, @isactive, @phonenumber, @isfirstlogin, @lineuserid);";
+
+                    using (var cmd = new NpgsqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@idnumber", model.IDNumber);
+                        cmd.Parameters.AddWithValue("@username", model.Username);
+                        cmd.Parameters.AddWithValue("@passwordhash", model.PasswordHash);
+                        cmd.Parameters.AddWithValue("@role", model.Role);
+                        cmd.Parameters.AddWithValue("@fullname", model.FullName);
+                        cmd.Parameters.AddWithValue("@createddate", model.CreatedDate);
+                        cmd.Parameters.AddWithValue("@isactive", model.IsActive);
+                        cmd.Parameters.AddWithValue("@phonenumber", model.PhoneNumber);
+                        cmd.Parameters.AddWithValue("@isfirstlogin", model.IsFirstLogin);
+                        cmd.Parameters.AddWithValue("@lineuserid", (object)DBNull.Value);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                TempData["SuccessMessage"] = $"✅ 已成功新增個案：{model.FullName}（身分證字號：{model.IDNumber}）！預設密碼為身分證字號。";
+                return RedirectToAction("Create");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"❌ 發生錯誤：{ex.Message}";
+                return View(viewModel);
+            }
+        }
+
+        // ========================================
+        // 🏠 Index
         // ========================================
         public async Task<IActionResult> Index()
         {
-            // 管理者: 顯示三個選項
             if (User.IsInRole("Admin"))
             {
                 return View("AdminMenu");
             }
 
-            // 病患: 顯示自己的紀錄列表
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var records = await GetUserRecordsAsync(userId);
             return View("PatientRecords", records);
         }
 
         // ========================================
-        // GET: CaseManagement/CreateRecord
-        // 新增/編輯紀錄表 (管理者專用)
+        // ➕ 新增個案紀錄
         // ========================================
         [Authorize(Roles = "Admin")]
         [HttpGet]
@@ -47,9 +128,32 @@ namespace healthProject.Controllers
             return View();
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateRecord(CaseManagementViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                await SaveRecordAsync(model);
+                TempData["SuccessMessage"] = "紀錄新增成功!";
+                return RedirectToAction("ViewAllRecords");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "新增紀錄失敗");
+                ModelState.AddModelError("", "新增紀錄失敗，請稍後再試");
+                return View(model);
+            }
+        }
+
         // ========================================
-        // POST: CaseManagement/SearchPatient
-        // 搜尋病患 (AJAX)
+        // 🔍 查詢病患
         // ========================================
         [Authorize(Roles = "Admin")]
         [HttpPost]
@@ -88,39 +192,10 @@ namespace healthProject.Controllers
             public string idNumber { get; set; }
         }
 
+        // ========================================
+        // 📋 紀錄管理區塊（ViewAll / Details / Edit）
+        // ========================================
 
-        // ========================================
-        // POST: CaseManagement/CreateRecord
-        // 儲存新紀錄
-        // ========================================
-        [Authorize(Roles = "Admin")]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateRecord(CaseManagementViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
-
-            try
-            {
-                await SaveRecordAsync(model);
-                TempData["SuccessMessage"] = "紀錄新增成功!";
-                return RedirectToAction("ViewAllRecords");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "新增紀錄失敗");
-                ModelState.AddModelError("", "新增紀錄失敗，請稍後再試");
-                return View(model);
-            }
-        }
-
-        // ========================================
-        // GET: CaseManagement/ViewAllRecords
-        // 查看所有紀錄 (管理者專用)
-        // ========================================
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ViewAllRecords(string searchIdNumber = null)
         {
@@ -141,60 +216,34 @@ namespace healthProject.Controllers
             return View(records);
         }
 
-        // ========================================
-        // GET: CaseManagement/Details/{id}
-        // 查看紀錄詳情
-        // ========================================
+
         public async Task<IActionResult> Details(int id)
         {
             var record = await GetRecordByIdAsync(id);
+            if (record == null) return NotFound();
 
-            if (record == null)
-            {
-                return NotFound();
-            }
-
-            // 檢查權限: 病患只能看自己的，管理者可以看所有人的
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             if (!User.IsInRole("Admin") && record.UserId != userId)
-            {
                 return Forbid();
-            }
 
             return View(record);
         }
 
-        // ========================================
-        // GET: CaseManagement/Edit/{id}
-        // 編輯紀錄 (管理者專用)
-        // ========================================
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
             var record = await GetRecordByIdAsync(id);
-
-            if (record == null)
-            {
-                return NotFound();
-            }
-
+            if (record == null) return NotFound();
             return View(record);
         }
 
-        // ========================================
-        // POST: CaseManagement/Edit
-        // 更新紀錄
-        // ========================================
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(CaseManagementViewModel model)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
+            if (!ModelState.IsValid) return View(model);
 
             try
             {
@@ -211,16 +260,13 @@ namespace healthProject.Controllers
         }
 
         // ========================================
-        // 資料庫查詢方法
+        // 🧠 資料庫操作區
         // ========================================
-
-        // 根據身分證查詢病患
         private async Task<UserDBModel> GetPatientByIdNumberAsync(string idNumber)
         {
-            var connectionString = _configuration.GetConnectionString("DefaultConnection");
-
-            await using var connection = new NpgsqlConnection(connectionString);
-            await connection.OpenAsync();
+            var connStr = _configuration.GetConnectionString("DefaultConnection");
+            await using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
 
             var query = @"
                 SELECT ""Id"", ""Username"", ""FullName"", ""IDNumber"", ""Role""
@@ -228,10 +274,9 @@ namespace healthProject.Controllers
                 WHERE ""IDNumber"" = @IDNumber AND ""IsActive"" = true
                 LIMIT 1";
 
-            await using var command = new NpgsqlCommand(query, connection);
-            command.Parameters.AddWithValue("@IDNumber", idNumber);
-
-            await using var reader = await command.ExecuteReaderAsync();
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@IDNumber", idNumber);
+            await using var reader = await cmd.ExecuteReaderAsync();
 
             if (await reader.ReadAsync())
             {
@@ -287,6 +332,7 @@ namespace healthProject.Controllers
             return records;
         }
 
+
         // 根據身分證查詢紀錄
         private async Task<List<CaseManagementViewModel>> GetRecordsByIdNumberAsync(string idNumber)
         {
@@ -326,6 +372,7 @@ namespace healthProject.Controllers
             return records;
         }
 
+
         // 取得所有紀錄
         private async Task<List<CaseManagementViewModel>> GetAllRecordsAsync()
         {
@@ -362,6 +409,7 @@ namespace healthProject.Controllers
 
             return records;
         }
+
 
         // 根據 ID 取得紀錄
         private async Task<CaseManagementViewModel> GetRecordByIdAsync(int id)
@@ -406,6 +454,7 @@ namespace healthProject.Controllers
 
             return null;
         }
+
 
         // 儲存新紀錄 (簡化版 - 只儲存基本欄位)
         private async Task SaveRecordAsync(CaseManagementViewModel model)
@@ -473,3 +522,4 @@ namespace healthProject.Controllers
         }
     }
 }
+

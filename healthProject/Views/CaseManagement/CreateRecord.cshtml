@@ -100,11 +100,11 @@
             font-family: inherit;
         }
 
-        .search-input:focus {
-            outline: none;
-            border-color: #FF9800;
-            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
-        }
+            .search-input:focus {
+                outline: none;
+                border-color: #FF9800;
+                box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+            }
 
         .btn-search {
             background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
@@ -118,10 +118,10 @@
             transition: all 0.3s ease;
         }
 
-        .btn-search:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
-        }
+            .btn-search:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+            }
 
         .patient-info {
             background: #E8F5E9;
@@ -132,9 +132,9 @@
             display: none;
         }
 
-        .patient-info.show {
-            display: block;
-        }
+            .patient-info.show {
+                display: block;
+            }
 
         .patient-info-text {
             color: #2E7D32;
@@ -189,11 +189,11 @@
             background: white;
         }
 
-        .form-control:focus {
-            outline: none;
-            border-color: #FF9800;
-            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
-        }
+            .form-control:focus {
+                outline: none;
+                border-color: #FF9800;
+                box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+            }
 
         .checkbox-group {
             display: flex;
@@ -207,26 +207,26 @@
             gap: 0.5rem;
         }
 
-        .checkbox-item input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
+            .checkbox-item input[type="checkbox"] {
+                width: 20px;
+                height: 20px;
+                cursor: pointer;
+            }
 
-        .checkbox-item label {
-            color: #E65100;
-            font-weight: 500;
-            cursor: pointer;
-        }
+            .checkbox-item label {
+                color: #E65100;
+                font-weight: 500;
+                cursor: pointer;
+            }
 
         .value-input {
             display: none;
             margin-top: 0.5rem;
         }
 
-        .value-input.show {
-            display: block;
-        }
+            .value-input.show {
+                display: block;
+            }
 
         .button-group {
             display: flex;
@@ -254,10 +254,10 @@
             box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-        }
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            }
 
         .btn-secondary {
             background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
@@ -265,12 +265,12 @@
             box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
         }
 
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
-            text-decoration: none;
-            color: white;
-        }
+            .btn-secondary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
+                text-decoration: none;
+                color: white;
+            }
 
         .alert {
             padding: 1rem;
@@ -498,7 +498,7 @@
         }
 
         // Enter 鍵搜尋
-        document.getElementById('searchIdNumber')?.addEventListener('keypress', function(e) {
+        document.getElementById('searchIdNumber')?.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 searchPatient();
             }

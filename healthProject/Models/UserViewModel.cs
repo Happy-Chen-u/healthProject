@@ -1,22 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace healthProject.Models
 {
-    public class UserViewModel : Controller
+    public class UserViewModel
     {
-        // 顯示個案資訊
-        public IActionResult Index()
-        {
-            return View();
-        }
+        [Required(ErrorMessage = "身分證字號為必填")]
+        [StringLength(10, MinimumLength = 10, ErrorMessage = "身分證字號必須為10碼")]
+        public string IDNumber { get; set; }
 
-        public int UserId { get; set; }
-        public string IdNumber { get; set; }  // 身分證字號
-        public string UserName { get; set; }
-        public string Password { get; set; }
-        public string Role { get; set; } // "Case" 或 "Admin"
+        [Required(ErrorMessage = "姓名為必填")]
+        [StringLength(50, ErrorMessage = "姓名長度不可超過50字")]
+        public string FullName { get; set; }
 
-        public virtual ICollection<CaseManagementDBModel> DiseaseRecords { get; set; }
-        public virtual ICollection<HealthRecordDBModel> HealthRecords { get; set; }
+        [Required(ErrorMessage = "電話號碼為必填")]
+        [Phone(ErrorMessage = "電話號碼格式不正確")]
+        public string PhoneNumber { get; set; }
     }
 }
+
