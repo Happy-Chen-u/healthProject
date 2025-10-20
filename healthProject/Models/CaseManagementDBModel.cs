@@ -155,11 +155,14 @@ namespace healthProject.Models
         // 其他叮嚀
         public bool OtherReminders { get; set; }
         public bool FastingGlucoseTarget { get; set; }
+        public decimal? FastingGlucoseTarget_Value { get; set; }
+
         public bool HbA1cTarget { get; set; }
         public decimal? HbA1cTarget_Value { get; set; }
         public bool TriglyceridesTarget { get; set; }
         public decimal? TriglyceridesTarget_Value { get; set; }
         public bool HDL_CholesterolTarget { get; set; }
+        public decimal? HDL_CholesterolTarget_Value { get; set; }
         public bool LDL_CholesterolTarget { get; set; }
         public decimal? LDL_CholesterolTarget_Value { get; set; }
     }
