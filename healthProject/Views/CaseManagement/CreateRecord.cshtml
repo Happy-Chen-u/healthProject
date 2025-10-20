@@ -1,0 +1,512 @@
+﻿@model CaseManagementViewModel
+@{
+    ViewData["Title"] = "代謝症候群疾病管理紀錄表";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFE0B2 100%);
+            min-height: 100vh;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-icon {
+            background: white;
+            color: #FF9800;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-content {
+            padding: 2rem;
+        }
+
+        /* 搜尋個案區塊 */
+        .search-section {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            border: 3px solid #FFB74D;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .search-title {
+            color: #E65100;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.875rem 1rem;
+            border: 2px solid #FFB74D;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #FF9800;
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+        }
+
+        .btn-search {
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            color: white;
+            padding: 0.875rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+        }
+
+        .patient-info {
+            background: #E8F5E9;
+            border: 2px solid #66BB6A;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .patient-info.show {
+            display: block;
+        }
+
+        .patient-info-text {
+            color: #2E7D32;
+            font-weight: 600;
+        }
+
+        /* 表單區塊 */
+        .form-section {
+            background: linear-gradient(135deg, #FFECB3 0%, #FFE082 100%);
+            border: 2px solid #FFB74D;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: -1.5rem -1.5rem 1rem -1.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            color: #E65100;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #FFB74D;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #FF9800;
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            color: #E65100;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .value-input {
+            display: none;
+            margin-top: 0.5rem;
+        }
+
+        .value-input.show {
+            display: block;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-danger {
+            background: #FFEBEE;
+            border: 2px solid #EF5350;
+            color: #C62828;
+        }
+
+        .alert-success {
+            background: #E8F5E9;
+            border: 2px solid #66BB6A;
+            color: #2E7D32;
+        }
+
+        @@media (max-width: 768px) {
+            body {
+                padding: 1rem 0.5rem;
+            }
+
+            .header {
+                padding: 1.5rem 1rem;
+            }
+
+            .header-title {
+                font-size: 1.3rem;
+            }
+
+            .form-content {
+                padding: 1.5rem 1rem;
+            }
+
+            .search-group {
+                flex-direction: column;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-icon">📋</div>
+            <h1 class="header-title">代謝症候群疾病管理紀錄表</h1>
+        </div>
+
+        <div class="form-content">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <div asp-validation-summary="All"></div>
+                </div>
+            }
+
+            <!-- 搜尋個案 -->
+            <div class="search-section">
+                <div class="search-title">
+                    <span>🔍</span>
+                    <span>步驟 1: 搜尋個案</span>
+                </div>
+                <div class="search-group">
+                    <input type="text"
+                           id="searchIdNumber"
+                           class="search-input"
+                           placeholder="請輸入個案身分證字號 (例如: A123456789)"
+                           maxlength="10" />
+                    <button type="button" class="btn-search" onclick="searchPatient()">
+                        🔍 搜尋個案
+                    </button>
+                </div>
+                <div id="patientInfo" class="patient-info">
+                    <div class="patient-info-text" id="patientInfoText"></div>
+                </div>
+            </div>
+
+            <!-- 表單 -->
+            <form asp-action="CreateRecord" method="post" id="recordForm" style="display: none;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="UserId" id="hiddenUserId" />
+                <input type="hidden" asp-for="IDNumber" id="hiddenIDNumber" />
+
+                <!-- 基本資料 -->
+                <div class="form-section">
+                    <div class="section-title">基本資料與生理量測</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label asp-for="Name" class="form-label">姓名 *</label>
+                            <input asp-for="Name" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Gender" class="form-label">性別 *</label>
+                            <select asp-for="Gender" class="form-control" required>
+                                <option value="">請選擇</option>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="BirthDate" class="form-label">出生日期 *</label>
+                            <input asp-for="BirthDate" type="date" class="form-control" required />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label asp-for="Height" class="form-label">身高 (公分) *</label>
+                            <input asp-for="Height" type="number" step="0.01" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Weight" class="form-label">體重 (公斤) *</label>
+                            <input asp-for="Weight" type="number" step="0.01" class="form-control" required />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">BMI</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input asp-for="BMI" type="checkbox" id="bmiCheck" onchange="toggleValueInput('bmiCheck', 'bmiValue')" />
+                                <label for="bmiCheck">勾選</label>
+                            </div>
+                        </div>
+                        <div id="bmiValue" class="value-input">
+                            <input asp-for="BMI_Value" type="number" step="0.01" class="form-control" placeholder="BMI 數值" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 日期資訊 -->
+                <div class="form-section">
+                    <div class="section-title">評估與追蹤日期</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label asp-for="AssessmentDate" class="form-label">評估日期</label>
+                            <input asp-for="AssessmentDate" type="date" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="FollowUpDate" class="form-label">追蹤日期</label>
+                            <input asp-for="FollowUpDate" type="date" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 按鈕 -->
+                <div class="button-group">
+                    <a href="@Url.Action("Index", "CaseManagement")" class="btn btn-secondary">
+                        ← 取消
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        ✓ 儲存紀錄
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 搜尋個案
+        async function searchPatient() {
+            const idNumber = document.getElementById('searchIdNumber').value.trim();
+
+            if (!idNumber) {
+                alert('請輸入身分證字號');
+                return;
+            }
+
+            try {
+                const response = await fetch('@Url.Action("SearchPatient", "CaseManagement")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ idNumber: idNumber })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // 顯示個案資訊
+                    document.getElementById('patientInfoText').innerHTML =
+                        `✅ 找到個案: ${result.data.name} (${result.data.idNumber})`;
+                    document.getElementById('patientInfo').classList.add('show');
+
+                    // 填入隱藏欄位
+                    document.getElementById('hiddenUserId').value = result.data.userId;
+                    document.getElementById('hiddenIDNumber').value = result.data.idNumber;
+                    document.getElementById('Name').value = result.data.name;
+
+                    // 顯示表單
+                    document.getElementById('recordForm').style.display = 'block';
+                } else {
+                    alert(result.message || '查無此個案，請確認身分證字號是否正確');
+                    document.getElementById('patientInfo').classList.remove('show');
+                    document.getElementById('recordForm').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('搜尋失敗:', error);
+                alert('搜尋失敗，請稍後再試');
+            }
+        }
+
+        // 切換數值輸入框
+        function toggleValueInput(checkboxId, valueId) {
+            const checkbox = document.getElementById(checkboxId);
+            const valueInput = document.getElementById(valueId);
+
+            if (checkbox.checked) {
+                valueInput.classList.add('show');
+            } else {
+                valueInput.classList.remove('show');
+            }
+        }
+
+        // Enter 鍵搜尋
+        document.getElementById('searchIdNumber')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchPatient();
+            }
+        });
+    </script>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+</body>
+</html>

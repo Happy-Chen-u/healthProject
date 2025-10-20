@@ -3,55 +3,67 @@
     Layout = null;
 }
 
-<style>
-    body {
-        background: linear-gradient(#FFFCEC 100%);
-        min-height: 100vh;
-        font-family: 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .dashboard-container {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem;
-    }
+        body {
+            background: linear-gradient(135deg, #FFFCEC 0%, #FFF8DC 100%);
+            min-height: 100vh;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-    .dashboard-content {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        max-width: 1000px;
-        width: 100%;
-        padding: 3rem 2rem;
-    }
+        .dashboard-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
 
-    .dashboard-header {
-        text-align: center;
-        margin-bottom: 3rem;
-    }
+        .dashboard-content {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1000px;
+            width: 100%;
+            padding: 3rem 2rem;
+        }
 
-    .dashboard-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 0.5rem;
-    }
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
 
-    .dashboard-subtitle {
-        font-size: 1.1rem;
-        color: #6eaf82;
-    }
+        .dashboard-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
 
-    .user-welcome {
-        background: linear-gradient(#4F9D9D);
-        color: white;
-        padding: 1.5rem;
-        border-radius: 15px;
-        margin-bottom: 2rem;
-        text-align: center;
-    }
+        .dashboard-subtitle {
+            font-size: 1.1rem;
+            color: #6eaf82;
+        }
+
+        .user-welcome {
+            background: linear-gradient(135deg, #4F9D9D 0%, #3d8a8a 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
 
         .user-welcome h3 {
             margin: 0;
@@ -59,34 +71,45 @@
             font-weight: 600;
         }
 
-    .user-role-badge {
-        display: inline-block;
-        background: rgba(255, 255, 255, 0.2);
-        padding: 0.3rem 1rem;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
-    }
+        .user-role-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
 
-    .page-selection {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 2rem;
-        margin-bottom: 2rem;
-    }
+        .success-message {
+            background: #d1fae5;
+            border: 1px solid #6ee7b7;
+            color: #065f46;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 500;
+        }
 
-    .page-card {
-        background: linear-gradient(#6da7cc);
-        color: white;
-        padding: 3rem 2rem;
-        border-radius: 15px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        text-decoration: none;
-        display: block;
-    }
+        .page-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .page-card {
+            background: linear-gradient(135deg, #6da7cc 0%, #5a92b8 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            display: block;
+        }
 
         .page-card:hover {
             transform: scale(1.05);
@@ -95,94 +118,42 @@
             text-decoration: none;
         }
 
-    .page-card-icon {
-        font-size: 4rem;
-        margin-bottom: 1rem;
-    }
-
-    .page-card-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-
-    .page-card-description {
-        font-size: 1rem;
-        opacity: 0.9;
-    }
-
-    .admin-section {
-        margin-top: 3rem;
-        padding-top: 2rem;
-        border-top: 2px solid #e2e8f0;
-    }
-
-    .admin-title {
-        text-align: center;
-        color: #1e293b;
-        margin-bottom: 1.5rem;
-        font-size: 1.5rem;
-        font-weight: 600;
-    }
-
-    .admin-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
-    }
-
-    .admin-card {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: white;
-        padding: 2rem 1.5rem;
-        border-radius: 12px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        text-decoration: none;
-        display: block;
-    }
-
-        .admin-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-            color: white;
-            text-decoration: none;
+        .page-card-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
         }
 
-    .admin-card-icon {
-        font-size: 2.5rem;
-        margin-bottom: 0.5rem;
-    }
+        .page-card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
 
-    .admin-card-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-    }
+        .page-card-description {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
 
-    .action-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        margin-top: 2rem;
-        flex-wrap: wrap;
-    }
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
 
-    .btn-secondary {
-        background: #64748b;
-        color: white;
-        border: none;
-        padding: 0.75rem 2rem;
-        border-radius: 25px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 1rem;
-        text-decoration: none;
-        display: inline-block;
-    }
-
-
+        .btn-secondary {
+            background: #64748b;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-block;
+        }
 
         .btn-secondary:hover {
             background: #475569;
@@ -191,143 +162,107 @@
             transform: translateY(-2px);
         }
 
-
-
-    .btn-danger {
-        background: #c54141;
-        color: white;
-        border: none;
-        padding: 0.75rem 2rem;
-        border-radius: 25px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 1rem;
-        max-width: 250px; /* 新增：限制最大寬度 */
-        width: auto; /* 根據內容自動調整 */
-    }
+        .btn-danger {
+            background: #c54141;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            max-width: 250px;
+            width: auto;
+        }
 
         .btn-danger:hover {
             background: #dc2626;
             transform: translateY(-2px);
         }
 
-    .success-message {
-        background: #d1fae5;
-        border: 1px solid #6ee7b7;
-        color: #065f46;
-        padding: 1rem;
-        border-radius: 12px;
-        margin-bottom: 1.5rem;
-        text-align: center;
-        font-weight: 500;
-    }
+        @@media (max-width: 768px) {
+            .dashboard-title {
+                font-size: 1.8rem;
+            }
 
-    @@media (max-width: 768px) {
+            .page-selection {
+                grid-template-columns: 1fr;
+            }
 
-        .dashboard-title {
-            font-size: 1.8rem;
+            .dashboard-container {
+                padding: 1rem;
+            }
+
+            .dashboard-content {
+                padding: 2rem 1.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-secondary,
+            .btn-danger {
+                width: auto;
+                max-width: 250px;
+            }
         }
-
-        .page-selection,
-        .admin-cards {
-            grid-template-columns: 1fr;
-        }
-
-        .dashboard-container {
-            padding: 1rem;
-        }
-
-        .dashboard-content {
-            padding: 2rem 1.5rem;
-        }
-
-        .action-buttons {
-            flex-direction: column;
-            align-items: center; /* 置中 */
-        }
-
-        .btn-secondary,
-        .btn-danger {
-            width: auto;
-            max-width: 250px
-        }
-    }
-</style>
-
-<div class="dashboard-container">
-    <div class="dashboard-content">
-        <div class="dashboard-header">
-            <h1 class="dashboard-title">🏥 系統功能選單</h1>
-            <p class="dashboard-subtitle">代謝症候群疾病管理與追蹤系統</p>
-        </div>
-
-        @* 顯示成功訊息 *@
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="success-message">
-                ✅ @TempData["SuccessMessage"]
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-content">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">🏥 系統功能選單</h1>
+                <p class="dashboard-subtitle">代謝症候群疾病管理與追蹤系統</p>
             </div>
-        }
 
-        <div class="user-welcome">
-            <h3>👋 您好,@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)</h3>
-            <div class="user-role-badge">
-                @(User.IsInRole("Admin") ? "👨‍⚕️ 管理者" : "👤 病患")
-            </div>
-        </div>
+            @* 顯示成功訊息 *@
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="success-message">
+                    ✅ @TempData["SuccessMessage"]
+                </div>
+            }
 
-        <!-- 一般使用者功能 -->
-        <div class="page-selection">
-            <a href="@Url.Action("Index", "CaseManagement")" class="page-card">
-                <div class="page-card-icon">📊</div>
-                <h3 class="page-card-title">疾病個管系統</h3>
-                <p class="page-card-description">
-                    @(User.IsInRole("Admin") ? "管理所有疾病管理紀錄" : "查看我的疾病管理紀錄")
-                </p>
-            </a>
-
-            <a href="@Url.Action("Index", "DailyHealth")" class="page-card">
-                <div class="page-card-icon">📝</div>
-                <h3 class="page-card-title">今日健康資訊</h3>
-                <p class="page-card-description">
-                    @(User.IsInRole("Admin") ? "查看所有健康資訊" : "查看與上傳每日健康資訊")
-                </p>
-            </a>
-        </div>
-
-        @if (User.IsInRole("Admin"))
-        {
-            <!-- 管理者專用功能 -->
-            <div class="admin-section">
-                <h2 class="admin-title">👨‍⚕️ 管理者專屬功能</h2>
-                <div class="admin-cards">
-                    <a href="@Url.Action("AdminIndex", "CaseManagement")" class="admin-card">
-                        <div class="admin-card-icon">📋</div>
-                        <h4 class="admin-card-title">管理所有個案紀錄</h4>
-                    </a>
-
-                    <a href="@Url.Action("Create", "CaseManagement")" class="admin-card">
-                        <div class="admin-card-icon">➕</div>
-                        <h4 class="admin-card-title">新增個案紀錄</h4>
-                    </a>
-
-                    <a href="@Url.Action("AdminIndex", "DailyHealth")" class="admin-card">
-                        <div class="admin-card-icon">📈</div>
-                        <h4 class="admin-card-title">查看所有健康紀錄</h4>
-                    </a>
+            <div class="user-welcome">
+                <h3>👋 您好,@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)</h3>
+                <div class="user-role-badge">
+                    @(User.IsInRole("Admin") ? "👨‍⚕️ 管理者" : "👤 個案")
                 </div>
             </div>
-        }
 
-        <!-- 操作按鈕 -->
-        <div class="action-buttons">
-            <a href="@Url.Action("ChangePassword", "Account")" class="btn-secondary">
-                🔐 變更密碼
-            </a>
-            <form method="post" action="@Url.Action("Logout", "Account")" style="display: inline;">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="btn-danger">🚪 登出</button>
-            </form>
+            <!-- 主要功能選單 -->
+            <div class="page-selection">
+                <a href="@Url.Action("Index", "CaseManagement")" class="page-card">
+                    <div class="page-card-icon">📊</div>
+                    <h3 class="page-card-title">疾病個管系統</h3>
+                    <p class="page-card-description">
+                        @(User.IsInRole("Admin") ? "管理所有疾病管理紀錄" : "查看我的疾病管理紀錄")
+                    </p>
+                </a>
+
+                <a href="@Url.Action("Index", "DailyHealth")" class="page-card">
+                    <div class="page-card-icon">📝</div>
+                    <h3 class="page-card-title">今日健康資訊</h3>
+                    <p class="page-card-description">
+                        @(User.IsInRole("Admin") ? "查看所有健康資訊" : "查看與上傳每日健康資訊")
+                    </p>
+                </a>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div class="action-buttons">
+                <a href="@Url.Action("ChangePassword", "Account")" class="btn-secondary">
+                    🔐 變更密碼
+                </a>
+                <form method="post" action="@Url.Action("Logout", "Account")" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-danger">🚪 登出</button>
+                </form>
+            </div>
         </div>
     </div>
-</div>
+</body>
+</html>

@@ -1,0 +1,227 @@
+﻿@{
+    ViewData["Title"] = "疾病個管系統 - 管理者功能";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFE0B2 100%);
+            min-height: 100vh;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .header-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-subtitle {
+            font-size: 1rem;
+            opacity: 0.95;
+        }
+
+        .content {
+            background: white;
+            padding: 3rem 2rem;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .welcome-box {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            border: 2px solid #FFB74D;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .welcome-text {
+            color: #E65100;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .menu-card {
+            background: linear-gradient(135deg, #FFECB3 0%, #FFE082 100%);
+            border: 3px solid #FFB74D;
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #E65100;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.2);
+        }
+
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 152, 0, 0.4);
+            background: linear-gradient(135deg, #FFE082 0%, #FFD54F 100%);
+            text-decoration: none;
+            color: #E65100;
+        }
+
+        .menu-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .menu-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: #E65100;
+        }
+
+        .menu-description {
+            font-size: 1rem;
+            color: #F57C00;
+            line-height: 1.5;
+        }
+
+        .back-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
+            background: linear-gradient(135deg, #607D8B 0%, #546E7A 100%);
+            color: white;
+            text-decoration: none;
+        }
+
+        .button-group {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        @@media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header {
+                padding: 1.5rem;
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .content {
+                padding: 2rem 1.5rem;
+            }
+
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-icon">📊</div>
+            <h1 class="header-title">疾病個管系統</h1>
+            <p class="header-subtitle">管理者專屬功能</p>
+        </div>
+
+        <div class="content">
+            <div class="welcome-box">
+                <div class="welcome-text">
+                    👨‍⚕️ 歡迎，@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)
+                </div>
+            </div>
+
+            <div class="menu-grid">
+                <!-- 新增個案 -->
+                <a href="@Url.Action("CreateUser", "Admin")" class="menu-card">
+                    <div class="menu-icon">➕</div>
+                    <h3 class="menu-title">新增個案</h3>
+                    <p class="menu-description">
+                        建立新的個案資料<br>
+                        (Users 資料表)
+                    </p>
+                </a>
+
+                <!-- 新增/編輯紀錄表 -->
+                <a href="@Url.Action("CreateRecord", "CaseManagement")" class="menu-card">
+                    <div class="menu-icon">📋</div>
+                    <h3 class="menu-title">新增/編輯紀錄表</h3>
+                    <p class="menu-description">
+                        輸入身分證字號<br>
+                        填寫個案管理紀錄
+                    </p>
+                </a>
+
+                <!-- 查看所有紀錄 -->
+                <a href="@Url.Action("ViewAllRecords", "CaseManagement")" class="menu-card">
+                    <div class="menu-icon">🔍</div>
+                    <h3 class="menu-title">查看所有紀錄</h3>
+                    <p class="menu-description">
+                        搜尋或查看<br>
+                        所有個案管理紀錄
+                    </p>
+                </a>
+            </div>
+
+            <div class="button-group">
+                <a href="@Url.Action("Dashboard", "Home")" class="back-button">
+                    ← 返回主選單
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
