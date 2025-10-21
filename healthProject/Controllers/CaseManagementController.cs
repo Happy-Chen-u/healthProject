@@ -168,6 +168,13 @@ namespace healthProject.Controllers
                     return Json(new { success = false, message = "查無此病患資料" });
                 }
 
+                // 🔍 新增角色判斷（只允許 Patient）
+                if (patient.Role != "Patient")
+                {
+                    return Json(new { success = false, message = "該帳號非病患身分，無法建立紀錄表" });
+                }
+
+                // ✅ 成功找到病患
                 return Json(new
                 {
                     success = true,
@@ -183,7 +190,7 @@ namespace healthProject.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "搜尋病患失敗");
-                return Json(new { success = false, message = "系統錯誤" });
+                return Json(new { success = false, message = "系統錯誤，請稍後再試" });
             }
         }
 
@@ -191,6 +198,8 @@ namespace healthProject.Controllers
         {
             public string idNumber { get; set; }
         }
+
+
 
         // ========================================
         // 📋 紀錄管理區塊（ViewAll / Details / Edit）
