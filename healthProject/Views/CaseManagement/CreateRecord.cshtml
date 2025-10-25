@@ -3,6 +3,7 @@
     ViewData["Title"] = "代謝症候群疾病管理紀錄表";
     Layout = null;
 }
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -63,7 +64,7 @@
         .form-content {
             padding: 2rem;
         }
-        /* 搜尋個案區塊 */
+
         .search-section {
             background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
             border: 3px solid #FFB74D;
@@ -124,7 +125,7 @@
         .patient-info {
             background: #E8F5E9;
             border: 2px solid #66BB6A;
-            padding: 1rem;
+            padding: 1.5rem;
             border-radius: 10px;
             margin-top: 1rem;
             display: none;
@@ -134,11 +135,92 @@
                 display: block;
             }
 
+        .patient-info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px dashed #66BB6A;
+        }
+
         .patient-info-text {
             color: #2E7D32;
             font-weight: 600;
+            font-size: 1.1rem;
         }
-        /* 表單區塊 */
+
+        .action-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-new {
+            background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+
+            .btn-new:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+            }
+
+        .btn-history {
+            background: linear-gradient(135deg, #42A5F5 0%, #2196F3 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+        }
+
+            .btn-history:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+                color: white;
+                text-decoration: none;
+            }
+
+        .patient-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #A5D6A7;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2E7D32;
+        }
+
         .form-section {
             background: linear-gradient(135deg, #FFECB3 0%, #FFE082 100%);
             border: 2px solid #FFB74D;
@@ -153,7 +235,7 @@
             padding: 0.75rem 1rem;
             border-radius: 10px;
             font-size: 1.1rem;
-            font-weight: 700; /* 確保所有小標為粗體 */
+            font-weight: 700;
             margin: -1.5rem -1.5rem 1rem -1.5rem;
         }
 
@@ -212,16 +294,20 @@
 
             .checkbox-item label {
                 color: #E65100;
-                font-weight: 700;
+                font-weight: 500;
                 cursor: pointer;
             }
 
-        .value-input {
+        .nested-content {
             display: none;
-            margin-top: 0.5rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.6);
+            border-left: 4px solid #FFB74D;
+            border-radius: 8px;
         }
 
-            .value-input.show {
+            .nested-content.show {
                 display: block;
             }
 
@@ -233,21 +319,10 @@
             flex-wrap: wrap;
         }
 
-        .btn {
-            padding: 1rem 2.5rem;
-            border: none;
-            border-radius: 25px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-
         .btn-primary {
             background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
             color: white;
+            padding: 1rem 2.5rem;
             box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
         }
 
@@ -259,6 +334,7 @@
         .btn-secondary {
             background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
             color: white;
+            padding: 1rem 2.5rem;
             box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
         }
 
@@ -281,19 +357,13 @@
             color: #C62828;
         }
 
-        .alert-success {
-            background: #E8F5E9;
-            border: 2px solid #66BB6A;
-            color: #2E7D32;
-        }
-        /* 增強響應式設計 */
         @@media (max-width: 768px) {
             body {
                 padding: 1rem 0.5rem;
             }
 
             .header {
-                padding: 1.5rem;
+                padding: 1.5rem 1rem;
             }
 
             .header-title {
@@ -301,47 +371,20 @@
             }
 
             .form-content {
-                padding: 1rem;
+                padding: 1.5rem 1rem;
             }
 
             .search-group {
                 flex-direction: column;
             }
 
-            .search-input, .btn-search {
-                width: 100%;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr; /* 手機模式下單列 */
-            }
-
-            .checkbox-item {
-                flex-wrap: wrap;
-            }
-
-            .button-group {
+            .action-buttons {
                 flex-direction: column;
             }
 
             .btn {
                 width: 100%;
-                margin-bottom: 0.5rem;
-            }
-
-            .section-title {
-                font-size: 1rem;
-                padding: 0.5rem 1rem;
-            }
-        }
-
-        @@media (min-width: 769px) and (max-width: 1024px) {
-            .form-row {
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            }
-
-            .section-title {
-                font-size: 1.05rem;
+                justify-content: center;
             }
         }
     </style>
@@ -352,6 +395,7 @@
             <div class="header-icon">📋</div>
             <h1 class="header-title">代謝症候群疾病管理紀錄表</h1>
         </div>
+
         <div class="form-content">
             @if (!ViewData.ModelState.IsValid)
             {
@@ -359,6 +403,7 @@
                     <div asp-validation-summary="All"></div>
                 </div>
             }
+
             <!-- 搜尋個案 -->
             <div class="search-section">
                 <div class="search-title">
@@ -376,9 +421,30 @@
                     </button>
                 </div>
                 <div id="patientInfo" class="patient-info">
-                    <div class="patient-info-text" id="patientInfoText"></div>
+                    <div class="patient-info-header">
+                        <div class="patient-info-text" id="patientInfoText"></div>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn-new" onclick="showNewRecordForm()">
+                            ➕ 新增本次評估紀錄
+                        </button>
+                        <a href="#" id="btnViewHistory" class="btn btn-history">
+                            📚 查看歷史紀錄
+                        </a>
+                    </div>
+                    <div id="patientStats" class="patient-stats" style="display: none;">
+                        <div class="stat-item">
+                            <div class="stat-label">歷史紀錄</div>
+                            <div class="stat-value" id="recordCount">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">最近評估</div>
+                            <div class="stat-value" id="lastRecord">--</div>
+                        </div>
+                    </div>
                 </div>
             </div>
+
             <!-- 表單 -->
             <form asp-action="CreateRecord" method="post" id="recordForm" style="display: none;">
                 @Html.AntiForgeryToken()
@@ -865,57 +931,60 @@
                         </div>
                     </div>
                 </div>
-                <!-- 按鈕 -->
+
                 <div class="button-group">
-                    <a href="@Url.Action("Index", "CaseManagement")" class="btn btn-secondary">
+                    <button type="button" class="btn btn-secondary" onclick="cancelForm()">
                         ← 取消
-                    </a>
+                    </button>
                     <button type="submit" class="btn btn-primary">
-                        ✓ 儲存紀錄
+                        ✓ 儲存本次紀錄
                     </button>
                 </div>
             </form>
         </div>
     </div>
+
     <script>
-        // 搜尋個案
+        let currentPatientId = null;
+        let currentPatientIdNumber = null;
+
         async function searchPatient() {
             const idNumber = document.getElementById('searchIdNumber').value.trim();
+
             if (!idNumber) {
                 alert('請輸入身分證字號');
                 return;
             }
+
             try {
                 const response = await fetch('@Url.Action("SearchPatient", "CaseManagement")', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                     },
                     body: JSON.stringify({ idNumber: idNumber })
                 });
+
                 const result = await response.json();
 
                 if (result.success) {
-                    // ✨ 檢查是否已有紀錄
-                    if (result.hasRecord) {
-                        // 已有紀錄,詢問是否要編輯
-                        if (confirm(result.message)) {
-                            window.location.href = '@Url.Action("Edit", "CaseManagement")/' + result.recordId;
-                        }
-                    } else {
-                        // 沒有紀錄,顯示新增表單
-                        document.getElementById('patientInfoText').innerHTML =
-                            `✅ 找到個案: ${result.data.name} (${result.data.idNumber})`;
-                        document.getElementById('patientInfo').classList.add('show');
+                    currentPatientId = result.data.id;
+                    currentPatientIdNumber = result.data.idNumber;
 
-                        // 填入隱藏欄位
-                        document.getElementById('hiddenUserId').value = result.data.userId;
-                        document.getElementById('hiddenIDNumber').value = result.data.idNumber;
-                        document.getElementById('Name').value = result.data.name;
+                    document.getElementById('patientInfoText').innerHTML =
+                        `✅ 找到個案: ${result.data.name} (${result.data.idNumber})`;
+                    document.getElementById('patientInfo').classList.add('show');
 
-                        // 顯示表單
-                        document.getElementById('recordForm').style.display = 'block';
-                    }
+                    // 設定查看歷史紀錄的連結
+                    document.getElementById('btnViewHistory').href =
+                        `@Url.Action("ViewAllRecords", "CaseManagement")?searchIdNumber=${result.data.idNumber}`;
+
+                    // 載入統計資料
+                    await loadPatientStats(result.data.idNumber);
+
+                    // 隱藏表單
+                    document.getElementById('recordForm').style.display = 'none';
                 } else {
                     alert(result.message || '查無此個案，請確認身分證字號是否正確');
                     document.getElementById('patientInfo').classList.remove('show');
@@ -926,19 +995,61 @@
                 alert('搜尋失敗，請稍後再試');
             }
         }
-        // 切換數值輸入框
-        function toggleValueInput(checkboxId, valueId) {
-            const checkbox = document.getElementById(checkboxId);
-            const valueInput = document.getElementById(valueId);
-            if (checkbox.checked) {
-                valueInput.classList.add('show');
-            } else {
-                valueInput.classList.remove('show');
+
+        async function loadPatientStats(idNumber) {
+            try {
+                // 這裡你可以建立一個新的 API 來取得病患統計
+                // 暫時先顯示統計區塊
+                document.getElementById('patientStats').style.display = 'grid';
+            } catch (error) {
+                console.error('載入統計失敗:', error);
             }
         }
+
+        function showNewRecordForm() {
+            if (!currentPatientId || !currentPatientIdNumber) {
+                alert('請先搜尋個案');
+                return;
+            }
+
+            // 填入隱藏欄位
+            document.getElementById('hiddenUserId').value = currentPatientId;
+            document.getElementById('hiddenIDNumber').value = currentPatientIdNumber;
+
+            // 顯示表單
+            document.getElementById('recordForm').style.display = 'block';
+
+            // 平滑捲動到表單
+            document.getElementById('recordForm').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        function cancelForm() {
+            document.getElementById('recordForm').style.display = 'none';
+            document.querySelector('.search-section').scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+
+        function toggleNested(checkboxId, nestedId) {
+            const checkbox = document.getElementById(checkboxId);
+            const nested = document.getElementById(nestedId);
+
+            if (checkbox && nested) {
+                if (checkbox.checked) {
+                    nested.classList.add('show');
+                } else {
+                    nested.classList.remove('show');
+                }
+            }
+        }
+
         // Enter 鍵搜尋
         document.getElementById('searchIdNumber')?.addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 searchPatient();
             }
         });

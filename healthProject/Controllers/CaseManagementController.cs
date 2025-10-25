@@ -178,10 +178,11 @@ namespace healthProject.Controllers
             }
         }
 
-      
+
         // ========================================
         // 🔍 查詢病患 
         // ========================================
+       
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> SearchPatient([FromBody] SearchRequest request)
@@ -195,35 +196,13 @@ namespace healthProject.Controllers
                     return Json(new { success = false, message = "查無此病患資料" });
                 }
 
-                // 🔍 新增角色判斷（只允許 Patient）
-                if (patient.Role != "Patient")
-                {
-                    return Json(new { success = false, message = "該帳號非病患身分，無法建立紀錄表" });
-                }
-
-                // ✨ 檢查是否已有紀錄
-                var existingRecord = await GetLatestRecordByIdNumberAsync(request.idNumber);
-
-                if (existingRecord != null)
-                {
-                    // 已有紀錄,返回紀錄 ID 讓前端重導向到編輯頁面
-                    return Json(new
-                    {
-                        success = true,
-                        hasRecord = true,
-                        recordId = existingRecord.Id,
-                        message = $"此個案已有紀錄,將帶您前往編輯頁面"
-                    });
-                }
-
-                // ✅ 沒有紀錄,可以新增
+                // ⭐ 不再檢查是否已有紀錄，直接回傳病患資訊
                 return Json(new
                 {
                     success = true,
-                    hasRecord = false,
                     data = new
                     {
-                        userId = patient.Id,
+                        id = patient.Id,
                         name = patient.FullName,
                         idNumber = patient.IDNumber,
                         username = patient.Username
@@ -233,12 +212,16 @@ namespace healthProject.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "搜尋病患失敗");
-                return Json(new { success = false, message = "系統錯誤，請稍後再試" });
+                return Json(new { success = false, message = "系統錯誤" });
             }
         }
 
+        public class SearchRequest
+        {
+            public string idNumber { get; set; }
+        }
 
-        
+
 
 
         // ========================================
@@ -265,10 +248,7 @@ namespace healthProject.Controllers
 
         
 
-        public class SearchRequest
-        {
-            public string idNumber { get; set; }
-        }
+        
 
 
 
