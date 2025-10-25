@@ -1,6 +1,6 @@
 ﻿@{
     ViewData["Title"] = "代謝症候群疾病管理與追蹤系統";
-    Layout = null; // 不使用預設 Layout
+    Layout = null;
 }
 
 <!DOCTYPE html>
@@ -42,12 +42,12 @@
         }
 
         .page-frame {
-            max-width: 1100px; /* 大螢幕時限制寬度 */
-            margin: 2rem auto; /* 與視窗保留空白，看出圓角 */
-            border-radius: 24px; /* 四邊圓角 */
-            overflow: hidden; /* 讓內部不超出圓角 */
+            max-width: 1100px;
+            margin: 2rem auto;
+            border-radius: 24px;
+            overflow: hidden;
             box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            background: white; /* 主體背景 */
+            background: white;
         }
         
         .mobile-container {
@@ -55,7 +55,7 @@
             display: flex;
             flex-direction: column;
             padding: 1rem;
-            padding-bottom: 2rem; /* 增加底部空間 */
+            padding-bottom: 2rem;
         }
 
         .main-card {
@@ -168,18 +168,30 @@
 
         .feature-card {
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            padding: 1.25rem;
             border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .feature-button {
+            width: 100%;
+            background: transparent;
+            border: none;
+            padding: 1.25rem;
             display: flex;
             align-items: center;
             gap: 1rem;
+            cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        .feature-card:active {
+        .feature-button:hover {
+            background: rgba(6, 182, 212, 0.05);
+        }
+
+        .feature-button:active {
             transform: scale(0.98);
-            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
         }
 
         .feature-icon {
@@ -187,10 +199,16 @@
             min-width: 60px;
             text-align: center;
             flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card.active .feature-icon {
+            transform: scale(1.1);
         }
 
         .feature-content {
             flex: 1;
+            text-align: left;
         }
 
         .feature-title {
@@ -206,6 +224,56 @@
             line-height: 1.4;
         }
 
+        .expand-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+            color: var(--text-gray);
+        }
+
+        .feature-card.active .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .feature-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            background: white;
+        }
+
+        .feature-card.active .feature-details {
+            max-height: 300px;
+            padding: 1rem 1.25rem 1.25rem 1.25rem;
+            border-top: 2px dashed #e2e8f0;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .detail-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        .detail-text {
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
         .footer-info {
             text-align: center;
             padding: 1.25rem 1rem;
@@ -215,7 +283,6 @@
             background: #fafafa;
         }
 
-        /* 平板 */
         @@media (min-width: 768px) {
             .mobile-container {
                 padding: 2rem;
@@ -249,7 +316,7 @@
                 gap: 1.25rem;
             }
 
-            .feature-card {
+            .feature-button {
                 padding: 1.5rem;
             }
 
@@ -259,7 +326,6 @@
             }
         }
 
-        /* 桌機 */
         @@media (min-width: 1024px) {
             .main-card {
                 max-width: 900px;
@@ -271,7 +337,7 @@
                 gap: 1.5rem;
             }
 
-            .feature-card {
+            .feature-button {
                 flex-direction: column;
                 text-align: center;
                 padding: 2rem 1.5rem;
@@ -281,14 +347,26 @@
                 font-size: 3rem;
                 margin-bottom: 0.5rem;
             }
+
+            .feature-content {
+                text-align: center;
+            }
+
+            .expand-icon {
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+            }
+
+            .feature-card {
+                position: relative;
+            }
+
+            .feature-details {
+                text-align: left;
+            }
         }
 
-        /* 避免內容溢出 */
-        .main-card {
-            overflow: visible;
-        }
-
-        /* 確保在小螢幕上也能完整顯示 */
         @@media (max-height: 700px) {
             .mobile-container {
                 min-height: auto;
@@ -320,7 +398,6 @@
 
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <!-- 已登入使用者 - 直接導向 Dashboard -->
                 <script>
                     window.location.href = '@Url.Action("Dashboard", "Home")';
                 </script>
@@ -328,50 +405,115 @@
             else
             {
                 <div class="page-frame">
-                <div class="content-section">
-                    <div class="welcome-box">
-                        <h2 class="welcome-title">歡迎使用</h2>
-                        <p class="welcome-desc">請先登入以使用完整功能</p>
-                        <a href="@Url.Action("Login", "Account")" class="login-btn">
-                            <span>🔐</span>
-                            <span>登入系統</span>
-                        </a>
+                    <div class="content-section">
+                        <div class="welcome-box">
+                            <h2 class="welcome-title">歡迎使用</h2>
+                            <p class="welcome-desc">請先登入以使用完整功能</p>
+                            <a href="@Url.Action("Login", "Account")" class="login-btn">
+                                <span>🔐</span>
+                                <span>登入系統</span>
+                            </a>
+                        </div>
+
+                        <div class="features-section">
+                            <!-- 疾病個管系統 -->
+                            <div class="feature-card" id="feature1">
+                                <button class="feature-button" onclick="toggleFeature('feature1')">
+                                    <div class="feature-icon">📊</div>
+                                    <div class="feature-content">
+                                        <h3 class="feature-title">疾病個管系統</h3>
+                                        <p class="feature-description">追蹤您的健康狀況與治療進展</p>
+                                    </div>
+                                    <div class="expand-icon">▼</div>
+                                </button>
+                                <div class="feature-details">
+                                    <div class="detail-item">
+                                        <div class="detail-icon">👤</div>
+                                        <div class="detail-text">查看您的疾病管理紀錄表</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-icon">👨‍⚕️</div>
+                                        <div class="detail-text">醫師追蹤病患疾病紀錄</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 健康資訊上傳 -->
+                            <div class="feature-card" id="feature2">
+                                <button class="feature-button" onclick="toggleFeature('feature2')">
+                                    <div class="feature-icon">📝</div>
+                                    <div class="feature-content">
+                                        <h3 class="feature-title">健康資訊上傳</h3>
+                                        <p class="feature-description">記錄血壓、血糖、體重等指標</p>
+                                    </div>
+                                    <div class="expand-icon">▼</div>
+                                </button>
+                                <div class="feature-details">
+                                    <div class="detail-item">
+                                        <div class="detail-icon">📤</div>
+                                        <div class="detail-text">上傳您每日的健康資訊</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-icon">👨‍⚕️</div>
+                                        <div class="detail-text">醫師查看病患每日健康資訊</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 數據分析追蹤 -->
+                            <div class="feature-card" id="feature3">
+                                <button class="feature-button" onclick="toggleFeature('feature3')">
+                                    <div class="feature-icon">📈</div>
+                                    <div class="feature-content">
+                                        <h3 class="feature-title">數據分析追蹤</h3>
+                                        <p class="feature-description">查看健康趨勢與個人化建議</p>
+                                    </div>
+                                    <div class="expand-icon">▼</div>
+                                </button>
+                                <div class="feature-details">
+                                    <div class="detail-item">
+                                        <div class="detail-icon">📊</div>
+                                        <div class="detail-text">查看您每日、每週與每月的健康趨勢與個人化建議</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-icon">👨‍⚕️</div>
+                                        <div class="detail-text">醫師查看病患健康趨勢，追蹤病患狀態</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="features-section">
-                        <div class="feature-card">
-                            <div class="feature-icon">📊</div>
-                            <div class="feature-content">
-                                <h3 class="feature-title">疾病個管系統</h3>
-                                <p class="feature-description">追蹤您的健康狀況與治療進展</p>
-                            </div>
-                        </div>
-
-                        <div class="feature-card">
-                            <div class="feature-icon">📝</div>
-                            <div class="feature-content">
-                                <h3 class="feature-title">健康資訊上傳</h3>
-                                <p class="feature-description">記錄血壓、血糖、體重等指標</p>
-                            </div>
-                        </div>
-
-                        <div class="feature-card">
-                            <div class="feature-icon">📈</div>
-                            <div class="feature-content">
-                                <h3 class="feature-title">數據分析追蹤</h3>
-                                <p class="feature-description">查看健康趨勢與個人化建議</p>
-                            </div>
-                        </div>
+                    <div class="footer-info">
+                        © 2025 代謝症候群管理系統
                     </div>
                 </div>
-
-                <div class="footer-info">
-                    © 2025 代謝症候群管理系統
-                </div>
-            </div>
             }
         </div>
     </div>
- 
+
+    <script>
+        function toggleFeature(featureId) {
+            const feature = document.getElementById(featureId);
+            const allFeatures = document.querySelectorAll('.feature-card');
+            
+            // 如果點擊的是已經展開的卡片，就收起來
+            if (feature.classList.contains('active')) {
+                feature.classList.remove('active');
+            } else {
+                // 先關閉所有其他卡片
+                allFeatures.forEach(f => f.classList.remove('active'));
+                // 展開點擊的卡片
+                feature.classList.add('active');
+            }
+        }
+
+        // 點擊卡片外部時關閉所有展開的卡片
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.feature-card')) {
+                document.querySelectorAll('.feature-card').forEach(f => f.classList.remove('active'));
+            }
+        });
+    </script>
 </body>
 </html>
