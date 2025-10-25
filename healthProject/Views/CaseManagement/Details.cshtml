@@ -1,5 +1,768 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model CaseManagementViewModel
 @{
+    ViewData["Title"] = "個案紀錄詳細資料";
+    Layout = null;
 }
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFE0B2 100%);
+            min-height: 100vh;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header-icon {
+            background: white;
+            color: #FF9800;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .detail-section {
+            background: linear-gradient(135deg, #FFECB3 0%, #FFE082 100%);
+            border: 2px solid #FFB74D;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: -1.5rem -1.5rem 1rem -1.5rem;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .detail-item {
+            background: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #FFE0B2;
+        }
+
+        .detail-label {
+            color: #E65100;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-value {
+            color: #424242;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .checkbox-display {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            background: #E8F5E9;
+            border: 1px solid #66BB6A;
+            border-radius: 5px;
+            color: #2E7D32;
+            font-weight: 600;
+            margin: 0.25rem;
+        }
+
+        .checkbox-display.unchecked {
+            background: #FFEBEE;
+            border-color: #EF5350;
+            color: #C62828;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+
+        @@media (max-width: 768px) {
+            .detail-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-icon">📄</div>
+            <h1 class="header-title">個案紀錄詳細資料</h1>
+        </div>
+
+        <div class="content">
+            <!-- 基本資料 -->
+            <div class="detail-section">
+                <div class="section-title">基本資料與生理量測</div>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <div class="detail-label">身分證字號</div>
+                        <div class="detail-value">@Model.IDNumber</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">姓名</div>
+                        <div class="detail-value">@Model.Name</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">性別</div>
+                        <div class="detail-value">@Model.Gender</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">出生日期</div>
+                        <div class="detail-value">@Model.BirthDate.ToString("yyyy/MM/dd")</div>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <div class="detail-label">身高 (公分)</div>
+                        <div class="detail-value">@Model.Height</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">體重 (公斤)</div>
+                        <div class="detail-value">@Model.Weight</div>
+                    </div>
+                    @if (Model.BMI && Model.BMI_Value.HasValue)
+                    {
+                        <div class="detail-item">
+                            <div class="detail-label">BMI 值</div>
+                            <div class="detail-value">@Model.BMI_Value.Value.ToString("F1")</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- 日期資訊 -->
+            <div class="detail-section">
+                <div class="section-title">評估與回診日期</div>
+                <div class="detail-row">
+                    @if (Model.AssessmentDate.HasValue)
+                    {
+                        <div class="detail-item">
+                            <div class="detail-label">評估日期</div>
+                            <div class="detail-value">@Model.AssessmentDate.Value.ToString("yyyy/MM/dd")</div>
+                        </div>
+                    }
+                    @if (Model.FollowUpDate.HasValue)
+                    {
+                        <div class="detail-item">
+                            <div class="detail-label">建議回診日期</div>
+                            <div class="detail-value">@Model.FollowUpDate.Value.ToString("yyyy/MM/dd")</div>
+                        </div>
+                    }
+                    @if (Model.AnnualAssessment)
+                    {
+                        <div class="detail-item">
+                            <div class="detail-label">年度評估日期</div>
+                            <div class="detail-value">
+                                @if (Model.AnnualAssessment_Date.HasValue)
+                                {
+                                    @Model.AnnualAssessment_Date.Value.ToString("yyyy/MM/dd")
+                                }
+                                else
+                                {
+                                    <span>已勾選</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- 血壓 -->
+            <div class="detail-section">
+                <div class="section-title">血壓</div>
+                <div class="detail-row">
+                    @if (Model.SystolicBP && Model.SystolicBP_Value.HasValue)
+                    {
+                        <div class="detail-item">
+                            <div class="detail-label">收縮壓 (mmHg)</div>
+                            <div class="detail-value">@Model.SystolicBP_Value</div>
+                        </div>
+                    }
+                    @if (Model.DiastolicBP && Model.DiastolicBP_Value.HasValue)
+                    {
+                        <div class="detail-item">
+                            <div class="detail-label">舒張壓 (mmHg)</div>
+                            <div class="detail-value">@Model.DiastolicBP_Value</div>
+                        </div>
+                    }
+                    @if (Model.BloodPressureGuidance722)
+                    {
+                        <div class="detail-item">
+                            <div class="detail-label">血壓指導 (722)</div>
+                            <div class="detail-value">✅ 已提供</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            
+        
+    
+<!-- 腰圍 / 血糖 / 脂質 -->
+<div class="detail-section">
+    <div class="section-title">腰圍 / 血糖 / 脂質</div>
+    <div class="detail-row">
+        @if (Model.CurrentWaist && Model.CurrentWaist_Value.HasValue)
+        {
+            <div class="detail-item">
+                <div class="detail-label">腰圍 (cm)</div>
+                <div class="detail-value">@Model.CurrentWaist_Value</div>
+            </div>
+        }
+        @if (Model.FastingGlucose && Model.FastingGlucose_Value.HasValue)
+        {
+            <div class="detail-item">
+                <div class="detail-label">飯前血糖值 (mg/dL)</div>
+                <div class="detail-value">@Model.FastingGlucose_Value</div>
+            </div>
+        }
+        @if (Model.HDL && Model.HDL_Value.HasValue)
+        {
+            <div class="detail-item">
+                <div class="detail-label">高密度脂蛋白膽固醇值 (mg/dL)</div>
+                <div class="detail-value">@Model.HDL_Value</div>
+            </div>
+        }
+        @if (Model.Triglycerides && Model.Triglycerides_Value.HasValue)
+        {
+            <div class="detail-item">
+                <div class="detail-label">三酸甘油脂值 (mg/dL)</div>
+                <div class="detail-value">@Model.Triglycerides_Value</div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- 生活型態 -->
+<div class="detail-section">
+    <div class="section-title">生活型態</div>
+    <div class="detail-row">
+        <div class="detail-item">
+            <div class="detail-label">運動狀況</div>
+            <div class="detail-value">
+                @if (Model.ExerciseNone)
+                {
+                    <span class="checkbox-display">無</span>
+                }
+                @if (Model.ExerciseUsually)
+                {
+                    <span class="checkbox-display">偶爾</span>
+                }
+                @if (Model.ExerciseAlways)
+                {
+                    <span class="checkbox-display">經常(每週累計達150分鐘)</span>
+                }
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">抽菸</div>
+            <div class="detail-value">
+                @if (Model.SmokingNone)
+                {
+                    <span class="checkbox-display">無</span>
+                }
+                @if (Model.SmokingUsually)
+                {
+                    <span class="checkbox-display">偶爾</span>
+                }
+                @if (Model.SmokingUnder10)
+                {
+                    <span class="checkbox-display">平均一天約吸10支菸以下</span>
+                }
+                @if (Model.SmokingOver10)
+                {
+                    <span class="checkbox-display">平均一天約吸10支菸(含)以上</span>
+                }
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">嚼檳榔</div>
+            <div class="detail-value">
+                @if (Model.BetelNutNone)
+                {
+                    <span class="checkbox-display">無</span>
+                }
+                @if (Model.BetelNutUsually)
+                {
+                    <span class="checkbox-display">偶爾</span>
+                }
+                @if (Model.BetelNutAlways)
+                {
+                    <span class="checkbox-display">經常</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 疾病風險評估 -->
+<div class="detail-section">
+    <div class="section-title">得到慢性病的風險</div>
+    <div class="detail-row">
+        <div class="detail-item">
+            <div class="detail-label">冠心病</div>
+            <div class="detail-value">
+                @if (Model.CoronaryHigh)
+                {
+                    <span class="checkbox-display">高</span>
+                }
+                @if (Model.CoronaryMedium)
+                {
+                    <span class="checkbox-display">中</span>
+                }
+                @if (Model.CoronaryLow)
+                {
+                    <span class="checkbox-display">低</span>
+                }
+                @if (Model.CoronaryNotApplicable)
+                {
+                    <span class="checkbox-display">不適用</span>
+                }
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">糖尿病</div>
+            <div class="detail-value">
+                @if (Model.DiabetesHigh)
+                {
+                    <span class="checkbox-display">高</span>
+                }
+                @if (Model.DiabetesMedium)
+                {
+                    <span class="checkbox-display">中</span>
+                }
+                @if (Model.DiabetesLow)
+                {
+                    <span class="checkbox-display">低</span>
+                }
+                @if (Model.DiabetesNotApplicabe)
+                {
+                    <span class="checkbox-display">不適用</span>
+                }
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">高血壓</div>
+            <div class="detail-value">
+                @if (Model.HypertensionHigh)
+                {
+                    <span class="checkbox-display">高</span>
+                }
+                @if (Model.HypertensionMedium)
+                {
+                    <span class="checkbox-display">中</span>
+                }
+                @if (Model.HypertensionLow)
+                {
+                    <span class="checkbox-display">低</span>
+                }
+                @if (Model.HypertensionNotApplicable)
+                {
+                    <span class="checkbox-display">不適用</span>
+                }
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">腦中風</div>
+            <div class="detail-value">
+                @if (Model.StrokeHigh)
+                {
+                    <span class="checkbox-display">高</span>
+                }
+                @if (Model.StrokeMedium)
+                {
+                    <span class="checkbox-display">中</span>
+                }
+                @if (Model.StrokeLow)
+                {
+                    <span class="checkbox-display">低</span>
+                }
+                @if (Model.StrokeNotApplicable)
+                {
+                    <span class="checkbox-display">不適用</span>
+                }
+            </div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">心血管不良事件</div>
+            <div class="detail-value">
+                @if (Model.CardiovascularHigh)
+                {
+                    <span class="checkbox-display">高</span>
+                }
+                @if (Model.CardiovascularMedium)
+                {
+                    <span class="checkbox-display">中</span>
+                }
+                @if (Model.CardiovascularLow)
+                {
+                    <span class="checkbox-display">低</span>
+                }
+                @if (Model.CardiovascularNotApplicable)
+                {
+                    <span class="checkbox-display">不適用</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 戒菸 / 戒檳服務 -->
+<div class="detail-section">
+    <div class="section-title">戒菸 / 戒檳服務</div>
+    <div class="detail-row">
+        @if (Model.SmokingService)
+        {
+            <div class="detail-item">
+                <div class="detail-label">戒菸服務</div>
+                <div class="detail-value">
+                    @if (Model.SmokingServiceType1)
+                    {
+                        <span class="checkbox-display">戒菸指導</span>
+                    }
+                    @if (Model.SmokingServiceType2)
+                    {
+                        <span class="checkbox-display">戒菸服務</span>
+                        @if (Model.SmokingServiceType2_Provide)
+                        {
+                            <span class="checkbox-display">提供戒菸服務</span>
+                        }
+                        @if (Model.SmokingServiceType2_Referral)
+                        {
+                            <span class="checkbox-display">同意轉介戒菸服務</span>
+                        }
+                    }
+                </div>
+            </div>
+        }
+        @if (Model.BetelNutService)
+        {
+            <div class="detail-item">
+                <div class="detail-label">戒檳服務</div>
+                <div class="detail-value">
+                    @if (Model.BetelQuitGoal)
+                    {
+                        <span class="checkbox-display">已設定戒檳目標</span>
+                    }
+                    @if (Model.BetelQuitYear.HasValue && Model.BetelQuitMonth.HasValue && Model.BetelQuitDay.HasValue)
+                    {
+                        <div>預計戒檳日期: @Model.BetelQuitYear/@Model.BetelQuitMonth/@Model.BetelQuitDay</div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- 口腔檢查 -->
+@if (Model.OralExam)
+{
+    <div class="detail-section">
+        <div class="section-title">口腔檢查</div>
+        <div class="detail-row">
+            <div class="detail-item">
+                <div class="detail-label">安排口腔黏膜檢查</div>
+                <div class="detail-value">
+                    @if (Model.OralExamYear.HasValue && Model.OralExamMonth.HasValue)
+                    {
+                        <span>@Model.OralExamYear 年 @Model.OralExamMonth 月</span>
+                    }
+                    else
+                    {
+                        <span>✅ 已安排</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- 飲食管理 -->
+@if (Model.DietManagement)
+{
+    <div class="detail-section">
+        <div class="section-title">飲食管理</div>
+        <div class="detail-row">
+            <div class="detail-item">
+                <div class="detail-label">每日建議攝取熱量 (大卡/天)</div>
+                <div class="detail-value">
+                    @if (Model.DailyCalories1200)
+                    {
+                        <span class="checkbox-display">1200 大卡</span>
+                    }
+                    @if (Model.DailyCalories1500)
+                    {
+                        <span class="checkbox-display">1500 大卡</span>
+                    }
+                    @if (Model.DailyCalories1800)
+                    {
+                        <span class="checkbox-display">1800 大卡</span>
+                    }
+                    @if (Model.DailyCalories2000)
+                    {
+                        <span class="checkbox-display">2000 大卡</span>
+                    }
+                    @if (Model.DailyCaloriesOther && !string.IsNullOrEmpty(Model.DailyCaloriesOtherValue))
+                    {
+                        <span class="checkbox-display">其他: @Model.DailyCaloriesOtherValue</span>
+                    }
+                </div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">盡量減少</div>
+                <div class="detail-value">
+                    @if (Model.ReduceFriedFood)
+                    {
+                        <span class="checkbox-display">油炸物</span>
+                    }
+                    @if (Model.ReduceSweetFood)
+                    {
+                        <span class="checkbox-display">甜食</span>
+                    }
+                    @if (Model.ReduceSalt)
+                    {
+                        <span class="checkbox-display">鹽</span>
+                    }
+                    @if (Model.ReduceSugaryDrinks)
+                    {
+                        <span class="checkbox-display">含糖飲料</span>
+                    }
+                    @if (Model.ReduceOther && !string.IsNullOrEmpty(Model.ReduceOtherValue))
+                    {
+                        <span class="checkbox-display">其他: @Model.ReduceOtherValue</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- 運動建議與資源 -->
+@if (Model.ExerciseRecommendation || Model.ExerciseGuidance || Model.SocialExerciseResources)
+{
+    <div class="detail-section">
+        <div class="section-title">運動建議與資源</div>
+        <div class="detail-row">
+            @if (Model.ExerciseRecommendation)
+            {
+                <div class="detail-item">
+                    <div class="detail-label">運動建議</div>
+                    <div class="detail-value">✅ 已提供</div>
+                </div>
+            }
+            @if (Model.ExerciseGuidance)
+            {
+                <div class="detail-item">
+                    <div class="detail-label">運動指導</div>
+                    <div class="detail-value">每週累積150分鐘中等費力運動</div>
+                </div>
+            }
+            @if (Model.SocialExerciseResources && !string.IsNullOrEmpty(Model.SocialExerciseResources_Text))
+            {
+                <div class="detail-item">
+                    <div class="detail-label">社區運動資源</div>
+                    <div class="detail-value">@Model.SocialExerciseResources_Text</div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- 目標設定 -->
+@if (Model.Achievement)
+{
+    <div class="detail-section">
+        <div class="section-title">目標設定</div>
+        <div class="detail-row">
+            @if (Model.WaistTarget_Value.HasValue)
+            {
+                <div class="detail-item">
+                    <div class="detail-label">目標腰圍 (cm)</div>
+                    <div class="detail-value">@Model.WaistTarget_Value</div>
+                </div>
+            }
+            @if (Model.WeightTarget_Value.HasValue)
+            {
+                <div class="detail-item">
+                    <div class="detail-label">目標體重 (kg)</div>
+                    <div class="detail-value">@Model.WeightTarget_Value</div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- 其他叮嚀 / 目標值 -->
+@if (Model.OtherReminders)
+{
+    <div class="detail-section">
+        <div class="section-title">其他叮嚀 / 目標值</div>
+        <div class="detail-row">
+            @if (Model.FastingGlucoseTarget && Model.FastingGlucoseTarget_Value.HasValue)
+            {
+                <div class="detail-item">
+                    <div class="detail-label">飯前血糖個人目標值 (mg/dL)</div>
+                    <div class="detail-value">@Model.FastingGlucoseTarget_Value</div>
+                </div>
+            }
+            @if (Model.HbA1cTarget && Model.HbA1cTarget_Value.HasValue)
+            {
+                <div class="detail-item">
+                    <div class="detail-label">醣化血紅素個人目標值 (%)</div>
+                    <div class="detail-value">@Model.HbA1cTarget_Value</div>
+                </div>
+            }
+            @if (Model.TriglyceridesTarget && Model.TriglyceridesTarget_Value.HasValue)
+            {
+                <div class="detail-item">
+                    <div class="detail-label">三酸甘油脂個人目標值 (mg/dL)</div>
+                    <div class="detail-value">@Model.TriglyceridesTarget_Value</div>
+                </div>
+            }
+            @if (Model.HDL_CholesterolTarget && Model.HDL_CholesterolTarget_Value.HasValue)
+            {
+                <div class="detail-item">
+                    <div class="detail-label">高密度脂蛋白膽固醇個人目標值 (mg/dL)</div>
+                    <div class="detail-value">@Model.HDL_CholesterolTarget_Value</div>
+                </div>
+            }
+            @if (Model.LDL_CholesterolTarget && Model.LDL_CholesterolTarget_Value.HasValue)
+            {
+                <div class="detail-item">
+                    <div class="detail-label">低密度脂蛋白膽固醇個人目標值 (mg/dL)</div>
+                    <div class="detail-value">@Model.LDL_CholesterolTarget_Value</div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- 備註 -->
+@if (!string.IsNullOrEmpty(Model.Notes))
+{
+    <div class="detail-section">
+        <div class="section-title">備註</div>
+        <div class="detail-item">
+            <div class="detail-value">@Model.Notes</div>
+        </div>
+    </div>
+}
+
+<!-- 按鈕 -->
+<div class="button-group">
+    
+                @if (User.IsInRole("Admin"))
+                {
+        <a href="@(Url.Action("ViewAllRecords", "CaseManagement"))" class="btn btn-secondary">
+            ← 返回列表
+        </a>
+                }
+                else
+                {
+        <a href="@(Url.Action("PatientRecords","CaseManagement"))" class="btn btn-secondary">
+            ← 返回列表
+        </a>
+                }
+
+
+                @if (User.IsInRole("Admin"))
+    {
+        <a href="@Url.Action("Edit", "CaseManagement", new { id = Model.Id })" class="btn btn-primary">
+            ✏️ 編輯紀錄
+        </a>
+    }
+</div>
+        </div>
+    </div>
+</body>
+</html>

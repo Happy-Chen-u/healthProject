@@ -10,9 +10,9 @@ namespace healthProject.Models
         [Key]
         public int Id { get; set; }
 
-        [ForeignKey("User")]
+        //[ForeignKey("User")]
         public int UserId { get; set; }
-        public virtual UserDBModel User { get; set; }
+       // public virtual UserDBModel User { get; set; }
 
         [ForeignKey("User")]
         [Required, StringLength(12)]
@@ -165,6 +165,8 @@ namespace healthProject.Models
         public decimal? HDL_CholesterolTarget_Value { get; set; }
         public bool LDL_CholesterolTarget { get; set; }
         public decimal? LDL_CholesterolTarget_Value { get; set; }
+
+        public string? Notes { get; set; }
     }
 }
 

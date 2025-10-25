@@ -165,5 +165,7 @@ namespace healthProject.Models
         public decimal? HDL_CholesterolTarget_Value { get; set; }
         public bool LDL_CholesterolTarget { get; set; }
         public decimal? LDL_CholesterolTarget_Value { get; set; }
+
+        public string Notes { get; set; }
     }
 }

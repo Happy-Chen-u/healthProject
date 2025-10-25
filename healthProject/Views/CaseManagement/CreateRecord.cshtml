@@ -861,7 +861,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">其他備註</label>
-                            <textarea asp-for="SocialExerciseResources_Text" class="form-control" rows="3" placeholder="其他備註或提醒"></textarea>
+                            <textarea asp-for="Notes" class="form-control" rows="3" placeholder="其他備註或提醒"></textarea>
                         </div>
                     </div>
                 </div>
@@ -894,17 +894,28 @@
                     body: JSON.stringify({ idNumber: idNumber })
                 });
                 const result = await response.json();
+
                 if (result.success) {
-                    // 顯示個案資訊
-                    document.getElementById('patientInfoText').innerHTML =
-                        `✅ 找到個案: ${result.data.name} (${result.data.idNumber})`;
-                    document.getElementById('patientInfo').classList.add('show');
-                    // 填入隱藏欄位
-                    document.getElementById('hiddenUserId').value = result.data.userId;
-                    document.getElementById('hiddenIDNumber').value = result.data.idNumber;
-                    document.getElementById('Name').value = result.data.name;
-                    // 顯示表單
-                    document.getElementById('recordForm').style.display = 'block';
+                    // ✨ 檢查是否已有紀錄
+                    if (result.hasRecord) {
+                        // 已有紀錄,詢問是否要編輯
+                        if (confirm(result.message)) {
+                            window.location.href = '@Url.Action("Edit", "CaseManagement")/' + result.recordId;
+                        }
+                    } else {
+                        // 沒有紀錄,顯示新增表單
+                        document.getElementById('patientInfoText').innerHTML =
+                            `✅ 找到個案: ${result.data.name} (${result.data.idNumber})`;
+                        document.getElementById('patientInfo').classList.add('show');
+
+                        // 填入隱藏欄位
+                        document.getElementById('hiddenUserId').value = result.data.userId;
+                        document.getElementById('hiddenIDNumber').value = result.data.idNumber;
+                        document.getElementById('Name').value = result.data.name;
+
+                        // 顯示表單
+                        document.getElementById('recordForm').style.display = 'block';
+                    }
                 } else {
                     alert(result.message || '查無此個案，請確認身分證字號是否正確');
                     document.getElementById('patientInfo').classList.remove('show');
