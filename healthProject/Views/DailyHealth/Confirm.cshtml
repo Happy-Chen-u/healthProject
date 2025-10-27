@@ -1,0 +1,272 @@
+﻿@model HealthRecordViewModel
+@{
+    ViewData["Title"] = "確認資料";
+    Layout = null;
+}
+
+<style>
+    .confirm-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .confirm-header {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+
+    .confirm-header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+    }
+
+    .confirm-header p {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+    }
+
+    .data-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #8b5cf6;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 3px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .data-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .data-item {
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 10px;
+        border-left: 4px solid #8b5cf6;
+    }
+
+    .data-label {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 0.5rem;
+    }
+
+    .data-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .data-value.empty {
+        color: #cbd5e1;
+        font-style: italic;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .btn {
+        padding: 1rem 2.5rem;
+        border: none;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-confirm {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-confirm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-edit {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    .btn-edit:hover {
+        background: #cbd5e1;
+        text-decoration: none;
+        color: #475569;
+    }
+
+    @@media (max-width: 768px) {
+        .button-group {
+            flex-direction: column-reverse;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="confirm-container">
+    <div class="confirm-header">
+        <h1>✓ 請確認您的資料</h1>
+        <p>@Model.RecordDate.ToString("yyyy年MM月dd日")</p>
+    </div>
+
+    <!-- 運動資訊 -->
+    <div class="data-section">
+        <div class="section-title">
+            <span>🏃</span>
+            <span>運動資訊</span>
+        </div>
+        <div class="data-grid">
+            <div class="data-item">
+                <div class="data-label">運動種類</div>
+                <div class="data-value @(string.IsNullOrEmpty(Model.ExerciseType) ? "empty" : "")">
+                    @(Model.ExerciseType ?? "未填寫")
+                </div>
+            </div>
+            <div class="data-item">
+                <div class="data-label">運動時間</div>
+                <div class="data-value @(!Model.ExerciseDuration.HasValue ? "empty" : "")">
+                    @(Model.ExerciseDuration?.ToString("0.0") ?? "未填寫") @(Model.ExerciseDuration.HasValue ? "分鐘" : "")
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 飲食資訊 -->
+    <div class="data-section">
+        <div class="section-title">
+            <span>🍽️</span>
+            <span>飲食資訊</span>
+        </div>
+        <div class="data-grid">
+            <div class="data-item">
+                <div class="data-label">水分攝取</div>
+                <div class="data-value @(!Model.WaterIntake.HasValue ? "empty" : "")">
+                    @(Model.WaterIntake?.ToString("0") ?? "未填寫") @(Model.WaterIntake.HasValue ? "ml" : "")
+                </div>
+            </div>
+            <div class="data-item">
+                <div class="data-label">飲料</div>
+                <div class="data-value @(string.IsNullOrEmpty(Model.Beverage) ? "empty" : "")">
+                    @(Model.Beverage ?? "未填寫")
+                </div>
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(Model.Meals))
+        {
+            <div class="data-item" style="margin-top: 1.5rem;">
+                <div class="data-label">三餐內容</div>
+                <div class="data-value" style="font-size: 1rem; white-space: pre-wrap;">
+                    @Model.Meals
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- 生活習慣 -->
+    <div class="data-section">
+        <div class="section-title">
+            <span>🚬</span>
+            <span>生活習慣</span>
+        </div>
+        <div class="data-grid">
+            <div class="data-item">
+                <div class="data-label">抽菸支數</div>
+                <div class="data-value @(!Model.Cigarettes.HasValue ? "empty" : "")">
+                    @(Model.Cigarettes?.ToString("0") ?? "未填寫") @(Model.Cigarettes.HasValue ? "支" : "")
+                </div>
+            </div>
+            <div class="data-item">
+                <div class="data-label">嚼檳榔次數</div>
+                <div class="data-value @(!Model.BetelNut.HasValue ? "empty" : "")">
+                    @(Model.BetelNut?.ToString("0") ?? "未填寫") @(Model.BetelNut.HasValue ? "次" : "")
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 生理數值 -->
+    <div class="data-section">
+        <div class="section-title">
+            <span>📊</span>
+            <span>生理數值</span>
+        </div>
+        <div class="data-grid">
+            <div class="data-item">
+                <div class="data-label">血糖</div>
+                <div class="data-value @(!Model.BloodSugar.HasValue ? "empty" : "")">
+                    @(Model.BloodSugar?.ToString("0.0") ?? "未填寫") @(Model.BloodSugar.HasValue ? "mg/dL" : "")
+                </div>
+            </div>
+            <div class="data-item">
+                <div class="data-label">血壓</div>
+                <div class="data-value @(!Model.SystolicBP.HasValue && !Model.DiastolicBP.HasValue ? "empty" : "")">
+                    @if (Model.SystolicBP.HasValue || Model.DiastolicBP.HasValue)
+                    {
+                        @($"{Model.SystolicBP?.ToString("0") ?? "?"}/{Model.DiastolicBP?.ToString("0") ?? "?"} mmHg")
+                    }
+                    else
+                    {
+                        @("未填寫")
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="ConfirmSubmit" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="UserId" />
+        <input type="hidden" asp-for="RecordDate" />
+        <input type="hidden" asp-for="ExerciseType" />
+        <input type="hidden" asp-for="ExerciseDuration" />
+        <input type="hidden" asp-for="WaterIntake" />
+        <input type="hidden" asp-for="Beverage" />
+        <input type="hidden" asp-for="Meals" />
+        <input type="hidden" asp-for="Cigarettes" />
+        <input type="hidden" asp-for="BetelNut" />
+        <input type="hidden" asp-for="BloodSugar" />
+        <input type="hidden" asp-for="SystolicBP" />
+        <input type="hidden" asp-for="DiastolicBP" />
+
+        <div class="button-group">
+            <a href="@Url.Action("Create", "DailyHealth")" class="btn btn-edit">
+                ✏️ 有誤，需要修改
+            </a>
+            <button type="submit" class="btn btn-confirm">
+                ✓ 確認上傳
+            </button>
+        </div>
+    </form>
+</div>

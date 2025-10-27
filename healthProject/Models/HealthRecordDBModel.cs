@@ -1,26 +1,63 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace healthProject.Models
 {
-    // 個案每日上傳健康資訊(內容待改)
-    public class HealthRecordDBModel : Controller
+    
+    public class HealthRecordDBModel
     {
-        public IActionResult Index()
-        {
-            return View();
-        }
+        [Key]
+        public int Id { get; set; }
 
-        public int HealthRecordId { get; set; }
+        [Required]
         public int UserId { get; set; }
-        public DateTime RecordDate { get; set; }
 
-        // 可依需求擴充
-        public decimal BodyTemperature { get; set; }
-        public int SystolicBP { get; set; }     // 收縮壓
-        public int DiastolicBP { get; set; }    // 舒張壓
-        public decimal BloodSugar { get; set; } // 血糖
-        public string Remark { get; set; }
+        [Required]
+        public DateTime RecordDate { get; set; } = DateTime.Today;
 
-        public virtual UserDBModel User { get; set; }
+        
+        [StringLength(100)]
+        public string? ExerciseType { get; set; }
+
+        
+        [Range(0, 999.9)]
+        public decimal? ExerciseDuration { get; set; }
+
+        
+        [Range(0, 999999)]
+        public decimal? WaterIntake { get; set; }
+
+        
+        [StringLength(200)]
+        public string? Beverage { get; set; }
+
+        
+        [StringLength(500)]
+        public string? Meals { get; set; }
+
+        
+        [Range(0, 99999)]
+        public decimal? Cigarettes { get; set; }
+
+        
+        [Range(0, 99999)]
+        public decimal? BetelNut { get; set; }
+
+        
+        [Range(0, 999.9)]
+        public decimal? BloodSugar { get; set; }
+
+        
+        [Range(0, 999.99)]
+        public decimal? SystolicBP { get; set; }
+
+        
+        [Range(0, 999.99)]
+        public decimal? DiastolicBP { get; set; }
+
+        // 標準值常數
+        public const int WATER_STANDARD = 2000; // 2000ml
+        public const int EXERCISE_STANDARD = 150; // 30分鐘
     }
 }

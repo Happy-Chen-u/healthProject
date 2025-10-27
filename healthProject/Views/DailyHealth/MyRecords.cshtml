@@ -1,0 +1,366 @@
+﻿@model List<HealthRecordViewModel>
+@{
+    ViewData["Title"] = "我的健康紀錄";
+    Layout = null;
+}
+
+<style>
+    .records-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .page-header p {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+    }
+
+    .stats-bar {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #06b6d4;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    .records-grid {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .record-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .record-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .record-header {
+        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #06b6d4;
+    }
+
+    .record-date {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #0891b2;
+    }
+
+    .record-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-icon {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-edit {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .btn-edit:hover {
+        background: #fde68a;
+        text-decoration: none;
+        color: #92400e;
+    }
+
+    .record-body {
+        padding: 1.5rem;
+    }
+
+    .data-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .data-item {
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 8px;
+        border-left: 3px solid #06b6d4;
+    }
+
+    .data-label {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 0.5rem;
+    }
+
+    .data-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-text {
+        color: #64748b;
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        color: white;
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
+    }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+
+    @@media (max-width: 768px) {
+        .record-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .data-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="records-container">
+    <div class="page-header">
+        <h1>
+            <span>📚</span>
+            <span>我的健康紀錄</span>
+        </h1>
+        <p>查看與管理您的歷史健康資訊</p>
+    </div>
+
+    <!-- ✅ 加入返回按鈕 -->
+    <div style="margin-bottom: 1.5rem;">
+        <a href="@Url.Action("Index", "DailyHealth")" class="btn btn-secondary">
+            ← 返回選單
+        </a>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-number">@Model.Count</div>
+                <div class="stat-label">總紀錄數</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">@Model.OrderByDescending(r => r.RecordDate).First().RecordDate.ToString("MM/dd")</div>
+                <div class="stat-label">最近紀錄</div>
+            </div>
+        </div>
+
+        <div class="records-grid">
+            @foreach (var record in Model.OrderByDescending(r => r.RecordDate))
+            {
+                <div class="record-card">
+                    <div class="record-header">
+                        <div class="record-date">
+                            📅 @record.RecordDate.ToString("yyyy年MM月dd日")
+                        </div>
+                        <div class="record-actions">
+                            <a href="@Url.Action("Edit", "DailyHealth", new { id = record.Id })" class="btn-icon btn-edit">
+                                ✏️ 編輯
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="record-body">
+                        <div class="data-grid">
+                            @if (!string.IsNullOrEmpty(record.ExerciseType) || record.ExerciseDuration.HasValue)
+                            {
+                                <div class="data-item">
+                                    <div class="data-label">🏃 運動</div>
+                                    <div class="data-value">
+                                        @(record.ExerciseType ?? "運動") @(record.ExerciseDuration.HasValue ? $"{record.ExerciseDuration:0.0}分鐘" : "")
+                                    </div>
+                                </div>
+                            }
+
+                            @if (record.WaterIntake.HasValue)
+                            {
+                                <div class="data-item">
+                                    <div class="data-label">💧 水分攝取</div>
+                                    <div class="data-value">@record.WaterIntake.Value.ToString("0") ml</div>
+                                </div>
+                            }
+
+                            @if (record.Cigarettes.HasValue)
+                            {
+                                <div class="data-item">
+                                    <div class="data-label">🚬 抽菸</div>
+                                    <div class="data-value">@record.Cigarettes.Value.ToString("0") 支</div>
+                                </div>
+                            }
+
+                            @if (record.BloodSugar.HasValue)
+                            {
+                                <div class="data-item">
+                                    <div class="data-label">🩸 血糖</div>
+                                    <div class="data-value">@record.BloodSugar.Value.ToString("0.0") mg/dL</div>
+                                </div>
+                            }
+
+                            @if (record.SystolicBP.HasValue || record.DiastolicBP.HasValue)
+                            {
+                                <div class="data-item">
+                                    <div class="data-label">❤️ 血壓</div>
+                                    <div class="data-value">
+                                        @(record.SystolicBP?.ToString("0") ?? "?")/@(record.DiastolicBP?.ToString("0") ?? "?") mmHg
+                                    </div>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(record.Meals))
+                            {
+                                <div class="data-item" style="grid-column: 1 / -1;">
+                                    <div class="data-label">🍽️ 三餐</div>
+                                    <div class="data-value" style="font-size: 0.95rem; font-weight: 400; white-space: pre-wrap;">
+                                        @record.Meals
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">📝</div>
+            <div class="empty-text">目前還沒有任何健康紀錄</div>
+            <a href="@Url.Action("Create", "DailyHealth")" class="btn-primary">
+                ➕ 新增第一筆紀錄
+            </a>
+        </div>
+    }
+</div>
