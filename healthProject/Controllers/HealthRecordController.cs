@@ -168,14 +168,53 @@ namespace healthProject.Controllers
             try
             {
                 await UpdateRecordAsync(model);
-                TempData["SuccessMessage"] = "紀錄更新成功！";
-                return RedirectToAction("MyRecords");
+
+                // ✅ 新增:產生警示訊息
+                var feedback = GenerateFeedback(model);
+                TempData["Feedback"] = JsonSerializer.Serialize(feedback);
+
+                // ✅ 修改:導向到 Success 頁面而不是 MyRecords
+                return RedirectToAction("Success");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "更新紀錄失敗");
                 ModelState.AddModelError("", "更新失敗，請稍後再試");
                 return View("Create", model);
+            }
+        }
+
+        // ========================================
+        // ✅ 確認更新（新增的方法）
+        // ========================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmUpdate(HealthRecordViewModel model)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                if (model.UserId != userId)
+                {
+                    return Forbid();
+                }
+
+                await UpdateRecordAsync(model);
+
+                // 產生建議訊息
+                var feedback = GenerateFeedback(model);
+                TempData["Feedback"] = JsonSerializer.Serialize(feedback);
+
+                // 🔔 發送 LINE 通知
+                await SendLineNotification(userId, feedback);
+
+                return RedirectToAction("Success");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "更新紀錄失敗");
+                ModelState.AddModelError("", "更新失敗，請稍後再試");
+                return View("Confirm", model);
             }
         }
 
@@ -503,7 +542,111 @@ namespace healthProject.Controllers
             return feedback;
         }
 
-        public class SearchRequest
+        // ========================================
+        // 📱 發送 LINE 通知
+        // ========================================
+        private async Task SendLineNotification(int userId, FeedbackViewModel feedback)
+        {
+            try
+            {
+                // 取得使用者的 LINE User ID
+                var lineUserId = await GetUserLineIdAsync(userId);
+
+                if (string.IsNullOrEmpty(lineUserId))
+                {
+                    _logger.LogWarning($"使用者 {userId} 尚未綁定 LINE");
+                    return;
+                }
+
+                // 取得 LINE Channel Access Token
+                var channelAccessToken = _configuration["LineBot:ChannelAccessToken"];
+
+                if (string.IsNullOrEmpty(channelAccessToken))
+                {
+                    _logger.LogError("LINE Channel Access Token 未設定");
+                    return;
+                }
+
+                // 建立訊息內容
+                var messages = new List<string>();
+                messages.Add("📊 今日健康資訊已記錄");
+                messages.Add("═══════════════");
+
+                if (!string.IsNullOrEmpty(feedback.WaterMessage))
+                    messages.Add(feedback.WaterMessage);
+
+                if (!string.IsNullOrEmpty(feedback.ExerciseMessage))
+                    messages.Add(feedback.ExerciseMessage);
+
+                if (!string.IsNullOrEmpty(feedback.CigaretteMessage))
+                    messages.Add(feedback.CigaretteMessage);
+
+                if (!string.IsNullOrEmpty(feedback.BloodPressureMessage))
+                    messages.Add(feedback.BloodPressureMessage);
+
+                if (!string.IsNullOrEmpty(feedback.BloodSugarMessage))
+                    messages.Add(feedback.BloodSugarMessage);
+
+                var messageText = string.Join("\n\n", messages);
+
+                // 發送 LINE 訊息
+                using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {channelAccessToken}");
+
+                var payload = new
+                {
+                    to = lineUserId,
+                    messages = new[]
+                    {
+                        new
+                        {
+                            type = "text",
+                            text = messageText
+                        }
+                    }
+                };
+
+                var json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                var response = await httpClient.PostAsync("https://api.line.me/v2/bot/message/push", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation($"LINE 通知發送成功 - UserId: {userId}");
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"LINE 通知發送失敗 - Status: {response.StatusCode}, Error: {errorContent}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "發送 LINE 通知時發生錯誤");
+            }
+        }
+
+        private async Task<string> GetUserLineIdAsync(int userId)
+        {
+            var connStr = _configuration.GetConnectionString("DefaultConnection");
+            await using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+
+            var query = @"
+                SELECT ""LineUserId""
+                FROM ""Users""
+                WHERE ""Id"" = @UserId
+                LIMIT 1";
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@UserId", userId);
+
+            var result = await cmd.ExecuteScalarAsync();
+            return result?.ToString();
+        }
+
+    public class SearchRequest
         {
             public string idNumber { get; set; }
         }
