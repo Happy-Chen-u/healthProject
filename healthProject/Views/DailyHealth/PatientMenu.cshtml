@@ -3,184 +3,249 @@
     Layout = null;
 }
 
-<style>
-    .health-container {
-        max-width: 800px;
-        margin: 2rem auto;
-        padding: 0 1rem;
-    }
-
-    body {
-        background-color: #e5eef5; /* 將背景顏色改為 #e5eef5 */
-        font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-        min-height: 100vh;
-        margin: 0;
-        padding: 0;
-    }
-
-    .page-header {
-        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 15px;
-        text-align: center;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
-    }
-
-    .page-header h1 {
-        margin: 0;
-        font-size: 1.8rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-
-    .menu-cards {
-        display: grid;
-        gap: 1.5rem;
-    }
-
-    .menu-card {
-        background: white;
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-        text-decoration: none;
-        color: inherit;
-        display: block;
-    }
-
-    .menu-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-        text-decoration: none;
-    }
-
-    .card-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-    }
-
-    .card-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 0.5rem;
-    }
-
-    .card-description {
-        color: #64748b;
-        line-height: 1.6;
-    }
-
-    .card-new {
-        background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
-        border: 2px solid #66BB6A;
-    }
-
-    .card-new:hover {
-        border-color: #4CAF50;
-    }
-
-    .card-history {
-        background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-        border: 2px solid #42A5F5;
-    }
-
-    .card-history:hover {
-        border-color: #2196F3;
-    }
-
-    @@media (max-width: 768px) {
-        .dashboard-title {
-            font-size: 1.8rem;
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .page-selection {
-            grid-template-columns: 1fr;
+        body {
+            background: linear-gradient(135deg, #e5eef5 0%, #b3e5fc 100%);
+            min-height: 100vh;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        .dashboard-container {
+        /* 共用容器 */
+        .health-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .health-content {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1000px;
+            width: 100%;
+            padding: 3rem 2rem;
+        }
+
+        /* 頁首 */
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: #06b6d4;
+        }
+
+        /* 卡片區 */
+        .menu-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .menu-card {
+            background: white;
+            padding: 3rem 2rem;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            display: block;
+            border: 3px solid transparent;
+        }
+
+            .menu-card:hover {
+                transform: scale(1.05);
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+                text-decoration: none;
+            }
+
+        /* 特定卡片樣式 */
+        .card-new {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border-color: #66BB6A !important;
+        }
+
+            .card-new:hover {
+                border-color: #4CAF50 !important;
+            }
+
+        .card-history {
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+            border-color: #42A5F5 !important;
+        }
+
+            .card-history:hover {
+                border-color: #2196F3 !important;
+            }
+
+        .card-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-description {
+            font-size: 1rem;
+            color: #64748b;
+            opacity: 0.9;
+        }
+
+        /* 返回按鈕 */
+        .back-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+            color: white;
+            padding: 1rem 2rem; /* 原本 2.5rem → 改 2rem */
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
+            text-align: center;
+            white-space: nowrap; /* 防止文字換行 */
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
+            background: linear-gradient(135deg, #607D8B 0%, #546E7A 100%);
+            color: white;
+            text-decoration: none;
+        }
+
+        .button-group {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        /* 響應式設計（與 Dashboard 一致） */
+        @@media (max-width: 768px) {
+            .health-container
+
+        {
             padding: 1rem;
         }
 
-        .dashboard-content {
+        .health-content {
             padding: 2rem 1.5rem;
         }
 
-        .action-buttons {
-            flex-direction: column;
-            align-items: center;
+        .page-title {
+            font-size: 1.8rem;
         }
 
-        .btn-secondary,
-        .btn-danger {
-            width: auto;
-            max-width: 250px;
+        .menu-cards {
+            grid-template-columns: 1fr;
         }
-    }
-</style>
 
-<div class="health-container">
-    <div class="page-header">
-        <h1>
-            <span>📊</span>
-            <span>今日健康資訊</span>
-        </h1>
-    </div>
+        .back-button {
+            padding: 0.85rem 1.8rem; /* 稍微縮小一點，更貼合 */
+            font-size: 1rem;
+            width: auto; /* 自動寬度 */
+            max-width: 220px; /* 最多 220px，避免太寬 */
+            display: inline-block;
+        }
 
-    
-    <!-- ✅ 加入返回按鈕 -->
-            <div style="margin-bottom: 1.5rem;">
-        <a href="@Url.Action("Dashboard", "Home")" class="btn btn-secondary">
+        }
+
+        @@media (max-width: 480px) {
+            .health-content
+
+        {
+            padding: 1.5rem 1rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .menu-card {
+            padding: 2.5rem 1.5rem;
+        }
+
+        .card-icon {
+            font-size: 3.5rem;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+        }
+
+        .card-description {
+            font-size: 0.95rem;
+        }
+
+        }
+    </style>
+</head>
+<body>
+    <div class="health-container">
+        <div class="health-content">
+            <!-- 頁首 -->
+            <div class="page-header">
+                <h1 class="page-title">📊 今日健康資訊</h1>
+                <p class="page-subtitle">記錄與管理您的每日健康數據</p>
+            </div>
+
+            <!-- 返回按鈕區 -->
+            <div class="button-group">
+                <a href="@Url.Action("Dashboard", "Home")" class="back-button">
                     ← 返回主選單
                 </a>
             </div>
 
-    <div class="menu-cards">
-        <a href="@Url.Action("Create", "DailyHealth")" class="menu-card card-new">
-            <div class="card-icon">➕</div>
-            <div class="card-title">新增今日紀錄</div>
-            <div class="card-description">
-                記錄您今天的運動、飲食、血壓、血糖等健康資訊
-            </div>
-        </a>
+            <!-- 功能卡片 -->
+            <div class="menu-cards">
+                <a href="@Url.Action("Create", "DailyHealth")" class="menu-card card-new">
+                    <div class="card-icon">➕</div>
+                    <div class="card-title">新增今日紀錄</div>
+                    <div class="card-description">
+                        記錄您今天的運動、飲食、血壓、血糖等健康資訊
+                    </div>
+                </a>
 
-        <a href="@Url.Action("MyRecords", "DailyHealth")" class="menu-card card-history">
-            <div class="card-icon">📚</div>
-            <div class="card-title">查看過去紀錄</div>
-            <div class="card-description">
-                查看與修改您過去的健康資訊紀錄
+                <a href="@Url.Action("MyRecords", "DailyHealth")" class="menu-card card-history">
+                    <div class="card-icon">📚</div>
+                    <div class="card-title">查看過去紀錄</div>
+                    <div class="card-description">
+                        查看與修改您過去的健康資訊紀錄
+                    </div>
+                </a>
             </div>
-        </a>
+        </div>
     </div>
-</div>
-<style>
-    .btn {
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: 10px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-block;
-        transition: all 0.3s ease;
-    }
-
-    .btn-secondary {
-        background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
-        color: white;
-        box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
-    }
-
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
-            text-decoration: none;
-            color: white;
-        }
-</style>
+</body>
+</html>
