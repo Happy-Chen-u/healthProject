@@ -349,7 +349,7 @@
                 }
 
                 <form asp-action="Login" asp-controller="Account" method="post">
-                    <input type="hidden" asp-for="@ViewData["ReturnUrl"]" />
+                    <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
                     
                     <div class="form-group">
                         <label asp-for="Username" class="form-label">帳號 (身分證字號)</label>

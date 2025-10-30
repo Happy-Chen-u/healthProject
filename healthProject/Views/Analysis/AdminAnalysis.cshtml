@@ -1,0 +1,873 @@
+﻿@{
+    ViewData["Title"] = "健康分析 - 管理員";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
+            min-height: 100vh;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #EF5350 0%, #E53935 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .button-group {
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-section {
+            background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
+            border: 3px solid #EF5350;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #C62828;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .report-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .report-type-card {
+            background: white;
+            border: 3px solid #FFCDD2;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .report-type-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            border-color: #EF5350;
+        }
+
+        .report-type-card.active {
+            background: linear-gradient(135deg, #EF5350 0%, #E53935 100%);
+            color: white;
+            border-color: #E53935;
+        }
+
+        .report-type-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .report-type-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .input-group {
+            background: white;
+            border: 2px solid #FFCDD2;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .form-row label {
+            font-weight: 600;
+            color: #C62828;
+            min-width: 120px;
+        }
+
+        .form-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #EF5350;
+            border-radius: 10px;
+            font-size: 1rem;
+            min-width: 180px;
+        }
+
+        .date-hint {
+            color: #D32F2F;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #EF5350 0%, #E53935 100%);
+            color: white;
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #42A5F5 0%, #1E88E5 100%);
+            color: white;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            border: 4px solid #FFCDD2;
+            border-top: 4px solid #EF5350;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @@keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .patient-info {
+            display: none;
+            background: #E3F2FD;
+            border: 2px solid #42A5F5;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .report-content {
+            display: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
+            border: 2px solid #EF5350;
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #C62828;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #B71C1C;
+        }
+
+        .stat-detail {
+            font-size: 0.85rem;
+            color: #C62828;
+            margin-top: 0.5rem;
+        }
+
+        .chart-section {
+            background: white;
+            border: 2px solid #FFCDD2;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #C62828;
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th {
+            background: linear-gradient(135deg, #EF5350 0%, #E53935 100%);
+            color: white;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #FFCDD2;
+        }
+
+        tr:hover {
+            background: #FFEBEE;
+        }
+
+        .badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #C8E6C9;
+            color: #2E7D32;
+        }
+
+        .badge-danger {
+            background: #FFCDD2;
+            color: #C62828;
+        }
+
+        .badge-warning {
+            background: #FFE0B2;
+            color: #E65100;
+        }
+
+        @@media (max-width: 768px) {
+            .report-types {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="header-title">📊 健康分析 - 管理員</h1>
+            <p class="header-subtitle">查看病患健康趨勢與統計報表</p>
+        </div>
+
+        <div class="content">
+            <div class="button-group">
+                <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
+                    ← 返回主選單
+                </a>
+            </div>
+
+            <!-- 搜尋區域 -->
+            <div class="search-section">
+                <h2 class="section-title">🔍 搜尋病患報表</h2>
+
+                <!-- 病患身分證 -->
+                <div class="input-group">
+                    <div class="form-row">
+                        <label>病患身分證:</label>
+                        <input type="text" id="idNumber" class="form-input" 
+                               placeholder="例如: A123456789" maxlength="10" />
+                    </div>
+                </div>
+
+                <!-- 報表類型選擇 -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="color: #C62828; margin-bottom: 1rem;">📋 報表類型</h3>
+                    <div class="report-types">
+                        <div class="report-type-card" data-type="0" onclick="selectReportType(0)">
+                            <div class="report-type-icon">📅</div>
+                            <div class="report-type-name">每日報表</div>
+                        </div>
+                        <div class="report-type-card active" data-type="1" onclick="selectReportType(1)">
+                            <div class="report-type-icon">📆</div>
+                            <div class="report-type-name">每週報表</div>
+                        </div>
+                        <div class="report-type-card" data-type="2" onclick="selectReportType(2)">
+                            <div class="report-type-icon">📋</div>
+                            <div class="report-type-name">每月報表</div>
+                        </div>
+                        <div class="report-type-card" data-type="3" onclick="selectReportType(3)">
+                            <div class="report-type-icon">📑</div>
+                            <div class="report-type-name">每年報表</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 日期選擇 -->
+                <div class="input-group">
+                    <!-- 每日 -->
+                    <div id="dailyDateSelection" style="display:none;">
+                        <div class="form-row">
+                            <label>選擇日期:</label>
+                            <input type="date" id="dailyDate" class="form-input" />
+                            <span class="date-hint">選擇單一日期</span>
+                        </div>
+                    </div>
+
+                    <!-- 每週 -->
+                    <div id="weeklyDateSelection">
+                        <div class="form-row">
+                            <label>週開始日期:</label>
+                            <input type="date" id="weeklyStartDate" class="form-input" />
+                            <span class="date-hint">系統將自動計算至該週結束日期 (+6天)</span>
+                        </div>
+                    </div>
+
+                    <!-- 每月 -->
+                    <div id="monthlyDateSelection" style="display:none;">
+                        <div class="form-row">
+                            <label>選擇年月:</label>
+                            <input type="month" id="monthlyDate" class="form-input" />
+                            <span class="date-hint">選擇年份和月份</span>
+                        </div>
+                    </div>
+
+                    <!-- 每年 -->
+                    <div id="yearlyDateSelection" style="display:none;">
+                        <div class="form-row">
+                            <label>選擇年份:</label>
+                            <select id="yearlyDate" class="form-input"></select>
+                            <span class="date-hint">選擇完整年份</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center;">
+                    <button class="btn btn-primary" onclick="searchPatient()">
+                        🔍 查詢報表
+                    </button>
+                    <button class="btn btn-success" onclick="downloadPdf()" id="downloadBtn" style="display:none;">
+                        📥 下載 PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- 載入中 -->
+            <div id="loadingDiv" class="loading">
+                <div class="spinner"></div>
+                <p style="color: #EF5350; font-size: 1.2rem; font-weight: 600;">正在產生報表...</p>
+            </div>
+
+            <!-- 病患資訊 -->
+            <div id="patientInfo" class="patient-info">
+                <h3 style="margin-bottom: 1rem;">👤 病患資訊</h3>
+                <p style="margin: 0.5rem 0;">
+                    <strong>姓名:</strong> <span id="patientName"></span>
+                </p>
+                <p style="margin: 0.5rem 0;">
+                    <strong>身分證:</strong> <span id="patientId"></span>
+                </p>
+            </div>
+
+            <!-- 報表內容 -->
+            <div id="reportContent" class="report-content">
+                <!-- 統計摘要 -->
+                <div class="chart-section">
+                    <h3 class="chart-title">📊 統計摘要</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">總天數</div>
+                            <div class="stat-value" id="totalDays">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">血壓異常</div>
+                            <div class="stat-value" id="highBPDays" style="color: #C62828;">0</div>
+                            <div class="stat-detail" id="highBPPercentage"></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">血糖異常</div>
+                            <div class="stat-value" id="highBSDays" style="color: #C62828;">0</div>
+                            <div class="stat-detail" id="highBSPercentage"></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">飲水不足</div>
+                            <div class="stat-value" id="lowWaterDays" style="color: #EF6C00;">0</div>
+                            <div class="stat-detail" id="lowWaterPercentage"></div>
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>項目</th>
+                                <th>平均值</th>
+                                <th>標準值</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="avgTable"></tbody>
+                    </table>
+                </div>
+
+                <!-- 圖表區域 -->
+                <div class="chart-section">
+                    <h3 class="chart-title">📈 血壓趨勢</h3>
+                    <canvas id="bpChart" style="max-height: 300px;"></canvas>
+                </div>
+
+                <div class="chart-section">
+                    <h3 class="chart-title">🩸 血糖趨勢</h3>
+                    <canvas id="bsChart" style="max-height: 300px;"></canvas>
+                </div>
+
+                <div class="chart-section">
+                    <h3 class="chart-title">💧 飲水量趨勢</h3>
+                    <canvas id="waterChart" style="max-height: 300px;"></canvas>
+                </div>
+
+                <div class="chart-section">
+                    <h3 class="chart-title">🏃 運動時間趨勢</h3>
+                    <canvas id="exerciseChart" style="max-height: 300px;"></canvas>
+                </div>
+
+                <!-- 飲料 & 三餐記錄 -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
+                    <div class="chart-section">
+                        <h3 class="chart-title">🥤 飲料記錄</h3>
+                        <div id="beverageTable"></div>
+                    </div>
+
+                    <div class="chart-section">
+                        <h3 class="chart-title">🍽️ 三餐記錄</h3>
+                        <div id="mealTable"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let currentReportType = 1; // 預設每週報表
+        let currentReport = null;
+        let charts = {};
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('✅ 管理員頁面載入完成');
+            initializeYearSelect();
+            setDefaultDates();
+        });
+
+        // 初始化年份選擇器
+        function initializeYearSelect() {
+            const yearSelect = document.getElementById('yearlyDate');
+            const currentYear = new Date().getFullYear();
+            for (let year = currentYear; year >= currentYear - 10; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year + ' 年';
+                yearSelect.appendChild(option);
+            }
+        }
+
+        // 設定預設日期
+        function setDefaultDates() {
+            const today = new Date();
+            document.getElementById('dailyDate').valueAsDate = today;
+
+            const lastMonday = new Date(today);
+            lastMonday.setDate(today.getDate() - today.getDay() - 6);
+            document.getElementById('weeklyStartDate').valueAsDate = lastMonday;
+
+            document.getElementById('monthlyDate').value = today.toISOString().substr(0, 7);
+        }
+
+        // 選擇報表類型
+        function selectReportType(type) {
+            console.log('選擇報表類型:', type);
+            currentReportType = type;
+
+            document.querySelectorAll('.report-type-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            document.querySelector(`.report-type-card[data-type="${type}"]`).classList.add('active');
+
+            document.getElementById('dailyDateSelection').style.display = type === 0 ? 'block' : 'none';
+            document.getElementById('weeklyDateSelection').style.display = type === 1 ? 'block' : 'none';
+            document.getElementById('monthlyDateSelection').style.display = type === 2 ? 'block' : 'none';
+            document.getElementById('yearlyDateSelection').style.display = type === 3 ? 'block' : 'none';
+
+            document.getElementById('patientInfo').style.display = 'none';
+            document.getElementById('reportContent').style.display = 'none';
+            document.getElementById('downloadBtn').style.display = 'none';
+        }
+
+        // 搜尋病患
+        async function searchPatient() {
+            const idNumber = document.getElementById('idNumber').value.trim();
+
+            if (!idNumber) {
+                alert('請輸入病患身分證字號');
+                return;
+            }
+
+            const idPattern = /^[A-Z][12]\d{8}$/;
+            if (!idPattern.test(idNumber)) {
+                alert('身分證格式錯誤\n正確格式: A123456789');
+                return;
+            }
+
+            let startDate, endDate;
+
+            switch (currentReportType) {
+                case 0: // 每日
+                    const daily = document.getElementById('dailyDate').value;
+                    if (!daily) {
+                        alert('請選擇日期');
+                        return;
+                    }
+                    startDate = daily;
+                    endDate = daily;
+                    break;
+
+                case 1: // 每週
+                    const weekStart = document.getElementById('weeklyStartDate').value;
+                    if (!weekStart) {
+                        alert('請選擇週開始日期');
+                        return;
+                    }
+                    startDate = weekStart;
+                    const weekEnd = new Date(weekStart);
+                    weekEnd.setDate(weekEnd.getDate() + 6);
+                    endDate = weekEnd.toISOString().substr(0, 10);
+                    break;
+
+                case 2: // 每月
+                    const monthly = document.getElementById('monthlyDate').value;
+                    if (!monthly) {
+                        alert('請選擇年月');
+                        return;
+                    }
+                    const [year, month] = monthly.split('-');
+                    startDate = `${year}-${month}-01`;
+                    const lastDay = new Date(year, month, 0).getDate();
+                    endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+                    break;
+
+                case 3: // 每年
+                    const yearVal = document.getElementById('yearlyDate').value;
+                    startDate = `${yearVal}-01-01`;
+                    endDate = `${yearVal}-12-31`;
+                    break;
+            }
+
+            document.getElementById('loadingDiv').style.display = 'block';
+            document.getElementById('patientInfo').style.display = 'none';
+            document.getElementById('reportContent').style.display = 'none';
+            document.getElementById('downloadBtn').style.display = 'none';
+
+            try {
+                const response = await fetch('/Analysis/GetAdminReport', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        idNumber,
+                        reportType: currentReportType,
+                        startDate,
+                        endDate
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentReport = result.data;
+                    displayPatientInfo(result.data);
+                    displayReport(result.data);
+                    document.getElementById('downloadBtn').style.display = 'inline-block';
+                } else {
+                    alert(result.message || '查詢失敗');
+                }
+            } catch (error) {
+                console.error('❌ 查詢錯誤:', error);
+                alert('系統錯誤，請稍後再試');
+            } finally {
+                document.getElementById('loadingDiv').style.display = 'none';
+            }
+        }
+
+        // 顯示病患資訊
+        function displayPatientInfo(data) {
+            document.getElementById('patientInfo').style.display = 'block';
+            document.getElementById('patientName').textContent = data.patientName;
+            document.getElementById('patientId').textContent = maskIdNumber(data.idNumber);
+        }
+
+        // 遮罩身分證
+        function maskIdNumber(id) {
+            if (!id || id.length < 10) return '***';
+            return id.substring(0, 4) + '***' + id.substring(7);
+        }
+
+        // 顯示報表 (與病患版本相同)
+        function displayReport(data) {
+            document.getElementById('reportContent').style.display = 'block';
+
+            const stats = data.statistics;
+            document.getElementById('totalDays').textContent = stats.totalDays;
+            document.getElementById('highBPDays').textContent = stats.highBPDays;
+            document.getElementById('highBPPercentage').textContent = `(${stats.highBPPercentage.toFixed(1)}%)`;
+            document.getElementById('highBSDays').textContent = stats.highBloodSugarDays;
+            document.getElementById('highBSPercentage').textContent = `(${stats.highBloodSugarPercentage.toFixed(1)}%)`;
+            document.getElementById('lowWaterDays').textContent = stats.lowWaterDays;
+            document.getElementById('lowWaterPercentage').textContent = `(${stats.lowWaterPercentage.toFixed(1)}%)`;
+
+            const avgTableHtml = `
+                <tr>
+                    <td>血壓</td>
+                    <td>${stats.avgSystolicBP?.toFixed(1) || 'N/A'} / ${stats.avgDiastolicBP?.toFixed(1) || 'N/A'} mmHg</td>
+                    <td>≤ 120/80 mmHg</td>
+                    <td>${(stats.avgSystolicBP > 120 || stats.avgDiastolicBP > 80) ? '<span class="badge badge-danger">偏高</span>' : '<span class="badge badge-success">正常</span>'}</td>
+                </tr>
+                <tr>
+                    <td>血糖</td>
+                    <td>${stats.avgBloodSugar?.toFixed(1) || 'N/A'} mg/dL</td>
+                    <td>≤ 99 mg/dL</td>
+                    <td>${stats.avgBloodSugar > 99 ? '<span class="badge badge-danger">偏高</span>' : '<span class="badge badge-success">正常</span>'}</td>
+                </tr>
+                <tr>
+                    <td>飲水量</td>
+                    <td>${stats.avgWaterIntake?.toFixed(0) || 'N/A'} ml</td>
+                    <td>≥ 2000 ml</td>
+                    <td>${stats.avgWaterIntake < 2000 ? '<span class="badge badge-warning">不足</span>' : '<span class="badge badge-success">充足</span>'}</td>
+                </tr>
+                <tr>
+                    <td>運動時間</td>
+                    <td>${stats.avgExerciseDuration?.toFixed(1) || 'N/A'} 分鐘</td>
+                    <td>≥ 150 分鐘/週</td>
+                    <td>${stats.avgExerciseDuration < 150 ? '<span class="badge badge-warning">不足</span>' : '<span class="badge badge-success">充足</span>'}</td>
+                </tr>
+            `;
+            document.getElementById('avgTable').innerHTML = avgTableHtml;
+
+            drawCharts(data.charts);
+
+            // 飲料記錄
+            if (data.charts.beverageRecords && data.charts.beverageRecords.length > 0) {
+                let beverageHtml = '<table><thead><tr><th>日期</th><th>飲料</th></tr></thead><tbody>';
+                data.charts.beverageRecords.forEach(r => {
+                    beverageHtml += `<tr><td>${r.date}</td><td>${r.beverage}</td></tr>`;
+                });
+                beverageHtml += '</tbody></table>';
+                document.getElementById('beverageTable').innerHTML = beverageHtml;
+            } else {
+                document.getElementById('beverageTable').innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
+            }
+
+            // 三餐記錄
+            if (data.charts.mealRecords && data.charts.mealRecords.length > 0) {
+                let mealHtml = '<table><thead><tr><th>日期</th><th>三餐</th></tr></thead><tbody>';
+                data.charts.mealRecords.forEach(r => {
+                    mealHtml += `<tr><td>${r.date}</td><td>${r.meals}</td></tr>`;
+                });
+                mealHtml += '</tbody></table>';
+                document.getElementById('mealTable').innerHTML = mealHtml;
+            } else {
+                document.getElementById('mealTable').innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
+            }
+        }
+
+        // 繪製圖表 (與病患版本相同)
+        function drawCharts(chartData) {
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+
+            if (chartData.bloodPressureData && chartData.bloodPressureData.length > 0) {
+                const bpCtx = document.getElementById('bpChart').getContext('2d');
+                charts.bp = new Chart(bpCtx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.bloodPressureData.map(d => d.date),
+                        datasets: [{
+                            label: '收縮壓',
+                            data: chartData.bloodPressureData.map(d => d.value),
+                            borderColor: 'rgb(54, 162, 235)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            tension: 0.1
+                        }, {
+                            label: '舒張壓',
+                            data: chartData.bloodPressureData.map(d => d.value2),
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: { display: true, text: '血壓趨勢 (標準值: 120/80 mmHg)' }
+                        }
+                    }
+                });
+            }
+
+            if (chartData.bloodSugarData && chartData.bloodSugarData.length > 0) {
+                const bsCtx = document.getElementById('bsChart').getContext('2d');
+                charts.bs = new Chart(bsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.bloodSugarData.map(d => d.date),
+                        datasets: [{
+                            label: '血糖',
+                            data: chartData.bloodSugarData.map(d => d.value),
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            tension: 0.1,
+                            pointBackgroundColor: chartData.bloodSugarData.map(d => d.isAbnormal ? 'red' : 'green')
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: { display: true, text: '血糖趨勢 (標準值: ≤99 mg/dL)' }
+                        }
+                    }
+                });
+            }
+
+            if (chartData.waterIntakeData && chartData.waterIntakeData.length > 0) {
+                const waterCtx = document.getElementById('waterChart').getContext('2d');
+                charts.water = new Chart(waterCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.waterIntakeData.map(d => d.date),
+                        datasets: [{
+                            label: '飲水量 (ml)',
+                            data: chartData.waterIntakeData.map(d => d.value),
+                            backgroundColor: chartData.waterIntakeData.map(d => d.isAbnormal ? 'rgba(255, 159, 64, 0.5)' : 'rgba(54, 162, 235, 0.5)'),
+                            borderColor: chartData.waterIntakeData.map(d => d.isAbnormal ? 'rgb(255, 159, 64)' : 'rgb(54, 162, 235)'),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: { display: true, text: '飲水量趨勢 (建議: ≥2000 ml)' }
+                        }
+                    }
+                });
+            }
+
+            if (chartData.exerciseDurationData && chartData.exerciseDurationData.length > 0) {
+                const exerciseCtx = document.getElementById('exerciseChart').getContext('2d');
+                charts.exercise = new Chart(exerciseCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.exerciseDurationData.map(d => d.date),
+                        datasets: [{
+                            label: '運動時間 (分鐘)',
+                            data: chartData.exerciseDurationData.map(d => d.value),
+                            backgroundColor: chartData.exerciseDurationData.map(d => d.isAbnormal ? 'rgba(255, 159, 64, 0.5)' : 'rgba(75, 192, 192, 0.5)'),
+                            borderColor: chartData.exerciseDurationData.map(d => d.isAbnormal ? 'rgb(255, 159, 64)' : 'rgb(75, 192, 192)'),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: { display: true, text: '運動時間趨勢 (建議: ≥150 分鐘/週)' }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 下載 PDF
+        function downloadPdf() {
+            if (!currentReport) {
+                alert('請先查詢報表');
+                return;
+            }
+            alert('下載 PDF 功能開發中...');
+        }
+    </script>
+</body>
+</html>

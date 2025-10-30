@@ -202,6 +202,20 @@
         margin-bottom: 0.5rem;
     }
 
+        .button-group {
+            display: flex;
+            justify-content: center;
+            margin: 2rem auto;
+            padding: 1rem;
+            max-width: 1200px;
+        }
+
+            .button-group .btn {
+                width: auto;
+                min-width: 150px;
+                text-align: center;
+            }
+
     @@media (max-width: 768px) {
             body {
                 padding: 1rem 0.5rem;
@@ -230,7 +244,20 @@
             .btn {
                 width: 100%;
                 justify-content: center;
+                margin-bottom: 0.5rem;
             }
+
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+                padding: 0 1rem;
+            }
+
+                .button-group .btn {
+                    width: auto; /* ✅ 改為自動寬度，避免太長 */
+                    max-width: 80%; /* 可選，避免文字太長時跑版 */
+                }
+
         }
     </style>
 </head>
@@ -381,12 +408,12 @@
             </p>
         </div>
     }
-</div>
+        <div class="button-group">
+            <a href="@Url.Action("Dashboard", "Home")" class="btn btn-secondary">
+                ← 回上一頁
+            </a>
+        </div>
 
-<div class="button-group">
-                    <a href="@Url.Action("Dashboard", "Home")" class="btn btn-secondary">
-                        ← 回上一頁
-                    </a>
 </div>
 
         </body>

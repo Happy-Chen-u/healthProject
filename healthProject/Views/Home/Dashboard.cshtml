@@ -34,7 +34,7 @@
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 1000px;
+            max-width: 1200px;
             width: 100%;
             padding: 3rem 2rem;
         }
@@ -93,15 +93,15 @@
 
         .page-selection {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
             margin-bottom: 2rem;
         }
 
         .page-card {
             background: linear-gradient(135deg, #6da7cc 0%, #5a92b8 100%);
             color: white;
-            padding: 3rem 2rem;
+            padding: 2.5rem 1.5rem;
             border-radius: 15px;
             text-align: center;
             cursor: pointer;
@@ -118,19 +118,20 @@
                 text-decoration: none;
             }
 
+
         .page-card-icon {
-            font-size: 4rem;
+            font-size: 3.5rem;
             margin-bottom: 1rem;
         }
 
         .page-card-title {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
         }
 
         .page-card-description {
-            font-size: 1rem;
+            font-size: 0.95rem;
             opacity: 0.9;
         }
 
@@ -207,6 +208,14 @@
                 width: auto;
                 max-width: 250px;
             }
+
+            .page-card-icon {
+                font-size: 3rem;
+            }
+
+            .page-card {
+                padding: 2rem 1.5rem;
+            }
         }
     </style>
 </head>
@@ -248,6 +257,15 @@
                     <h3 class="page-card-title">今日健康資訊</h3>
                     <p class="page-card-description">
                         @(User.IsInRole("Admin") ? "查看所有健康資訊" : "查看與上傳每日健康資訊")
+                    </p>
+                </a>
+
+                <!-- ✅ 新增健康分析卡片 -->
+                <a href="@Url.Action("Index", "Analysis")" class="page-card">
+                    <div class="page-card-icon">📈</div>
+                    <h3 class="page-card-title">健康分析</h3>
+                    <p class="page-card-description">
+                        @(User.IsInRole("Admin") ? "查看病患健康趨勢與統計分析" : "查看我的健康趨勢與統計報表")
                     </p>
                 </a>
             </div>
