@@ -62,10 +62,12 @@
             display: flex;
             gap: 1rem;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .search-input {
             flex: 1;
+            min-width: 200px;
             padding: 0.75rem;
             border: 2px solid #FFB74D;
             border-radius: 10px;
@@ -82,6 +84,8 @@
             text-decoration: none;
             display: inline-block;
             transition: all 0.3s ease;
+            text-align: center;
+            white-space: nowrap;
         }
 
         .btn-primary {
@@ -117,6 +121,22 @@
             font-weight: 600;
         }
 
+        .button-group {
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* 桌面版表格 */
+        .desktop-table {
+            display: block;
+        }
+
+        .mobile-cards {
+            display: none;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -143,6 +163,7 @@
         .action-buttons {
             display: flex;
             gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
         .btn-small {
@@ -157,10 +178,170 @@
             font-size: 1.2rem;
         }
 
-        .button-group {
-            margin-bottom: 1.5rem;
+        .record-count {
+            margin-top: 1rem;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* 手機版卡片樣式 */
+        .record-card {
+            background: #FFF8E1;
+            border: 2px solid #FFE0B2;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+            .record-card:hover {
+                background: #FFF3E0;
+                border-color: #FFB74D;
+            }
+
+        .card-row {
             display: flex;
-            gap: 1rem;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #FFE0B2;
+        }
+
+            .card-row:last-child {
+                border-bottom: none;
+                padding-top: 1rem;
+            }
+
+        .card-label {
+            font-weight: 600;
+            color: #E65100;
+        }
+
+        .card-value {
+            color: #333;
+            text-align: right;
+        }
+
+        /* 平板尺寸 (768px - 1024px) */
+        @@media (max-width: 1024px) {
+            .container
+        {
+            border-radius: 20px;
+        }
+
+        .content {
+            padding: 1.5rem;
+        }
+
+        table {
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.6rem 0.8rem;
+        }
+
+        }
+
+        /* 手機尺寸 (最大 768px) */
+        @@media (max-width: 768px) {
+            body
+        {
+            padding: 1rem 0.5rem;
+        }
+
+        .container {
+            border-radius: 15px;
+        }
+
+        .header {
+            padding: 1.5rem 1rem;
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+        }
+
+        .content {
+            padding: 1rem;
+        }
+
+        .search-section {
+            padding: 1rem;
+        }
+
+        .search-form {
+            flex-direction: column;
+        }
+
+        .search-input {
+            width: 100%;
+            min-width: 100%;
+        }
+
+        .btn {
+            width: 100%;
+        }
+
+        .button-group {
+            flex-direction: column;
+        }
+
+        /* 隱藏桌面表格,顯示手機卡片 */
+        .desktop-table {
+            display: none;
+        }
+
+        .mobile-cards {
+            display: block;
+        }
+
+        .empty-message {
+            padding: 2rem 1rem;
+            font-size: 1.1rem;
+        }
+
+        }
+
+        /* 小手機尺寸 (最大 480px) */
+        @@media (max-width: 480px) {
+            body
+        {
+            padding: 0.5rem;
+        }
+
+        .header {
+            padding: 1.2rem 0.8rem;
+        }
+
+        .header-title {
+            font-size: 1.3rem;
+        }
+
+        .content {
+            padding: 0.8rem;
+        }
+
+        .search-section {
+            padding: 0.8rem;
+        }
+
+        .btn {
+            padding: 0.7rem 1rem;
+            font-size: 0.95rem;
+        }
+
+        .record-card {
+            padding: 1rem;
+        }
+
+        .card-row {
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .card-value {
+            text-align: left;
+        }
+
         }
     </style>
 </head>
@@ -207,49 +388,97 @@
                 </form>
             </div>
 
-            <!-- 紀錄表格 -->
+            <!-- 紀錄內容 -->
             @if (Model != null && Model.Any())
             {
-                <table>
-                    <thead>
-                        <tr>
-                            <th>身分證字號</th>
-                            <th>姓名</th>
-                            <th>性別</th>
-                            <th>出生日期</th>
-                            <th>評估日期</th>
-                            <th>回診日期</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var record in Model)
-                        {
+                <!-- 桌面版表格 -->
+                <div class="desktop-table">
+                    <table>
+                        <thead>
                             <tr>
-                                <td>@record.IDNumber</td>
-                                <td>@record.Name</td>
-                                <td>@record.Gender</td>
-                                <td>@record.BirthDate.ToString("yyyy/MM/dd")</td>
-                                <td>@(record.AssessmentDate?.ToString("yyyy/MM/dd") ?? "-")</td>
-                                <td>@(record.FollowUpDate?.ToString("yyyy/MM/dd") ?? "-")</td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <a href="@Url.Action("Details", "CaseManagement", new { id = record.Id })"
-                                           class="btn btn-primary btn-small">
-                                            查看
-                                        </a>
-                                        <a href="@Url.Action("Edit", "CaseManagement", new { id = record.Id })"
-                                           class="btn btn-secondary btn-small">
-                                            編輯
-                                        </a>
-                                    </div>
-                                </td>
+                                <th>身分證字號</th>
+                                <th>姓名</th>
+                                <th>性別</th>
+                                <th>出生日期</th>
+                                <th>評估日期</th>
+                                <th>回診日期</th>
+                                <th>操作</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var record in Model)
+                            {
+                                <tr>
+                                    <td>@record.IDNumber</td>
+                                    <td>@record.Name</td>
+                                    <td>@record.Gender</td>
+                                    <td>@record.BirthDate.ToString("yyyy/MM/dd")</td>
+                                    <td>@(record.AssessmentDate?.ToString("yyyy/MM/dd") ?? "-")</td>
+                                    <td>@(record.FollowUpDate?.ToString("yyyy/MM/dd") ?? "-")</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="@Url.Action("Details", "CaseManagement", new { id = record.Id })"
+                                               class="btn btn-primary btn-small">
+                                                查看
+                                            </a>
+                                            <a href="@Url.Action("Edit", "CaseManagement", new { id = record.Id })"
+                                               class="btn btn-secondary btn-small">
+                                                編輯
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
 
-                <p style="margin-top: 1rem; color: #666;">
+                <!-- 手機版卡片 -->
+                <div class="mobile-cards">
+                    @foreach (var record in Model)
+                    {
+                        <div class="record-card">
+                            <div class="card-row">
+                                <span class="card-label">身分證字號</span>
+                                <span class="card-value">@record.IDNumber</span>
+                            </div>
+                            <div class="card-row">
+                                <span class="card-label">姓名</span>
+                                <span class="card-value">@record.Name</span>
+                            </div>
+                            <div class="card-row">
+                                <span class="card-label">性別</span>
+                                <span class="card-value">@record.Gender</span>
+                            </div>
+                            <div class="card-row">
+                                <span class="card-label">出生日期</span>
+                                <span class="card-value">@record.BirthDate.ToString("yyyy/MM/dd")</span>
+                            </div>
+                            <div class="card-row">
+                                <span class="card-label">評估日期</span>
+                                <span class="card-value">@(record.AssessmentDate?.ToString("yyyy/MM/dd") ?? "-")</span>
+                            </div>
+                            <div class="card-row">
+                                <span class="card-label">回診日期</span>
+                                <span class="card-value">@(record.FollowUpDate?.ToString("yyyy/MM/dd") ?? "-")</span>
+                            </div>
+                            <div class="card-row">
+                                <div class="action-buttons" style="width: 100%;">
+                                    <a href="@Url.Action("Details", "CaseManagement", new { id = record.Id })"
+                                       class="btn btn-primary btn-small">
+                                        📋 查看
+                                    </a>
+                                    <a href="@Url.Action("Edit", "CaseManagement", new { id = record.Id })"
+                                       class="btn btn-secondary btn-small">
+                                        ✏️ 編輯
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <p class="record-count">
                     共 @Model.Count 筆紀錄
                 </p>
             }
