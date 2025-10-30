@@ -100,12 +100,15 @@ namespace healthProject.Controllers
                 var feedback = GenerateFeedback(model);
                 TempData["Feedback"] = JsonSerializer.Serialize(feedback);
 
+                // 🔔 發送 LINE 通知 (新增這行)
+                await SendLineNotification(userId, feedback);
+
                 return RedirectToAction("Success");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "儲存今日健康紀錄失敗");
-                ModelState.AddModelError("", "儲存失敗，請稍後再試");
+                ModelState.AddModelError("", "儲存失敗,請稍後再試");
                 return View("Confirm", model);
             }
         }
@@ -169,17 +172,19 @@ namespace healthProject.Controllers
             {
                 await UpdateRecordAsync(model);
 
-                // ✅ 新增:產生警示訊息
+                // 產生警示訊息
                 var feedback = GenerateFeedback(model);
                 TempData["Feedback"] = JsonSerializer.Serialize(feedback);
 
-                // ✅ 修改:導向到 Success 頁面而不是 MyRecords
+                // 🔔 發送 LINE 通知 (新增這行)
+                await SendLineNotification(userId, feedback);
+
                 return RedirectToAction("Success");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "更新紀錄失敗");
-                ModelState.AddModelError("", "更新失敗，請稍後再試");
+                ModelState.AddModelError("", "更新失敗,請稍後再試");
                 return View("Create", model);
             }
         }
@@ -558,8 +563,8 @@ namespace healthProject.Controllers
                     return;
                 }
 
-                // 取得 LINE Channel Access Token
-                var channelAccessToken = _configuration["LineBot:ChannelAccessToken"];
+                // ✅ 修正: Line:ChannelAccessToken
+                var channelAccessToken = _configuration["Line:ChannelAccessToken"];
 
                 if (string.IsNullOrEmpty(channelAccessToken))
                 {
@@ -569,25 +574,57 @@ namespace healthProject.Controllers
 
                 // 建立訊息內容
                 var messages = new List<string>();
-                messages.Add("📊 今日健康資訊已記錄");
+                messages.Add("📊 【代謝症候群管理系統】");
+                messages.Add("今日健康資訊已記錄成功!");
                 messages.Add("═══════════════");
 
-                if (!string.IsNullOrEmpty(feedback.WaterMessage))
-                    messages.Add(feedback.WaterMessage);
+                // 只顯示有警示的項目
+                bool hasWarning = false;
 
-                if (!string.IsNullOrEmpty(feedback.ExerciseMessage))
+                if (!string.IsNullOrEmpty(feedback.BloodPressureMessage) &&
+                    feedback.BloodPressureStatus == "danger")
+                {
+                    messages.Add(feedback.BloodPressureMessage);
+                    hasWarning = true;
+                }
+
+                if (!string.IsNullOrEmpty(feedback.BloodSugarMessage) &&
+                    feedback.BloodSugarStatus == "danger")
+                {
+                    messages.Add(feedback.BloodSugarMessage);
+                    hasWarning = true;
+                }
+
+                if (!string.IsNullOrEmpty(feedback.WaterMessage) &&
+                    feedback.WaterStatus == "warning")
+                {
+                    messages.Add(feedback.WaterMessage);
+                }
+
+                if (!string.IsNullOrEmpty(feedback.ExerciseMessage) &&
+                    feedback.ExerciseStatus == "warning")
+                {
                     messages.Add(feedback.ExerciseMessage);
+                }
 
                 if (!string.IsNullOrEmpty(feedback.CigaretteMessage))
+                {
                     messages.Add(feedback.CigaretteMessage);
+                }
 
-                if (!string.IsNullOrEmpty(feedback.BloodPressureMessage))
-                    messages.Add(feedback.BloodPressureMessage);
+                if (!hasWarning)
+                {
+                    messages.Add("✅ 各項指標都在正常範圍內!");
+                    messages.Add("請繼續保持良好的生活習慣 💪");
+                }
+                else
+                {
+                    messages.Add("");
+                    messages.Add("⚠️ 請注意上述異常項目");
+                    messages.Add("建議諮詢您的醫療團隊");
+                }
 
-                if (!string.IsNullOrEmpty(feedback.BloodSugarMessage))
-                    messages.Add(feedback.BloodSugarMessage);
-
-                var messageText = string.Join("\n\n", messages);
+                var messageText = string.Join("\n", messages);
 
                 // 發送 LINE 訊息
                 using var httpClient = new HttpClient();
@@ -598,12 +635,12 @@ namespace healthProject.Controllers
                     to = lineUserId,
                     messages = new[]
                     {
-                        new
-                        {
-                            type = "text",
-                            text = messageText
-                        }
-                    }
+                new
+                {
+                    type = "text",
+                    text = messageText
+                }
+            }
                 };
 
                 var json = JsonSerializer.Serialize(payload);
@@ -613,17 +650,18 @@ namespace healthProject.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation($"LINE 通知發送成功 - UserId: {userId}");
+                    _logger.LogInformation($"✅ LINE 通知發送成功 - UserId: {userId}");
                 }
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError($"LINE 通知發送失敗 - Status: {response.StatusCode}, Error: {errorContent}");
+                    _logger.LogError($"❌ LINE 通知發送失敗 - Status: {response.StatusCode}, Error: {errorContent}");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "發送 LINE 通知時發生錯誤");
+                _logger.LogError(ex, "❌ 發送 LINE 通知時發生錯誤");
+                // 不拋出例外,避免影響主要流程
             }
         }
 

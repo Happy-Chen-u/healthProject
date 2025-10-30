@@ -58,6 +58,6 @@ namespace healthProject.Models
 
         // 標準值常數
         public const int WATER_STANDARD = 2000; // 2000ml
-        public const int EXERCISE_STANDARD = 150; // 30分鐘
+        public const int EXERCISE_STANDARD = 150; // 150分鐘
     }
 }

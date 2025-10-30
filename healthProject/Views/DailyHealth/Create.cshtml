@@ -164,12 +164,33 @@
     }
 
     @@media (max-width: 768px) {
-        .button-group {
+        body {
+            padding: 1rem 0.5rem;
+        }
+
+        .header {
+            padding: 1.5rem 1rem;
+        }
+
+        .header-title {
+            font-size: 1.3rem;
+        }
+
+        .form-content {
+            padding: 1.5rem 1rem;
+        }
+
+        .search-group {
+            flex-direction: column;
+        }
+
+        .action-buttons {
             flex-direction: column;
         }
 
         .btn {
             width: 100%;
+            justify-content: center;
         }
     }
 </style>
