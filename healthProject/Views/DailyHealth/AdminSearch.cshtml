@@ -5,7 +5,7 @@
 
 <style>
     .admin-container {
-        max-width: 1000px;
+        max-width: 1200px;
         margin: 2rem auto;
         padding: 0 1rem;
     }
@@ -28,14 +28,14 @@
         box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
     }
 
-        .page-header h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
+    .page-header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
 
     .search-section {
         background: white;
@@ -71,11 +71,11 @@
         font-family: inherit;
     }
 
-        .search-input:focus {
-            outline: none;
-            border-color: #81af74;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-        }
+    .search-input:focus {
+        outline: none;
+        border-color: #81af74;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
 
     .btn-search {
         background: linear-gradient(135deg, #81af74 0%, #275a37 100%);
@@ -90,10 +90,10 @@
         box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
     }
 
-        .btn-search:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
-        }
+    .btn-search:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    }
 
     .patient-info {
         background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
@@ -104,9 +104,9 @@
         display: none;
     }
 
-        .patient-info.show {
-            display: block;
-        }
+    .patient-info.show {
+        display: block;
+    }
 
     .patient-name {
         font-size: 1.3rem;
@@ -124,36 +124,61 @@
         display: none;
     }
 
-        .results-section.show {
-            display: block;
-        }
-
-    .records-grid {
-        display: grid;
-        gap: 1.5rem;
+    .results-section.show {
+        display: block;
     }
 
-    .record-card {
+    /* 🆕 日期分組 */
+    .date-group {
         background: white;
         border-radius: 15px;
         overflow: hidden;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
     }
 
-    .record-header {
+    .date-header {
         background: linear-gradient(#e0ecdd);
-        padding: 1.5rem;
-        border-bottom: 2px solid #74a86f;
+        padding: 1.5rem 2rem;
+        border-bottom: 3px solid #74a86f;
     }
 
-    .record-date {
-        font-size: 1.2rem;
+    .date-title {
+        font-size: 1.3rem;
         font-weight: 700;
         color: #408355;
+        margin-bottom: 0.5rem;
     }
 
-    .record-body {
+    .date-summary {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        font-size: 0.9rem;
+        color: #2f5d3f;
+    }
+
+    .record-items {
         padding: 1.5rem;
+    }
+
+    .record-item {
+        background: #f8fafc;
+        border-left: 4px solid #63885e;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .record-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .record-time {
+        font-size: 0.95rem;
+        color: #64748b;
+        margin-bottom: 1rem;
+        font-weight: 600;
     }
 
     .data-grid {
@@ -163,9 +188,9 @@
     }
 
     .data-item {
-        padding: 1rem;
-        background: #f8fafc;
-        border-radius: 8px;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 6px;
         border-left: 3px solid #63885e;
     }
 
@@ -176,9 +201,23 @@
     }
 
     .data-value {
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 600;
         color: #1e293b;
+    }
+
+    .daily-summary {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .daily-summary-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #92400e;
+        margin-bottom: 1rem;
     }
 
     .empty-state {
@@ -214,12 +253,12 @@
         box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
     }
 
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
-            text-decoration: none;
-            color: white;
-        }
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
+        text-decoration: none;
+        color: white;
+    }
 
     @@media (max-width: 768px) {
         .search-group {
@@ -228,6 +267,11 @@
 
         .data-grid {
             grid-template-columns: 1fr;
+        }
+
+        .date-summary {
+            flex-direction: column;
+            gap: 0.5rem;
         }
     }
 </style>
@@ -240,7 +284,6 @@
         </h1>
     </div>
 
-    <!-- ✅ 加入返回按鈕 -->
     <div style="margin-bottom: 1.5rem;">
         <a href="@Url.Action("Dashboard", "Home")" class="btn btn-secondary">
             ← 返回主選單
@@ -270,7 +313,7 @@
     </div>
 
     <div id="resultsSection" class="results-section">
-        <div id="recordsContainer" class="records-grid"></div>
+        <div id="recordsContainer"></div>
         <div id="emptyState" class="empty-state" style="display: none;">
             <div class="empty-icon">📝</div>
             <div>此病患尚無健康資訊紀錄</div>
@@ -299,12 +342,9 @@
             const result = await response.json();
 
             if (result.success) {
-                // 顯示病患資訊
                 document.getElementById('patientName').textContent = result.data.patientName;
                 document.getElementById('patientId').textContent = `身分證字號：${result.data.idNumber}`;
                 document.getElementById('patientInfo').classList.add('show');
-
-                // 顯示紀錄
                 displayRecords(result.data.records);
             } else {
                 alert(result.message || '查無此病患');
@@ -317,14 +357,14 @@
         }
     }
 
-    function displayRecords(records) {
+    function displayRecords(groupedRecords) {
         const resultsSection = document.getElementById('resultsSection');
         const recordsContainer = document.getElementById('recordsContainer');
         const emptyState = document.getElementById('emptyState');
 
         resultsSection.classList.add('show');
 
-        if (!records || records.length === 0) {
+        if (!groupedRecords || groupedRecords.length === 0) {
             recordsContainer.innerHTML = '';
             emptyState.style.display = 'block';
             return;
@@ -332,94 +372,168 @@
 
         emptyState.style.display = 'none';
 
-        // 按日期排序（最新的在前）
-        records.sort((a, b) => new Date(b.recordDate) - new Date(a.recordDate));
-
-        recordsContainer.innerHTML = records.map(record => {
-            const date = new Date(record.recordDate);
+        // 已經是分組格式：[{date: "2025-10-30", records: [...]}]
+        recordsContainer.innerHTML = groupedRecords.map(group => {
+            const records = group.records;
+            const date = new Date(group.date);
             const dateStr = `${date.getFullYear()}年${String(date.getMonth() + 1).padStart(2, '0')}月${String(date.getDate()).padStart(2, '0')}日`;
 
-            let dataItems = '';
+            // 計算當日統計
+            const totalWater = records.reduce((sum, r) => sum + (r.waterIntake || 0), 0);
+            const totalExercise = records.reduce((sum, r) => sum + (r.exerciseDuration || 0), 0);
+            const bpReadings = records.flatMap(r => [r.bp_First_1, r.bp_First_2, r.bp_Second_1, r.bp_Second_2].filter(v => v != null));
+            const avgBP = bpReadings.length > 0 ? Math.round(bpReadings.reduce((a, b) => a + b, 0) / bpReadings.length) : null;
 
-            if (record.exerciseType || record.exerciseDuration) {
-                dataItems += `
-                    <div class="data-item">
-                        <div class="data-label">🏃 運動</div>
-                        <div class="data-value">${record.exerciseType || '運動'} ${record.exerciseDuration ? record.exerciseDuration.toFixed(1) + '分鐘' : ''}</div>
+            let summaryItems = `<span>📝 共 ${records.length} 筆記錄</span>`;
+            if (totalWater > 0) summaryItems += `<span>💧 ${totalWater} ml</span>`;
+            if (totalExercise > 0) summaryItems += `<span>🏃 ${totalExercise} 分鐘</span>`;
+
+            // 各筆記錄
+            const recordItems = records.map(record => {
+                const time = record.recordTime ? new Date(`2000-01-01T${record.recordTime}`).toLocaleTimeString('zh-TW', {hour: '2-digit', minute: '2-digit'}) : '未記錄時間';
+                
+                let dataItems = '';
+
+                // 血壓 - 4個欄位
+                if (record.bp_First_1 || record.bp_First_2 || record.bp_Second_1 || record.bp_Second_2) {
+                    const avgSys = [record.bp_First_1, record.bp_Second_1].filter(v => v).reduce((a, b) => a + b, 0) / [record.bp_First_1, record.bp_Second_1].filter(v => v).length || 0;
+                    const avgDia = [record.bp_First_2, record.bp_Second_2].filter(v => v).reduce((a, b) => a + b, 0) / [record.bp_First_2, record.bp_Second_2].filter(v => v).length || 0;
+                    
+                    dataItems += `
+                        <div class="data-item" style="grid-column: 1 / -1;">
+                            <div class="data-label">❤️ 血壓測量</div>
+                            <div class="data-value" style="font-size: 0.95rem;">
+                                第一次: ${record.bp_First_1 || '?'}/${record.bp_First_2 || '?'} mmHg &nbsp;|&nbsp; 
+                                第二次: ${record.bp_Second_1 || '?'}/${record.bp_Second_2 || '?'} mmHg
+                                ${avgSys && avgDia ? `<br><span style="color: #0891b2;">平均: ${Math.round(avgSys)}/${Math.round(avgDia)} mmHg</span>` : ''}
+                            </div>
+                        </div>`;
+                }
+
+                // 三餐
+                if (record.meals_Breakfast) {
+                    const meal = typeof record.meals_Breakfast === 'string' ? JSON.parse(record.meals_Breakfast) : record.meals_Breakfast;
+                    dataItems += `
+                        <div class="data-item">
+                            <div class="data-label">🌅 早餐</div>
+                            <div class="data-value" style="font-size: 0.85rem;">
+                                ${meal.Vegetables ? `🥬 ${meal.Vegetables}` : ''}
+                                ${meal.Protein ? `<br>🥩 ${meal.Protein}` : ''}
+                                ${meal.Carbs ? `<br>🍚 ${meal.Carbs}` : ''}
+                            </div>
+                        </div>`;
+                }
+
+                if (record.meals_Lunch) {
+                    const meal = typeof record.meals_Lunch === 'string' ? JSON.parse(record.meals_Lunch) : record.meals_Lunch;
+                    dataItems += `
+                        <div class="data-item">
+                            <div class="data-label">☀️ 午餐</div>
+                            <div class="data-value" style="font-size: 0.85rem;">
+                                ${meal.Vegetables ? `🥬 ${meal.Vegetables}` : ''}
+                                ${meal.Protein ? `<br>🥩 ${meal.Protein}` : ''}
+                                ${meal.Carbs ? `<br>🍚 ${meal.Carbs}` : ''}
+                            </div>
+                        </div>`;
+                }
+
+                if (record.meals_Dinner) {
+                    const meal = typeof record.meals_Dinner === 'string' ? JSON.parse(record.meals_Dinner) : record.meals_Dinner;
+                    dataItems += `
+                        <div class="data-item">
+                            <div class="data-label">🌙 晚餐</div>
+                            <div class="data-value" style="font-size: 0.85rem;">
+                                ${meal.Vegetables ? `🥬 ${meal.Vegetables}` : ''}
+                                ${meal.Protein ? `<br>🥩 ${meal.Protein}` : ''}
+                                ${meal.Carbs ? `<br>🍚 ${meal.Carbs}` : ''}
+                            </div>
+                        </div>`;
+                }
+
+                if (record.exerciseType || record.exerciseDuration) {
+                    dataItems += `
+                        <div class="data-item">
+                            <div class="data-label">🏃 運動</div>
+                            <div class="data-value">${record.exerciseType || '運動'} ${record.exerciseDuration ? record.exerciseDuration.toFixed(1) + '分鐘' : ''}</div>
+                        </div>`;
+                }
+
+                if (record.waterIntake) {
+                    dataItems += `
+                        <div class="data-item">
+                            <div class="data-label">💧 水分攝取</div>
+                            <div class="data-value">${record.waterIntake.toFixed(0)} ml</div>
+                        </div>`;
+                }
+
+                if (record.beverage) {
+                    dataItems += `
+                        <div class="data-item">
+                            <div class="data-label">🥤 飲料</div>
+                            <div class="data-value">${record.beverage}</div>
+                        </div>`;
+                }
+
+                if (record.cigarettes) {
+                    dataItems += `
+                        <div class="data-item">
+                            <div class="data-label">🚬 抽菸</div>
+                            <div class="data-value">${record.cigarettes.toFixed(0)} 支</div>
+                        </div>`;
+                }
+
+                if (record.betelNut) {
+                    dataItems += `
+                        <div class="data-item">
+                            <div class="data-label">🌿 檳榔</div>
+                            <div class="data-value">${record.betelNut.toFixed(0)} 次</div>
+                        </div>`;
+                }
+
+                if (record.bloodSugar) {
+                    dataItems += `
+                        <div class="data-item">
+                            <div class="data-label">🩸 血糖</div>
+                            <div class="data-value">${record.bloodSugar.toFixed(1)} mg/dL</div>
+                        </div>`;
+                }
+
+                return `
+                    <div class="record-item">
+                        <div class="record-time">⏰ ${time}</div>
+                        <div class="data-grid">
+                            ${dataItems || '<div style="grid-column: 1 / -1; text-align: center; color: #94a3b8;">無資料</div>'}
+                        </div>
                     </div>`;
-            }
+            }).join('');
 
-            if (record.waterIntake) {
-                dataItems += `
-                    <div class="data-item">
-                        <div class="data-label">💧 水分攝取</div>
-                        <div class="data-value">${record.waterIntake.toFixed(0)} ml</div>
-                    </div>`;
-            }
-
-            if (record.cigarettes) {
-                dataItems += `
-                    <div class="data-item">
-                        <div class="data-label">🚬 抽菸</div>
-                        <div class="data-value">${record.cigarettes.toFixed(0)} 支</div>
-                    </div>`;
-            }
-
-            if (record.betelNut) {
-                dataItems += `
-                    <div class="data-item">
-                        <div class="data-label">🌿 檳榔</div>
-                        <div class="data-value">${record.betelNut.toFixed(0)} 次</div>
-                    </div>`;
-            }
-
-            if (record.bloodSugar) {
-                dataItems += `
-                    <div class="data-item">
-                        <div class="data-label">🩸 血糖</div>
-                        <div class="data-value">${record.bloodSugar.toFixed(1)} mg/dL</div>
-                    </div>`;
-            }
-
-            if (record.systolicBP || record.diastolicBP) {
-                dataItems += `
-                    <div class="data-item">
-                        <div class="data-label">❤️ 血壓</div>
-                        <div class="data-value">${record.systolicBP ? record.systolicBP.toFixed(0) : '?'}/${record.diastolicBP ? record.diastolicBP.toFixed(0) : '?'} mmHg</div>
-                    </div>`;
-            }
-
-            if (record.beverage) {
-                dataItems += `
-                    <div class="data-item">
-                        <div class="data-label">🥤 飲料</div>
-                        <div class="data-value">${record.beverage}</div>
-                    </div>`;
-            }
-
-            if (record.meals) {
-                dataItems += `
-                    <div class="data-item" style="grid-column: 1 / -1;">
-                        <div class="data-label">🍽️ 三餐</div>
-                        <div class="data-value" style="font-size: 0.95rem; font-weight: 400; white-space: pre-wrap;">${record.meals}</div>
+            // 當日統計
+            let dailySummary = '';
+            if (records.length > 1) {
+                dailySummary = `
+                    <div class="daily-summary">
+                        <div class="daily-summary-title">📊 今日統計</div>
+                        <div class="data-grid">
+                            ${totalWater > 0 ? `<div class="data-item"><div class="data-label">💧 總水分</div><div class="data-value">${totalWater} ml</div></div>` : ''}
+                            ${totalExercise > 0 ? `<div class="data-item"><div class="data-label">🏃 總運動</div><div class="data-value">${totalExercise} 分鐘</div></div>` : ''}
+                        </div>
                     </div>`;
             }
 
             return `
-                <div class="record-card">
-                    <div class="record-header">
-                        <div class="record-date">📅 ${dateStr}</div>
+                <div class="date-group">
+                    <div class="date-header">
+                        <div class="date-title">📅 ${dateStr}</div>
+                        <div class="date-summary">${summaryItems}</div>
                     </div>
-                    <div class="record-body">
-                        <div class="data-grid">
-                            ${dataItems || '<div style="grid-column: 1 / -1; text-align: center; color: #94a3b8;">無資料</div>'}
-                        </div>
+                    <div class="record-items">
+                        ${recordItems}
+                        ${dailySummary}
                     </div>
                 </div>`;
         }).join('');
     }
 
-    // Enter 鍵搜尋
     document.getElementById('searchIdNumber')?.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -427,4 +541,3 @@
         }
     });
 </script>
-

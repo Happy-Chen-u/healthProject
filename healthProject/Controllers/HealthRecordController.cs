@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -37,38 +38,48 @@ namespace healthProject.Controllers
         // ========================================
         // ➕ 新增今日紀錄 - 病患專用
         // ========================================
-        
         [HttpGet]
-        public async Task<IActionResult> Create()
+        public IActionResult Create()
         {
             if (User.IsInRole("Admin"))
             {
                 return RedirectToAction("Index");
             }
 
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-
-            // ✅ 檢查今天是否已經有紀錄
-            var todayRecord = await GetTodayRecordAsync(userId);
-
-            if (todayRecord != null)
-            {
-                // 今天已經上傳過了，顯示提示並導向編輯頁面
-                TempData["InfoMessage"] = "📝 您今天已經上傳過健康資訊了，如需修改請在下方編輯。";
-                return RedirectToAction("Edit", new { id = todayRecord.Id });
-            }
-
             var model = new HealthRecordViewModel
             {
-                RecordDate = DateTime.Today
+                RecordDate = DateTime.Today,
+                RecordTime = DateTime.Now.TimeOfDay
             };
             return View(model);
         }
 
+
+
+        // ========================================
+        // ➕ 新增紀錄 - POST
+        // ========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(HealthRecordViewModel model)
+        public async Task<IActionResult> Create(HealthRecordViewModel model,
+            string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
         {
+            // 🆕 解析血壓輸入
+            model.ParseBloodPressure();
+
+            // 🆕 手動處理三餐 JSON
+            if (!string.IsNullOrEmpty(Meals_Breakfast))
+                model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(Meals_Breakfast);
+            if (!string.IsNullOrEmpty(Meals_Lunch))
+                model.Meals_Lunch = JsonSerializer.Deserialize<MealSelection>(Meals_Lunch);
+            if (!string.IsNullOrEmpty(Meals_Dinner))
+                model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(Meals_Dinner);
+
+            // 移除三餐的驗證錯誤 (因為是選填)
+            ModelState.Remove("Meals_Breakfast");
+            ModelState.Remove("Meals_Lunch");
+            ModelState.Remove("Meals_Dinner");
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -77,6 +88,7 @@ namespace healthProject.Controllers
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             model.UserId = userId;
             model.RecordDate = DateTime.Today;
+            model.RecordTime = DateTime.Now.TimeOfDay;
 
             // 顯示確認頁面
             return View("Confirm", model);
@@ -87,20 +99,36 @@ namespace healthProject.Controllers
         // ========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ConfirmSubmit(HealthRecordViewModel model)
+        public async Task<IActionResult> ConfirmSubmit(HealthRecordViewModel model,
+            string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
         {
             try
             {
+                // 🆕 處理三餐 JSON 反序列化
+                if (!string.IsNullOrEmpty(Meals_Breakfast))
+                    model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(Meals_Breakfast);
+                if (!string.IsNullOrEmpty(Meals_Lunch))
+                    model.Meals_Lunch = JsonSerializer.Deserialize<MealSelection>(Meals_Lunch);
+                if (!string.IsNullOrEmpty(Meals_Dinner))
+                    model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(Meals_Dinner);
+
+                ModelState.Clear();
+
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 model.UserId = userId;
+                model.RecordDate = DateTime.Today;
+                model.RecordTime = DateTime.Now.TimeOfDay;
 
                 await SaveRecordAsync(model);
 
-                // 產生建議訊息
-                var feedback = GenerateFeedback(model);
+                // 🆕 取得今日所有紀錄來計算總計
+                var todayRecords = await GetUserRecordsByDateAsync(userId, DateTime.Today);
+
+                // 產生建議訊息（使用今日總計）
+                var feedback = GenerateFeedbackWithDailyTotal(todayRecords);
                 TempData["Feedback"] = JsonSerializer.Serialize(feedback);
 
-                // 🔔 發送 LINE 通知 (新增這行)
+                // 🔔 發送 LINE 通知
                 await SendLineNotification(userId, feedback);
 
                 return RedirectToAction("Success");
@@ -108,14 +136,14 @@ namespace healthProject.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "儲存今日健康紀錄失敗");
-                ModelState.AddModelError("", "儲存失敗,請稍後再試");
+                ModelState.AddModelError("", "儲存失敗，請稍後再試");
                 return View("Confirm", model);
             }
         }
 
-        // ========================================
-        // 🎉 上傳成功頁面
-        // ========================================
+            // ========================================
+            // 🎉 上傳成功頁面
+            // ========================================
         public IActionResult Success()
         {
             if (TempData["Feedback"] != null)
@@ -127,13 +155,25 @@ namespace healthProject.Controllers
         }
 
         // ========================================
-        // 📚 查看歷史紀錄 - 病患專用
+        // 📚 查看歷史紀錄 - 病患專用 (分組顯示)
         // ========================================
         public async Task<IActionResult> MyRecords()
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var records = await GetUserRecordsAsync(userId);
-            return View(records);
+
+            // 🆕 按日期分組
+            var groupedRecords = records
+                .GroupBy(r => r.RecordDate.Date)
+                .Select(g => new DailyRecordGroup
+                {
+                    Date = g.Key,
+                    Records = g.OrderBy(r => r.RecordTime).ToList()
+                })
+                .OrderByDescending(g => g.Date)
+                .ToList();
+
+            return View(groupedRecords);
         }
 
         // ========================================
@@ -168,36 +208,29 @@ namespace healthProject.Controllers
                 return Forbid();
             }
 
-            try
-            {
-                await UpdateRecordAsync(model);
-
-                // 產生警示訊息
-                var feedback = GenerateFeedback(model);
-                TempData["Feedback"] = JsonSerializer.Serialize(feedback);
-
-                // 🔔 發送 LINE 通知 (新增這行)
-                await SendLineNotification(userId, feedback);
-
-                return RedirectToAction("Success");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "更新紀錄失敗");
-                ModelState.AddModelError("", "更新失敗,請稍後再試");
-                return View("Create", model);
-            }
+            // 顯示確認頁面
+            return View("Confirm", model);
         }
 
         // ========================================
-        // ✅ 確認更新（新增的方法）
+        // ✅ 確認更新
         // ========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ConfirmUpdate(HealthRecordViewModel model)
+        public async Task<IActionResult> ConfirmUpdate(HealthRecordViewModel model,
+            string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
         {
             try
             {
+                if (!string.IsNullOrEmpty(Meals_Breakfast))
+                    model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(Meals_Breakfast);
+                if (!string.IsNullOrEmpty(Meals_Lunch))
+                    model.Meals_Lunch = JsonSerializer.Deserialize<MealSelection>(Meals_Lunch);
+                if (!string.IsNullOrEmpty(Meals_Dinner))
+                    model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(Meals_Dinner);
+
+                ModelState.Clear();
+
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 if (model.UserId != userId)
                 {
@@ -206,11 +239,13 @@ namespace healthProject.Controllers
 
                 await UpdateRecordAsync(model);
 
-                // 產生建議訊息
-                var feedback = GenerateFeedback(model);
+                // 🆕 取得今日所有紀錄來計算總計
+                var todayRecords = await GetUserRecordsByDateAsync(userId, model.RecordDate);
+
+                // 產生建議訊息（使用今日總計）
+                var feedback = GenerateFeedbackWithDailyTotal(todayRecords);
                 TempData["Feedback"] = JsonSerializer.Serialize(feedback);
 
-                // 🔔 發送 LINE 通知
                 await SendLineNotification(userId, feedback);
 
                 return RedirectToAction("Success");
@@ -232,15 +267,24 @@ namespace healthProject.Controllers
         {
             try
             {
-                // 先找到病患
                 var patient = await GetPatientByIdNumberAsync(request.idNumber);
                 if (patient == null)
                 {
                     return Json(new { success = false, message = "查無此病患" });
                 }
 
-                // 取得該病患的所有紀錄
                 var records = await GetUserRecordsAsync(patient.Id);
+
+                // 分組顯示
+                var groupedRecords = records
+                    .GroupBy(r => r.RecordDate.Date)
+                    .Select(g => new
+                    {
+                        date = g.Key.ToString("yyyy-MM-dd"),
+                        records = g.OrderBy(r => r.RecordTime).ToList()
+                    })
+                    .OrderByDescending(g => g.date)
+                    .ToList();
 
                 return Json(new
                 {
@@ -249,7 +293,7 @@ namespace healthProject.Controllers
                     {
                         patientName = patient.FullName,
                         idNumber = patient.IDNumber,
-                        records = records
+                        records = groupedRecords
                     }
                 });
             }
@@ -260,42 +304,75 @@ namespace healthProject.Controllers
             }
         }
 
-        // ========================================
-        // 🧠 資料庫操作
-        // ========================================
-        private async Task SaveRecordAsync(HealthRecordViewModel model)
+       // ========================================
+      // 🧠 資料庫操作 - 新增
+      // ========================================
+    private async Task SaveRecordAsync(HealthRecordViewModel model)
         {
             var connStr = _configuration.GetConnectionString("DefaultConnection");
             await using var conn = new NpgsqlConnection(connStr);
             await conn.OpenAsync();
 
             var query = @"
-                INSERT INTO ""Today"" 
-                (""UserId"", ""RecordDate"", ""ExerciseType"", ""ExerciseDuration"", 
-                 ""WaterIntake"", ""Beverage"", ""Meals"", ""Cigarettes"", 
-                 ""BetelNut"", ""BloodSugar"", ""SystolicBP"", ""DiastolicBP"")
-                VALUES 
-                (@UserId, @RecordDate, @ExerciseType, @ExerciseDuration,
-                 @WaterIntake, @Beverage, @Meals, @Cigarettes,
-                 @BetelNut, @BloodSugar, @SystolicBP, @DiastolicBP)";
+        INSERT INTO ""Today"" 
+        (""UserId"", ""RecordDate"", ""RecordTime"",
+         ""BP_First_1_Systolic"", ""BP_First_1_Diastolic"",
+         ""BP_First_2_Systolic"", ""BP_First_2_Diastolic"",
+         ""BP_Second_1_Systolic"", ""BP_Second_1_Diastolic"",
+         ""BP_Second_2_Systolic"", ""BP_Second_2_Diastolic"",
+         ""Meals_Breakfast"", ""Meals_Lunch"", ""Meals_Dinner"",
+         ""ExerciseType"", ""ExerciseDuration"", 
+         ""WaterIntake"", ""Beverage"", ""Cigarettes"", 
+         ""BetelNut"", ""BloodSugar"")
+        VALUES 
+        (@UserId, @RecordDate, @RecordTime,
+         @BP_First_1_Systolic, @BP_First_1_Diastolic,
+         @BP_First_2_Systolic, @BP_First_2_Diastolic,
+         @BP_Second_1_Systolic, @BP_Second_1_Diastolic,
+         @BP_Second_2_Systolic, @BP_Second_2_Diastolic,
+         @Meals_Breakfast::jsonb, @Meals_Lunch::jsonb, @Meals_Dinner::jsonb,
+         @ExerciseType, @ExerciseDuration,
+         @WaterIntake, @Beverage, @Cigarettes,
+         @BetelNut, @BloodSugar)";
 
             await using var cmd = new NpgsqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@UserId", model.UserId);
             cmd.Parameters.AddWithValue("@RecordDate", model.RecordDate);
+            cmd.Parameters.AddWithValue("@RecordTime", model.RecordTime ?? (object)DBNull.Value);
+
+            // 血壓 - 8個欄位
+            cmd.Parameters.AddWithValue("@BP_First_1_Systolic", model.BP_First_1_Systolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_First_1_Diastolic", model.BP_First_1_Diastolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_First_2_Systolic", model.BP_First_2_Systolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_First_2_Diastolic", model.BP_First_2_Diastolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_Second_1_Systolic", model.BP_Second_1_Systolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_Second_1_Diastolic", model.BP_Second_1_Diastolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_Second_2_Systolic", model.BP_Second_2_Systolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_Second_2_Diastolic", model.BP_Second_2_Diastolic ?? (object)DBNull.Value);
+
+            // ⚠️ 三餐 JSON - 加入 ::jsonb 轉換
+            cmd.Parameters.AddWithValue("@Meals_Breakfast",
+                model.Meals_Breakfast != null ? JsonSerializer.Serialize(model.Meals_Breakfast) : (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@Meals_Lunch",
+                model.Meals_Lunch != null ? JsonSerializer.Serialize(model.Meals_Lunch) : (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@Meals_Dinner",
+                model.Meals_Dinner != null ? JsonSerializer.Serialize(model.Meals_Dinner) : (object)DBNull.Value);
+
+            // 其他
             cmd.Parameters.AddWithValue("@ExerciseType", model.ExerciseType ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@ExerciseDuration", model.ExerciseDuration ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@WaterIntake", model.WaterIntake ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@Beverage", model.Beverage ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@Meals", model.Meals ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@Cigarettes", model.Cigarettes ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@BetelNut", model.BetelNut ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@BloodSugar", model.BloodSugar ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@SystolicBP", model.SystolicBP ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@DiastolicBP", model.DiastolicBP ?? (object)DBNull.Value);
 
             await cmd.ExecuteNonQueryAsync();
         }
 
+        // ========================================
+        // 🧠 資料庫操作 - 更新
+        // ========================================
         private async Task UpdateRecordAsync(HealthRecordViewModel model)
         {
             var connStr = _configuration.GetConnectionString("DefaultConnection");
@@ -303,31 +380,64 @@ namespace healthProject.Controllers
             await conn.OpenAsync();
 
             var query = @"
-                UPDATE ""Today""
-                SET ""ExerciseType"" = @ExerciseType, ""ExerciseDuration"" = @ExerciseDuration,
-                    ""WaterIntake"" = @WaterIntake, ""Beverage"" = @Beverage,
-                    ""Meals"" = @Meals, ""Cigarettes"" = @Cigarettes,
-                    ""BetelNut"" = @BetelNut, ""BloodSugar"" = @BloodSugar,
-                    ""SystolicBP"" = @SystolicBP, ""DiastolicBP"" = @DiastolicBP
-                WHERE ""Id"" = @Id AND ""UserId"" = @UserId";
+        UPDATE ""Today""
+        SET ""BP_First_1_Systolic"" = @BP_First_1_Systolic,
+            ""BP_First_1_Diastolic"" = @BP_First_1_Diastolic,
+            ""BP_First_2_Systolic"" = @BP_First_2_Systolic,
+            ""BP_First_2_Diastolic"" = @BP_First_2_Diastolic,
+            ""BP_Second_1_Systolic"" = @BP_Second_1_Systolic,
+            ""BP_Second_1_Diastolic"" = @BP_Second_1_Diastolic,
+            ""BP_Second_2_Systolic"" = @BP_Second_2_Systolic,
+            ""BP_Second_2_Diastolic"" = @BP_Second_2_Diastolic,
+            ""Meals_Breakfast"" = @Meals_Breakfast::jsonb,
+            ""Meals_Lunch"" = @Meals_Lunch::jsonb,
+            ""Meals_Dinner"" = @Meals_Dinner::jsonb,
+            ""ExerciseType"" = @ExerciseType,
+            ""ExerciseDuration"" = @ExerciseDuration,
+            ""WaterIntake"" = @WaterIntake,
+            ""Beverage"" = @Beverage,
+            ""Cigarettes"" = @Cigarettes,
+            ""BetelNut"" = @BetelNut,
+            ""BloodSugar"" = @BloodSugar
+        WHERE ""Id"" = @Id AND ""UserId"" = @UserId";
 
             await using var cmd = new NpgsqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@Id", model.Id);
             cmd.Parameters.AddWithValue("@UserId", model.UserId);
+
+            // 血壓 - 8個欄位
+            cmd.Parameters.AddWithValue("@BP_First_1_Systolic", model.BP_First_1_Systolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_First_1_Diastolic", model.BP_First_1_Diastolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_First_2_Systolic", model.BP_First_2_Systolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_First_2_Diastolic", model.BP_First_2_Diastolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_Second_1_Systolic", model.BP_Second_1_Systolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_Second_1_Diastolic", model.BP_Second_1_Diastolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_Second_2_Systolic", model.BP_Second_2_Systolic ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_Second_2_Diastolic", model.BP_Second_2_Diastolic ?? (object)DBNull.Value);
+
+            // ⚠️ 三餐 JSON - 加入 ::jsonb 轉換
+            cmd.Parameters.AddWithValue("@Meals_Breakfast",
+                model.Meals_Breakfast != null ? JsonSerializer.Serialize(model.Meals_Breakfast) : (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@Meals_Lunch",
+                model.Meals_Lunch != null ? JsonSerializer.Serialize(model.Meals_Lunch) : (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@Meals_Dinner",
+                model.Meals_Dinner != null ? JsonSerializer.Serialize(model.Meals_Dinner) : (object)DBNull.Value);
+
+            // 其他
             cmd.Parameters.AddWithValue("@ExerciseType", model.ExerciseType ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@ExerciseDuration", model.ExerciseDuration ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@WaterIntake", model.WaterIntake ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@Beverage", model.Beverage ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@Meals", model.Meals ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@Cigarettes", model.Cigarettes ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@BetelNut", model.BetelNut ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@BloodSugar", model.BloodSugar ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@SystolicBP", model.SystolicBP ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@DiastolicBP", model.DiastolicBP ?? (object)DBNull.Value);
 
             await cmd.ExecuteNonQueryAsync();
         }
 
+        // ========================================
+        // 🧠 資料庫操作 - 查詢
+        // ========================================
         private async Task<List<HealthRecordViewModel>> GetUserRecordsAsync(int userId)
         {
             var records = new List<HealthRecordViewModel>();
@@ -339,7 +449,7 @@ namespace healthProject.Controllers
             var query = @"
                 SELECT * FROM ""Today""
                 WHERE ""UserId"" = @UserId
-                ORDER BY ""RecordDate"" DESC";
+                ORDER BY ""RecordDate"" DESC, ""RecordTime"" DESC";
 
             await using var cmd = new NpgsqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@UserId", userId);
@@ -347,7 +457,8 @@ namespace healthProject.Controllers
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                records.Add(MapFromReader(reader));
+                var dbModel = MapFromReader(reader);
+                records.Add(dbModel.ToViewModel());
             }
 
             return records;
@@ -369,7 +480,8 @@ namespace healthProject.Controllers
             await using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return MapFromReader(reader);
+                var dbModel = MapFromReader(reader);
+                return dbModel.ToViewModel();
             }
 
             return null;
@@ -404,61 +516,67 @@ namespace healthProject.Controllers
             return null;
         }
 
-        private HealthRecordViewModel MapFromReader(NpgsqlDataReader reader)
+        // ========================================
+        // 🧠 資料庫讀取 - MapFromReader (🆕 修正版)
+        // ========================================
+        private HealthRecordDBModel MapFromReader(NpgsqlDataReader reader)
         {
-            return new HealthRecordViewModel
+            return new HealthRecordDBModel
             {
-                Id = reader.GetInt32(0),
-                UserId = reader.GetInt32(1),
-                RecordDate = reader.GetDateTime(2),
-                ExerciseType = reader.IsDBNull(3) ? null : reader.GetString(3),
-                ExerciseDuration = reader.IsDBNull(4) ? null : reader.GetDecimal(4),
-                WaterIntake = reader.IsDBNull(5) ? null : reader.GetDecimal(5),
-                Beverage = reader.IsDBNull(6) ? null : reader.GetString(6),
-                Meals = reader.IsDBNull(7) ? null : reader.GetString(7),
-                Cigarettes = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
-                BetelNut = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
-                BloodSugar = reader.IsDBNull(10) ? null : reader.GetDecimal(10),
-                SystolicBP = reader.IsDBNull(11) ? null : reader.GetDecimal(11),
-                DiastolicBP = reader.IsDBNull(12) ? null : reader.GetDecimal(12)
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                RecordDate = reader.GetDateTime(reader.GetOrdinal("RecordDate")),
+                RecordTime = reader.IsDBNull(reader.GetOrdinal("RecordTime"))
+                    ? null : reader.GetTimeSpan(reader.GetOrdinal("RecordTime")),
+
+                // 🆕 血壓 - 8個欄位
+                BP_First_1_Systolic = reader.IsDBNull(reader.GetOrdinal("BP_First_1_Systolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_First_1_Systolic")),
+                BP_First_1_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_First_1_Diastolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_First_1_Diastolic")),
+                BP_First_2_Systolic = reader.IsDBNull(reader.GetOrdinal("BP_First_2_Systolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_First_2_Systolic")),
+                BP_First_2_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_First_2_Diastolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_First_2_Diastolic")),
+                BP_Second_1_Systolic = reader.IsDBNull(reader.GetOrdinal("BP_Second_1_Systolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_Second_1_Systolic")),
+                BP_Second_1_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_Second_1_Diastolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_Second_1_Diastolic")),
+                BP_Second_2_Systolic = reader.IsDBNull(reader.GetOrdinal("BP_Second_2_Systolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_Second_2_Systolic")),
+                BP_Second_2_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_Second_2_Diastolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_Second_2_Diastolic")),
+
+                // 三餐
+                Meals_Breakfast = reader.IsDBNull(reader.GetOrdinal("Meals_Breakfast"))
+                    ? null : reader.GetString(reader.GetOrdinal("Meals_Breakfast")),
+                Meals_Lunch = reader.IsDBNull(reader.GetOrdinal("Meals_Lunch"))
+                    ? null : reader.GetString(reader.GetOrdinal("Meals_Lunch")),
+                Meals_Dinner = reader.IsDBNull(reader.GetOrdinal("Meals_Dinner"))
+                    ? null : reader.GetString(reader.GetOrdinal("Meals_Dinner")),
+
+                // 其他
+                ExerciseType = reader.IsDBNull(reader.GetOrdinal("ExerciseType"))
+                    ? null : reader.GetString(reader.GetOrdinal("ExerciseType")),
+                ExerciseDuration = reader.IsDBNull(reader.GetOrdinal("ExerciseDuration"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("ExerciseDuration")),
+                WaterIntake = reader.IsDBNull(reader.GetOrdinal("WaterIntake"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("WaterIntake")),
+                Beverage = reader.IsDBNull(reader.GetOrdinal("Beverage"))
+                    ? null : reader.GetString(reader.GetOrdinal("Beverage")),
+                Cigarettes = reader.IsDBNull(reader.GetOrdinal("Cigarettes"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("Cigarettes")),
+                BetelNut = reader.IsDBNull(reader.GetOrdinal("BetelNut"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BetelNut")),
+                BloodSugar = reader.IsDBNull(reader.GetOrdinal("BloodSugar"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BloodSugar"))
             };
         }
 
-        // ========================================
-        // 🧠 資料庫操作
-        // ========================================
-
-        // ✅ 新增這個方法
-        private async Task<HealthRecordViewModel> GetTodayRecordAsync(int userId)
-        {
-            var connStr = _configuration.GetConnectionString("DefaultConnection");
-            await using var conn = new NpgsqlConnection(connStr);
-            await conn.OpenAsync();
-
-            var query = @"
-        SELECT * FROM ""Today""
-        WHERE ""UserId"" = @UserId AND ""RecordDate"" = @RecordDate
-        LIMIT 1";
-
-            await using var cmd = new NpgsqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@UserId", userId);
-            cmd.Parameters.AddWithValue("@RecordDate", DateTime.Today);
-
-            await using var reader = await cmd.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
-            {
-                return MapFromReader(reader);
-            }
-
-            return null;
-        }
-
-    
-
-        // ========================================
-        // 💬 產生回饋訊息
-        // ========================================
-        private FeedbackViewModel GenerateFeedback(HealthRecordViewModel model)
+            // ========================================
+            // 💬 產生回饋訊息
+            // ========================================
+            private FeedbackViewModel GenerateFeedback(HealthRecordViewModel model)
         {
             var feedback = new FeedbackViewModel();
 
@@ -495,7 +613,7 @@ namespace healthProject.Controllers
             }
 
             // 抽菸
-            if (model.Cigarettes.HasValue)
+            if (model.Cigarettes.HasValue && model.Cigarettes.Value > 0)
             {
                 if (model.Cigarettes.Value < 3)
                 {
@@ -514,19 +632,18 @@ namespace healthProject.Controllers
                 }
             }
 
-            // 血壓 - 收縮壓
-            if (model.SystolicBP.HasValue && model.SystolicBP.Value > 120)
+            // 血壓 (使用平均值)
+            if (model.AvgSystolicBP.HasValue && model.AvgSystolicBP.Value > 120)
             {
                 feedback.BloodPressureMessage = "⚠️ 收縮壓偏高（>120 mmHg），建議注意飲食與作息，並諮詢醫師！";
                 feedback.BloodPressureStatus = "danger";
             }
-            // 血壓 - 舒張壓
-            else if (model.DiastolicBP.HasValue && model.DiastolicBP.Value > 80)
+            else if (model.AvgDiastolicBP.HasValue && model.AvgDiastolicBP.Value > 80)
             {
                 feedback.BloodPressureMessage = "⚠️ 舒張壓偏高（>80 mmHg），建議注意飲食與作息，並諮詢醫師！";
                 feedback.BloodPressureStatus = "danger";
             }
-            else if (model.SystolicBP.HasValue || model.DiastolicBP.HasValue)
+            else if (model.AvgSystolicBP.HasValue || model.AvgDiastolicBP.HasValue)
             {
                 feedback.BloodPressureMessage = "✅ 血壓數值正常，繼續保持良好的生活習慣！";
                 feedback.BloodPressureStatus = "success";
@@ -554,31 +671,25 @@ namespace healthProject.Controllers
         {
             try
             {
-                // 取得使用者的 LINE User ID
                 var lineUserId = await GetUserLineIdAsync(userId);
-
                 if (string.IsNullOrEmpty(lineUserId))
                 {
                     _logger.LogWarning($"使用者 {userId} 尚未綁定 LINE");
                     return;
                 }
 
-                // ✅ 修正: Line:ChannelAccessToken
                 var channelAccessToken = _configuration["Line:ChannelAccessToken"];
-
                 if (string.IsNullOrEmpty(channelAccessToken))
                 {
                     _logger.LogError("LINE Channel Access Token 未設定");
                     return;
                 }
 
-                // 建立訊息內容
                 var messages = new List<string>();
                 messages.Add("📊 【代謝症候群管理系統】");
                 messages.Add("今日健康資訊已記錄成功!");
                 messages.Add("═══════════════");
 
-                // 只顯示有警示的項目
                 bool hasWarning = false;
 
                 if (!string.IsNullOrEmpty(feedback.BloodPressureMessage) &&
@@ -626,7 +737,6 @@ namespace healthProject.Controllers
 
                 var messageText = string.Join("\n", messages);
 
-                // 發送 LINE 訊息
                 using var httpClient = new HttpClient();
                 httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {channelAccessToken}");
 
@@ -635,12 +745,8 @@ namespace healthProject.Controllers
                     to = lineUserId,
                     messages = new[]
                     {
-                new
-                {
-                    type = "text",
-                    text = messageText
-                }
-            }
+                        new { type = "text", text = messageText }
+                    }
                 };
 
                 var json = JsonSerializer.Serialize(payload);
@@ -661,7 +767,6 @@ namespace healthProject.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ 發送 LINE 通知時發生錯誤");
-                // 不拋出例外,避免影響主要流程
             }
         }
 
@@ -684,9 +789,154 @@ namespace healthProject.Controllers
             return result?.ToString();
         }
 
-    public class SearchRequest
+        public class SearchRequest
         {
             public string idNumber { get; set; }
+        }
+
+        // 🆕 新增：取得特定日期的所有紀錄
+        private async Task<List<HealthRecordViewModel>> GetUserRecordsByDateAsync(int userId, DateTime date)
+        {
+            var records = new List<HealthRecordViewModel>();
+            var connStr = _configuration.GetConnectionString("DefaultConnection");
+
+            await using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+
+            var query = @"
+        SELECT * FROM ""Today""
+        WHERE ""UserId"" = @UserId 
+          AND ""RecordDate"" = @RecordDate
+        ORDER BY ""RecordTime"" DESC";
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            cmd.Parameters.AddWithValue("@RecordDate", date.Date);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var dbModel = MapFromReader(reader);
+                records.Add(dbModel.ToViewModel());
+            }
+
+            return records;
+        }
+
+        // 🆕 新增：使用當日總計產生 Feedback
+        private FeedbackViewModel GenerateFeedbackWithDailyTotal(List<HealthRecordViewModel> todayRecords)
+        {
+            var feedback = new FeedbackViewModel();
+
+            // 計算今日總計
+            var totalWater = todayRecords.Sum(r => r.WaterIntake ?? 0);
+            var totalExercise = todayRecords.Sum(r => r.ExerciseDuration ?? 0);
+            var totalCigarettes = todayRecords.Sum(r => r.Cigarettes ?? 0);
+
+            // 血壓平均
+            var allSystolic = todayRecords
+                .SelectMany(r => new[] { r.BP_First_1_Systolic, r.BP_First_2_Systolic,
+                                 r.BP_Second_1_Systolic, r.BP_Second_2_Systolic })
+                .Where(v => v.HasValue)
+                .Select(v => v.Value)
+                .ToList();
+
+            var allDiastolic = todayRecords
+                .SelectMany(r => new[] { r.BP_First_1_Diastolic, r.BP_First_2_Diastolic,
+                                 r.BP_Second_1_Diastolic, r.BP_Second_2_Diastolic })
+                .Where(v => v.HasValue)
+                .Select(v => v.Value)
+                .ToList();
+
+            var avgSystolic = allSystolic.Any() ? allSystolic.Average() : (decimal?)null;
+            var avgDiastolic = allDiastolic.Any() ? allDiastolic.Average() : (decimal?)null;
+
+            // 血糖平均
+            var bloodSugars = todayRecords.Where(r => r.BloodSugar.HasValue).Select(r => r.BloodSugar.Value).ToList();
+            var avgBloodSugar = bloodSugars.Any() ? bloodSugars.Average() : (decimal?)null;
+
+            // 💧 水分攝取（使用今日總計）
+            if (totalWater > 0)
+            {
+                if (totalWater < HealthRecordViewModel.WATER_STANDARD)
+                {
+                    var diff = HealthRecordViewModel.WATER_STANDARD - (int)totalWater;
+                    feedback.WaterMessage = $"💧 今日總水分攝取 {totalWater:0} ml，還差 {diff} ml 達到建議量！";
+                    feedback.WaterStatus = "warning";
+                }
+                else
+                {
+                    feedback.WaterMessage = $"💧 太棒了！今日總水分攝取 {totalWater:0} ml，已達標準！";
+                    feedback.WaterStatus = "success";
+                }
+            }
+
+            // 🏃 運動時間（使用今日總計）
+            if (totalExercise > 0)
+            {
+                if (totalExercise < HealthRecordViewModel.EXERCISE_STANDARD)
+                {
+                    var diff = HealthRecordViewModel.EXERCISE_STANDARD - (int)totalExercise;
+                    feedback.ExerciseMessage = $"🏃 今日總運動時間 {totalExercise:0} 分鐘，可再增加 {diff} 分鐘達到建議量！";
+                    feedback.ExerciseStatus = "warning";
+                }
+                else
+                {
+                    feedback.ExerciseMessage = $"🏃 很棒！今日總運動時間 {totalExercise:0} 分鐘，已達標準！";
+                    feedback.ExerciseStatus = "success";
+                }
+            }
+
+            // 🚬 抽菸（使用今日總計）
+            if (totalCigarettes > 0)
+            {
+                if (totalCigarettes < 3)
+                {
+                    feedback.CigaretteMessage = $"🚭 今日抽菸 {totalCigarettes:0} 支，量很少！繼續努力戒菸！";
+                    feedback.CigaretteStatus = "success";
+                }
+                else if (totalCigarettes <= 7)
+                {
+                    feedback.CigaretteMessage = $"🚭 今日抽菸 {totalCigarettes:0} 支，加油！抽得越少身體越健康！";
+                    feedback.CigaretteStatus = "info";
+                }
+                else
+                {
+                    feedback.CigaretteMessage = $"⚠️ 今日抽菸量 {totalCigarettes:0} 支較多，建議尋求戒菸協助！";
+                    feedback.CigaretteStatus = "danger";
+                }
+            }
+
+            // ❤️ 血壓 (使用今日平均)
+            if (avgSystolic.HasValue && avgSystolic.Value > 120)
+            {
+                feedback.BloodPressureMessage = $"⚠️ 今日平均收縮壓 {avgSystolic.Value:0} mmHg 偏高（>120），建議注意飲食與作息！";
+                feedback.BloodPressureStatus = "danger";
+            }
+            else if (avgDiastolic.HasValue && avgDiastolic.Value > 80)
+            {
+                feedback.BloodPressureMessage = $"⚠️ 今日平均舒張壓 {avgDiastolic.Value:0} mmHg 偏高（>80），建議注意飲食與作息！";
+                feedback.BloodPressureStatus = "danger";
+            }
+            else if (avgSystolic.HasValue || avgDiastolic.HasValue)
+            {
+                feedback.BloodPressureMessage = $"✅ 今日血壓 {avgSystolic:0}/{avgDiastolic:0} mmHg 正常，繼續保持！";
+                feedback.BloodPressureStatus = "success";
+            }
+
+            // 🩸 血糖 (使用今日平均)
+            if (avgBloodSugar.HasValue && avgBloodSugar.Value > 99)
+            {
+                feedback.BloodSugarMessage = $"⚠️ 今日平均血糖 {avgBloodSugar.Value:0.0} mg/dL 偏高（>99），建議控制飲食！";
+                feedback.BloodSugarStatus = "danger";
+            }
+            else if (avgBloodSugar.HasValue)
+            {
+                feedback.BloodSugarMessage = $"✅ 今日血糖 {avgBloodSugar.Value:0.0} mg/dL 正常，繼續維持！";
+                feedback.BloodSugarStatus = "success";
+            }
+
+            return feedback;
         }
     }
 }

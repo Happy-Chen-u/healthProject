@@ -12,12 +12,13 @@
     }
 
     body {
-        background-color: #e5eef5; /* 將背景顏色改為 #e5eef5 */
+        background-color: #e5eef5;
         font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
         min-height: 100vh;
         margin: 0;
         padding: 0;
     }
+
     .form-header {
         background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
         color: white;
@@ -83,7 +84,7 @@
         font-size: 0.95rem;
     }
 
-    .form-control {
+    .form-control, .form-select {
         width: 100%;
         padding: 0.75rem;
         border: 2px solid #e2e8f0;
@@ -91,23 +92,51 @@
         font-size: 1rem;
         font-family: inherit;
         transition: all 0.3s ease;
+        background-color: white;
     }
 
-    .form-control:focus {
+    .form-control:focus, .form-select:focus {
         outline: none;
         border-color: #06b6d4;
         box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
-    }
-
-    textarea.form-control {
-        min-height: 100px;
-        resize: vertical;
     }
 
     .input-hint {
         font-size: 0.85rem;
         color: #64748b;
         margin-top: 0.25rem;
+    }
+
+    .bp-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .bp-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .bp-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #475569;
+    }
+
+    .meal-section {
+        padding: 1.5rem;
+        background: #f8fafc;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+
+    .meal-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #0891b2;
+        margin-bottom: 1rem;
     }
 
     .button-group {
@@ -163,37 +192,23 @@
         font-weight: 600;
     }
 
+    .alert-danger {
+        background: #ffebee;
+        border: 2px solid #ef5350;
+        color: #c62828;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+
     @@media (max-width: 768px) {
-        body {
-            padding: 1rem 0.5rem;
-        }
-
-        .header {
-            padding: 1.5rem 1rem;
-        }
-
-        .header-title {
-            font-size: 1.3rem;
-        }
-
-        .form-content {
-            padding: 1.5rem 1rem;
-        }
-
-        .search-group {
-            flex-direction: column;
-        }
-
-        .action-buttons {
-            flex-direction: column;
-        }
-
-        .btn {
-            width: 100%;
-            justify-content: center;
+        .bp-grid {
+            grid-template-columns: 1fr;
         }
     }
 </style>
+
+
 
 <div class="form-container">
     <div class="form-header">
@@ -206,20 +221,201 @@
         <input type="hidden" asp-for="Id" />
         <input type="hidden" asp-for="UserId" />
 
-        <!-- ✅ 新增提示訊息區塊 -->
         @if (TempData["InfoMessage"] != null)
         {
-            <div class="alert alert-info">
+            <div class="alert-info">
                 @TempData["InfoMessage"]
             </div>
         }
 
         @if (!ViewData.ModelState.IsValid)
         {
-            <div class="alert alert-danger">
+            <div class="alert-danger">
                 <div asp-validation-summary="All"></div>
             </div>
         }
+
+        <!-- 🆕 血壓 - 4 個 "120/80" 格式輸入框 -->
+        <div class="form-section">
+            <div class="section-title">
+                <span>❤️</span>
+                <span>血壓測量 (mmHg)</span>
+            </div>
+            <div class="bp-grid">
+                <div class="bp-item">
+                    <label class="bp-label">第一次第一遍</label>
+                    <input asp-for="BP_First_1_Input" type="text" class="form-control" placeholder="例：120/80" />
+                    <span asp-validation-for="BP_First_1_Input" class="text-danger"></span>
+                </div>
+                <div class="bp-item">
+                    <label class="bp-label">第一次第二遍</label>
+                    <input asp-for="BP_First_2_Input" type="text" class="form-control" placeholder="例：118/78" />
+                    <span asp-validation-for="BP_First_2_Input" class="text-danger"></span>
+                </div>
+                <div class="bp-item">
+                    <label class="bp-label">第二次第一遍</label>
+                    <input asp-for="BP_Second_1_Input" type="text" class="form-control" placeholder="例：115/75" />
+                    <span asp-validation-for="BP_Second_1_Input" class="text-danger"></span>
+                </div>
+                <div class="bp-item">
+                    <label class="bp-label">第二次第二遍</label>
+                    <input asp-for="BP_Second_2_Input" type="text" class="form-control" placeholder="例：117/77" />
+                    <span asp-validation-for="BP_Second_2_Input" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="input-hint">請輸入格式如 "120/80"。建議測量兩次取平均值。正常值：收縮壓 < 120、舒張壓 < 80</div>
+        </div>
+
+        <!-- 🆕 三餐選擇 - 數字選項 -->
+        <div class="form-section">
+            <div class="section-title">
+                <span>🍽️</span>
+                <span>三餐攝取</span>
+            </div>
+
+            <!-- 早餐 -->
+            <div class="meal-section">
+                <div class="meal-title">🌅 早餐</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">蔬菜</label>
+                        <select class="form-select" id="breakfast-veg" name="Meals_Breakfast_Vegetables">
+                            <option value="">請選擇</option>
+                            <option value="0">0</option>
+                            <option value="0.5">0.5 (拳頭)</option>
+                            <option value="1">1 (拳頭)</option>
+                            <option value="1.5">1.5 (拳頭)</option>
+                            <option value="2">2 (拳頭)</option>
+                            <option value="其他">其他 (請於下方輸入)</option>
+                        </select>
+                        <input type="text" class="form-control" id="breakfast-veg-other" placeholder="例如：半個拳頭多一點" style="margin-top: 0.5rem; display: none;" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">蛋白質</label>
+                        <select class="form-select" id="breakfast-protein" name="Meals_Breakfast_Protein">
+                            <option value="">請選擇</option>
+                            <option value="0">0</option>
+                            <option value="0.5">0.5 (拳頭)</option>
+                            <option value="1">1 (拳頭)</option>
+                            <option value="1.5">1.5 (拳頭)</option>
+                            <option value="2">2 (拳頭)</option>
+                            <option value="其他">其他 (請於下方輸入)</option>
+                        </select>
+                        <input type="text" class="form-control" id="breakfast-protein-other" placeholder="例如：半個拳頭多一點" style="margin-top: 0.5rem; display: none;" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">澱粉</label>
+                        <select class="form-select" id="breakfast-carbs" name="Meals_Breakfast_Carbs">
+                            <option value="">請選擇</option>
+                            <option value="0">0</option>
+                            <option value="0.5">0.5 (拳頭)</option>
+                            <option value="1">1 (拳頭)</option>
+                            <option value="1.5">1.5 (拳頭)</option>
+                            <option value="2">2 (拳頭)</option>
+                            <option value="其他">其他 (請於下方輸入)</option>
+                        </select>
+                        <input type="text" class="form-control" id="breakfast-carbs-other" placeholder="例如：半個拳頭多一點" style="margin-top: 0.5rem; display: none;" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- 午餐 -->
+            <div class="meal-section">
+                <div class="meal-title">☀️ 午餐</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">蔬菜</label>
+                        <select class="form-select" id="lunch-veg">
+                            <option value="">請選擇</option>
+                            <option value="0">0</option>
+                            <option value="0.5">0.5 (拳頭)</option>
+                            <option value="1">1 (拳頭)</option>
+                            <option value="1.5">1.5 (拳頭)</option>
+                            <option value="2">2 (拳頭)</option>
+                            <option value="其他">其他 (請於下方輸入)</option>
+                        </select>
+                        <input type="text" class="form-control" id="lunch-veg-other" placeholder="例如：半個拳頭多一點" style="margin-top: 0.5rem; display: none;" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">蛋白質</label>
+                        <select class="form-select" id="lunch-protein">
+                            <option value="">請選擇</option>
+                            <option value="0">0</option>
+                            <option value="0.5">0.5 (拳頭)</option>
+                            <option value="1">1 (拳頭)</option>
+                            <option value="1.5">1.5 (拳頭)</option>
+                            <option value="2">2 (拳頭)</option>
+                            <option value="其他">其他 (請於下方輸入)</option>
+                        </select>
+                        <input type="text" class="form-control" id="lunch-protein-other" placeholder="例如：半個拳頭多一點" style="margin-top: 0.5rem; display: none;" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">澱粉</label>
+                        <select class="form-select" id="lunch-carbs">
+                            <option value="">請選擇</option>
+                            <option value="0">0</option>
+                            <option value="0.5">0.5 (拳頭)</option>
+                            <option value="1">1 (拳頭)</option>
+                            <option value="1.5">1.5 (拳頭)</option>
+                            <option value="2">2 (拳頭)</option>
+                            <option value="其他">其他 (請於下方輸入)</option>
+                        </select>
+                        <input type="text" class="form-control" id="lunch-carbs-other" placeholder="例如：半個拳頭多一點" style="margin-top: 0.5rem; display: none;" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- 晚餐 -->
+            <div class="meal-section">
+                <div class="meal-title">🌙 晚餐</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">蔬菜</label>
+                        <select class="form-select" id="dinner-veg">
+                            <option value="">請選擇</option>
+                            <option value="0">0</option>
+                            <option value="0.5">0.5 (拳頭)</option>
+                            <option value="1">1 (拳頭)</option>
+                            <option value="1.5">1.5 (拳頭)</option>
+                            <option value="2">2 (拳頭)</option>
+                            <option value="其他">其他 (請於下方輸入)</option>
+                        </select>
+                        <input type="text" class="form-control" id="dinner-veg-other" placeholder="例如：半個拳頭多一點" style="margin-top: 0.5rem; display: none;" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">蛋白質</label>
+                        <select class="form-select" id="dinner-protein">
+                            <option value="">請選擇</option>
+                            <option value="0">0</option>
+                            <option value="0.5">0.5 (拳頭)</option>
+                            <option value="1">1 (拳頭)</option>
+                            <option value="1.5">1.5 (拳頭)</option>
+                            <option value="2">2 (拳頭)</option>
+                            <option value="其他">其他 (請於下方輸入)</option>
+                        </select>
+                        <input type="text" class="form-control" id="dinner-protein-other" placeholder="例如：半個拳頭多一點" style="margin-top: 0.5rem; display: none;" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">澱粉</label>
+                        <select class="form-select" id="dinner-carbs">
+                            <option value="">請選擇</option>
+                            <option value="0">0</option>
+                            <option value="0.5">0.5 (拳頭)</option>
+                            <option value="1">1 (拳頭)</option>
+                            <option value="1.5">1.5 (拳頭)</option>
+                            <option value="2">2 (拳頭)</option>
+                            <option value="其他">其他 (請於下方輸入)</option>
+                        </select>
+                        <input type="text" class="form-control" id="dinner-carbs-other" placeholder="例如：半個拳頭多一點" style="margin-top: 0.5rem; display: none;" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden fields for MealSelection JSON -->
+            <input type="hidden" id="Meals_Breakfast_Json" name="Meals_Breakfast" />
+            <input type="hidden" id="Meals_Lunch_Json" name="Meals_Lunch" />
+            <input type="hidden" id="Meals_Dinner_Json" name="Meals_Dinner" />
+        </div>
 
         <!-- 運動資訊 -->
         <div class="form-section">
@@ -243,8 +439,8 @@
         <!-- 飲食資訊 -->
         <div class="form-section">
             <div class="section-title">
-                <span>🍽️</span>
-                <span>飲食資訊</span>
+                <span>💧</span>
+                <span>飲品攝取</span>
             </div>
             <div class="form-row">
                 <div class="form-group">
@@ -253,13 +449,9 @@
                     <div class="input-hint">建議每日飲水 2000 ml</div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" asp-for="Beverage">飲料</label>
-                    <input asp-for="Beverage" class="form-control" placeholder="例如：咖啡、茶、果汁" />
+                    <label class="form-label" asp-for="Beverage">其他飲料</label>
+                    <input asp-for="Beverage" class="form-control" placeholder="例如:咖啡、茶、果汁" />
                 </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label" asp-for="Meals">三餐內容</label>
-                <textarea asp-for="Meals" class="form-control" placeholder="請簡單描述今日的三餐內容"></textarea>
             </div>
         </div>
 
@@ -286,24 +478,13 @@
         <!-- 生理數值 -->
         <div class="form-section">
             <div class="section-title">
-                <span>📊</span>
-                <span>生理數值</span>
+                <span>🩸</span>
+                <span>血糖</span>
             </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label" asp-for="BloodSugar">血糖 (mg/dL)</label>
-                    <input asp-for="BloodSugar" type="number" step="0.1" class="form-control" placeholder="0" />
-                    <div class="input-hint">正常值：70-99 mg/dL</div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">血壓 (mmHg)</label>
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        <input asp-for="SystolicBP" type="number" step="0.01" class="form-control" placeholder="收縮壓" />
-                        <span style="font-weight: 700;">/</span>
-                        <input asp-for="DiastolicBP" type="number" step="0.01" class="form-control" placeholder="舒張壓" />
-                    </div>
-                    <div class="input-hint">正常值：收縮壓 < 120、舒張壓 < 80</div>
-                </div>
+            <div class="form-group">
+                <label class="form-label" asp-for="BloodSugar">血糖 (mg/dL)</label>
+                <input asp-for="BloodSugar" type="number" step="0.1" class="form-control" placeholder="0" />
+                <div class="input-hint">正常值：70-99 mg/dL</div>
             </div>
         </div>
 
@@ -311,12 +492,117 @@
             <a href="@Url.Action("Index", "DailyHealth")" class="btn btn-secondary">
                 ← 取消
             </a>
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary" onclick="return prepareMealData()">
                 @(Model.Id > 0 ? "💾 儲存修改" : "✓ 下一步")
             </button>
         </div>
     </form>
 </div>
+
+<script>
+    // 處理「其他」選項的顯示/隱藏
+    function setupOtherInputs() {
+        const selects = document.querySelectorAll('.form-select');
+        selects.forEach(select => {
+            const otherId = select.id + '-other';
+            const otherInput = document.getElementById(otherId);
+            
+            if (otherInput) {
+                select.addEventListener('change', function() {
+                    if (this.value === '其他') {
+                        otherInput.style.display = 'block';
+                    } else {
+                        otherInput.style.display = 'none';
+                        otherInput.value = '';
+                    }
+                });
+            }
+        });
+    }
+
+    // 提交前準備三餐數據
+    function prepareMealData() {
+        // 早餐
+        const breakfastVeg = document.getElementById('breakfast-veg').value;
+        const breakfastProtein = document.getElementById('breakfast-protein').value;
+        const breakfastCarbs = document.getElementById('breakfast-carbs').value;
+        
+        if (breakfastVeg || breakfastProtein || breakfastCarbs) {
+            const breakfast = {
+                Vegetables: breakfastVeg === '其他' ? document.getElementById('breakfast-veg-other').value : breakfastVeg,
+                Protein: breakfastProtein === '其他' ? document.getElementById('breakfast-protein-other').value : breakfastProtein,
+                Carbs: breakfastCarbs === '其他' ? document.getElementById('breakfast-carbs-other').value : breakfastCarbs
+            };
+            document.getElementById('Meals_Breakfast_Json').value = JSON.stringify(breakfast);
+        }
+
+        // 午餐
+        const lunchVeg = document.getElementById('lunch-veg').value;
+        const lunchProtein = document.getElementById('lunch-protein').value;
+        const lunchCarbs = document.getElementById('lunch-carbs').value;
+        
+        if (lunchVeg || lunchProtein || lunchCarbs) {
+            const lunch = {
+                Vegetables: lunchVeg === '其他' ? document.getElementById('lunch-veg-other').value : lunchVeg,
+                Protein: lunchProtein === '其他' ? document.getElementById('lunch-protein-other').value : lunchProtein,
+                Carbs: lunchCarbs === '其他' ? document.getElementById('lunch-carbs-other').value : lunchCarbs
+            };
+            document.getElementById('Meals_Lunch_Json').value = JSON.stringify(lunch);
+        }
+
+        // 晚餐
+        const dinnerVeg = document.getElementById('dinner-veg').value;
+        const dinnerProtein = document.getElementById('dinner-protein').value;
+        const dinnerCarbs = document.getElementById('dinner-carbs').value;
+        
+        if (dinnerVeg || dinnerProtein || dinnerCarbs) {
+            const dinner = {
+                Vegetables: dinnerVeg === '其他' ? document.getElementById('dinner-veg-other').value : dinnerVeg,
+                Protein: dinnerProtein === '其他' ? document.getElementById('dinner-protein-other').value : dinnerProtein,
+                Carbs: dinnerCarbs === '其他' ? document.getElementById('dinner-carbs-other').value : dinnerCarbs
+            };
+            document.getElementById('Meals_Dinner_Json').value = JSON.stringify(dinner);
+        }
+
+        return true;
+    }
+
+    // 頁面載入時初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        setupOtherInputs();
+        
+        // 如果是編輯模式,恢復選項
+        @if (Model.Meals_Breakfast != null)
+        {
+            <text>
+            const breakfast = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Breakfast));
+            if (breakfast.Vegetables) document.getElementById('breakfast-veg').value = breakfast.Vegetables;
+            if (breakfast.Protein) document.getElementById('breakfast-protein').value = breakfast.Protein;
+            if (breakfast.Carbs) document.getElementById('breakfast-carbs').value = breakfast.Carbs;
+            </text>
+        }
+        
+        @if (Model.Meals_Lunch != null)
+        {
+            <text>
+            const lunch = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Lunch));
+            if (lunch.Vegetables) document.getElementById('lunch-veg').value = lunch.Vegetables;
+            if (lunch.Protein) document.getElementById('lunch-protein').value = lunch.Protein;
+            if (lunch.Carbs) document.getElementById('lunch-carbs').value = lunch.Carbs;
+            </text>
+        }
+        
+        @if (Model.Meals_Dinner != null)
+        {
+            <text>
+            const dinner = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Dinner));
+            if (dinner.Vegetables) document.getElementById('dinner-veg').value = dinner.Vegetables;
+            if (dinner.Protein) document.getElementById('dinner-protein').value = dinner.Protein;
+            if (dinner.Carbs) document.getElementById('dinner-carbs').value = dinner.Carbs;
+            </text>
+        }
+    });
+</script>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

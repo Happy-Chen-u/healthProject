@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using System.Security.Claims;
-
+using System.Text.Json;
 
 namespace healthProject.Controllers
 {
@@ -67,7 +67,7 @@ namespace healthProject.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "產生報表失敗");
-                return Json(new { success = false, message = "系統錯誤，請稍後再試" });
+                return Json(new { success = false, message = "系統錯誤,請稍後再試" });
             }
         }
 
@@ -129,15 +129,14 @@ namespace healthProject.Controllers
                 await using var conn = new NpgsqlConnection(connStr);
                 await conn.OpenAsync();
 
-                // 查詢報表
                 var query = @"
-            SELECT wr.""PdfData"", wr.""UserId"", wr.""ExpiresAt"", u.""IDNumber"", u.""FullName""
-            FROM ""WeeklyReports"" wr
-            JOIN ""Users"" u ON wr.""UserId"" = u.""Id""
-            WHERE wr.""Id"" = @ReportId";
+                    SELECT wr.""PdfData"", wr.""UserId"", wr.""ExpiresAt"", u.""IDNumber"", u.""FullName""
+                    FROM ""WeeklyReports"" wr
+                    JOIN ""Users"" u ON wr.""UserId"" = u.""Id""
+                    WHERE wr.""Id"" = @ReportId";
 
                 await using var cmd = new NpgsqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@ReportId", request.ReportDate); // 這裡用 ReportDate 欄位傳 reportId
+                cmd.Parameters.AddWithValue("@ReportId", request.ReportDate);
 
                 await using var reader = await cmd.ExecuteReaderAsync();
 
@@ -151,30 +150,26 @@ namespace healthProject.Controllers
                 var expiresAt = reader.GetDateTime(reader.GetOrdinal("ExpiresAt"));
                 var fullName = reader.GetString(reader.GetOrdinal("FullName"));
 
-                // 檢查是否過期
                 if (DateTime.Now > expiresAt)
                 {
                     return Json(new { success = false, message = "此報表連結已過期" });
                 }
 
-                // 驗證身分證
                 if (request.IDNumber != storedIdNumber)
                 {
                     return Json(new { success = false, message = "身分證字號驗證失敗" });
                 }
 
-                // 標記為已驗證
                 await reader.CloseAsync();
                 var updateQuery = @"
-            UPDATE ""WeeklyReports""
-            SET ""IsVerified"" = true
-            WHERE ""Id"" = @ReportId";
+                    UPDATE ""WeeklyReports""
+                    SET ""IsVerified"" = true
+                    WHERE ""Id"" = @ReportId";
 
                 await using var updateCmd = new NpgsqlCommand(updateQuery, conn);
                 updateCmd.Parameters.AddWithValue("@ReportId", request.ReportDate);
                 await updateCmd.ExecuteNonQueryAsync();
 
-                // 回傳 PDF 的 Base64
                 var base64Pdf = Convert.ToBase64String(pdfData);
 
                 return Json(new
@@ -192,7 +187,6 @@ namespace healthProject.Controllers
             }
         }
 
-
         // ========================================
         // 📥 下載 PDF 報表
         // ========================================
@@ -201,7 +195,6 @@ namespace healthProject.Controllers
         {
             try
             {
-                // 權限檢查
                 var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 if (!User.IsInRole("Admin") && currentUserId != userId)
                 {
@@ -236,7 +229,7 @@ namespace healthProject.Controllers
         }
 
         // ========================================
-        // 🔍 產生分析報表
+        // 🔍 產生分析報表 (修正版)
         // ========================================
         private async Task<AnalysisViewModel> GenerateAnalysisAsync(
             int userId,
@@ -246,10 +239,56 @@ namespace healthProject.Controllers
             DateTime startDate,
             DateTime endDate)
         {
-            var records = await GetRecordsInRangeAsync(userId, startDate, endDate);
+            var rawRecords = await GetRecordsInRangeAsync(userId, startDate, endDate);
 
-            var statistics = CalculateStatistics(records);
-            var charts = GenerateChartData(records, reportType);
+            var dailyGroups = rawRecords
+                .GroupBy(r => r.RecordDate.Date)
+                .Select(g => new DailyRecordGroup
+                {
+                    Date = g.Key,
+                    Records = g.OrderBy(r => r.RecordTime).ToList()
+                })
+                .OrderBy(g => g.Date)
+                .ToList();
+
+            // ✅ 修正:建立合併的三餐物件
+            var aggregatedRecords = dailyGroups.Select(d => new HealthRecordViewModel
+            {
+                RecordDate = d.Date,
+
+                // 血壓:使用當日所有測量的平均
+                BP_First_1_Systolic = d.AvgSystolicBP,
+                BP_First_1_Diastolic = d.AvgDiastolicBP,
+
+                // 血糖:使用當日平均
+                BloodSugar = d.AvgBloodSugar,
+
+                // 飲水量:使用當日總和
+                WaterIntake = d.TotalWater > 0 ? d.TotalWater : null,
+
+                // 運動時間:使用當日總和
+                ExerciseDuration = d.TotalExercise > 0 ? d.TotalExercise : null,
+
+                // 抽菸:使用當日總和
+                Cigarettes = d.TotalCigarettes > 0 ? d.TotalCigarettes : null,
+
+                // 檳榔:使用當日總和
+                BetelNut = d.TotalBetelNut > 0 ? d.TotalBetelNut : null,
+
+                // ✅ 三餐:建立合併的物件 (讓 MealsDisplay 自動計算)
+                Meals_Breakfast = d.HasAnyMeals ? CreateDailyMealSummary(d, "Breakfast") : null,
+                Meals_Lunch = d.HasAnyMeals ? CreateDailyMealSummary(d, "Lunch") : null,
+                Meals_Dinner = d.HasAnyMeals ? CreateDailyMealSummary(d, "Dinner") : null,
+
+                // 飲料:合併顯示
+                Beverage = string.Join(", ", d.Records
+                    .Where(r => !string.IsNullOrEmpty(r.Beverage))
+                    .Select(r => r.Beverage)
+                    .Distinct())
+            }).ToList();
+
+            var statistics = CalculateStatistics(aggregatedRecords);
+            var charts = GenerateChartData(aggregatedRecords, reportType);
 
             return new AnalysisViewModel
             {
@@ -259,13 +298,39 @@ namespace healthProject.Controllers
                 StartDate = startDate,
                 EndDate = endDate,
                 Statistics = statistics,
-                Records = records,
+                Records = aggregatedRecords,
                 Charts = charts
             };
         }
 
+
         // ========================================
-        // 📈 計算統計數據
+        // 🆕 產生每日三餐顯示文字
+        // ========================================
+        private string GetDailyMealsDisplay(DailyRecordGroup dailyGroup)
+        {
+            var parts = new List<string>();
+
+            // 蔬菜
+            var veggies = dailyGroup.TotalVegetables;
+            if (veggies.NumericTotal > 0 || veggies.OtherTexts.Any())
+                parts.Add($"🥬蔬菜:{veggies.Display}");
+
+            // 蛋白質
+            var protein = dailyGroup.TotalProtein;
+            if (protein.NumericTotal > 0 || protein.OtherTexts.Any())
+                parts.Add($"🥩蛋白質:{protein.Display}");
+
+            // 澱粉
+            var carbs = dailyGroup.TotalCarbs;
+            if (carbs.NumericTotal > 0 || carbs.OtherTexts.Any())
+                parts.Add($"🍚澱粉:{carbs.Display}");
+
+            return parts.Any() ? string.Join(", ", parts) : "未記錄";
+        }
+
+        // ========================================
+        // 📈 計算統計數據 (使用每日聚合後的數據)
         // ========================================
         private AnalysisStatistics CalculateStatistics(List<HealthRecordViewModel> records)
         {
@@ -274,22 +339,49 @@ namespace healthProject.Controllers
                 return new AnalysisStatistics { TotalDays = 0 };
             }
 
+            // 取得有血壓數據的記錄
+            var bpRecords = records.Where(r =>
+                r.BP_First_1_Systolic.HasValue || r.BP_First_1_Diastolic.HasValue).ToList();
+
             return new AnalysisStatistics
             {
-                TotalDays = records.Count,
+                TotalDays = records.Count, // 🆕 改為天數,不是筆數
 
-                // 平均值
-                AvgSystolicBP = records.Where(r => r.SystolicBP.HasValue).Average(r => r.SystolicBP),
-                AvgDiastolicBP = records.Where(r => r.DiastolicBP.HasValue).Average(r => r.DiastolicBP),
-                AvgBloodSugar = records.Where(r => r.BloodSugar.HasValue).Average(r => r.BloodSugar),
-                AvgWaterIntake = records.Where(r => r.WaterIntake.HasValue).Average(r => r.WaterIntake),
-                AvgExerciseDuration = records.Where(r => r.ExerciseDuration.HasValue).Average(r => r.ExerciseDuration),
-                AvgCigarettes = records.Where(r => r.Cigarettes.HasValue).Average(r => r.Cigarettes),
+                // 平均血壓 (各天平均的平均)
+                AvgSystolicBP = bpRecords.Any(r => r.BP_First_1_Systolic.HasValue)
+                    ? bpRecords.Where(r => r.BP_First_1_Systolic.HasValue)
+                        .Average(r => r.BP_First_1_Systolic.Value)
+                    : null,
+
+                AvgDiastolicBP = bpRecords.Any(r => r.BP_First_1_Diastolic.HasValue)
+                    ? bpRecords.Where(r => r.BP_First_1_Diastolic.HasValue)
+                        .Average(r => r.BP_First_1_Diastolic.Value)
+                    : null,
+
+                // 平均血糖
+                AvgBloodSugar = records.Where(r => r.BloodSugar.HasValue).Any()
+                    ? records.Where(r => r.BloodSugar.HasValue).Average(r => r.BloodSugar.Value)
+                    : null,
+
+                // 平均飲水量 (各天總和的平均)
+                AvgWaterIntake = records.Where(r => r.WaterIntake.HasValue).Any()
+                    ? records.Where(r => r.WaterIntake.HasValue).Average(r => r.WaterIntake.Value)
+                    : null,
+
+                // 平均運動時間 (各天總和的平均)
+                AvgExerciseDuration = records.Where(r => r.ExerciseDuration.HasValue).Any()
+                    ? records.Where(r => r.ExerciseDuration.HasValue).Average(r => r.ExerciseDuration.Value)
+                    : null,
+
+                // 平均抽菸
+                AvgCigarettes = records.Where(r => r.Cigarettes.HasValue).Any()
+                    ? records.Where(r => r.Cigarettes.HasValue).Average(r => r.Cigarettes.Value)
+                    : null,
 
                 // 異常天數
                 HighBPDays = records.Count(r =>
-                    (r.SystolicBP.HasValue && r.SystolicBP.Value > 120) ||
-                    (r.DiastolicBP.HasValue && r.DiastolicBP.Value > 80)),
+                    (r.BP_First_1_Systolic.HasValue && r.BP_First_1_Systolic.Value > 120) ||
+                    (r.BP_First_1_Diastolic.HasValue && r.BP_First_1_Diastolic.Value > 80)),
 
                 HighBloodSugarDays = records.Count(r =>
                     r.BloodSugar.HasValue && r.BloodSugar.Value > 99),
@@ -300,6 +392,72 @@ namespace healthProject.Controllers
                 LowExerciseDays = records.Count(r =>
                     r.ExerciseDuration.HasValue && r.ExerciseDuration.Value < 150)
             };
+        }
+
+        // ========================================
+        // 🆕 建立每日三餐統計摘要
+        // ========================================
+        private MealSelection CreateDailyMealSummary(DailyRecordGroup dailyGroup, string mealType)
+        {
+            // 收集當天該餐的所有記錄
+            var meals = mealType switch
+            {
+                "Breakfast" => dailyGroup.Records.Where(r => r.Meals_Breakfast != null).Select(r => r.Meals_Breakfast).ToList(),
+                "Lunch" => dailyGroup.Records.Where(r => r.Meals_Lunch != null).Select(r => r.Meals_Lunch).ToList(),
+                "Dinner" => dailyGroup.Records.Where(r => r.Meals_Dinner != null).Select(r => r.Meals_Dinner).ToList(),
+                _ => new List<MealSelection>()
+            };
+
+            if (!meals.Any()) return null;
+
+            // 如果只有一筆,直接回傳
+            if (meals.Count == 1) return meals[0];
+
+            // 合併多筆記錄
+            return new MealSelection
+            {
+                Vegetables = CombineMealItem(meals.Select(m => m.Vegetables)),
+                Protein = CombineMealItem(meals.Select(m => m.Protein)),
+                Carbs = CombineMealItem(meals.Select(m => m.Carbs))
+            };
+        }
+
+        // ========================================
+        // 🆕 合併三餐項目 (例如:合併蔬菜攝取量)
+        // ========================================
+        private string CombineMealItem(IEnumerable<string> items)
+        {
+            var validItems = items.Where(i => !string.IsNullOrEmpty(i) && i != "0").ToList();
+            if (!validItems.Any()) return "0";
+
+            // 嘗試加總數值
+            decimal total = 0;
+            var otherTexts = new List<string>();
+
+            foreach (var item in validItems)
+            {
+                if (decimal.TryParse(item, out decimal value))
+                {
+                    total += value;
+                }
+                else if (!item.StartsWith("其他:"))
+                {
+                    // 像 "半個拳頭"、"一個拳頭" 等文字描述
+                    otherTexts.Add(item);
+                }
+                else
+                {
+                    // "其他:XXX" 格式
+                    otherTexts.Add(item);
+                }
+            }
+
+            // 組合結果
+            var parts = new List<string>();
+            if (total > 0) parts.Add(total.ToString("0"));
+            parts.AddRange(otherTexts.Distinct());
+
+            return string.Join(" + ", parts);
         }
 
         // ========================================
@@ -314,14 +472,15 @@ namespace healthProject.Controllers
                 var dateStr = FormatDateForChart(record.RecordDate, reportType);
 
                 // 血壓數據
-                if (record.SystolicBP.HasValue || record.DiastolicBP.HasValue)
+                if (record.BP_First_1_Systolic.HasValue || record.BP_First_1_Diastolic.HasValue)
                 {
                     charts.BloodPressureData.Add(new ChartPoint
                     {
                         Date = dateStr,
-                        Value = record.SystolicBP,
-                        Value2 = record.DiastolicBP,
-                        IsAbnormal = (record.SystolicBP ?? 0) > 120 || (record.DiastolicBP ?? 0) > 80
+                        Value = record.BP_First_1_Systolic,
+                        Value2 = record.BP_First_1_Diastolic,
+                        IsAbnormal = (record.BP_First_1_Systolic ?? 0) > 120 ||
+                                     (record.BP_First_1_Diastolic ?? 0) > 80
                     });
                 }
 
@@ -359,12 +518,12 @@ namespace healthProject.Controllers
                 }
 
                 // 三餐記錄
-                if (!string.IsNullOrEmpty(record.Meals))
+                if (!string.IsNullOrEmpty(record.MealsDisplay) && record.MealsDisplay != "未記錄")
                 {
                     charts.MealRecords.Add(new MealRecord
                     {
                         Date = record.RecordDate.ToString("MM/dd"),
-                        Meals = record.Meals
+                        Meals = record.MealsDisplay
                     });
                 }
 
@@ -411,7 +570,7 @@ namespace healthProject.Controllers
                 WHERE ""UserId"" = @UserId 
                   AND ""RecordDate"" >= @StartDate 
                   AND ""RecordDate"" <= @EndDate
-                ORDER BY ""RecordDate"" ASC";
+                ORDER BY ""RecordDate"" ASC, ""RecordTime"" ASC";
 
             await using var cmd = new NpgsqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@UserId", userId);
@@ -487,24 +646,82 @@ namespace healthProject.Controllers
             return null;
         }
 
+        // ========================================
+        // ✅ MapFromReader (支援新的血壓與三餐欄位)
+        // ========================================
         private HealthRecordViewModel MapFromReader(NpgsqlDataReader reader)
         {
-            return new HealthRecordViewModel
+            var model = new HealthRecordViewModel
             {
-                Id = reader.GetInt32(0),
-                UserId = reader.GetInt32(1),
-                RecordDate = reader.GetDateTime(2),
-                ExerciseType = reader.IsDBNull(3) ? null : reader.GetString(3),
-                ExerciseDuration = reader.IsDBNull(4) ? null : reader.GetDecimal(4),
-                WaterIntake = reader.IsDBNull(5) ? null : reader.GetDecimal(5),
-                Beverage = reader.IsDBNull(6) ? null : reader.GetString(6),
-                Meals = reader.IsDBNull(7) ? null : reader.GetString(7),
-                Cigarettes = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
-                BetelNut = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
-                BloodSugar = reader.IsDBNull(10) ? null : reader.GetDecimal(10),
-                SystolicBP = reader.IsDBNull(11) ? null : reader.GetDecimal(11),
-                DiastolicBP = reader.IsDBNull(12) ? null : reader.GetDecimal(12)
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                RecordDate = reader.GetDateTime(reader.GetOrdinal("RecordDate")),
+                RecordTime = reader.IsDBNull(reader.GetOrdinal("RecordTime"))
+                    ? null
+                    : reader.GetTimeSpan(reader.GetOrdinal("RecordTime")),
+
+                // 🩸 血壓資料 - 8個欄位
+                BP_First_1_Systolic = reader.IsDBNull(reader.GetOrdinal("BP_First_1_Systolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_First_1_Systolic")),
+                BP_First_1_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_First_1_Diastolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_First_1_Diastolic")),
+
+                BP_First_2_Systolic = reader.IsDBNull(reader.GetOrdinal("BP_First_2_Systolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_First_2_Systolic")),
+                BP_First_2_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_First_2_Diastolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_First_2_Diastolic")),
+
+                BP_Second_1_Systolic = reader.IsDBNull(reader.GetOrdinal("BP_Second_1_Systolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_Second_1_Systolic")),
+                BP_Second_1_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_Second_1_Diastolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_Second_1_Diastolic")),
+
+                BP_Second_2_Systolic = reader.IsDBNull(reader.GetOrdinal("BP_Second_2_Systolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_Second_2_Systolic")),
+                BP_Second_2_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_Second_2_Diastolic"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BP_Second_2_Diastolic")),
+
+                // 其他欄位
+                ExerciseType = reader.IsDBNull(reader.GetOrdinal("ExerciseType"))
+                    ? null : reader.GetString(reader.GetOrdinal("ExerciseType")),
+                ExerciseDuration = reader.IsDBNull(reader.GetOrdinal("ExerciseDuration"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("ExerciseDuration")),
+                WaterIntake = reader.IsDBNull(reader.GetOrdinal("WaterIntake"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("WaterIntake")),
+                Beverage = reader.IsDBNull(reader.GetOrdinal("Beverage"))
+                    ? null : reader.GetString(reader.GetOrdinal("Beverage")),
+                Cigarettes = reader.IsDBNull(reader.GetOrdinal("Cigarettes"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("Cigarettes")),
+                BetelNut = reader.IsDBNull(reader.GetOrdinal("BetelNut"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BetelNut")),
+                BloodSugar = reader.IsDBNull(reader.GetOrdinal("BloodSugar"))
+                    ? null : reader.GetDecimal(reader.GetOrdinal("BloodSugar"))
             };
+
+            // 🍱 三餐資料 JSON 解析
+            try
+            {
+                var breakfastJson = reader.IsDBNull(reader.GetOrdinal("Meals_Breakfast"))
+                    ? null : reader.GetString(reader.GetOrdinal("Meals_Breakfast"));
+                if (!string.IsNullOrEmpty(breakfastJson))
+                    model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(breakfastJson);
+
+                var lunchJson = reader.IsDBNull(reader.GetOrdinal("Meals_Lunch"))
+                    ? null : reader.GetString(reader.GetOrdinal("Meals_Lunch"));
+                if (!string.IsNullOrEmpty(lunchJson))
+                    model.Meals_Lunch = JsonSerializer.Deserialize<MealSelection>(lunchJson);
+
+                var dinnerJson = reader.IsDBNull(reader.GetOrdinal("Meals_Dinner"))
+                    ? null : reader.GetString(reader.GetOrdinal("Meals_Dinner"));
+                if (!string.IsNullOrEmpty(dinnerJson))
+                    model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(dinnerJson);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"解析三餐 JSON 失敗: {ex.Message}");
+            }
+
+            return model;
         }
     }
 
