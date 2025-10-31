@@ -272,14 +272,14 @@ namespace healthProject.Controllers
                    ""FastingGlucoseTarget_Value"", ""HbA1cTarget_Value"", 
                    ""TriglyceridesTarget_Value"", ""HDL_CholesterolTarget_Value"", 
                    ""LDL_CholesterolTarget_Value"", ""Achievement"", ""AssessmentDate""
-            FROM public.""CaseManagements""
+            FROM public.""CaseManagement""
             WHERE (@idNumber IS NULL OR ""IDNumber"" ILIKE '%' || @idNumber || '%')
             ORDER BY ""AssessmentDate"" DESC;
         ";
 
                 await using (var cmd = new NpgsqlCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@idNumber", (object?)idNumber ?? DBNull.Value);
+                    cmd.Parameters.Add("@idNumber", NpgsqlTypes.NpgsqlDbType.Text).Value = (object?)idNumber ?? DBNull.Value;
 
                     await using (var reader = await cmd.ExecuteReaderAsync())
                     {
@@ -334,7 +334,7 @@ namespace healthProject.Controllers
 
                 string sql = @"
             SELECT *
-            FROM public.""CaseManagements""
+            FROM public.""CaseManagement""
             WHERE ""IDNumber"" = @id
             ORDER BY ""AssessmentDate"" DESC
             LIMIT 1;
