@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace healthProject.Models
 {
@@ -10,39 +10,13 @@ namespace healthProject.Models
     // ========================================
     public class MealSelection
     {
-        public string Vegetables { get; set; } // 蔬菜
-        public string Protein { get; set; }    // 蛋白質
-        public string Carbs { get; set; }      // 澱粉
+        public string? Vegetables { get; set; }
+        public string? Protein { get; set; }
+        public string? Carbs { get; set; }
 
         public override string ToString()
         {
-            return $"蔬菜:{Vegetables ?? "未選"}, 蛋白質:{Protein ?? "未選"}, 澱粉:{Carbs ?? "未選"}";
-        }
-    }
-
-    // ========================================
-    // 自訂血壓驗證 Attribute
-    // ========================================
-    public class BloodPressureAttribute : ValidationAttribute
-    {
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
-        {
-            if (value == null || string.IsNullOrWhiteSpace(value.ToString()))
-                return ValidationResult.Success; // 允許空值
-
-            var input = value.ToString();
-            var parts = input.Split('/', StringSplitOptions.RemoveEmptyEntries);
-
-            if (parts.Length != 2)
-                return new ValidationResult("血壓格式錯誤,請輸入如: 120/80");
-
-            if (!decimal.TryParse(parts[0], out var sys) || !decimal.TryParse(parts[1], out var dia))
-                return new ValidationResult("血壓數值必須為數字");
-
-            if (sys < 50 || sys > 250 || dia < 30 || dia > 150)
-                return new ValidationResult("血壓數值超出合理範圍");
-
-            return ValidationResult.Success;
+            return $"蔬菜:{Vegetables}, 蛋白質:{Protein}, 澱粉:{Carbs}";
         }
     }
 
@@ -59,91 +33,86 @@ namespace healthProject.Models
         [Required]
         public DateTime RecordDate { get; set; } = DateTime.Today;
 
-        // 🆕 記錄時間 (用於區分同一天的多筆)
         public TimeSpan? RecordTime { get; set; }
 
-        // ────────────────────────────────────────
-        // 血壓輸入 (前端輸入 120/80 格式)
-        // ────────────────────────────────────────
-        [Display(Name = "第一次第一遍(上午)")]
-        [BloodPressure]
+        // ✅ 只保留這 8 個數字欄位
+        public decimal? BP_First_1_Systolic { get; set; }
+        public decimal? BP_First_1_Diastolic { get; set; }
+        public decimal? BP_First_2_Systolic { get; set; }
+        public decimal? BP_First_2_Diastolic { get; set; }
+        public decimal? BP_Second_1_Systolic { get; set; }
+        public decimal? BP_Second_1_Diastolic { get; set; }
+        public decimal? BP_Second_2_Systolic { get; set; }
+        public decimal? BP_Second_2_Diastolic { get; set; }
+
+        // ✅ 新增驗證方法
+        public List<string> ValidateBloodPressure()
+        {
+            var warnings = new List<string>();
+
+            // 第一次(上午)
+            bool hasFirst1 = BP_First_1_Systolic.HasValue && BP_First_1_Diastolic.HasValue;
+            bool hasFirst2 = BP_First_2_Systolic.HasValue && BP_First_2_Diastolic.HasValue;
+
+            if (hasFirst1 && !hasFirst2)
+            {
+                warnings.Add("⚠️ 上午血壓: 已填第一遍,但未填第二遍");
+            }
+
+            // 第二次(睡前)
+            bool hasSecond1 = BP_Second_1_Systolic.HasValue && BP_Second_1_Diastolic.HasValue;
+            bool hasSecond2 = BP_Second_2_Systolic.HasValue && BP_Second_2_Diastolic.HasValue;
+
+            if (hasSecond1 && !hasSecond2)
+            {
+                warnings.Add("⚠️ 睡前血壓: 已填第一遍,但未填第二遍");
+            }
+
+            return warnings;
+        }
+
+        // ========================================
+        // 🆕 前端輸入用的字串欄位 (格式: "120/80")
+        // ========================================
         public string? BP_First_1_Input { get; set; }
-
-        [Display(Name = "第一次第二遍(上午)")]
-        [BloodPressure]
         public string? BP_First_2_Input { get; set; }
-
-        [Display(Name = "第二次第一遍(睡前)")]
-        [BloodPressure]
         public string? BP_Second_1_Input { get; set; }
-
-        [Display(Name = "第二次第二遍(睡前)")]
-        [BloodPressure]
         public string? BP_Second_2_Input { get; set; }
 
-        // ────────────────────────────────────────
-        // 內部數值 (存入 DB) - 4次量測,每次2個值(收縮壓/舒張壓)
-        // ────────────────────────────────────────
-        public decimal? BP_First_1_Systolic { get; set; }   // 第一次第一遍收縮壓
-        public decimal? BP_First_1_Diastolic { get; set; }  // 第一次第一遍舒張壓
+        
 
-        public decimal? BP_First_2_Systolic { get; set; }   // 第一次第二遍收縮壓
-        public decimal? BP_First_2_Diastolic { get; set; }  // 第一次第二遍舒張壓
 
-        public decimal? BP_Second_1_Systolic { get; set; }  // 第二次第一遍收縮壓
-        public decimal? BP_Second_1_Diastolic { get; set; } // 第二次第一遍舒張壓
-
-        public decimal? BP_Second_2_Systolic { get; set; }  // 第二次第二遍收縮壓
-        public decimal? BP_Second_2_Diastolic { get; set; } // 第二次第二遍舒張壓
-
-        // ────────────────────────────────────────
-        // 解析血壓輸入 (Controller 呼叫)
-        // ────────────────────────────────────────
-        public void ParseBloodPressure()
+        private void ParseBPInput(string input, out decimal? systolic, out decimal? diastolic)
         {
-            ParseOne(BP_First_1_Input, out var s1, out var d1);
-            BP_First_1_Systolic = s1;
-            BP_First_1_Diastolic = d1;
+            systolic = null;
+            diastolic = null;
 
-            ParseOne(BP_First_2_Input, out var s2, out var d2);
-            BP_First_2_Systolic = s2;
-            BP_First_2_Diastolic = d2;
-
-            ParseOne(BP_Second_1_Input, out var s3, out var d3);
-            BP_Second_1_Systolic = s3;
-            BP_Second_1_Diastolic = d3;
-
-            ParseOne(BP_Second_2_Input, out var s4, out var d4);
-            BP_Second_2_Systolic = s4;
-            BP_Second_2_Diastolic = d4;
-        }
-
-        private static void ParseOne(string input, out decimal? sys, out decimal? dia)
-        {
-            sys = dia = null;
             if (string.IsNullOrWhiteSpace(input)) return;
 
-            var parts = input.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length != 2) return;
-
-            if (decimal.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out var s))
-                sys = s;
-            if (decimal.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
-                dia = d;
+            // 正則表達式: 匹配 "120/80" 或 "120 / 80" 格式
+            var match = Regex.Match(input.Trim(), @"^(\d+)\s*/\s*(\d+)$");
+            if (match.Success)
+            {
+                if (decimal.TryParse(match.Groups[1].Value, out decimal sys))
+                    systolic = sys;
+                if (decimal.TryParse(match.Groups[2].Value, out decimal dia))
+                    diastolic = dia;
+            }
         }
 
-        // ────────────────────────────────────────
-        // 顯示用 (計算平均血壓)
-        // ────────────────────────────────────────
+        
+
+        // ========================================
+        // 計算平均血壓 (所有有效測量的平均)
+        // ========================================
         public decimal? AvgSystolicBP
         {
             get
             {
-                var values = new[] { BP_First_1_Systolic, BP_First_2_Systolic,
-                                    BP_Second_1_Systolic, BP_Second_2_Systolic }
-                    .Where(v => v.HasValue)
-                    .Select(v => v.Value)
-                    .ToList();
+                var values = new[] {
+                    BP_First_1_Systolic, BP_First_2_Systolic,
+                    BP_Second_1_Systolic, BP_Second_2_Systolic
+                }.Where(v => v.HasValue).Select(v => v.Value);
 
                 return values.Any() ? values.Average() : null;
             }
@@ -153,32 +122,30 @@ namespace healthProject.Models
         {
             get
             {
-                var values = new[] { BP_First_1_Diastolic, BP_First_2_Diastolic,
-                                    BP_Second_1_Diastolic, BP_Second_2_Diastolic }
-                    .Where(v => v.HasValue)
-                    .Select(v => v.Value)
-                    .ToList();
+                var values = new[] {
+                    BP_First_1_Diastolic, BP_First_2_Diastolic,
+                    BP_Second_1_Diastolic, BP_Second_2_Diastolic
+                }.Where(v => v.HasValue).Select(v => v.Value);
 
                 return values.Any() ? values.Average() : null;
             }
         }
 
         // ========================================
-        // 🆕 三餐 - 移除 Required,改為可選
+        // 三餐 - JSON 格式
         // ========================================
-        public MealSelection Meals_Breakfast { get; set; }
-        public MealSelection Meals_Lunch { get; set; }
-        public MealSelection Meals_Dinner { get; set; }
+        public MealSelection? Meals_Breakfast { get; set; }
+        public MealSelection? Meals_Lunch { get; set; }
+        public MealSelection? Meals_Dinner { get; set; }
 
-        // 用於前端顯示的完整三餐描述
         public string MealsDisplay
         {
             get
             {
                 var meals = new List<string>();
-                if (Meals_Breakfast != null) meals.Add($"早餐: {Meals_Breakfast}");
-                if (Meals_Lunch != null) meals.Add($"午餐: {Meals_Lunch}");
-                if (Meals_Dinner != null) meals.Add($"晚餐: {Meals_Dinner}");
+                if (Meals_Breakfast != null) meals.Add($"早: {Meals_Breakfast}");
+                if (Meals_Lunch != null) meals.Add($"午: {Meals_Lunch}");
+                if (Meals_Dinner != null) meals.Add($"晚: {Meals_Dinner}");
                 return meals.Any() ? string.Join(" | ", meals) : "未記錄";
             }
         }
@@ -221,6 +188,4 @@ namespace healthProject.Models
         public const int BP_DIASTOLIC_STANDARD = 80;
         public const int BLOOD_SUGAR_STANDARD = 99;
     }
-
-    
 }

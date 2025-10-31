@@ -334,7 +334,8 @@
             const response = await fetch('@Url.Action("SearchPatientRecords", "DailyHealth")', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': '@Html.AntiForgeryToken()'
                 },
                 body: JSON.stringify({ idNumber: idNumber })
             });
@@ -378,15 +379,31 @@
             const date = new Date(group.date);
             const dateStr = `${date.getFullYear()}年${String(date.getMonth() + 1).padStart(2, '0')}月${String(date.getDate()).padStart(2, '0')}日`;
 
-            // 計算當日統計
+            // 🆕 計算當日統計 - 使用新的血壓欄位
             const totalWater = records.reduce((sum, r) => sum + (r.waterIntake || 0), 0);
             const totalExercise = records.reduce((sum, r) => sum + (r.exerciseDuration || 0), 0);
-            const bpReadings = records.flatMap(r => [r.bp_First_1, r.bp_First_2, r.bp_Second_1, r.bp_Second_2].filter(v => v != null));
-            const avgBP = bpReadings.length > 0 ? Math.round(bpReadings.reduce((a, b) => a + b, 0) / bpReadings.length) : null;
+            
+            // 收集所有血壓數值
+            const systolicReadings = records.flatMap(r => [
+                r.bp_First_1_Systolic, r.bp_First_2_Systolic, 
+                r.bp_Second_1_Systolic, r.bp_Second_2_Systolic
+            ].filter(v => v != null));
+            const diastolicReadings = records.flatMap(r => [
+                r.bp_First_1_Diastolic, r.bp_First_2_Diastolic,
+                r.bp_Second_1_Diastolic, r.bp_Second_2_Diastolic
+            ].filter(v => v != null));
+            
+            const avgSystolic = systolicReadings.length > 0 
+                ? Math.round(systolicReadings.reduce((a, b) => a + b, 0) / systolicReadings.length) 
+                : null;
+            const avgDiastolic = diastolicReadings.length > 0 
+                ? Math.round(diastolicReadings.reduce((a, b) => a + b, 0) / diastolicReadings.length) 
+                : null;
 
-            let summaryItems = `<span>📝 共 ${records.length} 筆記錄</span>`;
-            if (totalWater > 0) summaryItems += `<span>💧 ${totalWater} ml</span>`;
-            if (totalExercise > 0) summaryItems += `<span>🏃 ${totalExercise} 分鐘</span>`;
+            let summaryItems = `<span class="summary-item">📝 共 ${records.length} 筆記錄</span>`;
+            if (totalWater > 0) summaryItems += `<span class="summary-item">💧 ${totalWater} ml</span>`;
+            if (totalExercise > 0) summaryItems += `<span class="summary-item">🏃 ${totalExercise} 分鐘</span>`;
+            if (avgSystolic && avgDiastolic) summaryItems += `<span class="summary-item">❤️ ${avgSystolic}/${avgDiastolic} mmHg</span>`;
 
             // 各筆記錄
             const recordItems = records.map(record => {
@@ -394,61 +411,94 @@
                 
                 let dataItems = '';
 
-                // 血壓 - 4個欄位
-                if (record.bp_First_1 || record.bp_First_2 || record.bp_Second_1 || record.bp_Second_2) {
-                    const avgSys = [record.bp_First_1, record.bp_Second_1].filter(v => v).reduce((a, b) => a + b, 0) / [record.bp_First_1, record.bp_Second_1].filter(v => v).length || 0;
-                    const avgDia = [record.bp_First_2, record.bp_Second_2].filter(v => v).reduce((a, b) => a + b, 0) / [record.bp_First_2, record.bp_Second_2].filter(v => v).length || 0;
+                // 🆕 血壓 - 4個測量 (8個欄位)
+                if (record.bp_First_1_Systolic || record.bp_First_1_Diastolic || 
+                    record.bp_First_2_Systolic || record.bp_First_2_Diastolic ||
+                    record.bp_Second_1_Systolic || record.bp_Second_1_Diastolic ||
+                    record.bp_Second_2_Systolic || record.bp_Second_2_Diastolic) {
+                    
+                    // 計算平均
+                    const sysValues = [record.bp_First_1_Systolic, record.bp_First_2_Systolic, 
+                                      record.bp_Second_1_Systolic, record.bp_Second_2_Systolic].filter(v => v);
+                    const diaValues = [record.bp_First_1_Diastolic, record.bp_First_2_Diastolic,
+                                      record.bp_Second_1_Diastolic, record.bp_Second_2_Diastolic].filter(v => v);
+                    const avgSys = sysValues.length > 0 ? Math.round(sysValues.reduce((a, b) => a + b, 0) / sysValues.length) : null;
+                    const avgDia = diaValues.length > 0 ? Math.round(diaValues.reduce((a, b) => a + b, 0) / diaValues.length) : null;
                     
                     dataItems += `
                         <div class="data-item" style="grid-column: 1 / -1;">
                             <div class="data-label">❤️ 血壓測量</div>
-                            <div class="data-value" style="font-size: 0.95rem;">
-                                第一次: ${record.bp_First_1 || '?'}/${record.bp_First_2 || '?'} mmHg &nbsp;|&nbsp; 
-                                第二次: ${record.bp_Second_1 || '?'}/${record.bp_Second_2 || '?'} mmHg
-                                ${avgSys && avgDia ? `<br><span style="color: #0891b2;">平均: ${Math.round(avgSys)}/${Math.round(avgDia)} mmHg</span>` : ''}
-                            </div>
-                        </div>`;
+                            <div class="data-value" style="line-height: 1.8;">`;
+                    
+                    if (record.bp_First_1_Systolic && record.bp_First_1_Diastolic) {
+                        dataItems += `第一次第一遍: ${Math.round(record.bp_First_1_Systolic)}/${Math.round(record.bp_First_1_Diastolic)} mmHg<br>`;
+                    }
+                    if (record.bp_First_2_Systolic && record.bp_First_2_Diastolic) {
+                        dataItems += `第一次第二遍: ${Math.round(record.bp_First_2_Systolic)}/${Math.round(record.bp_First_2_Diastolic)} mmHg<br>`;
+                    }
+                    if (record.bp_Second_1_Systolic && record.bp_Second_1_Diastolic) {
+                        dataItems += `第二次第一遍: ${Math.round(record.bp_Second_1_Systolic)}/${Math.round(record.bp_Second_1_Diastolic)} mmHg<br>`;
+                    }
+                    if (record.bp_Second_2_Systolic && record.bp_Second_2_Diastolic) {
+                        dataItems += `第二次第二遍: ${Math.round(record.bp_Second_2_Systolic)}/${Math.round(record.bp_Second_2_Diastolic)} mmHg<br>`;
+                    }
+                    if (avgSys && avgDia) {
+                        dataItems += `<span style="color: #0891b2; font-weight: 600;">平均: ${avgSys}/${avgDia} mmHg</span>`;
+                    }
+                    dataItems += `</div></div>`;
                 }
 
-                // 三餐
-                if (record.meals_Breakfast) {
-                    const meal = typeof record.meals_Breakfast === 'string' ? JSON.parse(record.meals_Breakfast) : record.meals_Breakfast;
-                    dataItems += `
-                        <div class="data-item">
-                            <div class="data-label">🌅 早餐</div>
-                            <div class="data-value" style="font-size: 0.85rem;">
-                                ${meal.Vegetables ? `🥬 ${meal.Vegetables}` : ''}
-                                ${meal.Protein ? `<br>🥩 ${meal.Protein}` : ''}
-                                ${meal.Carbs ? `<br>🍚 ${meal.Carbs}` : ''}
-                            </div>
-                        </div>`;
-                }
+                // 三餐 - 加強解析邏輯
+                function parseMeal(mealData) {
+    if (!mealData) return null;
+    if (typeof mealData === "object") return mealData;
+    try {
+        return JSON.parse(mealData);
+    } catch {
+        return null;
+    }
+}
 
-                if (record.meals_Lunch) {
-                    const meal = typeof record.meals_Lunch === 'string' ? JSON.parse(record.meals_Lunch) : record.meals_Lunch;
-                    dataItems += `
-                        <div class="data-item">
-                            <div class="data-label">☀️ 午餐</div>
-                            <div class="data-value" style="font-size: 0.85rem;">
-                                ${meal.Vegetables ? `🥬 ${meal.Vegetables}` : ''}
-                                ${meal.Protein ? `<br>🥩 ${meal.Protein}` : ''}
-                                ${meal.Carbs ? `<br>🍚 ${meal.Carbs}` : ''}
-                            </div>
-                        </div>`;
-                }
+const breakfast = parseMeal(record.meals_Breakfast || record.Meals_Breakfast);
+if (breakfast && (breakfast.vegetables || breakfast.protein || breakfast.carbs)) {
+    dataItems += `
+        <div class="data-item">
+            <div class="data-label">🌅 早餐</div>
+            <div class="data-value meal-lines">
+                ${breakfast.vegetables ? `🥬 蔬菜：${breakfast.vegetables}<br>` : ""}
+                ${breakfast.protein ? `🥩 蛋白質：${breakfast.protein}<br>` : ""}
+                ${breakfast.carbs ? `🍚 澱粉：${breakfast.carbs}` : ""}
+            </div>
+        </div>`;
+}
 
-                if (record.meals_Dinner) {
-                    const meal = typeof record.meals_Dinner === 'string' ? JSON.parse(record.meals_Dinner) : record.meals_Dinner;
-                    dataItems += `
-                        <div class="data-item">
-                            <div class="data-label">🌙 晚餐</div>
-                            <div class="data-value" style="font-size: 0.85rem;">
-                                ${meal.Vegetables ? `🥬 ${meal.Vegetables}` : ''}
-                                ${meal.Protein ? `<br>🥩 ${meal.Protein}` : ''}
-                                ${meal.Carbs ? `<br>🍚 ${meal.Carbs}` : ''}
-                            </div>
-                        </div>`;
-                }
+const lunch = parseMeal(record.meals_Lunch || record.Meals_Lunch);
+if (lunch && (lunch.vegetables || lunch.protein || lunch.carbs)) {
+    dataItems += `
+        <div class="data-item">
+            <div class="data-label">☀️ 午餐</div>
+            <div class="data-value meal-lines">
+                ${lunch.vegetables ? `🥬 蔬菜：${lunch.vegetables}<br>` : ""}
+                ${lunch.protein ? `🥩 蛋白質：${lunch.protein}<br>` : ""}
+                ${lunch.carbs ? `🍚 澱粉：${lunch.carbs}` : ""}
+            </div>
+        </div>`;
+}
+
+const dinner = parseMeal(record.meals_Dinner || record.Meals_Dinner);
+if (dinner && (dinner.vegetables || dinner.protein || dinner.carbs)) {
+    dataItems += `
+        <div class="data-item">
+            <div class="data-label">🌙 晚餐</div>
+            <div class="data-value meal-lines">
+                ${dinner.vegetables ? `🥬 蔬菜：${dinner.vegetables}<br>` : ""}
+                ${dinner.protein ? `🥩 蛋白質：${dinner.protein}<br>` : ""}
+                ${dinner.carbs ? `🍚 澱粉：${dinner.carbs}` : ""}
+            </div>
+        </div>`;
+}
+
+
 
                 if (record.exerciseType || record.exerciseDuration) {
                     dataItems += `
@@ -462,7 +512,7 @@
                     dataItems += `
                         <div class="data-item">
                             <div class="data-label">💧 水分攝取</div>
-                            <div class="data-value">${record.waterIntake.toFixed(0)} ml</div>
+                            <div class="data-value">${Math.round(record.waterIntake)} ml</div>
                         </div>`;
                 }
 
@@ -478,7 +528,7 @@
                     dataItems += `
                         <div class="data-item">
                             <div class="data-label">🚬 抽菸</div>
-                            <div class="data-value">${record.cigarettes.toFixed(0)} 支</div>
+                            <div class="data-value">${Math.round(record.cigarettes)} 支</div>
                         </div>`;
                 }
 
@@ -486,7 +536,7 @@
                     dataItems += `
                         <div class="data-item">
                             <div class="data-label">🌿 檳榔</div>
-                            <div class="data-value">${record.betelNut.toFixed(0)} 次</div>
+                            <div class="data-value">${Math.round(record.betelNut)} 次</div>
                         </div>`;
                 }
 
@@ -507,33 +557,88 @@
                     </div>`;
             }).join('');
 
-            // 當日統計
-            let dailySummary = '';
-            if (records.length > 1) {
-                dailySummary = `
-                    <div class="daily-summary">
-                        <div class="daily-summary-title">📊 今日統計</div>
-                        <div class="data-grid">
-                            ${totalWater > 0 ? `<div class="data-item"><div class="data-label">💧 總水分</div><div class="data-value">${totalWater} ml</div></div>` : ''}
-                            ${totalExercise > 0 ? `<div class="data-item"><div class="data-label">🏃 總運動</div><div class="data-value">${totalExercise} 分鐘</div></div>` : ''}
-                        </div>
-                    </div>`;
-            }
+            // 🆕 當日統計
+            // 🆕 當日統計
+let dailySummary = '';
+if (records.length > 1) {
+    // 統計數值類別
+    const totalWater = records.reduce((sum, r) => sum + (r.waterIntake || 0), 0);
+    const totalExercise = records.reduce((sum, r) => sum + (r.exerciseDuration || 0), 0);
+    const totalCigs = records.reduce((sum, r) => sum + (r.cigarettes || 0), 0);
+    const totalBetel = records.reduce((sum, r) => sum + (r.betelNut || 0), 0);
+    const bsValues = records.map(r => r.bloodSugar).filter(v => v);
+    const avgBS = bsValues.length > 0 ? bsValues.reduce((a, b) => a + b, 0) / bsValues.length : null;
 
-            return `
-                <div class="date-group">
-                    <div class="date-header">
-                        <div class="date-title">📅 ${dateStr}</div>
-                        <div class="date-summary">${summaryItems}</div>
-                    </div>
-                    <div class="record-items">
-                        ${recordItems}
-                        ${dailySummary}
-                    </div>
-                </div>`;
+    // 平均血壓
+    const systolicValues = records.flatMap(r => [
+        r.bp_First_1_Systolic, r.bp_First_2_Systolic,
+        r.bp_Second_1_Systolic, r.bp_Second_2_Systolic
+    ].filter(v => v));
+    const diastolicValues = records.flatMap(r => [
+        r.bp_First_1_Diastolic, r.bp_First_2_Diastolic,
+        r.bp_Second_1_Diastolic, r.bp_Second_2_Diastolic
+    ].filter(v => v));
+    const avgSystolic = systolicValues.length > 0 ? (systolicValues.reduce((a, b) => a + b, 0) / systolicValues.length).toFixed(0) : null;
+    const avgDiastolic = diastolicValues.length > 0 ? (diastolicValues.reduce((a, b) => a + b, 0) / diastolicValues.length).toFixed(0) : null;
+
+    // 🥗 三餐總攝取統計
+    let totalVeg = 0, totalProtein = 0, totalCarbs = 0;
+
+    const parseMeal = meal => {
+        if (!meal) return null;
+        if (typeof meal === "string") {
+            try { return JSON.parse(meal); } catch { return null; }
+        }
+        return meal;
+    };
+
+    records.forEach(r => {
+        const meals = [r.meals_Breakfast, r.meals_Lunch, r.meals_Dinner];
+        meals.forEach(m => {
+            const meal = parseMeal(m);
+            if (meal) {
+                totalVeg += parseFloat(meal.vegetables) || 0;
+                totalProtein += parseFloat(meal.protein) || 0;
+                totalCarbs += parseFloat(meal.carbs) || 0;
+            }
+        });
+    });
+
+    dailySummary = `
+        <div class="daily-summary">
+            <div class="daily-summary-title">📊 今日統計</div>
+            <div class="data-grid">
+                ${totalWater > 0 ? `<div class="data-item"><div class="data-label">💧 總水分</div><div class="data-value">${totalWater} ml</div></div>` : ''}
+                ${totalExercise > 0 ? `<div class="data-item"><div class="data-label">🏃 總運動</div><div class="data-value">${totalExercise} 分鐘</div></div>` : ''}
+                ${avgSystolic && avgDiastolic ? `<div class="data-item"><div class="data-label">❤️ 平均血壓</div><div class="data-value">${avgSystolic}/${avgDiastolic} mmHg</div></div>` : ''}
+                ${avgBS ? `<div class="data-item"><div class="data-label">🩸 平均血糖</div><div class="data-value">${avgBS.toFixed(1)} mg/dL</div></div>` : ''}
+                ${totalCigs > 0 ? `<div class="data-item"><div class="data-label">🚬 總抽菸量</div><div class="data-value">${totalCigs} 支</div></div>` : ''}
+                ${totalBetel > 0 ? `<div class="data-item"><div class="data-label">🌿 總檳榔量</div><div class="data-value">${totalBetel} 次</div></div>` : ''}
+                ${(totalVeg + totalProtein + totalCarbs) > 0 ? `
+                    <div class="data-item"><div class="data-label">🥬 總蔬菜份</div><div class="data-value">${totalVeg.toFixed(1)}</div></div>
+                    <div class="data-item"><div class="data-label">🥩 總蛋白質份</div><div class="data-value">${totalProtein.toFixed(1)}</div></div>
+                    <div class="data-item"><div class="data-label">🍚 總澱粉份</div><div class="data-value">${totalCarbs.toFixed(1)}</div></div>
+                ` : ''}
+            </div>
+        </div>`;
+}
+
+return `
+    <div class="date-group">
+        <div class="date-header">
+            <div class="date-title">📅 ${dateStr}</div>
+            <div class="date-summary">${summaryItems}</div>
+        </div>
+        <div class="record-items">
+            ${recordItems}
+            ${dailySummary}
+        </div>
+    </div>`;
+
         }).join('');
     }
 
+    // Enter 鍵搜尋
     document.getElementById('searchIdNumber')?.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();

@@ -235,35 +235,164 @@
             </div>
         }
 
-        <!-- 🆕 血壓 - 4 個 "120/80" 格式輸入框 -->
+        <!-- 🆕 血壓 - 8 個獨立數字輸入框 (收縮壓/舒張壓分開) -->
         <div class="form-section">
             <div class="section-title">
                 <span>❤️</span>
                 <span>血壓測量 (mmHg)</span>
             </div>
-            <div class="bp-grid">
-                <div class="bp-item">
-                    <label class="bp-label">第一次第一遍</label>
-                    <input asp-for="BP_First_1_Input" type="text" class="form-control" placeholder="例：120/80" />
-                    <span asp-validation-for="BP_First_1_Input" class="text-danger"></span>
-                </div>
-                <div class="bp-item">
-                    <label class="bp-label">第一次第二遍</label>
-                    <input asp-for="BP_First_2_Input" type="text" class="form-control" placeholder="例：118/78" />
-                    <span asp-validation-for="BP_First_2_Input" class="text-danger"></span>
-                </div>
-                <div class="bp-item">
-                    <label class="bp-label">第二次第一遍</label>
-                    <input asp-for="BP_Second_1_Input" type="text" class="form-control" placeholder="例：115/75" />
-                    <span asp-validation-for="BP_Second_1_Input" class="text-danger"></span>
-                </div>
-                <div class="bp-item">
-                    <label class="bp-label">第二次第二遍</label>
-                    <input asp-for="BP_Second_2_Input" type="text" class="form-control" placeholder="例：117/77" />
-                    <span asp-validation-for="BP_Second_2_Input" class="text-danger"></span>
+
+            <!-- 測量說明 -->
+            <div style="background: #E3F2FD; border-left: 4px solid #1976D2; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <strong style="color: #1565C0;">📍 測量時間說明:</strong>
+                <div style="margin-top: 0.5rem; color: #1976D2; font-size: 0.9rem;">
+                    • <strong>上午</strong>: 起床後 1 小時內,早餐前<br>
+                    • <strong>睡前</strong>: 睡覺前 1 小時內<br>
+                    • 每次測量間隔 1-2 分鐘,取兩遍的平均值
                 </div>
             </div>
-            <div class="input-hint">請輸入格式如 "120/80"。建議測量兩次取平均值。正常值：收縮壓 < 120、舒張壓 < 80</div>
+
+            <!-- 第一次 (上午) -->
+            <div style="background: linear-gradient(135deg, #FFF9C4 0%, #FFF59D 100%); padding: 1.5rem; border-radius: 15px; margin-bottom: 1.5rem; border: 2px solid #FBC02D;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    <span style="font-size: 1.5rem;">🌅</span>
+                    <h4 style="margin: 0; color: #F57C00; font-weight: 700;">第一次 (上午)</h4>
+                </div>
+
+                <!-- 第一遍 -->
+                <div style="background: rgba(255, 255, 255, 0.7); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; border: 2px solid #FFB300;">
+                    <div style="font-weight: 600; color: #E65100; margin-bottom: 0.75rem; font-size: 1.05rem;">
+                        📍 第一遍 <span style="color: #D84315;">*</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                        <div>
+                            <label style="display: block; font-weight: 500; color: #E65100; margin-bottom: 0.5rem;">
+                                收縮壓 (上壓)
+                            </label>
+                            <input asp-for="BP_First_1_Systolic" type="number" class="form-control"
+                                   placeholder="例: 120" min="50" max="250" step="1"
+                                   style="padding: 0.75rem; border: 2px solid #FFB300; border-radius: 10px; font-size: 1.1rem; text-align: center;" />
+                            <span asp-validation-for="BP_First_1_Systolic" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; color: #E65100; margin-bottom: 0.5rem;">
+                                舒張壓 (下壓)
+                            </label>
+                            <input asp-for="BP_First_1_Diastolic" type="number" class="form-control"
+                                   placeholder="例: 80" min="30" max="150" step="1"
+                                   style="padding: 0.75rem; border: 2px solid #FFB300; border-radius: 10px; font-size: 1.1rem; text-align: center;" />
+                            <span asp-validation-for="BP_First_1_Diastolic" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第二遍 -->
+                <div style="background: rgba(255, 255, 255, 0.7); padding: 1rem; border-radius: 10px; border: 2px solid #FFD54F;">
+                    <div style="font-weight: 600; color: #E65100; margin-bottom: 0.75rem; font-size: 1.05rem;">
+                        📍 第二遍
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                        <div>
+                            <label style="display: block; font-weight: 500; color: #E65100; margin-bottom: 0.5rem;">
+                                收縮壓 (上壓)
+                            </label>
+                            <input asp-for="BP_First_2_Systolic" type="number" class="form-control"
+                                   placeholder="例: 118" min="50" max="250" step="1"
+                                   style="padding: 0.75rem; border: 2px solid #FFD54F; border-radius: 10px; font-size: 1.1rem; text-align: center;" />
+                            <span asp-validation-for="BP_First_2_Systolic" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; color: #E65100; margin-bottom: 0.5rem;">
+                                舒張壓 (下壓)
+                            </label>
+                            <input asp-for="BP_First_2_Diastolic" type="number" class="form-control"
+                                   placeholder="例: 78" min="30" max="150" step="1"
+                                   style="padding: 0.75rem; border: 2px solid #FFD54F; border-radius: 10px; font-size: 1.1rem; text-align: center;" />
+                            <span asp-validation-for="BP_First_2_Diastolic" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; font-size: 0.85rem; color: #E65100;">
+                    💡若填第一遍，請記得填第二遍
+                </div>
+            </div>
+
+            <!-- 第二次 (睡前) -->
+            <div style="background: linear-gradient(135deg, #E1BEE7 0%, #CE93D8 100%); padding: 1.5rem; border-radius: 15px; margin-bottom: 1rem; border: 2px solid #9C27B0;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    <span style="font-size: 1.5rem;">🌙</span>
+                    <h4 style="margin: 0; color: #6A1B9A; font-weight: 700;">第二次 (睡前)</h4>
+                </div>
+
+                <!-- 第一遍 -->
+                <div style="background: rgba(255, 255, 255, 0.7); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; border: 2px solid #AB47BC;">
+                    <div style="font-weight: 600; color: #4A148C; margin-bottom: 0.75rem; font-size: 1.05rem;">
+                        📍 第一遍
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                        <div>
+                            <label style="display: block; font-weight: 500; color: #4A148C; margin-bottom: 0.5rem;">
+                                收縮壓 (上壓)
+                            </label>
+                            <input asp-for="BP_Second_1_Systolic" type="number" class="form-control"
+                                   placeholder="例: 115" min="50" max="250" step="1"
+                                   style="padding: 0.75rem; border: 2px solid #AB47BC; border-radius: 10px; font-size: 1.1rem; text-align: center;" />
+                            <span asp-validation-for="BP_Second_1_Systolic" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; color: #4A148C; margin-bottom: 0.5rem;">
+                                舒張壓 (下壓)
+                            </label>
+                            <input asp-for="BP_Second_1_Diastolic" type="number" class="form-control"
+                                   placeholder="例: 75" min="30" max="150" step="1"
+                                   style="padding: 0.75rem; border: 2px solid #AB47BC; border-radius: 10px; font-size: 1.1rem; text-align: center;" />
+                            <span asp-validation-for="BP_Second_1_Diastolic" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第二遍 -->
+                <div style="background: rgba(255, 255, 255, 0.7); padding: 1rem; border-radius: 10px; border: 2px solid #CE93D8;">
+                    <div style="font-weight: 600; color: #4A148C; margin-bottom: 0.75rem; font-size: 1.05rem;">
+                        📍 第二遍
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                        <div>
+                            <label style="display: block; font-weight: 500; color: #4A148C; margin-bottom: 0.5rem;">
+                                收縮壓 (上壓)
+                            </label>
+                            <input asp-for="BP_Second_2_Systolic" type="number" class="form-control"
+                                   placeholder="例: 117" min="50" max="250" step="1"
+                                   style="padding: 0.75rem; border: 2px solid #CE93D8; border-radius: 10px; font-size: 1.1rem; text-align: center;" />
+                            <span asp-validation-for="BP_Second_2_Systolic" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 500; color: #4A148C; margin-bottom: 0.5rem;">
+                                舒張壓 (下壓)
+                            </label>
+                            <input asp-for="BP_Second_2_Diastolic" type="number" class="form-control"
+                                   placeholder="例: 77" min="30" max="150" step="1"
+                                   style="padding: 0.75rem; border: 2px solid #CE93D8; border-radius: 10px; font-size: 1.1rem; text-align: center;" />
+                            <span asp-validation-for="BP_Second_2_Diastolic" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; font-size: 0.85rem; color: #4A148C;">
+                    💡 若填第一遍，請記得填第二遍
+                </div>
+            </div>
+
+            <!-- 總說明 -->
+            <div class="input-hint" style="background: #F3E5F5; padding: 1rem; border-radius: 10px; border-left: 4px solid #9C27B0;">
+                <strong style="color: #6A1B9A;">📋 血壓標準值:</strong>
+                <ul style="margin: 0.5rem 0 0 1.5rem; color: #4A148C;">
+                    <li>正常血壓: 收縮壓 &lt; 120 mmHg、舒張壓 &lt; 80 mmHg</li>
+                    <li>高血壓前期: 收縮壓 120-139 mmHg 或 舒張壓 80-89 mmHg</li>
+                    <li>高血壓: 收縮壓 ≥ 140 mmHg 或 舒張壓 ≥ 90 mmHg</li>
+                </ul>
+            </div>
         </div>
 
         <!-- 🆕 三餐選擇 - 數字選項 -->
@@ -506,9 +635,9 @@
         selects.forEach(select => {
             const otherId = select.id + '-other';
             const otherInput = document.getElementById(otherId);
-            
+
             if (otherInput) {
-                select.addEventListener('change', function() {
+                select.addEventListener('change', function () {
                     if (this.value === '其他') {
                         otherInput.style.display = 'block';
                     } else {
@@ -526,7 +655,7 @@
         const breakfastVeg = document.getElementById('breakfast-veg').value;
         const breakfastProtein = document.getElementById('breakfast-protein').value;
         const breakfastCarbs = document.getElementById('breakfast-carbs').value;
-        
+
         if (breakfastVeg || breakfastProtein || breakfastCarbs) {
             const breakfast = {
                 Vegetables: breakfastVeg === '其他' ? document.getElementById('breakfast-veg-other').value : breakfastVeg,
@@ -540,7 +669,7 @@
         const lunchVeg = document.getElementById('lunch-veg').value;
         const lunchProtein = document.getElementById('lunch-protein').value;
         const lunchCarbs = document.getElementById('lunch-carbs').value;
-        
+
         if (lunchVeg || lunchProtein || lunchCarbs) {
             const lunch = {
                 Vegetables: lunchVeg === '其他' ? document.getElementById('lunch-veg-other').value : lunchVeg,
@@ -554,7 +683,7 @@
         const dinnerVeg = document.getElementById('dinner-veg').value;
         const dinnerProtein = document.getElementById('dinner-protein').value;
         const dinnerCarbs = document.getElementById('dinner-carbs').value;
-        
+
         if (dinnerVeg || dinnerProtein || dinnerCarbs) {
             const dinner = {
                 Vegetables: dinnerVeg === '其他' ? document.getElementById('dinner-veg-other').value : dinnerVeg,
@@ -568,40 +697,66 @@
     }
 
     // 頁面載入時初始化
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         setupOtherInputs();
-        
-        // 如果是編輯模式,恢復選項
-        @if (Model.Meals_Breakfast != null)
-        {
-            <text>
-            const breakfast = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Breakfast));
-            if (breakfast.Vegetables) document.getElementById('breakfast-veg').value = breakfast.Vegetables;
-            if (breakfast.Protein) document.getElementById('breakfast-protein').value = breakfast.Protein;
-            if (breakfast.Carbs) document.getElementById('breakfast-carbs').value = breakfast.Carbs;
-            </text>
-        }
-        
-        @if (Model.Meals_Lunch != null)
-        {
-            <text>
-            const lunch = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Lunch));
-            if (lunch.Vegetables) document.getElementById('lunch-veg').value = lunch.Vegetables;
-            if (lunch.Protein) document.getElementById('lunch-protein').value = lunch.Protein;
-            if (lunch.Carbs) document.getElementById('lunch-carbs').value = lunch.Carbs;
-            </text>
-        }
-        
-        @if (Model.Meals_Dinner != null)
-        {
-            <text>
-            const dinner = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Dinner));
-            if (dinner.Vegetables) document.getElementById('dinner-veg').value = dinner.Vegetables;
-            if (dinner.Protein) document.getElementById('dinner-protein').value = dinner.Protein;
-            if (dinner.Carbs) document.getElementById('dinner-carbs').value = dinner.Carbs;
-            </text>
-        }
-    });
+
+        // ✅ 如果是編輯模式,恢復血壓輸入值
+    @if (Model.BP_First_1_Systolic.HasValue && Model.BP_First_1_Diastolic.HasValue)
+    {
+        <text>
+                    document.getElementById('BP_First_1_Input').value = '@Model.BP_First_1_Systolic/@Model.BP_First_1_Diastolic';
+        </text>
+    }
+    @if (Model.BP_First_2_Systolic.HasValue && Model.BP_First_2_Diastolic.HasValue)
+    {
+        <text>
+                    document.getElementById('BP_First_2_Input').value = '@Model.BP_First_2_Systolic/@Model.BP_First_2_Diastolic';
+        </text>
+    }
+    @if (Model.BP_Second_1_Systolic.HasValue && Model.BP_Second_1_Diastolic.HasValue)
+    {
+        <text>
+                    document.getElementById('BP_Second_1_Input').value = '@Model.BP_Second_1_Systolic/@Model.BP_Second_1_Diastolic';
+        </text>
+    }
+    @if (Model.BP_Second_2_Systolic.HasValue && Model.BP_Second_2_Diastolic.HasValue)
+    {
+        <text>
+                    document.getElementById('BP_Second_2_Input').value = '@Model.BP_Second_2_Systolic/@Model.BP_Second_2_Diastolic';
+        </text>
+    }
+
+            // 如果是編輯模式,恢復三餐選項
+    @if (Model.Meals_Breakfast != null)
+    {
+        <text>
+                    const breakfast = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Breakfast));
+                    if (breakfast.Vegetables) document.getElementById('breakfast-veg').value = breakfast.Vegetables;
+                    if (breakfast.Protein) document.getElementById('breakfast-protein').value = breakfast.Protein;
+                    if (breakfast.Carbs) document.getElementById('breakfast-carbs').value = breakfast.Carbs;
+        </text>
+    }
+
+    @if (Model.Meals_Lunch != null)
+    {
+        <text>
+                    const lunch = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Lunch));
+                    if (lunch.Vegetables) document.getElementById('lunch-veg').value = lunch.Vegetables;
+                    if (lunch.Protein) document.getElementById('lunch-protein').value = lunch.Protein;
+                    if (lunch.Carbs) document.getElementById('lunch-carbs').value = lunch.Carbs;
+        </text>
+    }
+
+    @if (Model.Meals_Dinner != null)
+    {
+        <text>
+                    const dinner = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Dinner));
+                    if (dinner.Vegetables) document.getElementById('dinner-veg').value = dinner.Vegetables;
+                    if (dinner.Protein) document.getElementById('dinner-protein').value = dinner.Protein;
+                    if (dinner.Carbs) document.getElementById('dinner-carbs').value = dinner.Carbs;
+        </text>
+    }
+        });
 </script>
 
 @section Scripts {

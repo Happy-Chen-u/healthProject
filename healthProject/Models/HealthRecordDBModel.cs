@@ -10,15 +10,17 @@ namespace healthProject.Models
         public DateTime RecordDate { get; set; }
         public TimeSpan? RecordTime { get; set; }
 
-        // 🆕 血壓 - 8個欄位 (4次測量,每次2個值)
-        public decimal? BP_First_1_Systolic { get; set; }    // 第一次第一遍收縮壓
-        public decimal? BP_First_1_Diastolic { get; set; }   // 第一次第一遍舒張壓
-        public decimal? BP_First_2_Systolic { get; set; }    // 第一次第二遍收縮壓
-        public decimal? BP_First_2_Diastolic { get; set; }   // 第一次第二遍舒張壓
-        public decimal? BP_Second_1_Systolic { get; set; }   // 第二次第一遍收縮壓
-        public decimal? BP_Second_1_Diastolic { get; set; }  // 第二次第一遍舒張壓
-        public decimal? BP_Second_2_Systolic { get; set; }   // 第二次第二遍收縮壓
-        public decimal? BP_Second_2_Diastolic { get; set; }  // 第二次第二遍舒張壓
+        
+        // ✅ 血壓 - 8個欄位
+        public decimal? BP_First_1_Systolic { get; set; }
+        public decimal? BP_First_1_Diastolic { get; set; }
+        public decimal? BP_First_2_Systolic { get; set; }
+        public decimal? BP_First_2_Diastolic { get; set; }
+        public decimal? BP_Second_1_Systolic { get; set; }
+        public decimal? BP_Second_1_Diastolic { get; set; }
+        public decimal? BP_Second_2_Systolic { get; set; }
+        public decimal? BP_Second_2_Diastolic { get; set; }
+
 
         // 三餐 (JSON 字串)
         public string? Meals_Breakfast { get; set; }

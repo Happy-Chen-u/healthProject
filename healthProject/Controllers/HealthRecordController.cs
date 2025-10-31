@@ -62,10 +62,16 @@ namespace healthProject.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(HealthRecordViewModel model,
-            string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
+    string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
         {
-            // 🆕 解析血壓輸入
-            model.ParseBloodPressure();
+
+
+            // ✅ 驗證血壓完整性
+            var bpWarnings = model.ValidateBloodPressure();
+            if (bpWarnings.Any())
+            {
+                TempData["BPWarnings"] = string.Join("\n", bpWarnings);
+            }
 
             // 🆕 手動處理三餐 JSON
             if (!string.IsNullOrEmpty(Meals_Breakfast))
@@ -75,10 +81,14 @@ namespace healthProject.Controllers
             if (!string.IsNullOrEmpty(Meals_Dinner))
                 model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(Meals_Dinner);
 
-            // 移除三餐的驗證錯誤 (因為是選填)
+            // 移除不需要驗證的欄位
             ModelState.Remove("Meals_Breakfast");
             ModelState.Remove("Meals_Lunch");
             ModelState.Remove("Meals_Dinner");
+            ModelState.Remove("BP_First_1_Input");
+            ModelState.Remove("BP_First_2_Input");
+            ModelState.Remove("BP_Second_1_Input");
+            ModelState.Remove("BP_Second_2_Input");
 
             if (!ModelState.IsValid)
             {
@@ -195,9 +205,22 @@ namespace healthProject.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(HealthRecordViewModel model)
+        public async Task<IActionResult> Edit(HealthRecordViewModel model,
+            string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)  // ⚠️ 加入三餐參數
         {
-            if (!ModelState.IsValid)
+            // 🆕 處理三餐 JSON 反序列化
+            if (!string.IsNullOrEmpty(Meals_Breakfast))
+                model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(Meals_Breakfast);
+            if (!string.IsNullOrEmpty(Meals_Lunch))
+                model.Meals_Lunch = JsonSerializer.Deserialize<MealSelection>(Meals_Lunch);
+            if (!string.IsNullOrEmpty(Meals_Dinner))
+                model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(Meals_Dinner);
+
+            // ⚠️ 清除 ModelState（因為我們手動處理了三餐）
+            ModelState.Clear();
+
+            // 重新驗證（如果需要）
+            if (!TryValidateModel(model))
             {
                 return View("Create", model);
             }
@@ -261,6 +284,7 @@ namespace healthProject.Controllers
         // ========================================
         // 🔍 管理員搜尋病患紀錄
         // ========================================
+
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> SearchPatientRecords([FromBody] SearchRequest request)
@@ -275,13 +299,48 @@ namespace healthProject.Controllers
 
                 var records = await GetUserRecordsAsync(patient.Id);
 
-                // 分組顯示
+                // 確保三餐欄位是物件 (不是已序列化的字串)
+                object ToMealObject(MealSelection m) =>
+                    m == null ? null : new
+                    {
+                        Vegetables = string.IsNullOrWhiteSpace(m.Vegetables) ? null : m.Vegetables,
+                        Protein = string.IsNullOrWhiteSpace(m.Protein) ? null : m.Protein,
+                        Carbs = string.IsNullOrWhiteSpace(m.Carbs) ? null : m.Carbs
+                    };
+
                 var groupedRecords = records
                     .GroupBy(r => r.RecordDate.Date)
                     .Select(g => new
                     {
                         date = g.Key.ToString("yyyy-MM-dd"),
-                        records = g.OrderBy(r => r.RecordTime).ToList()
+                        records = g.OrderBy(r => r.RecordTime).Select(r => new
+                        {
+                            recordTime = r.RecordTime?.ToString(@"hh\:mm"),
+
+                            // 血壓 (維持原樣)
+                            bp_First_1_Systolic = r.BP_First_1_Systolic,
+                            bp_First_1_Diastolic = r.BP_First_1_Diastolic,
+                            bp_First_2_Systolic = r.BP_First_2_Systolic,
+                            bp_First_2_Diastolic = r.BP_First_2_Diastolic,
+                            bp_Second_1_Systolic = r.BP_Second_1_Systolic,
+                            bp_Second_1_Diastolic = r.BP_Second_1_Diastolic,
+                            bp_Second_2_Systolic = r.BP_Second_2_Systolic,
+                            bp_Second_2_Diastolic = r.BP_Second_2_Diastolic,
+
+                            // 三餐 - 明確轉成物件 (避免字串包 JSON 的情況)
+                            meals_Breakfast = ToMealObject(r.Meals_Breakfast),
+                            meals_Lunch = ToMealObject(r.Meals_Lunch),
+                            meals_Dinner = ToMealObject(r.Meals_Dinner),
+
+                            // 其他欄位
+                            exerciseType = r.ExerciseType,
+                            exerciseDuration = r.ExerciseDuration,
+                            waterIntake = r.WaterIntake,
+                            beverage = r.Beverage,
+                            cigarettes = r.Cigarettes,
+                            betelNut = r.BetelNut,
+                            bloodSugar = r.BloodSugar
+                        }).ToList()
                     })
                     .OrderByDescending(g => g.date)
                     .ToList();
@@ -304,10 +363,12 @@ namespace healthProject.Controllers
             }
         }
 
-       // ========================================
-      // 🧠 資料庫操作 - 新增
-      // ========================================
-    private async Task SaveRecordAsync(HealthRecordViewModel model)
+
+
+        // ========================================
+        // 🧠 資料庫操作 - 新增
+        // ========================================
+        private async Task SaveRecordAsync(HealthRecordViewModel model)
         {
             var connStr = _configuration.GetConnectionString("DefaultConnection");
             await using var conn = new NpgsqlConnection(connStr);
