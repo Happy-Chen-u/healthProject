@@ -246,9 +246,16 @@ namespace healthProject.Controllers
             }
         }
 
-        
 
-        
+        // ========================================
+        // 📋 查看個案目標值是否達標（ViewGoals）
+        // ========================================
+
+        public IActionResult ViewGoals()
+        {
+            return View();
+        }
+
 
 
 

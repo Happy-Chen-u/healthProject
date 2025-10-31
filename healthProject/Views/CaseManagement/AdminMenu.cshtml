@@ -77,22 +77,22 @@
 
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(4, 1fr); /* 固定四欄 */
+            gap: 1.5rem;
             margin-bottom: 2rem;
         }
 
         .menu-card {
             background: linear-gradient(135deg, #FFECB3 0%, #FFE082 100%);
-            border: 3px solid #FFB74D;
-            border-radius: 20px;
-            padding: 2.5rem 2rem;
+            border: 2px solid #FFB74D;
+            border-radius: 15px;
+            padding: 1.5rem 1rem; /* 按鈕縮小 */
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
             color: #E65100;
-            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.2);
+            box-shadow: 0 4px 10px rgba(255, 152, 0, 0.2);
         }
 
         .menu-card:hover {
@@ -104,19 +104,19 @@
         }
 
         .menu-icon {
-            font-size: 4rem;
+            font-size: 2.5rem;
             margin-bottom: 1rem;
         }
 
         .menu-title {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
             margin-bottom: 0.75rem;
             color: #E65100;
         }
 
         .menu-description {
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: #F57C00;
             line-height: 1.5;
         }
@@ -211,6 +211,16 @@
                     <p class="menu-description">
                         搜尋或查看<br>
                         所有個案管理紀錄
+                    </p>
+                </a>
+
+                <!-- 查看個案目標值 -->
+                <a href="@Url.Action("ViewGoals", "CaseManagement")" class="menu-card">
+                    <div class="menu-icon">🎯</div>
+                    <h3 class="menu-title">查看個案目標值</h3>
+                    <p class="menu-description">
+                        可查看個案是否達成<br>
+                        每次評估設定的目標值
                     </p>
                 </a>
             </div>
