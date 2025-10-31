@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Npgsql;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
@@ -248,13 +249,128 @@ namespace healthProject.Controllers
 
 
         // ========================================
-        // 📋 查看個案目標值是否達標（ViewGoals）
+        // 📋 查看個案目標值是否達標（ViewTargets/ViewDetails）
         // ========================================
 
-        public IActionResult ViewGoals()
+        // 查看所有個案目標值狀態
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<IActionResult> ViewTargets(string idNumber = null)
         {
-            return View();
+            var connStr = _configuration.GetConnectionString("DefaultConnection")
+                + ";SSL Mode=Require;Trust Server Certificate=True;";
+
+            var list = new List<TargetSummaryViewModel>();
+
+            await using (var conn = new NpgsqlConnection(connStr))
+            {
+                await conn.OpenAsync();
+
+                string sql = @"
+            SELECT ""Name"", ""IDNumber"",
+                   ""WaistTarget_Value"", ""WeightTarget_Value"", 
+                   ""FastingGlucoseTarget_Value"", ""HbA1cTarget_Value"", 
+                   ""TriglyceridesTarget_Value"", ""HDL_CholesterolTarget_Value"", 
+                   ""LDL_CholesterolTarget_Value"", ""Achievement"", ""AssessmentDate""
+            FROM public.""CaseManagements""
+            WHERE (@idNumber IS NULL OR ""IDNumber"" ILIKE '%' || @idNumber || '%')
+            ORDER BY ""AssessmentDate"" DESC;
+        ";
+
+                await using (var cmd = new NpgsqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@idNumber", (object?)idNumber ?? DBNull.Value);
+
+                    await using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        var grouped = new Dictionary<string, (string Name, int Achieved, int Total)>();
+
+                        while (await reader.ReadAsync())
+                        {
+                            var id = reader["IDNumber"].ToString();
+                            var name = reader["Name"].ToString();
+                            bool achieved = Convert.ToBoolean(reader["Achievement"]);
+
+                            int total = 7; // 七項指標
+                            int achievedCount = achieved ? 7 : 0; // 目前假設 Achievement = true 表示全部達成
+
+                            if (!grouped.ContainsKey(id))
+                                grouped[id] = (name, achievedCount, total);
+                        }
+
+                        foreach (var g in grouped)
+                        {
+                            list.Add(new TargetSummaryViewModel
+                            {
+                                Name = g.Value.Name,
+                                IDNumber = g.Key,
+                                AchievedCount = g.Value.Achieved,
+                                UnachievedCount = g.Value.Total - g.Value.Achieved
+                            });
+                        }
+                    }
+                }
+            }
+
+            ViewBag.SearchIdNumber = idNumber;
+            return View(list);
         }
+
+
+        // 顯示某位個案的詳細目標達成狀況
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<IActionResult> TargetDetails(string idNumber)
+        {
+            if (string.IsNullOrEmpty(idNumber))
+                return BadRequest("缺少身分證字號參數");
+
+            var connStr = _configuration.GetConnectionString("DefaultConnection")
+                + ";SSL Mode=Require;Trust Server Certificate=True;";
+
+            await using (var conn = new NpgsqlConnection(connStr))
+            {
+                await conn.OpenAsync();
+
+                string sql = @"
+            SELECT *
+            FROM public.""CaseManagements""
+            WHERE ""IDNumber"" = @id
+            ORDER BY ""AssessmentDate"" DESC
+            LIMIT 1;
+        ";
+
+                await using (var cmd = new NpgsqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", idNumber);
+
+                    await using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            var record = new CaseManagementViewModel
+                            {
+                                Name = reader["Name"].ToString(),
+                                IDNumber = reader["IDNumber"].ToString(),
+                                WaistTarget_Value = reader["WaistTarget_Value"] as decimal?,
+                                WeightTarget_Value = reader["WeightTarget_Value"] as decimal?,
+                                FastingGlucoseTarget_Value = reader["FastingGlucoseTarget_Value"] as decimal?,
+                                HbA1cTarget_Value = reader["HbA1cTarget_Value"] as decimal?,
+                                TriglyceridesTarget_Value = reader["TriglyceridesTarget_Value"] as decimal?,
+                                HDL_CholesterolTarget_Value = reader["HDL_CholesterolTarget_Value"] as decimal?,
+                                LDL_CholesterolTarget_Value = reader["LDL_CholesterolTarget_Value"] as decimal?,
+                                Achievement = Convert.ToBoolean(reader["Achievement"])
+                            };
+
+                            return View(record);
+                        }
+                    }
+                }
+            }
+
+            return NotFound("找不到該個案的紀錄");
+        }
+
 
 
 
@@ -457,8 +573,8 @@ namespace healthProject.Controllers
                ""AnnualAssessment"", ""AnnualAssessment_Date"",
                ""SystolicBP"", ""SystolicBP_Value"", ""DiastolicBP"", ""DiastolicBP_Value"",
                ""BloodPressureGuidance722"",
-               ""CurrentWaist"", ""CurrentWaist_Value"", ""FastingGlucose"", ""FastingGlucose_Value"",
-               ""HDL"", ""HDL_Value"", ""Triglycerides"", ""Triglycerides_Value"",
+               ""CurrentWaist"", ""CurrentWaist_Value"", ""FastingGlucose"", ""FastingGlucose_Value"", ""HbA1c"", ""HbA1c_Value"",
+               ""HDL"", ""HDL_Value"", ""LDL"", ""LDL_Value"", ""Triglycerides"", ""Triglycerides_Value"",
                ""ExerciseNone"", ""ExerciseUsually"", ""ExerciseAlways"",
                ""SmokingNone"", ""SmokingUsually"", ""SmokingUnder10"", ""SmokingOver10"",
                ""BetelNutNone"", ""BetelNutUsually"", ""BetelNutAlways"",
@@ -519,124 +635,128 @@ namespace healthProject.Controllers
                     DiastolicBP_Value = reader.IsDBNull(17) ? null : reader.GetDecimal(17),
                     BloodPressureGuidance722 = reader.GetBoolean(18),
 
-                    // 腰圍/血糖/脂質 (索引 19-26)
+                    // 腰圍/血糖/脂質 (索引 19-30)
                     CurrentWaist = reader.GetBoolean(19),
                     CurrentWaist_Value = reader.IsDBNull(20) ? null : reader.GetDecimal(20),
                     FastingGlucose = reader.GetBoolean(21),
                     FastingGlucose_Value = reader.IsDBNull(22) ? null : reader.GetDecimal(22),
-                    HDL = reader.GetBoolean(23),
-                    HDL_Value = reader.IsDBNull(24) ? null : reader.GetDecimal(24),
-                    Triglycerides = reader.GetBoolean(25),
-                    Triglycerides_Value = reader.IsDBNull(26) ? null : reader.GetDecimal(26),
+                    HbA1c = reader.GetBoolean(23),
+                    HbA1c_Value = reader.IsDBNull(24) ? null : reader.GetDecimal(24),
+                    HDL = reader.GetBoolean(25),
+                    HDL_Value = reader.IsDBNull(26) ? null : reader.GetDecimal(26),
+                    LDL = reader.GetBoolean(27),
+                    LDL_Value = reader.IsDBNull(28) ? null : reader.GetDecimal(28),
+                    Triglycerides = reader.GetBoolean(29),
+                    Triglycerides_Value = reader.IsDBNull(30) ? null : reader.GetDecimal(30),
 
-                    // 生活型態 - 運動 (索引 27-29)
-                    ExerciseNone = reader.GetBoolean(27),
-                    ExerciseUsually = reader.GetBoolean(28),
-                    ExerciseAlways = reader.GetBoolean(29),
+                    // 生活型態 - 運動 (索引 31-33)
+                    ExerciseNone = reader.GetBoolean(31),
+                    ExerciseUsually = reader.GetBoolean(32),
+                    ExerciseAlways = reader.GetBoolean(33),
 
-                    // 生活型態 - 抽菸 (索引 30-33)
-                    SmokingNone = reader.GetBoolean(30),
-                    SmokingUsually = reader.GetBoolean(31),
-                    SmokingUnder10 = reader.GetBoolean(32),
-                    SmokingOver10 = reader.GetBoolean(33),
+                    // 生活型態 - 抽菸 (索引 34-37)
+                    SmokingNone = reader.GetBoolean(34),
+                    SmokingUsually = reader.GetBoolean(35),
+                    SmokingUnder10 = reader.GetBoolean(36),
+                    SmokingOver10 = reader.GetBoolean(37),
 
-                    // 生活型態 - 檳榔 (索引 34-36)
-                    BetelNutNone = reader.GetBoolean(34),
-                    BetelNutUsually = reader.GetBoolean(35),
-                    BetelNutAlways = reader.GetBoolean(36),
+                    // 生活型態 - 檳榔 (索引 38-40)
+                    BetelNutNone = reader.GetBoolean(38),
+                    BetelNutUsually = reader.GetBoolean(39),
+                    BetelNutAlways = reader.GetBoolean(40),
 
-                    // 疾病風險評估 - 冠心病 (索引 37-40)
-                    CoronaryHigh = reader.GetBoolean(37),
-                    CoronaryMedium = reader.GetBoolean(38),
-                    CoronaryLow = reader.GetBoolean(39),
-                    CoronaryNotApplicable = reader.GetBoolean(40),
+                    // 疾病風險評估 - 冠心病 (索引 41-44)
+                    CoronaryHigh = reader.GetBoolean(41),
+                    CoronaryMedium = reader.GetBoolean(42),
+                    CoronaryLow = reader.GetBoolean(43),
+                    CoronaryNotApplicable = reader.GetBoolean(44),
 
-                    // 疾病風險評估 - 糖尿病 (索引 41-44)
-                    DiabetesHigh = reader.GetBoolean(41),
-                    DiabetesMedium = reader.GetBoolean(42),
-                    DiabetesLow = reader.GetBoolean(43),
-                    DiabetesNotApplicabe = reader.GetBoolean(44),
+                    // 疾病風險評估 - 糖尿病 (索引 45-48)
+                    DiabetesHigh = reader.GetBoolean(45),
+                    DiabetesMedium = reader.GetBoolean(46),
+                    DiabetesLow = reader.GetBoolean(47),
+                    DiabetesNotApplicabe = reader.GetBoolean(48),
 
-                    // 疾病風險評估 - 高血壓 (索引 45-48)
-                    HypertensionHigh = reader.GetBoolean(45),
-                    HypertensionMedium = reader.GetBoolean(46),
-                    HypertensionLow = reader.GetBoolean(47),
-                    HypertensionNotApplicable = reader.GetBoolean(48),
+                    // 疾病風險評估 - 高血壓 (索引 49-52)
+                    HypertensionHigh = reader.GetBoolean(49),
+                    HypertensionMedium = reader.GetBoolean(50),
+                    HypertensionLow = reader.GetBoolean(51),
+                    HypertensionNotApplicable = reader.GetBoolean(52),
 
-                    // 疾病風險評估 - 腦中風 (索引 49-52)
-                    StrokeHigh = reader.GetBoolean(49),
-                    StrokeMedium = reader.GetBoolean(50),
-                    StrokeLow = reader.GetBoolean(51),
-                    StrokeNotApplicable = reader.GetBoolean(52),
+                    // 疾病風險評估 - 腦中風 (索引 53-56)
+                    StrokeHigh = reader.GetBoolean(53),
+                    StrokeMedium = reader.GetBoolean(54),
+                    StrokeLow = reader.GetBoolean(55),
+                    StrokeNotApplicable = reader.GetBoolean(56),
 
-                    // 疾病風險評估 - 心血管 (索引 53-56)
-                    CardiovascularHigh = reader.GetBoolean(53),
-                    CardiovascularMedium = reader.GetBoolean(54),
-                    CardiovascularLow = reader.GetBoolean(55),
-                    CardiovascularNotApplicable = reader.GetBoolean(56),
+                    // 疾病風險評估 - 心血管 (索引 57-60)
+                    CardiovascularHigh = reader.GetBoolean(57),
+                    CardiovascularMedium = reader.GetBoolean(58),
+                    CardiovascularLow = reader.GetBoolean(59),
+                    CardiovascularNotApplicable = reader.GetBoolean(60),
 
-                    // 戒菸服務 (索引 57-61)
-                    SmokingService = reader.GetBoolean(57),
-                    SmokingServiceType1 = reader.GetBoolean(58),
-                    SmokingServiceType2 = reader.GetBoolean(59),
-                    SmokingServiceType2_Provide = reader.GetBoolean(60),
-                    SmokingServiceType2_Referral = reader.GetBoolean(61),
+                    // 戒菸服務 (索引 61-65)
+                    SmokingService = reader.GetBoolean(61),
+                    SmokingServiceType1 = reader.GetBoolean(62),
+                    SmokingServiceType2 = reader.GetBoolean(63),
+                    SmokingServiceType2_Provide = reader.GetBoolean(64),
+                    SmokingServiceType2_Referral = reader.GetBoolean(65),
 
-                    // 戒檳服務 (索引 62-66)
-                    BetelNutService = reader.GetBoolean(62),
-                    BetelQuitGoal = reader.GetBoolean(63),
-                    BetelQuitYear = reader.IsDBNull(64) ? null : reader.GetInt32(64),
-                    BetelQuitMonth = reader.IsDBNull(65) ? null : reader.GetInt32(65),
-                    BetelQuitDay = reader.IsDBNull(66) ? null : reader.GetInt32(66),
+                    // 戒檳服務 (索引 66-70)
+                    BetelNutService = reader.GetBoolean(66),
+                    BetelQuitGoal = reader.GetBoolean(67),
+                    BetelQuitYear = reader.IsDBNull(68) ? null : reader.GetInt32(68),
+                    BetelQuitMonth = reader.IsDBNull(69) ? null : reader.GetInt32(69),
+                    BetelQuitDay = reader.IsDBNull(70) ? null : reader.GetInt32(70),
 
-                    // 口腔檢查 (索引 67-69)
-                    OralExam = reader.GetBoolean(67),
-                    OralExamYear = reader.IsDBNull(68) ? null : reader.GetInt32(68),
-                    OralExamMonth = reader.IsDBNull(69) ? null : reader.GetInt32(69),
+                    // 口腔檢查 (索引 71-73)
+                    OralExam = reader.GetBoolean(71),
+                    OralExamYear = reader.IsDBNull(72) ? null : reader.GetInt32(72),
+                    OralExamMonth = reader.IsDBNull(73) ? null : reader.GetInt32(73),
 
-                    // 飲食管理 - 每日建議攝取熱量 (索引 70-76)
-                    DietManagement = reader.GetBoolean(70),
-                    DailyCalories1200 = reader.GetBoolean(71),
-                    DailyCalories1500 = reader.GetBoolean(72),
-                    DailyCalories1800 = reader.GetBoolean(73),
-                    DailyCalories2000 = reader.GetBoolean(74),
-                    DailyCaloriesOther = reader.GetBoolean(75),
-                    DailyCaloriesOtherValue = reader.IsDBNull(76) ? null : reader.GetString(76),
+                    // 飲食管理 - 每日建議攝取熱量 (索引 74-80)
+                    DietManagement = reader.GetBoolean(74),
+                    DailyCalories1200 = reader.GetBoolean(75),
+                    DailyCalories1500 = reader.GetBoolean(76),
+                    DailyCalories1800 = reader.GetBoolean(77),
+                    DailyCalories2000 = reader.GetBoolean(78),
+                    DailyCaloriesOther = reader.GetBoolean(79),
+                    DailyCaloriesOtherValue = reader.IsDBNull(80) ? null : reader.GetString(80),
 
-                    // 飲食管理 - 盡量減少 (索引 77-82)
-                    ReduceFriedFood = reader.GetBoolean(77),
-                    ReduceSweetFood = reader.GetBoolean(78),
-                    ReduceSalt = reader.GetBoolean(79),
-                    ReduceSugaryDrinks = reader.GetBoolean(80),
-                    ReduceOther = reader.GetBoolean(81),
-                    ReduceOtherValue = reader.IsDBNull(82) ? null : reader.GetString(82),
+                    // 飲食管理 - 盡量減少 (索引 81-86)
+                    ReduceFriedFood = reader.GetBoolean(81),
+                    ReduceSweetFood = reader.GetBoolean(82),
+                    ReduceSalt = reader.GetBoolean(83),
+                    ReduceSugaryDrinks = reader.GetBoolean(84),
+                    ReduceOther = reader.GetBoolean(85),
+                    ReduceOtherValue = reader.IsDBNull(86) ? null : reader.GetString(86),
 
-                    // 運動建議與資源 (索引 83-86)
-                    ExerciseRecommendation = reader.GetBoolean(83),
-                    ExerciseGuidance = reader.GetBoolean(84),
-                    SocialExerciseResources = reader.GetBoolean(85),
-                    SocialExerciseResources_Text = reader.IsDBNull(86) ? null : reader.GetString(86),
+                    // 運動建議與資源 (索引 87-90)
+                    ExerciseRecommendation = reader.GetBoolean(87),
+                    ExerciseGuidance = reader.GetBoolean(88),
+                    SocialExerciseResources = reader.GetBoolean(89),
+                    SocialExerciseResources_Text = reader.IsDBNull(90) ? null : reader.GetString(90),
 
-                    // 目標設定 (索引 87-89)
-                    Achievement = reader.GetBoolean(87),
-                    WaistTarget_Value = reader.IsDBNull(88) ? null : reader.GetDecimal(88),
-                    WeightTarget_Value = reader.IsDBNull(89) ? null : reader.GetDecimal(89),
+                    // 目標設定 (索引 91-93)
+                    Achievement = reader.GetBoolean(91),
+                    WaistTarget_Value = reader.IsDBNull(92) ? null : reader.GetDecimal(92),
+                    WeightTarget_Value = reader.IsDBNull(93) ? null : reader.GetDecimal(93),
 
-                    // 其他叮嚀/目標值 (索引 90-100)
-                    OtherReminders = reader.GetBoolean(90),
-                    FastingGlucoseTarget = reader.GetBoolean(91),
-                    FastingGlucoseTarget_Value = reader.IsDBNull(92) ? null : reader.GetDecimal(92),
-                    HbA1cTarget = reader.GetBoolean(93),
-                    HbA1cTarget_Value = reader.IsDBNull(94) ? null : reader.GetDecimal(94),
-                    TriglyceridesTarget = reader.GetBoolean(95),
-                    TriglyceridesTarget_Value = reader.IsDBNull(96) ? null : reader.GetDecimal(96),
-                    HDL_CholesterolTarget = reader.GetBoolean(97),
-                    HDL_CholesterolTarget_Value = reader.IsDBNull(98) ? null : reader.GetDecimal(98),
-                    LDL_CholesterolTarget = reader.GetBoolean(99),
-                    LDL_CholesterolTarget_Value = reader.IsDBNull(100) ? null : reader.GetDecimal(100),
+                    // 其他叮嚀/目標值 (索引 94-104)
+                    OtherReminders = reader.GetBoolean(94),
+                    FastingGlucoseTarget = reader.GetBoolean(95),
+                    FastingGlucoseTarget_Value = reader.IsDBNull(96) ? null : reader.GetDecimal(96),
+                    HbA1cTarget = reader.GetBoolean(97),
+                    HbA1cTarget_Value = reader.IsDBNull(98) ? null : reader.GetDecimal(98),
+                    TriglyceridesTarget = reader.GetBoolean(99),
+                    TriglyceridesTarget_Value = reader.IsDBNull(100) ? null : reader.GetDecimal(100),
+                    HDL_CholesterolTarget = reader.GetBoolean(101),
+                    HDL_CholesterolTarget_Value = reader.IsDBNull(102) ? null : reader.GetDecimal(102),
+                    LDL_CholesterolTarget = reader.GetBoolean(103),
+                    LDL_CholesterolTarget_Value = reader.IsDBNull(104) ? null : reader.GetDecimal(104),
 
-                    // 備註 (索引 101)
-                    Notes = reader.IsDBNull(101) ? null : reader.GetString(101)
+                    // 備註 (索引 105)
+                    Notes = reader.IsDBNull(105) ? null : reader.GetString(105)
                 });
             }
 
@@ -659,8 +779,8 @@ namespace healthProject.Controllers
                ""AnnualAssessment"", ""AnnualAssessment_Date"",
                ""SystolicBP"", ""SystolicBP_Value"", ""DiastolicBP"", ""DiastolicBP_Value"",
                ""BloodPressureGuidance722"",
-               ""CurrentWaist"", ""CurrentWaist_Value"", ""FastingGlucose"", ""FastingGlucose_Value"",
-               ""HDL"", ""HDL_Value"", ""Triglycerides"", ""Triglycerides_Value"",
+               ""CurrentWaist"", ""CurrentWaist_Value"", ""FastingGlucose"", ""FastingGlucose_Value"", ""HbA1c"", ""HbA1c_Value"",
+               ""HDL"", ""HDL_Value"", ""LDL"", ""LDL_Value"", ""Triglycerides"", ""Triglycerides_Value"",
                ""ExerciseNone"", ""ExerciseUsually"", ""ExerciseAlways"",
                ""SmokingNone"", ""SmokingUsually"", ""SmokingUnder10"", ""SmokingOver10"",
                ""BetelNutNone"", ""BetelNutUsually"", ""BetelNutAlways"",
@@ -723,124 +843,128 @@ namespace healthProject.Controllers
                     DiastolicBP_Value = reader.IsDBNull(17) ? null : reader.GetDecimal(17),
                     BloodPressureGuidance722 = reader.GetBoolean(18),
 
-                    // 腰圍/血糖/脂質 (索引 19-26)
+                    // 腰圍/血糖/脂質 (索引 19-30)
                     CurrentWaist = reader.GetBoolean(19),
                     CurrentWaist_Value = reader.IsDBNull(20) ? null : reader.GetDecimal(20),
                     FastingGlucose = reader.GetBoolean(21),
                     FastingGlucose_Value = reader.IsDBNull(22) ? null : reader.GetDecimal(22),
-                    HDL = reader.GetBoolean(23),
-                    HDL_Value = reader.IsDBNull(24) ? null : reader.GetDecimal(24),
-                    Triglycerides = reader.GetBoolean(25),
-                    Triglycerides_Value = reader.IsDBNull(26) ? null : reader.GetDecimal(26),
+                    HbA1c = reader.GetBoolean(23),
+                    HbA1c_Value = reader.IsDBNull(24) ? null : reader.GetDecimal(24),
+                    HDL = reader.GetBoolean(25),
+                    HDL_Value = reader.IsDBNull(26) ? null : reader.GetDecimal(26),
+                    LDL = reader.GetBoolean(27),
+                    LDL_Value = reader.IsDBNull(28) ? null : reader.GetDecimal(28),
+                    Triglycerides = reader.GetBoolean(29),
+                    Triglycerides_Value = reader.IsDBNull(30) ? null : reader.GetDecimal(30),
 
-                    // 生活型態 - 運動 (索引 27-29)
-                    ExerciseNone = reader.GetBoolean(27),
-                    ExerciseUsually = reader.GetBoolean(28),
-                    ExerciseAlways = reader.GetBoolean(29),
+                    // 生活型態 - 運動 (索引 31-33)
+                    ExerciseNone = reader.GetBoolean(31),
+                    ExerciseUsually = reader.GetBoolean(32),
+                    ExerciseAlways = reader.GetBoolean(33),
 
-                    // 生活型態 - 抽菸 (索引 30-33)
-                    SmokingNone = reader.GetBoolean(30),
-                    SmokingUsually = reader.GetBoolean(31),
-                    SmokingUnder10 = reader.GetBoolean(32),
-                    SmokingOver10 = reader.GetBoolean(33),
+                    // 生活型態 - 抽菸 (索引 34-37)
+                    SmokingNone = reader.GetBoolean(34),
+                    SmokingUsually = reader.GetBoolean(35),
+                    SmokingUnder10 = reader.GetBoolean(36),
+                    SmokingOver10 = reader.GetBoolean(37),
 
-                    // 生活型態 - 檳榔 (索引 34-36)
-                    BetelNutNone = reader.GetBoolean(34),
-                    BetelNutUsually = reader.GetBoolean(35),
-                    BetelNutAlways = reader.GetBoolean(36),
+                    // 生活型態 - 檳榔 (索引 38-40)
+                    BetelNutNone = reader.GetBoolean(38),
+                    BetelNutUsually = reader.GetBoolean(39),
+                    BetelNutAlways = reader.GetBoolean(40),
 
-                    // 疾病風險評估 - 冠心病 (索引 37-40)
-                    CoronaryHigh = reader.GetBoolean(37),
-                    CoronaryMedium = reader.GetBoolean(38),
-                    CoronaryLow = reader.GetBoolean(39),
-                    CoronaryNotApplicable = reader.GetBoolean(40),
+                    // 疾病風險評估 - 冠心病 (索引 41-44)
+                    CoronaryHigh = reader.GetBoolean(41),
+                    CoronaryMedium = reader.GetBoolean(42),
+                    CoronaryLow = reader.GetBoolean(43),
+                    CoronaryNotApplicable = reader.GetBoolean(44),
 
-                    // 疾病風險評估 - 糖尿病 (索引 41-44)
-                    DiabetesHigh = reader.GetBoolean(41),
-                    DiabetesMedium = reader.GetBoolean(42),
-                    DiabetesLow = reader.GetBoolean(43),
-                    DiabetesNotApplicabe = reader.GetBoolean(44),
+                    // 疾病風險評估 - 糖尿病 (索引 45-48)
+                    DiabetesHigh = reader.GetBoolean(45),
+                    DiabetesMedium = reader.GetBoolean(46),
+                    DiabetesLow = reader.GetBoolean(47),
+                    DiabetesNotApplicabe = reader.GetBoolean(48),
 
-                    // 疾病風險評估 - 高血壓 (索引 45-48)
-                    HypertensionHigh = reader.GetBoolean(45),
-                    HypertensionMedium = reader.GetBoolean(46),
-                    HypertensionLow = reader.GetBoolean(47),
-                    HypertensionNotApplicable = reader.GetBoolean(48),
+                    // 疾病風險評估 - 高血壓 (索引 49-52)
+                    HypertensionHigh = reader.GetBoolean(49),
+                    HypertensionMedium = reader.GetBoolean(50),
+                    HypertensionLow = reader.GetBoolean(51),
+                    HypertensionNotApplicable = reader.GetBoolean(52),
 
-                    // 疾病風險評估 - 腦中風 (索引 49-52)
-                    StrokeHigh = reader.GetBoolean(49),
-                    StrokeMedium = reader.GetBoolean(50),
-                    StrokeLow = reader.GetBoolean(51),
-                    StrokeNotApplicable = reader.GetBoolean(52),
+                    // 疾病風險評估 - 腦中風 (索引 53-56)
+                    StrokeHigh = reader.GetBoolean(53),
+                    StrokeMedium = reader.GetBoolean(54),
+                    StrokeLow = reader.GetBoolean(55),
+                    StrokeNotApplicable = reader.GetBoolean(56),
 
-                    // 疾病風險評估 - 心血管 (索引 53-56)
-                    CardiovascularHigh = reader.GetBoolean(53),
-                    CardiovascularMedium = reader.GetBoolean(54),
-                    CardiovascularLow = reader.GetBoolean(55),
-                    CardiovascularNotApplicable = reader.GetBoolean(56),
+                    // 疾病風險評估 - 心血管 (索引 57-60)
+                    CardiovascularHigh = reader.GetBoolean(57),
+                    CardiovascularMedium = reader.GetBoolean(58),
+                    CardiovascularLow = reader.GetBoolean(59),
+                    CardiovascularNotApplicable = reader.GetBoolean(60),
 
-                    // 戒菸服務 (索引 57-61)
-                    SmokingService = reader.GetBoolean(57),
-                    SmokingServiceType1 = reader.GetBoolean(58),
-                    SmokingServiceType2 = reader.GetBoolean(59),
-                    SmokingServiceType2_Provide = reader.GetBoolean(60),
-                    SmokingServiceType2_Referral = reader.GetBoolean(61),
+                    // 戒菸服務 (索引 61-65)
+                    SmokingService = reader.GetBoolean(61),
+                    SmokingServiceType1 = reader.GetBoolean(62),
+                    SmokingServiceType2 = reader.GetBoolean(63),
+                    SmokingServiceType2_Provide = reader.GetBoolean(64),
+                    SmokingServiceType2_Referral = reader.GetBoolean(65),
 
-                    // 戒檳服務 (索引 62-66)
-                    BetelNutService = reader.GetBoolean(62),
-                    BetelQuitGoal = reader.GetBoolean(63),
-                    BetelQuitYear = reader.IsDBNull(64) ? null : reader.GetInt32(64),
-                    BetelQuitMonth = reader.IsDBNull(65) ? null : reader.GetInt32(65),
-                    BetelQuitDay = reader.IsDBNull(66) ? null : reader.GetInt32(66),
+                    // 戒檳服務 (索引 66-70)
+                    BetelNutService = reader.GetBoolean(66),
+                    BetelQuitGoal = reader.GetBoolean(67),
+                    BetelQuitYear = reader.IsDBNull(68) ? null : reader.GetInt32(68),
+                    BetelQuitMonth = reader.IsDBNull(69) ? null : reader.GetInt32(69),
+                    BetelQuitDay = reader.IsDBNull(70) ? null : reader.GetInt32(70),
 
-                    // 口腔檢查 (索引 67-69)
-                    OralExam = reader.GetBoolean(67),
-                    OralExamYear = reader.IsDBNull(68) ? null : reader.GetInt32(68),
-                    OralExamMonth = reader.IsDBNull(69) ? null : reader.GetInt32(69),
+                    // 口腔檢查 (索引 71-73)
+                    OralExam = reader.GetBoolean(71),
+                    OralExamYear = reader.IsDBNull(72) ? null : reader.GetInt32(72),
+                    OralExamMonth = reader.IsDBNull(73) ? null : reader.GetInt32(73),
 
-                    // 飲食管理 - 每日建議攝取熱量 (索引 70-76)
-                    DietManagement = reader.GetBoolean(70),
-                    DailyCalories1200 = reader.GetBoolean(71),
-                    DailyCalories1500 = reader.GetBoolean(72),
-                    DailyCalories1800 = reader.GetBoolean(73),
-                    DailyCalories2000 = reader.GetBoolean(74),
-                    DailyCaloriesOther = reader.GetBoolean(75),
-                    DailyCaloriesOtherValue = reader.IsDBNull(76) ? null : reader.GetString(76),
+                    // 飲食管理 - 每日建議攝取熱量 (索引 74-80)
+                    DietManagement = reader.GetBoolean(74),
+                    DailyCalories1200 = reader.GetBoolean(75),
+                    DailyCalories1500 = reader.GetBoolean(76),
+                    DailyCalories1800 = reader.GetBoolean(77),
+                    DailyCalories2000 = reader.GetBoolean(78),
+                    DailyCaloriesOther = reader.GetBoolean(79),
+                    DailyCaloriesOtherValue = reader.IsDBNull(80) ? null : reader.GetString(80),
 
-                    // 飲食管理 - 盡量減少 (索引 77-82)
-                    ReduceFriedFood = reader.GetBoolean(77),
-                    ReduceSweetFood = reader.GetBoolean(78),
-                    ReduceSalt = reader.GetBoolean(79),
-                    ReduceSugaryDrinks = reader.GetBoolean(80),
-                    ReduceOther = reader.GetBoolean(81),
-                    ReduceOtherValue = reader.IsDBNull(82) ? null : reader.GetString(82),
+                    // 飲食管理 - 盡量減少 (索引 81-86)
+                    ReduceFriedFood = reader.GetBoolean(81),
+                    ReduceSweetFood = reader.GetBoolean(82),
+                    ReduceSalt = reader.GetBoolean(83),
+                    ReduceSugaryDrinks = reader.GetBoolean(84),
+                    ReduceOther = reader.GetBoolean(85),
+                    ReduceOtherValue = reader.IsDBNull(86) ? null : reader.GetString(86),
 
-                    // 運動建議與資源 (索引 83-86)
-                    ExerciseRecommendation = reader.GetBoolean(83),
-                    ExerciseGuidance = reader.GetBoolean(84),
-                    SocialExerciseResources = reader.GetBoolean(85),
-                    SocialExerciseResources_Text = reader.IsDBNull(86) ? null : reader.GetString(86),
+                    // 運動建議與資源 (索引 87-90)
+                    ExerciseRecommendation = reader.GetBoolean(87),
+                    ExerciseGuidance = reader.GetBoolean(88),
+                    SocialExerciseResources = reader.GetBoolean(89),
+                    SocialExerciseResources_Text = reader.IsDBNull(90) ? null : reader.GetString(90),
 
-                    // 目標設定 (索引 87-89)
-                    Achievement = reader.GetBoolean(87),
-                    WaistTarget_Value = reader.IsDBNull(88) ? null : reader.GetDecimal(88),
-                    WeightTarget_Value = reader.IsDBNull(89) ? null : reader.GetDecimal(89),
+                    // 目標設定 (索引 91-93)
+                    Achievement = reader.GetBoolean(91),
+                    WaistTarget_Value = reader.IsDBNull(92) ? null : reader.GetDecimal(92),
+                    WeightTarget_Value = reader.IsDBNull(93) ? null : reader.GetDecimal(93),
 
-                    // 其他叮嚀/目標值 (索引 90-100)
-                    OtherReminders = reader.GetBoolean(90),
-                    FastingGlucoseTarget = reader.GetBoolean(91),
-                    FastingGlucoseTarget_Value = reader.IsDBNull(92) ? null : reader.GetDecimal(92),
-                    HbA1cTarget = reader.GetBoolean(93),
-                    HbA1cTarget_Value = reader.IsDBNull(94) ? null : reader.GetDecimal(94),
-                    TriglyceridesTarget = reader.GetBoolean(95),
-                    TriglyceridesTarget_Value = reader.IsDBNull(96) ? null : reader.GetDecimal(96),
-                    HDL_CholesterolTarget = reader.GetBoolean(97),
-                    HDL_CholesterolTarget_Value = reader.IsDBNull(98) ? null : reader.GetDecimal(98),
-                    LDL_CholesterolTarget = reader.GetBoolean(99),
-                    LDL_CholesterolTarget_Value = reader.IsDBNull(100) ? null : reader.GetDecimal(100),
+                    // 其他叮嚀/目標值 (索引 94-104)
+                    OtherReminders = reader.GetBoolean(94),
+                    FastingGlucoseTarget = reader.GetBoolean(95),
+                    FastingGlucoseTarget_Value = reader.IsDBNull(96) ? null : reader.GetDecimal(96),
+                    HbA1cTarget = reader.GetBoolean(97),
+                    HbA1cTarget_Value = reader.IsDBNull(98) ? null : reader.GetDecimal(98),
+                    TriglyceridesTarget = reader.GetBoolean(99),
+                    TriglyceridesTarget_Value = reader.IsDBNull(100) ? null : reader.GetDecimal(100),
+                    HDL_CholesterolTarget = reader.GetBoolean(101),
+                    HDL_CholesterolTarget_Value = reader.IsDBNull(102) ? null : reader.GetDecimal(102),
+                    LDL_CholesterolTarget = reader.GetBoolean(103),
+                    LDL_CholesterolTarget_Value = reader.IsDBNull(104) ? null : reader.GetDecimal(104),
 
-                    // 備註 (索引 101)
-                    Notes = reader.IsDBNull(101) ? null : reader.GetString(101)
+                    // 備註 (索引 105)
+                    Notes = reader.IsDBNull(105) ? null : reader.GetString(105)
                 };
             }
 
@@ -867,8 +991,8 @@ namespace healthProject.Controllers
                ""AnnualAssessment"", ""AnnualAssessment_Date"",
                ""SystolicBP"", ""SystolicBP_Value"", ""DiastolicBP"", ""DiastolicBP_Value"",
                ""BloodPressureGuidance722"",
-               ""CurrentWaist"", ""CurrentWaist_Value"", ""FastingGlucose"", ""FastingGlucose_Value"",
-               ""HDL"", ""HDL_Value"", ""Triglycerides"", ""Triglycerides_Value"",
+               ""CurrentWaist"", ""CurrentWaist_Value"", ""FastingGlucose"", ""FastingGlucose_Value"", ""HbA1c"", ""HbA1c_Value"",
+               ""HDL"", ""HDL_Value"", ""LDL"", ""LDL_Value"", ""Triglycerides"", ""Triglycerides_Value"",
                ""ExerciseNone"", ""ExerciseUsually"", ""ExerciseAlways"",
                ""SmokingNone"", ""SmokingUsually"", ""SmokingUnder10"", ""SmokingOver10"",
                ""BetelNutNone"", ""BetelNutUsually"", ""BetelNutAlways"",
@@ -907,6 +1031,7 @@ namespace healthProject.Controllers
             {
                 return new CaseManagementViewModel
                 {
+                    // 基本資料 (索引 0-11)
                     Id = reader.GetInt32(0),
                     UserId = reader.GetInt32(1),
                     IDNumber = reader.GetString(2),
@@ -920,115 +1045,139 @@ namespace healthProject.Controllers
                     AssessmentDate = reader.IsDBNull(10) ? null : reader.GetDateTime(10),
                     FollowUpDate = reader.IsDBNull(11) ? null : reader.GetDateTime(11),
 
+                    // 年度評估 (索引 12-13)
                     AnnualAssessment = reader.GetBoolean(12),
                     AnnualAssessment_Date = reader.IsDBNull(13) ? null : reader.GetDateTime(13),
 
+                    // 血壓 (索引 14-18)
                     SystolicBP = reader.GetBoolean(14),
                     SystolicBP_Value = reader.IsDBNull(15) ? null : reader.GetDecimal(15),
                     DiastolicBP = reader.GetBoolean(16),
                     DiastolicBP_Value = reader.IsDBNull(17) ? null : reader.GetDecimal(17),
                     BloodPressureGuidance722 = reader.GetBoolean(18),
 
+                    // 腰圍/血糖/脂質 (索引 19-30)
                     CurrentWaist = reader.GetBoolean(19),
                     CurrentWaist_Value = reader.IsDBNull(20) ? null : reader.GetDecimal(20),
                     FastingGlucose = reader.GetBoolean(21),
                     FastingGlucose_Value = reader.IsDBNull(22) ? null : reader.GetDecimal(22),
-                    HDL = reader.GetBoolean(23),
-                    HDL_Value = reader.IsDBNull(24) ? null : reader.GetDecimal(24),
-                    Triglycerides = reader.GetBoolean(25),
-                    Triglycerides_Value = reader.IsDBNull(26) ? null : reader.GetDecimal(26),
+                    HbA1c = reader.GetBoolean(23),
+                    HbA1c_Value = reader.IsDBNull(24) ? null : reader.GetDecimal(24),
+                    HDL = reader.GetBoolean(25),
+                    HDL_Value = reader.IsDBNull(26) ? null : reader.GetDecimal(26),
+                    LDL = reader.GetBoolean(27),
+                    LDL_Value = reader.IsDBNull(28) ? null : reader.GetDecimal(28),
+                    Triglycerides = reader.GetBoolean(29),
+                    Triglycerides_Value = reader.IsDBNull(30) ? null : reader.GetDecimal(30),
 
-                    ExerciseNone = reader.GetBoolean(27),
-                    ExerciseUsually = reader.GetBoolean(28),
-                    ExerciseAlways = reader.GetBoolean(29),
+                    // 生活型態 - 運動 (索引 31-33)
+                    ExerciseNone = reader.GetBoolean(31),
+                    ExerciseUsually = reader.GetBoolean(32),
+                    ExerciseAlways = reader.GetBoolean(33),
 
-                    SmokingNone = reader.GetBoolean(30),
-                    SmokingUsually = reader.GetBoolean(31),
-                    SmokingUnder10 = reader.GetBoolean(32),
-                    SmokingOver10 = reader.GetBoolean(33),
+                    // 生活型態 - 抽菸 (索引 34-37)
+                    SmokingNone = reader.GetBoolean(34),
+                    SmokingUsually = reader.GetBoolean(35),
+                    SmokingUnder10 = reader.GetBoolean(36),
+                    SmokingOver10 = reader.GetBoolean(37),
 
-                    BetelNutNone = reader.GetBoolean(34),
-                    BetelNutUsually = reader.GetBoolean(35),
-                    BetelNutAlways = reader.GetBoolean(36),
+                    // 生活型態 - 檳榔 (索引 38-40)
+                    BetelNutNone = reader.GetBoolean(38),
+                    BetelNutUsually = reader.GetBoolean(39),
+                    BetelNutAlways = reader.GetBoolean(40),
 
-                    CoronaryHigh = reader.GetBoolean(37),
-                    CoronaryMedium = reader.GetBoolean(38),
-                    CoronaryLow = reader.GetBoolean(39),
-                    CoronaryNotApplicable = reader.GetBoolean(40),
+                    // 疾病風險評估 - 冠心病 (索引 41-44)
+                    CoronaryHigh = reader.GetBoolean(41),
+                    CoronaryMedium = reader.GetBoolean(42),
+                    CoronaryLow = reader.GetBoolean(43),
+                    CoronaryNotApplicable = reader.GetBoolean(44),
 
-                    DiabetesHigh = reader.GetBoolean(41),
-                    DiabetesMedium = reader.GetBoolean(42),
-                    DiabetesLow = reader.GetBoolean(43),
-                    DiabetesNotApplicabe = reader.GetBoolean(44),
+                    // 疾病風險評估 - 糖尿病 (索引 45-48)
+                    DiabetesHigh = reader.GetBoolean(45),
+                    DiabetesMedium = reader.GetBoolean(46),
+                    DiabetesLow = reader.GetBoolean(47),
+                    DiabetesNotApplicabe = reader.GetBoolean(48),
 
-                    HypertensionHigh = reader.GetBoolean(45),
-                    HypertensionMedium = reader.GetBoolean(46),
-                    HypertensionLow = reader.GetBoolean(47),
-                    HypertensionNotApplicable = reader.GetBoolean(48),
+                    // 疾病風險評估 - 高血壓 (索引 49-52)
+                    HypertensionHigh = reader.GetBoolean(49),
+                    HypertensionMedium = reader.GetBoolean(50),
+                    HypertensionLow = reader.GetBoolean(51),
+                    HypertensionNotApplicable = reader.GetBoolean(52),
 
-                    StrokeHigh = reader.GetBoolean(49),
-                    StrokeMedium = reader.GetBoolean(50),
-                    StrokeLow = reader.GetBoolean(51),
-                    StrokeNotApplicable = reader.GetBoolean(52),
+                    // 疾病風險評估 - 腦中風 (索引 53-56)
+                    StrokeHigh = reader.GetBoolean(53),
+                    StrokeMedium = reader.GetBoolean(54),
+                    StrokeLow = reader.GetBoolean(55),
+                    StrokeNotApplicable = reader.GetBoolean(56),
 
-                    CardiovascularHigh = reader.GetBoolean(53),
-                    CardiovascularMedium = reader.GetBoolean(54),
-                    CardiovascularLow = reader.GetBoolean(55),
-                    CardiovascularNotApplicable = reader.GetBoolean(56),
+                    // 疾病風險評估 - 心血管 (索引 57-60)
+                    CardiovascularHigh = reader.GetBoolean(57),
+                    CardiovascularMedium = reader.GetBoolean(58),
+                    CardiovascularLow = reader.GetBoolean(59),
+                    CardiovascularNotApplicable = reader.GetBoolean(60),
 
-                    SmokingService = reader.GetBoolean(57),
-                    SmokingServiceType1 = reader.GetBoolean(58),
-                    SmokingServiceType2 = reader.GetBoolean(59),
-                    SmokingServiceType2_Provide = reader.GetBoolean(60),
-                    SmokingServiceType2_Referral = reader.GetBoolean(61),
+                    // 戒菸服務 (索引 61-65)
+                    SmokingService = reader.GetBoolean(61),
+                    SmokingServiceType1 = reader.GetBoolean(62),
+                    SmokingServiceType2 = reader.GetBoolean(63),
+                    SmokingServiceType2_Provide = reader.GetBoolean(64),
+                    SmokingServiceType2_Referral = reader.GetBoolean(65),
 
-                    BetelNutService = reader.GetBoolean(62),
-                    BetelQuitGoal = reader.GetBoolean(63),
-                    BetelQuitYear = reader.IsDBNull(64) ? null : reader.GetInt32(64),
-                    BetelQuitMonth = reader.IsDBNull(65) ? null : reader.GetInt32(65),
-                    BetelQuitDay = reader.IsDBNull(66) ? null : reader.GetInt32(66),
+                    // 戒檳服務 (索引 66-70)
+                    BetelNutService = reader.GetBoolean(66),
+                    BetelQuitGoal = reader.GetBoolean(67),
+                    BetelQuitYear = reader.IsDBNull(68) ? null : reader.GetInt32(68),
+                    BetelQuitMonth = reader.IsDBNull(69) ? null : reader.GetInt32(69),
+                    BetelQuitDay = reader.IsDBNull(70) ? null : reader.GetInt32(70),
 
-                    OralExam = reader.GetBoolean(67),
-                    OralExamYear = reader.IsDBNull(68) ? null : reader.GetInt32(68),
-                    OralExamMonth = reader.IsDBNull(69) ? null : reader.GetInt32(69),
+                    // 口腔檢查 (索引 71-73)
+                    OralExam = reader.GetBoolean(71),
+                    OralExamYear = reader.IsDBNull(72) ? null : reader.GetInt32(72),
+                    OralExamMonth = reader.IsDBNull(73) ? null : reader.GetInt32(73),
 
-                    DietManagement = reader.GetBoolean(70),
-                    DailyCalories1200 = reader.GetBoolean(71),
-                    DailyCalories1500 = reader.GetBoolean(72),
-                    DailyCalories1800 = reader.GetBoolean(73),
-                    DailyCalories2000 = reader.GetBoolean(74),
-                    DailyCaloriesOther = reader.GetBoolean(75),
-                    DailyCaloriesOtherValue = reader.IsDBNull(76) ? null : reader.GetString(76),
+                    // 飲食管理 - 每日建議攝取熱量 (索引 74-80)
+                    DietManagement = reader.GetBoolean(74),
+                    DailyCalories1200 = reader.GetBoolean(75),
+                    DailyCalories1500 = reader.GetBoolean(76),
+                    DailyCalories1800 = reader.GetBoolean(77),
+                    DailyCalories2000 = reader.GetBoolean(78),
+                    DailyCaloriesOther = reader.GetBoolean(79),
+                    DailyCaloriesOtherValue = reader.IsDBNull(80) ? null : reader.GetString(80),
 
-                    ReduceFriedFood = reader.GetBoolean(77),
-                    ReduceSweetFood = reader.GetBoolean(78),
-                    ReduceSalt = reader.GetBoolean(79),
-                    ReduceSugaryDrinks = reader.GetBoolean(80),
-                    ReduceOther = reader.GetBoolean(81),
-                    ReduceOtherValue = reader.IsDBNull(82) ? null : reader.GetString(82),
+                    // 飲食管理 - 盡量減少 (索引 81-86)
+                    ReduceFriedFood = reader.GetBoolean(81),
+                    ReduceSweetFood = reader.GetBoolean(82),
+                    ReduceSalt = reader.GetBoolean(83),
+                    ReduceSugaryDrinks = reader.GetBoolean(84),
+                    ReduceOther = reader.GetBoolean(85),
+                    ReduceOtherValue = reader.IsDBNull(86) ? null : reader.GetString(86),
 
-                    ExerciseRecommendation = reader.GetBoolean(83),
-                    ExerciseGuidance = reader.GetBoolean(84),
-                    SocialExerciseResources = reader.GetBoolean(85),
-                    SocialExerciseResources_Text = reader.IsDBNull(86) ? null : reader.GetString(86),
+                    // 運動建議與資源 (索引 87-90)
+                    ExerciseRecommendation = reader.GetBoolean(87),
+                    ExerciseGuidance = reader.GetBoolean(88),
+                    SocialExerciseResources = reader.GetBoolean(89),
+                    SocialExerciseResources_Text = reader.IsDBNull(90) ? null : reader.GetString(90),
 
-                    Achievement = reader.GetBoolean(87),
-                    WaistTarget_Value = reader.IsDBNull(88) ? null : reader.GetDecimal(88),
-                    WeightTarget_Value = reader.IsDBNull(89) ? null : reader.GetDecimal(89),
+                    // 目標設定 (索引 91-93)
+                    Achievement = reader.GetBoolean(91),
+                    WaistTarget_Value = reader.IsDBNull(92) ? null : reader.GetDecimal(92),
+                    WeightTarget_Value = reader.IsDBNull(93) ? null : reader.GetDecimal(93),
 
-                    OtherReminders = reader.GetBoolean(90),
-                    FastingGlucoseTarget = reader.GetBoolean(91),
-                    FastingGlucoseTarget_Value = reader.IsDBNull(92) ? null : reader.GetDecimal(92),
-                    HbA1cTarget = reader.GetBoolean(93),
-                    HbA1cTarget_Value = reader.IsDBNull(94) ? null : reader.GetDecimal(94),
-                    TriglyceridesTarget = reader.GetBoolean(95),
-                    TriglyceridesTarget_Value = reader.IsDBNull(96) ? null : reader.GetDecimal(96),
-                    HDL_CholesterolTarget = reader.GetBoolean(97),
-                    HDL_CholesterolTarget_Value = reader.IsDBNull(98) ? null : reader.GetDecimal(98),
-                    LDL_CholesterolTarget = reader.GetBoolean(99),
-                    LDL_CholesterolTarget_Value = reader.IsDBNull(100) ? null : reader.GetDecimal(100),
+                    // 其他叮嚀/目標值 (索引 94-104)
+                    OtherReminders = reader.GetBoolean(94),
+                    FastingGlucoseTarget = reader.GetBoolean(95),
+                    FastingGlucoseTarget_Value = reader.IsDBNull(96) ? null : reader.GetDecimal(96),
+                    HbA1cTarget = reader.GetBoolean(97),
+                    HbA1cTarget_Value = reader.IsDBNull(98) ? null : reader.GetDecimal(98),
+                    TriglyceridesTarget = reader.GetBoolean(99),
+                    TriglyceridesTarget_Value = reader.IsDBNull(100) ? null : reader.GetDecimal(100),
+                    HDL_CholesterolTarget = reader.GetBoolean(101),
+                    HDL_CholesterolTarget_Value = reader.IsDBNull(102) ? null : reader.GetDecimal(102),
+                    LDL_CholesterolTarget = reader.GetBoolean(103),
+                    LDL_CholesterolTarget_Value = reader.IsDBNull(104) ? null : reader.GetDecimal(104),
 
-                    Notes = reader.IsDBNull(101) ? null : reader.GetString(101)
+                    // 備註 (索引 105)
+                    Notes = reader.IsDBNull(105) ? null : reader.GetString(105)
                 };
             }
 
@@ -1076,8 +1225,8 @@ namespace healthProject.Controllers
                 ""AssessmentDate"", ""FollowUpDate"",
                 ""AnnualAssessment"", ""AnnualAssessment_Date"",
                 ""SystolicBP"", ""SystolicBP_Value"", ""DiastolicBP"", ""DiastolicBP_Value"", ""BloodPressureGuidance722"",
-                ""CurrentWaist"", ""CurrentWaist_Value"", ""FastingGlucose"", ""FastingGlucose_Value"",
-                ""HDL"", ""HDL_Value"", ""Triglycerides"", ""Triglycerides_Value"",
+                ""CurrentWaist"", ""CurrentWaist_Value"", ""FastingGlucose"", ""FastingGlucose_Value"", ""HbA1c"", ""HbA1c_Value"",
+                ""HDL"", ""HDL_Value"", ""LDL"", ""LDL_Value"", ""Triglycerides"", ""Triglycerides_Value"",
                 ""ExerciseNone"", ""ExerciseUsually"", ""ExerciseAlways"",
                 ""SmokingNone"", ""SmokingUsually"", ""SmokingUnder10"", ""SmokingOver10"",
                 ""BetelNutNone"", ""BetelNutUsually"", ""BetelNutAlways"",
@@ -1109,8 +1258,8 @@ namespace healthProject.Controllers
                 @AssessmentDate, @FollowUpDate,
                 @AnnualAssessment, @AnnualAssessment_Date,
                 @SystolicBP, @SystolicBP_Value, @DiastolicBP, @DiastolicBP_Value, @BloodPressureGuidance722,
-                @CurrentWaist, @CurrentWaist_Value, @FastingGlucose, @FastingGlucose_Value,
-                @HDL, @HDL_Value, @Triglycerides, @Triglycerides_Value,
+                @CurrentWaist, @CurrentWaist_Value, @FastingGlucose, @FastingGlucose_Value, @HbA1c, @HbA1c_Value,
+                @HDL, @HDL_Value, @LDL, @LDL_Value, @Triglycerides, @Triglycerides_Value,
                 @ExerciseNone, @ExerciseUsually, @ExerciseAlways,
                 @SmokingNone, @SmokingUsually, @SmokingUnder10, @SmokingOver10,
                 @BetelNutNone, @BetelNutUsually, @BetelNutAlways,
@@ -1167,8 +1316,12 @@ namespace healthProject.Controllers
                 command.Parameters.AddWithValue("@CurrentWaist_Value", model.CurrentWaist_Value ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("@FastingGlucose", model.FastingGlucose);
                 command.Parameters.AddWithValue("@FastingGlucose_Value", model.FastingGlucose_Value ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@HbA1c", model.HbA1c);
+                command.Parameters.AddWithValue("@HbA1c_Value", model.HbA1c_Value ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("@HDL", model.HDL);
                 command.Parameters.AddWithValue("@HDL_Value", model.HDL_Value ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@LDL", model.LDL);
+                command.Parameters.AddWithValue("@LDL_Value", model.LDL_Value ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("@Triglycerides", model.Triglycerides);
                 command.Parameters.AddWithValue("@Triglycerides_Value", model.Triglycerides_Value ?? (object)DBNull.Value);
 
@@ -1314,7 +1467,9 @@ namespace healthProject.Controllers
                     ""BloodPressureGuidance722"" = @BloodPressureGuidance722,
                     ""CurrentWaist"" = @CurrentWaist, ""CurrentWaist_Value"" = @CurrentWaist_Value,
                     ""FastingGlucose"" = @FastingGlucose, ""FastingGlucose_Value"" = @FastingGlucose_Value,
+                    ""HbA1c"" = @HbA1c, ""HbA1c_Value"" = @HbA1c_Value,
                     ""HDL"" = @HDL, ""HDL_Value"" = @HDL_Value,
+                    ""LDL"" = @LDL, ""LDL_Value"" = @LDL_Value,
                     ""Triglycerides"" = @Triglycerides, ""Triglycerides_Value"" = @Triglycerides_Value,
                     ""ExerciseNone"" = @ExerciseNone, ""ExerciseUsually"" = @ExerciseUsually, ""ExerciseAlways"" = @ExerciseAlways,
                     ""SmokingNone"" = @SmokingNone, ""SmokingUsually"" = @SmokingUsually,
@@ -1390,8 +1545,12 @@ namespace healthProject.Controllers
             command.Parameters.AddWithValue("@CurrentWaist_Value", model.CurrentWaist_Value ?? (object)DBNull.Value);
             command.Parameters.AddWithValue("@FastingGlucose", model.FastingGlucose);
             command.Parameters.AddWithValue("@FastingGlucose_Value", model.FastingGlucose_Value ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@HbA1c", model.HbA1c);
+            command.Parameters.AddWithValue("@HbA1c_Value", model.HbA1c_Value ?? (object)DBNull.Value);
             command.Parameters.AddWithValue("@HDL", model.HDL);
             command.Parameters.AddWithValue("@HDL_Value", model.HDL_Value ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@LDL", model.LDL);
+            command.Parameters.AddWithValue("@LDL_Value", model.LDL_Value ?? (object)DBNull.Value);
             command.Parameters.AddWithValue("@Triglycerides", model.Triglycerides);
             command.Parameters.AddWithValue("@Triglycerides_Value", model.Triglycerides_Value ?? (object)DBNull.Value);
 

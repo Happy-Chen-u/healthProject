@@ -1,0 +1,82 @@
+﻿@model healthProject.Models.CaseManagementViewModel
+
+@{
+    ViewData["Title"] = "個案目標詳細內容";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body {
+        background-color: #e5eef5;
+        font-family: "Microsoft JhengHei", sans-serif;
+    }
+
+    h2 {
+        text-align: center;
+        color: #2c3e50;
+        margin-top: 20px;
+    }
+
+    table {
+        width: 70%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+        padding: 10px 15px;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+    }
+
+    th {
+        background-color: #a897e6;
+        color: white;
+    }
+
+    tr:hover {
+        background-color: #f3f0ff;
+    }
+
+    .back-btn {
+        display: block;
+        width: fit-content;
+        margin: 20px auto;
+        background-color: #9a8cd1;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+    }
+
+        .back-btn:hover {
+            background-color: #7d6bb3;
+        }
+</style>
+
+<h2>個案目標詳細內容</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>指標</th>
+            <th>目標值</th>
+            <th>是否達成</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td>腰圍</td><td>@Model.WaistTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
+        <tr><td>體重</td><td>@Model.WeightTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
+        <tr><td>空腹血糖</td><td>@Model.FastingGlucoseTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
+        <tr><td>醣化血紅素 (HbA1c)</td><td>@Model.HbA1cTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
+        <tr><td>三酸甘油脂</td><td>@Model.TriglyceridesTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
+        <tr><td>高密度脂蛋白膽固醇 (HDL)</td><td>@Model.HDL_CholesterolTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
+        <tr><td>低密度脂蛋白膽固醇 (LDL)</td><td>@Model.LDL_CholesterolTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
+    </tbody>
+</table>
+
+<a asp-action="ViewTargets" class="back-btn">← 返回列表</a>

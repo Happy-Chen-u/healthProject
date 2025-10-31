@@ -1,0 +1,127 @@
+﻿@model IEnumerable<healthProject.Models.TargetSummaryViewModel>
+
+@{
+    ViewData["Title"] = "個案目標達成狀況";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body {
+        background-color: #e5eef5;
+        font-family: "Microsoft JhengHei", sans-serif;
+    }
+
+    h2 {
+        text-align: center;
+        color: #2c3e50;
+        margin-top: 20px;
+    }
+
+    .search-box {
+        text-align: center;
+        margin: 20px auto;
+    }
+
+        .search-box input {
+            width: 250px;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .search-box button {
+            padding: 8px 15px;
+            background-color: #9a8cd1;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+            .search-box button:hover {
+                background-color: #7d6bb3;
+            }
+
+    table {
+        width: 90%;
+        margin: 0 auto;
+        border-collapse: collapse;
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+        padding: 12px 15px;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+    }
+
+    th {
+        background-color: #a897e6;
+        color: white;
+    }
+
+    tr:hover {
+        background-color: #f3f0ff;
+    }
+
+    .details-btn {
+        background-color: #b19cd9;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 5px;
+        border: none;
+        text-decoration: none;
+    }
+
+        .details-btn:hover {
+            background-color: #937dc2;
+        }
+</style>
+
+<h2>個案目標達成狀況</h2>
+
+<div class="search-box">
+    <form asp-action="ViewTargets" method="get">
+        <input type="text" name="idNumber" placeholder="輸入身分證字號查詢" value="@ViewBag.SearchIdNumber" />
+        <button type="submit">🔍 查詢</button>
+    </form>
+</div>
+
+@if (!Model.Any())
+{
+    <p style="text-align:center; color:#555;">查無資料</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>姓名</th>
+                <th>身分證字號</th>
+                <th>達成項目</th>
+                <th>未達成項目</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.IDNumber</td>
+                    <td>@item.AchievedCount</td>
+                    <td>@item.UnachievedCount</td>
+                    <td>
+                        <a asp-action="TargetDetails" asp-route-idNumber="@item.IDNumber" class="details-btn">
+                            查看最新詳細內容
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
