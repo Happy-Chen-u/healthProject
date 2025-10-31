@@ -1,0 +1,272 @@
+﻿@model IEnumerable<healthProject.Models.TargetSummaryViewModel>
+
+@{
+    ViewData["Title"] = "個案目標達成狀況";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFE0B2 100%);
+            min-height: 100vh;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .search-section {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            border: 3px solid #FFB74D;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .search-form {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 0.75rem;
+            border: 2px solid #FFB74D;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .top-left-btn {
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 0.7rem 1.3rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.3s;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #90A4AE 0%, #78909C 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .back-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #90A4AE 0%, #78909C 100%);
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: inline-block;
+        }
+
+            .back-btn:hover {
+                background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        th {
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            color: white;
+            padding: 1rem;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #FFE0B2;
+            text-align: center;
+        }
+
+        tr:hover {
+            background: #FFF8E1;
+        }
+
+        .details-btn {
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+            .details-btn:hover {
+                background: linear-gradient(135deg, #FFA726 0%, #FB8C00 100%);
+            }
+
+        .no-data {
+            text-align: center;
+            color: #E65100;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+        }
+
+        .record-count {
+            text-align: right;
+            margin-top: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* 手機版調整 */
+        @@media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            table, th, td {
+                font-size: 0.9rem;
+            }
+
+            .top-left-btn {
+                margin-bottom: 0.8rem;
+            }
+
+            .back-btn {
+                display: inline-block;
+                width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="header-title">🎯 個案目標達成狀況</h1>
+        </div>
+
+        <div class="content">
+            <!-- 返回主選單按鈕 -->
+            <div class="button-group top-left-btn">
+                <a href="@Url.Action("Index", "CaseManagement")" class="btn btn-secondary">
+                    ← 返回主選單
+                </a>
+            </div>
+
+            <!-- 查詢區 -->
+            <div class="search-section">
+                <form asp-action="ViewTargets" method="get" class="search-form">
+                    <input type="text" name="idNumber" placeholder="輸入身分證字號查詢" value="@ViewBag.SearchIdNumber" class="search-input" />
+                    <button type="submit" class="btn btn-primary">🔍 查詢</button>
+                    @if (!string.IsNullOrEmpty(ViewBag.SearchIdNumber))
+                    {
+                        <a href="@Url.Action("ViewTargets", "CaseManagement")" class="btn btn-secondary">清除搜尋</a>
+                    }
+                </form>
+            </div>
+
+            <!-- 資料表格 -->
+            @using System.Linq  
+            @if (!Model.Any())
+            {
+                <p class="no-data">查無資料</p>
+            }
+            else
+            {
+                <table>
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>身分證字號</th>
+                            <th>達成項目</th>
+                            <th>未達成項目</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Name</td>
+                                <td>@item.IDNumber</td>
+                                <td>@item.AchievedCount</td>
+                                <td>@item.UnachievedCount</td>
+                                <td>
+                                    <a asp-action="TargetDetails" asp-route-idNumber="@item.IDNumber" class="details-btn">
+                                        查看最新詳細內容
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <!-- 顯示總筆數 -->
+                <p class="record-count">共 @Model.Count() 筆紀錄</p>
+            }
+
+        </div>
+    </div>
+</body>
+</html>

@@ -51,6 +51,12 @@ namespace healthProject.Models
         public bool HDL { get; set; }
         public decimal? HDL_Value { get; set; }
 
+        public bool LDL { get; set; }
+        public decimal? LDL_Value { get; set; }
+
+        public bool HbA1c { get; set; }
+        public decimal? HbA1c_Value { get; set; }
+
         public bool Triglycerides { get; set; }
         public decimal? Triglycerides_Value { get; set; }
 

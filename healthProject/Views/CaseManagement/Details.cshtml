@@ -306,11 +306,25 @@
                 <div class="detail-value">@Model.FastingGlucose_Value</div>
             </div>
         }
+        @if (Model.HbA1c && Model.HbA1c_Value.HasValue)
+        {
+            <div class="detail-item">
+                <div class="detail-label">醣化血紅素 (mg/dL)</div>
+                <div class="detail-value">@Model.HbA1c_Value</div>
+            </div>
+        }
         @if (Model.HDL && Model.HDL_Value.HasValue)
         {
             <div class="detail-item">
                 <div class="detail-label">高密度脂蛋白膽固醇值 (mg/dL)</div>
                 <div class="detail-value">@Model.HDL_Value</div>
+            </div>
+        }
+        @if (Model.LDL && Model.LDL_Value.HasValue)
+        {
+            <div class="detail-item">
+                <div class="detail-label">低密度脂蛋白膽固醇值 (mg/dL)</div>
+                <div class="detail-value">@Model.LDL_Value</div>
             </div>
         }
         @if (Model.Triglycerides && Model.Triglycerides_Value.HasValue)
