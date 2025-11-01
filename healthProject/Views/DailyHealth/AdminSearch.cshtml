@@ -128,7 +128,6 @@
         display: block;
     }
 
-    /* 🆕 日期分組 */
     .date-group {
         background: white;
         border-radius: 15px;
@@ -210,7 +209,7 @@
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
         border-radius: 10px;
         padding: 1.5rem;
-        margin-top: 1rem;
+        margin: 0 1.5rem 1.5rem 1.5rem;
     }
 
     .daily-summary-title {
@@ -258,6 +257,31 @@
         box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
         text-decoration: none;
         color: white;
+    }
+
+    /* 🆕 按鈕樣式 */
+    .btn-toggle-details {
+        background: linear-gradient(135deg, #81af74 0%, #5a8a4a 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(129, 175, 116, 0.3);
+        width: 100%;
+    }
+
+    .btn-toggle-details:hover {
+        background: linear-gradient(135deg, #5a8a4a 0%, #3d5f32 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(129, 175, 116, 0.4);
+    }
+
+    .btn-toggle-details.active {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     }
 
     @@media (max-width: 768px) {
@@ -322,6 +346,57 @@
 </div>
 
 <script>
+    // ✅ 在最前面定義 parseMeal 函數
+    function parseMeal(mealData) {
+        if (!mealData) return null;
+        if (typeof mealData === "object") return mealData;
+        try {
+            return JSON.parse(mealData);
+        } catch {
+            return null;
+        }
+    }
+
+    // ✅ 計算三餐總和
+    function calculateMealTotal(items) {
+        let total = 0;
+        let others = [];
+        
+        items.forEach(item => {
+            if (typeof item === 'number') {
+                total += item;
+            } else if (typeof item === 'string') {
+                // 處理 "1+1.5" 這種算式
+                if (item.includes('+')) {
+                    const parts = item.split('+');
+                    parts.forEach(part => {
+                        const num = parseFloat(part.trim());
+                        if (!isNaN(num)) {
+                            total += num;
+                        } else {
+                            others.push(part.trim());
+                        }
+                    });
+                } else {
+                    const num = parseFloat(item);
+                    if (!isNaN(num)) {
+                        total += num;
+                    } else {
+                        others.push(item);
+                    }
+                }
+            }
+        });
+        
+        const parts = [];
+        if (total > 0) {
+            parts.push(total % 1 === 0 ? total.toString() : total.toFixed(1));
+        }
+        parts.push(...others);
+        
+        return parts.length > 0 ? parts.join(' + ') : null;
+    }
+
     async function searchPatient() {
         const idNumber = document.getElementById('searchIdNumber').value.trim();
 
@@ -344,7 +419,7 @@
 
             if (result.success) {
                 document.getElementById('patientName').textContent = result.data.patientName;
-                document.getElementById('patientId').textContent = `身分證字號：${result.data.idNumber}`;
+                document.getElementById('patientId').textContent = `身分證字號:${result.data.idNumber}`;
                 document.getElementById('patientInfo').classList.add('show');
                 displayRecords(result.data.records);
             } else {
@@ -354,7 +429,7 @@
             }
         } catch (error) {
             console.error('搜尋失敗:', error);
-            alert('搜尋失敗，請稍後再試');
+            alert('搜尋失敗,請稍後再試');
         }
     }
 
@@ -373,17 +448,15 @@
 
         emptyState.style.display = 'none';
 
-        // 已經是分組格式：[{date: "2025-10-30", records: [...]}]
         recordsContainer.innerHTML = groupedRecords.map(group => {
             const records = group.records;
             const date = new Date(group.date);
             const dateStr = `${date.getFullYear()}年${String(date.getMonth() + 1).padStart(2, '0')}月${String(date.getDate()).padStart(2, '0')}日`;
 
-            // 🆕 計算當日統計 - 使用新的血壓欄位
+            // 計算當日統計
             const totalWater = records.reduce((sum, r) => sum + (r.waterIntake || 0), 0);
             const totalExercise = records.reduce((sum, r) => sum + (r.exerciseDuration || 0), 0);
             
-            // 收集所有血壓數值
             const systolicReadings = records.flatMap(r => [
                 r.bp_First_1_Systolic, r.bp_First_2_Systolic, 
                 r.bp_Second_1_Systolic, r.bp_Second_2_Systolic
@@ -411,13 +484,12 @@
                 
                 let dataItems = '';
 
-                // 🆕 血壓 - 4個測量 (8個欄位)
+                // 血壓
                 if (record.bp_First_1_Systolic || record.bp_First_1_Diastolic || 
                     record.bp_First_2_Systolic || record.bp_First_2_Diastolic ||
                     record.bp_Second_1_Systolic || record.bp_Second_1_Diastolic ||
                     record.bp_Second_2_Systolic || record.bp_Second_2_Diastolic) {
                     
-                    // 計算平均
                     const sysValues = [record.bp_First_1_Systolic, record.bp_First_2_Systolic, 
                                       record.bp_Second_1_Systolic, record.bp_Second_2_Systolic].filter(v => v);
                     const diaValues = [record.bp_First_1_Diastolic, record.bp_First_2_Diastolic,
@@ -448,57 +520,45 @@
                     dataItems += `</div></div>`;
                 }
 
-                // 三餐 - 加強解析邏輯
-                function parseMeal(mealData) {
-    if (!mealData) return null;
-    if (typeof mealData === "object") return mealData;
-    try {
-        return JSON.parse(mealData);
-    } catch {
-        return null;
-    }
-}
+                // 三餐
+                const breakfast = parseMeal(record.meals_Breakfast || record.Meals_Breakfast);
+                if (breakfast && (breakfast.vegetables || breakfast.protein || breakfast.carbs)) {
+                    dataItems += `
+                        <div class="data-item">
+                            <div class="data-label">🌅 早餐</div>
+                            <div class="data-value meal-lines">
+                                ${breakfast.vegetables ? `🥬 蔬菜:${breakfast.vegetables}<br>` : ""}
+                                ${breakfast.protein ? `🥩 蛋白質:${breakfast.protein}<br>` : ""}
+                                ${breakfast.carbs ? `🍚 澱粉:${breakfast.carbs}` : ""}
+                            </div>
+                        </div>`;
+                }
 
-const breakfast = parseMeal(record.meals_Breakfast || record.Meals_Breakfast);
-if (breakfast && (breakfast.vegetables || breakfast.protein || breakfast.carbs)) {
-    dataItems += `
-        <div class="data-item">
-            <div class="data-label">🌅 早餐</div>
-            <div class="data-value meal-lines">
-                ${breakfast.vegetables ? `🥬 蔬菜：${breakfast.vegetables}<br>` : ""}
-                ${breakfast.protein ? `🥩 蛋白質：${breakfast.protein}<br>` : ""}
-                ${breakfast.carbs ? `🍚 澱粉：${breakfast.carbs}` : ""}
-            </div>
-        </div>`;
-}
+                const lunch = parseMeal(record.meals_Lunch || record.Meals_Lunch);
+                if (lunch && (lunch.vegetables || lunch.protein || lunch.carbs)) {
+                    dataItems += `
+                        <div class="data-item">
+                            <div class="data-label">☀️ 午餐</div>
+                            <div class="data-value meal-lines">
+                                ${lunch.vegetables ? `🥬 蔬菜:${lunch.vegetables}<br>` : ""}
+                                ${lunch.protein ? `🥩 蛋白質:${lunch.protein}<br>` : ""}
+                                ${lunch.carbs ? `🍚 澱粉:${lunch.carbs}` : ""}
+                            </div>
+                        </div>`;
+                }
 
-const lunch = parseMeal(record.meals_Lunch || record.Meals_Lunch);
-if (lunch && (lunch.vegetables || lunch.protein || lunch.carbs)) {
-    dataItems += `
-        <div class="data-item">
-            <div class="data-label">☀️ 午餐</div>
-            <div class="data-value meal-lines">
-                ${lunch.vegetables ? `🥬 蔬菜：${lunch.vegetables}<br>` : ""}
-                ${lunch.protein ? `🥩 蛋白質：${lunch.protein}<br>` : ""}
-                ${lunch.carbs ? `🍚 澱粉：${lunch.carbs}` : ""}
-            </div>
-        </div>`;
-}
-
-const dinner = parseMeal(record.meals_Dinner || record.Meals_Dinner);
-if (dinner && (dinner.vegetables || dinner.protein || dinner.carbs)) {
-    dataItems += `
-        <div class="data-item">
-            <div class="data-label">🌙 晚餐</div>
-            <div class="data-value meal-lines">
-                ${dinner.vegetables ? `🥬 蔬菜：${dinner.vegetables}<br>` : ""}
-                ${dinner.protein ? `🥩 蛋白質：${dinner.protein}<br>` : ""}
-                ${dinner.carbs ? `🍚 澱粉：${dinner.carbs}` : ""}
-            </div>
-        </div>`;
-}
-
-
+                const dinner = parseMeal(record.meals_Dinner || record.Meals_Dinner);
+                if (dinner && (dinner.vegetables || dinner.protein || dinner.carbs)) {
+                    dataItems += `
+                        <div class="data-item">
+                            <div class="data-label">🌙 晚餐</div>
+                            <div class="data-value meal-lines">
+                                ${dinner.vegetables ? `🥬 蔬菜:${dinner.vegetables}<br>` : ""}
+                                ${dinner.protein ? `🥩 蛋白質:${dinner.protein}<br>` : ""}
+                                ${dinner.carbs ? `🍚 澱粉:${dinner.carbs}` : ""}
+                            </div>
+                        </div>`;
+                }
 
                 if (record.exerciseType || record.exerciseDuration) {
                     dataItems += `
@@ -557,85 +617,96 @@ if (dinner && (dinner.vegetables || dinner.protein || dinner.carbs)) {
                     </div>`;
             }).join('');
 
-            // 🆕 當日統計
-            // 🆕 當日統計
-let dailySummary = '';
-if (records.length > 1) {
-    // 統計數值類別
-    const totalWater = records.reduce((sum, r) => sum + (r.waterIntake || 0), 0);
-    const totalExercise = records.reduce((sum, r) => sum + (r.exerciseDuration || 0), 0);
-    const totalCigs = records.reduce((sum, r) => sum + (r.cigarettes || 0), 0);
-    const totalBetel = records.reduce((sum, r) => sum + (r.betelNut || 0), 0);
-    const bsValues = records.map(r => r.bloodSugar).filter(v => v);
-    const avgBS = bsValues.length > 0 ? bsValues.reduce((a, b) => a + b, 0) / bsValues.length : null;
+            // ✅ 統計三餐總攝取
+            const allVeg = [], allProtein = [], allCarbs = [];
+            records.forEach(r => {
+                const meals = [r.meals_Breakfast, r.meals_Lunch, r.meals_Dinner];
+                meals.forEach(m => {
+                    const meal = parseMeal(m);
+                    if (meal) {
+                        if (meal.vegetables && meal.vegetables !== '0') allVeg.push(meal.vegetables);
+                        if (meal.protein && meal.protein !== '0') allProtein.push(meal.protein);
+                        if (meal.carbs && meal.carbs !== '0') allCarbs.push(meal.carbs);
+                    }
+                });
+            });
 
-    // 平均血壓
-    const systolicValues = records.flatMap(r => [
-        r.bp_First_1_Systolic, r.bp_First_2_Systolic,
-        r.bp_Second_1_Systolic, r.bp_Second_2_Systolic
-    ].filter(v => v));
-    const diastolicValues = records.flatMap(r => [
-        r.bp_First_1_Diastolic, r.bp_First_2_Diastolic,
-        r.bp_Second_1_Diastolic, r.bp_Second_2_Diastolic
-    ].filter(v => v));
-    const avgSystolic = systolicValues.length > 0 ? (systolicValues.reduce((a, b) => a + b, 0) / systolicValues.length).toFixed(0) : null;
-    const avgDiastolic = diastolicValues.length > 0 ? (diastolicValues.reduce((a, b) => a + b, 0) / diastolicValues.length).toFixed(0) : null;
+            const vegTotal = calculateMealTotal(allVeg);
+            const proteinTotal = calculateMealTotal(allProtein);
+            const carbsTotal = calculateMealTotal(allCarbs);
 
-    // 🥗 三餐總攝取統計
-    let totalVeg = 0, totalProtein = 0, totalCarbs = 0;
+            // 其他統計
+            const totalCigs = records.reduce((sum, r) => sum + (r.cigarettes || 0), 0);
+            const totalBetel = records.reduce((sum, r) => sum + (r.betelNut || 0), 0);
+            const bsValues = records.map(r => r.bloodSugar).filter(v => v);
+            const avgBS = bsValues.length > 0 ? bsValues.reduce((a, b) => a + b, 0) / bsValues.length : null;
 
-    const parseMeal = meal => {
-        if (!meal) return null;
-        if (typeof meal === "string") {
-            try { return JSON.parse(meal); } catch { return null; }
-        }
-        return meal;
-    };
-
-    records.forEach(r => {
-        const meals = [r.meals_Breakfast, r.meals_Lunch, r.meals_Dinner];
-        meals.forEach(m => {
-            const meal = parseMeal(m);
-            if (meal) {
-                totalVeg += parseFloat(meal.vegetables) || 0;
-                totalProtein += parseFloat(meal.protein) || 0;
-                totalCarbs += parseFloat(meal.carbs) || 0;
+            // ✅ 今日統計 (永遠顯示,不受按鈕控制)
+            let dailySummary = '';
+            if (records.length > 1) {
+                dailySummary = `
+                    <div class="daily-summary">
+                        <div class="daily-summary-title">📊 今日統計</div>
+                        <div class="data-grid">
+                            ${totalWater > 0 ? `<div class="data-item"><div class="data-label">💧 總水分</div><div class="data-value">${totalWater} ml</div></div>` : ''}
+                            ${totalExercise > 0 ? `<div class="data-item"><div class="data-label">🏃 總運動</div><div class="data-value">${totalExercise} 分鐘</div></div>` : ''}
+                            ${avgSystolic && avgDiastolic ? `<div class="data-item"><div class="data-label">❤️ 平均血壓</div><div class="data-value">${avgSystolic}/${avgDiastolic} mmHg</div></div>` : ''}
+                            ${avgBS ? `<div class="data-item"><div class="data-label">🩸 平均血糖</div><div class="data-value">${avgBS.toFixed(1)} mg/dL</div></div>` : ''}
+                            ${totalCigs > 0 ? `<div class="data-item"><div class="data-label">🚬 總抽菸量</div><div class="data-value">${totalCigs} 支</div></div>` : ''}
+                            ${totalBetel > 0 ? `<div class="data-item"><div class="data-label">🌿 總檳榔量</div><div class="data-value">${totalBetel} 次</div></div>` : ''}
+                            ${(vegTotal || proteinTotal || carbsTotal) ? `
+                                <div class="data-item" style="grid-column: 1 / -1;">
+                                    <div class="data-label">🍽️ 今日三餐總計</div>
+                                    <div class="data-value" style="line-height: 1.8;">
+                                        ${vegTotal ? `<div>🥬 蔬菜: ${vegTotal}</div>` : ''}
+                                        ${proteinTotal ? `<div>🥩 蛋白質: ${proteinTotal}</div>` : ''}
+                                        ${carbsTotal ? `<div>🍚 澱粉: ${carbsTotal}</div>` : ''}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>`;
             }
-        });
-    });
 
-    dailySummary = `
-        <div class="daily-summary">
-            <div class="daily-summary-title">📊 今日統計</div>
-            <div class="data-grid">
-                ${totalWater > 0 ? `<div class="data-item"><div class="data-label">💧 總水分</div><div class="data-value">${totalWater} ml</div></div>` : ''}
-                ${totalExercise > 0 ? `<div class="data-item"><div class="data-label">🏃 總運動</div><div class="data-value">${totalExercise} 分鐘</div></div>` : ''}
-                ${avgSystolic && avgDiastolic ? `<div class="data-item"><div class="data-label">❤️ 平均血壓</div><div class="data-value">${avgSystolic}/${avgDiastolic} mmHg</div></div>` : ''}
-                ${avgBS ? `<div class="data-item"><div class="data-label">🩸 平均血糖</div><div class="data-value">${avgBS.toFixed(1)} mg/dL</div></div>` : ''}
-                ${totalCigs > 0 ? `<div class="data-item"><div class="data-label">🚬 總抽菸量</div><div class="data-value">${totalCigs} 支</div></div>` : ''}
-                ${totalBetel > 0 ? `<div class="data-item"><div class="data-label">🌿 總檳榔量</div><div class="data-value">${totalBetel} 次</div></div>` : ''}
-                ${(totalVeg + totalProtein + totalCarbs) > 0 ? `
-                    <div class="data-item"><div class="data-label">🥬 總蔬菜份</div><div class="data-value">${totalVeg.toFixed(1)}</div></div>
-                    <div class="data-item"><div class="data-label">🥩 總蛋白質份</div><div class="data-value">${totalProtein.toFixed(1)}</div></div>
-                    <div class="data-item"><div class="data-label">🍚 總澱粉份</div><div class="data-value">${totalCarbs.toFixed(1)}</div></div>
-                ` : ''}
-            </div>
-        </div>`;
-}
+            // ✅ 按鈕 (只有多筆記錄時顯示)
+            const toggleButton = records.length > 1 ? `
+                <div style="padding: 1rem 2rem; background: #f8f9fa; border-bottom: 1px solid #e2e8f0;">
+                    <button onclick="toggleDetailsAdmin(this)" class="btn-toggle-details">
+                        📋 顯示全部 ${records.length} 筆紀錄
+                    </button>
+                </div>` : '';
 
-return `
-    <div class="date-group">
-        <div class="date-header">
-            <div class="date-title">📅 ${dateStr}</div>
-            <div class="date-summary">${summaryItems}</div>
-        </div>
-        <div class="record-items">
-            ${recordItems}
-            ${dailySummary}
-        </div>
-    </div>`;
-
+            return `
+                <div class="date-group">
+                    <div class="date-header">
+                        <div class="date-title">📅 ${dateStr}</div>
+                        <div class="date-summary">${summaryItems}</div>
+                    </div>
+                    ${toggleButton}
+                    <div class="record-items" style="${records.length > 1 ? 'display: none;' : ''}">
+                        ${recordItems}
+                    </div>
+                    ${dailySummary}
+                </div>`;
         }).join('');
+    }
+
+    // ✅ 切換詳細記錄顯示/隱藏
+    function toggleDetailsAdmin(button) {
+        const dateGroup = button.closest('.date-group');
+        const recordItems = dateGroup.querySelector('.record-items');
+        const isHidden = recordItems.style.display === 'none';
+        
+        if (isHidden) {
+            recordItems.style.display = 'block';
+            button.textContent = '📋 隱藏詳細記錄';
+            button.classList.add('active');
+        } else {
+            recordItems.style.display = 'none';
+            const count = recordItems.querySelectorAll('.record-item').length;
+            button.textContent = `📋 顯示全部 ${count} 筆紀錄`;
+            button.classList.remove('active');
+        }
     }
 
     // Enter 鍵搜尋

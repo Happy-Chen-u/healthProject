@@ -76,12 +76,22 @@ namespace healthProject.Models
         public bool IsAbnormal { get; set; }
     }
 
-    // 三餐記錄
     public class MealRecord
     {
         public string Date { get; set; }
-        public string Meals { get; set; }
+        public string Meals { get; set; }  // 保留舊格式(給 PDF 用)
+        public MealStatistics MealData { get; set; }  // 🆕 新格式(給前端用)
     }
+
+    // 🆕 三餐統計資料結構
+    public class MealStatistics
+    {
+        public List<string> Vegetables { get; set; } = new();
+        public List<string> Protein { get; set; } = new();
+        public List<string> Carbs { get; set; } = new();
+    }
+
+
 
     // 飲料記錄
     public class BeverageRecord

@@ -649,6 +649,25 @@
         });
     }
 
+    // 🆕 恢復三餐選項 (包括「其他」文字的處理)
+    function restoreMealSelection(selectId, otherInputId, value) {
+        if (!value) return;
+
+        const selectElement = document.getElementById(selectId);
+        const otherInput = document.getElementById(otherInputId);
+
+        // 檢查是否為預設選項
+        const validOptions = ['0', '0.5', '1', '1.5', '2'];
+        if (validOptions.includes(value)) {
+            selectElement.value = value;
+        } else {
+            // 不是預設選項,設為「其他」並填入文字框
+            selectElement.value = '其他';
+            otherInput.style.display = 'block';
+            otherInput.value = value;
+        }
+    }
+
     // 提交前準備三餐數據
     function prepareMealData() {
         // 早餐
@@ -700,63 +719,58 @@
     document.addEventListener('DOMContentLoaded', function () {
         setupOtherInputs();
 
-        // ✅ 如果是編輯模式,恢復血壓輸入值
-    @if (Model.BP_First_1_Systolic.HasValue && Model.BP_First_1_Diastolic.HasValue)
-    {
-        <text>
-                    document.getElementById('BP_First_1_Input').value = '@Model.BP_First_1_Systolic/@Model.BP_First_1_Diastolic';
-        </text>
-    }
-    @if (Model.BP_First_2_Systolic.HasValue && Model.BP_First_2_Diastolic.HasValue)
-    {
-        <text>
-                    document.getElementById('BP_First_2_Input').value = '@Model.BP_First_2_Systolic/@Model.BP_First_2_Diastolic';
-        </text>
-    }
-    @if (Model.BP_Second_1_Systolic.HasValue && Model.BP_Second_1_Diastolic.HasValue)
-    {
-        <text>
-                    document.getElementById('BP_Second_1_Input').value = '@Model.BP_Second_1_Systolic/@Model.BP_Second_1_Diastolic';
-        </text>
-    }
-    @if (Model.BP_Second_2_Systolic.HasValue && Model.BP_Second_2_Diastolic.HasValue)
-    {
-        <text>
-                    document.getElementById('BP_Second_2_Input').value = '@Model.BP_Second_2_Systolic/@Model.BP_Second_2_Diastolic';
-        </text>
-    }
+        // 🆕 如果是編輯模式,恢復三餐選項
+        @if (Model.Meals_Breakfast != null)
+        {
+            <text>
+            const breakfast = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Breakfast));
+            console.log('恢復早餐資料:', breakfast);
+            if (breakfast.Vegetables) {
+                restoreMealSelection('breakfast-veg', 'breakfast-veg-other', breakfast.Vegetables);
+            }
+            if (breakfast.Protein) {
+                restoreMealSelection('breakfast-protein', 'breakfast-protein-other', breakfast.Protein);
+            }
+            if (breakfast.Carbs) {
+                restoreMealSelection('breakfast-carbs', 'breakfast-carbs-other', breakfast.Carbs);
+            }
+            </text>
+        }
 
-            // 如果是編輯模式,恢復三餐選項
-    @if (Model.Meals_Breakfast != null)
-    {
-        <text>
-                    const breakfast = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Breakfast));
-                    if (breakfast.Vegetables) document.getElementById('breakfast-veg').value = breakfast.Vegetables;
-                    if (breakfast.Protein) document.getElementById('breakfast-protein').value = breakfast.Protein;
-                    if (breakfast.Carbs) document.getElementById('breakfast-carbs').value = breakfast.Carbs;
-        </text>
-    }
+        @if (Model.Meals_Lunch != null)
+        {
+            <text>
+            const lunch = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Lunch));
+            console.log('恢復午餐資料:', lunch);
+            if (lunch.Vegetables) {
+                restoreMealSelection('lunch-veg', 'lunch-veg-other', lunch.Vegetables);
+            }
+            if (lunch.Protein) {
+                restoreMealSelection('lunch-protein', 'lunch-protein-other', lunch.Protein);
+            }
+            if (lunch.Carbs) {
+                restoreMealSelection('lunch-carbs', 'lunch-carbs-other', lunch.Carbs);
+            }
+            </text>
+        }
 
-    @if (Model.Meals_Lunch != null)
-    {
-        <text>
-                    const lunch = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Lunch));
-                    if (lunch.Vegetables) document.getElementById('lunch-veg').value = lunch.Vegetables;
-                    if (lunch.Protein) document.getElementById('lunch-protein').value = lunch.Protein;
-                    if (lunch.Carbs) document.getElementById('lunch-carbs').value = lunch.Carbs;
-        </text>
-    }
-
-    @if (Model.Meals_Dinner != null)
-    {
-        <text>
-                    const dinner = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Dinner));
-                    if (dinner.Vegetables) document.getElementById('dinner-veg').value = dinner.Vegetables;
-                    if (dinner.Protein) document.getElementById('dinner-protein').value = dinner.Protein;
-                    if (dinner.Carbs) document.getElementById('dinner-carbs').value = dinner.Carbs;
-        </text>
-    }
-        });
+        @if (Model.Meals_Dinner != null)
+        {
+            <text>
+            const dinner = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Dinner));
+            console.log('恢復晚餐資料:', dinner);
+            if (dinner.Vegetables) {
+                restoreMealSelection('dinner-veg', 'dinner-veg-other', dinner.Vegetables);
+            }
+            if (dinner.Protein) {
+                restoreMealSelection('dinner-protein', 'dinner-protein-other', dinner.Protein);
+            }
+            if (dinner.Carbs) {
+                restoreMealSelection('dinner-carbs', 'dinner-carbs-other', dinner.Carbs);
+            }
+            </text>
+        }
+    });
 </script>
 
 @section Scripts {

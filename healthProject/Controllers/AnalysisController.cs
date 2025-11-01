@@ -422,43 +422,60 @@ namespace healthProject.Controllers
             };
         }
 
+
         // ========================================
-        // 🆕 合併三餐項目 (例如:合併蔬菜攝取量)
+        // 🆕 修改：合併三餐項目，計算總和而不是顯示算式
         // ========================================
         private string CombineMealItem(IEnumerable<string> items)
         {
             var validItems = items.Where(i => !string.IsNullOrEmpty(i) && i != "0").ToList();
             if (!validItems.Any()) return "0";
 
-            // 嘗試加總數值
             decimal total = 0;
             var otherTexts = new List<string>();
 
             foreach (var item in validItems)
             {
-                if (decimal.TryParse(item, out decimal value))
+                // 處理帶 "+" 號的算式 (例如: "1+1.5")
+                if (item.Contains("+"))
+                {
+                    var parts = item.Split('+');
+                    foreach (var part in parts)
+                    {
+                        if (decimal.TryParse(part.Trim(), out decimal value))
+                        {
+                            total += value;
+                        }
+                        else
+                        {
+                            otherTexts.Add(part.Trim());
+                        }
+                    }
+                }
+                // 單純數值
+                else if (decimal.TryParse(item, out decimal value))
                 {
                     total += value;
                 }
-                else if (!item.StartsWith("其他:"))
-                {
-                    // 像 "半個拳頭"、"一個拳頭" 等文字描述
-                    otherTexts.Add(item);
-                }
+                // 文字描述
                 else
                 {
-                    // "其他:XXX" 格式
                     otherTexts.Add(item);
                 }
             }
 
-            // 組合結果
-            var parts = new List<string>();
-            if (total > 0) parts.Add(total.ToString("0"));
-            parts.AddRange(otherTexts.Distinct());
+            // ✅ 組合結果：直接顯示總和
+            var resultParts = new List<string>(); // ← 改名
+            if (total > 0)
+            {
+                // 如果是整數就不顯示小數點，否則最多顯示一位小數
+                resultParts.Add(total % 1 == 0 ? total.ToString("0") : total.ToString("0.#"));
+            }
+            resultParts.AddRange(otherTexts.Distinct());
 
-            return string.Join(" + ", parts);
+            return string.Join(" + ", resultParts);
         }
+
 
         // ========================================
         // 📊 產生圖表數據
@@ -517,13 +534,41 @@ namespace healthProject.Controllers
                     });
                 }
 
-                // 三餐記錄
-                if (!string.IsNullOrEmpty(record.MealsDisplay) && record.MealsDisplay != "未記錄")
+                // 🆕 三餐記錄 - 改為統計格式
+                if (record.Meals_Breakfast != null || record.Meals_Lunch != null || record.Meals_Dinner != null)
                 {
+                    var vegetables = new List<string>();
+                    var protein = new List<string>();
+                    var carbs = new List<string>();
+
+                    // 收集早午晚餐的各營養素
+                    foreach (var meal in new[] { record.Meals_Breakfast, record.Meals_Lunch, record.Meals_Dinner })
+                    {
+                        if (meal != null)
+                        {
+                            if (!string.IsNullOrEmpty(meal.Vegetables) && meal.Vegetables != "0")
+                                vegetables.Add(meal.Vegetables);
+                            if (!string.IsNullOrEmpty(meal.Protein) && meal.Protein != "0")
+                                protein.Add(meal.Protein);
+                            if (!string.IsNullOrEmpty(meal.Carbs) && meal.Carbs != "0")
+                                carbs.Add(meal.Carbs);
+                        }
+                    }
+
+                    // ✅ 計算總和
+                    var vegTotal = CalculateMealTotal(vegetables);
+                    var proteinTotal = CalculateMealTotal(protein);
+                    var carbsTotal = CalculateMealTotal(carbs);
+
                     charts.MealRecords.Add(new MealRecord
                     {
                         Date = record.RecordDate.ToString("MM/dd"),
-                        Meals = record.MealsDisplay
+                        MealData = new MealStatistics
+                        {
+                            Vegetables = string.IsNullOrEmpty(vegTotal) ? new List<string>() : new List<string> { vegTotal },
+                            Protein = string.IsNullOrEmpty(proteinTotal) ? new List<string>() : new List<string> { proteinTotal },
+                            Carbs = string.IsNullOrEmpty(carbsTotal) ? new List<string>() : new List<string> { carbsTotal }
+                        }
                     });
                 }
 
@@ -644,6 +689,58 @@ namespace healthProject.Controllers
             }
 
             return null;
+        }
+
+        // ========================================
+        // 🆕 新增輔助方法：計算三餐項目總和
+        // 加在 AnalysisController 類別中
+        // ========================================
+        private string CalculateMealTotal(List<string> items)
+        {
+            if (!items.Any()) return null;
+
+            decimal total = 0;
+            var otherTexts = new List<string>();
+
+            foreach (var item in items)
+            {
+                // 處理帶 "+" 號的算式
+                if (item.Contains("+"))
+                {
+                    var parts = item.Split('+');
+                    foreach (var part in parts)
+                    {
+                        if (decimal.TryParse(part.Trim(), out decimal value))
+                        {
+                            total += value;
+                        }
+                        else
+                        {
+                            otherTexts.Add(part.Trim());
+                        }
+                    }
+                }
+                // 單純數值
+                else if (decimal.TryParse(item, out decimal value))
+                {
+                    total += value;
+                }
+                // 文字描述
+                else
+                {
+                    otherTexts.Add(item);
+                }
+            }
+
+            // 組合結果
+            var result = new List<string>();
+            if (total > 0)
+            {
+                result.Add(total % 1 == 0 ? total.ToString("0") : total.ToString("0.#"));
+            }
+            result.AddRange(otherTexts.Distinct());
+
+            return result.Any() ? string.Join(" + ", result) : null;
         }
 
         // ========================================

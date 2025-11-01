@@ -213,6 +213,64 @@
             <p>@Model.RecordDate.ToString("yyyy年MM月dd日")</p>
         </div>
 
+        <!-- 🆕 異常值警告區 -->
+        @{
+            var warnings = new List<string>();
+            
+            // 檢查收縮壓
+            var allSystolic = new[] { Model.BP_First_1_Systolic, Model.BP_First_2_Systolic, 
+                                      Model.BP_Second_1_Systolic, Model.BP_Second_2_Systolic }
+                              .Where(v => v.HasValue).Select(v => v.Value);
+            if (allSystolic.Any(v => v > 200))
+                warnings.Add("❌ 收縮壓 >200 mmHg - 請確認是否輸入錯誤!");
+            
+            // 檢查舒張壓
+            var allDiastolic = new[] { Model.BP_First_1_Diastolic, Model.BP_First_2_Diastolic,
+                                       Model.BP_Second_1_Diastolic, Model.BP_Second_2_Diastolic }
+                               .Where(v => v.HasValue).Select(v => v.Value);
+            if (allDiastolic.Any(v => v > 160))
+                warnings.Add("❌ 舒張壓 >160 mmHg - 請確認是否輸入錯誤!");
+            
+            // 檢查血糖
+            if (Model.BloodSugar.HasValue && Model.BloodSugar.Value > 300)
+                warnings.Add("❌ 血糖 >300 mg/dL - 請確認是否輸入錯誤!");
+            
+            // 檢查運動時間
+            if (Model.ExerciseDuration.HasValue && Model.ExerciseDuration.Value > 720)
+                warnings.Add("❌ 運動時間 >720 分鐘 (12小時) - 請確認是否輸入錯誤!");
+            
+            // 檢查飲水量
+            if (Model.WaterIntake.HasValue && Model.WaterIntake.Value > 5000)
+                warnings.Add("❌ 飲水量 >5000 ml - 請確認是否輸入錯誤!");
+            
+            // 檢查抽菸
+            if (Model.Cigarettes.HasValue && Model.Cigarettes.Value > 50)
+                warnings.Add("❌ 抽菸數 >50 支 - 請確認是否輸入錯誤!");
+            
+            // 檢查檳榔
+            if (Model.BetelNut.HasValue && Model.BetelNut.Value > 50)
+                warnings.Add("❌ 嚼檳榔 >50 次 - 請確認是否輸入錯誤!");
+            
+            if (warnings.Any())
+            {
+                <div style="background: #fee; border: 2px solid #dc2626; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; animation: shake 0.5s;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                        <span style="font-size: 1.5rem;">⚠️</span>
+                        <strong style="color: #dc2626; font-size: 1.1rem;">注意:數值可能有誤!</strong>
+                    </div>
+                    @foreach (var warning in warnings)
+                    {
+                        <div style="color: #dc2626; font-weight: 600; margin: 0.5rem 0; padding-left: 2rem;">
+                            @warning
+                        </div>
+                    }
+                    <div style="color: #991b1b; margin-top: 1rem; padding: 0.75rem; background: #fef2f2; border-radius: 6px;">
+                        💡 <strong>提示:</strong> 如果數值有誤,請點擊下方「有誤,需要修改」按鈕返回修改
+                    </div>
+                </div>
+            }
+        }
+
         <!-- 血壓測量 -->
         @if (Model.BP_First_1_Systolic.HasValue || Model.BP_First_1_Diastolic.HasValue || 
              Model.BP_First_2_Systolic.HasValue || Model.BP_First_2_Diastolic.HasValue ||
@@ -227,7 +285,8 @@
                 <div class="bp-detail">
                     <div class="bp-item">
                         <div class="bp-label">第一次第一遍</div>
-                        <div class="bp-value @(!Model.BP_First_1_Systolic.HasValue || !Model.BP_First_1_Diastolic.HasValue ? "empty" : "")">
+                        <div class="bp-value @(!Model.BP_First_1_Systolic.HasValue || !Model.BP_First_1_Diastolic.HasValue ? "empty" : "")
+                             @((Model.BP_First_1_Systolic > 200 || Model.BP_First_1_Diastolic > 160) ? "text-danger" : "")">
                             @if (Model.BP_First_1_Systolic.HasValue && Model.BP_First_1_Diastolic.HasValue)
                             {
                                 @($"{Model.BP_First_1_Systolic.Value:0}/{Model.BP_First_1_Diastolic.Value:0} mmHg")
@@ -240,7 +299,8 @@
                     </div>
                     <div class="bp-item">
                         <div class="bp-label">第一次第二遍</div>
-                        <div class="bp-value @(!Model.BP_First_2_Systolic.HasValue || !Model.BP_First_2_Diastolic.HasValue ? "empty" : "")">
+                        <div class="bp-value @(!Model.BP_First_2_Systolic.HasValue || !Model.BP_First_2_Diastolic.HasValue ? "empty" : "")
+                             @((Model.BP_First_2_Systolic > 200 || Model.BP_First_2_Diastolic > 160) ? "text-danger" : "")">
                             @if (Model.BP_First_2_Systolic.HasValue && Model.BP_First_2_Diastolic.HasValue)
                             {
                                 @($"{Model.BP_First_2_Systolic.Value:0}/{Model.BP_First_2_Diastolic.Value:0} mmHg")
@@ -253,7 +313,8 @@
                     </div>
                     <div class="bp-item">
                         <div class="bp-label">第二次第一遍</div>
-                        <div class="bp-value @(!Model.BP_Second_1_Systolic.HasValue || !Model.BP_Second_1_Diastolic.HasValue ? "empty" : "")">
+                        <div class="bp-value @(!Model.BP_Second_1_Systolic.HasValue || !Model.BP_Second_1_Diastolic.HasValue ? "empty" : "")
+                             @((Model.BP_Second_1_Systolic > 200 || Model.BP_Second_1_Diastolic > 160) ? "text-danger" : "")">
                             @if (Model.BP_Second_1_Systolic.HasValue && Model.BP_Second_1_Diastolic.HasValue)
                             {
                                 @($"{Model.BP_Second_1_Systolic.Value:0}/{Model.BP_Second_1_Diastolic.Value:0} mmHg")
@@ -266,7 +327,8 @@
                     </div>
                     <div class="bp-item">
                         <div class="bp-label">第二次第二遍</div>
-                        <div class="bp-value @(!Model.BP_Second_2_Systolic.HasValue || !Model.BP_Second_2_Diastolic.HasValue ? "empty" : "")">
+                        <div class="bp-value @(!Model.BP_Second_2_Systolic.HasValue || !Model.BP_Second_2_Diastolic.HasValue ? "empty" : "")
+                             @((Model.BP_Second_2_Systolic > 200 || Model.BP_Second_2_Diastolic > 160) ? "text-danger" : "")">
                             @if (Model.BP_Second_2_Systolic.HasValue && Model.BP_Second_2_Diastolic.HasValue)
                             {
                                 @($"{Model.BP_Second_2_Systolic.Value:0}/{Model.BP_Second_2_Diastolic.Value:0} mmHg")
@@ -281,7 +343,7 @@
                 @if (Model.AvgSystolicBP.HasValue && Model.AvgDiastolicBP.HasValue)
                 {
                     <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 8px; text-align: center;">
-                        <strong style="color: #0891b2;">平均血壓：</strong>
+                        <strong style="color: #0891b2;">平均血壓:</strong>
                         <span style="font-size: 1.2rem; font-weight: 700; color: #0e7490;">
                             @Model.AvgSystolicBP.Value.ToString("0") / @Model.AvgDiastolicBP.Value.ToString("0") mmHg
                         </span>
@@ -306,15 +368,15 @@
                             <div class="meal-detail">
                                 @if (!string.IsNullOrEmpty(Model.Meals_Breakfast.Vegetables))
                                 {
-                                    <div>🥬 蔬菜：@Model.Meals_Breakfast.Vegetables</div>
+                                    <div>🥬 蔬菜:@Model.Meals_Breakfast.Vegetables</div>
                                 }
                                 @if (!string.IsNullOrEmpty(Model.Meals_Breakfast.Protein))
                                 {
-                                    <div>🥩 蛋白質：@Model.Meals_Breakfast.Protein</div>
+                                    <div>🥩 蛋白質:@Model.Meals_Breakfast.Protein</div>
                                 }
                                 @if (!string.IsNullOrEmpty(Model.Meals_Breakfast.Carbs))
                                 {
-                                    <div>🍚 澱粉：@Model.Meals_Breakfast.Carbs</div>
+                                    <div>🍚 澱粉:@Model.Meals_Breakfast.Carbs</div>
                                 }
                             </div>
                         </div>
@@ -327,15 +389,15 @@
                             <div class="meal-detail">
                                 @if (!string.IsNullOrEmpty(Model.Meals_Lunch.Vegetables))
                                 {
-                                    <div>🥬 蔬菜：@Model.Meals_Lunch.Vegetables</div>
+                                    <div>🥬 蔬菜:@Model.Meals_Lunch.Vegetables</div>
                                 }
                                 @if (!string.IsNullOrEmpty(Model.Meals_Lunch.Protein))
                                 {
-                                    <div>🥩 蛋白質：@Model.Meals_Lunch.Protein</div>
+                                    <div>🥩 蛋白質:@Model.Meals_Lunch.Protein</div>
                                 }
                                 @if (!string.IsNullOrEmpty(Model.Meals_Lunch.Carbs))
                                 {
-                                    <div>🍚 澱粉：@Model.Meals_Lunch.Carbs</div>
+                                    <div>🍚 澱粉:@Model.Meals_Lunch.Carbs</div>
                                 }
                             </div>
                         </div>
@@ -348,15 +410,15 @@
                             <div class="meal-detail">
                                 @if (!string.IsNullOrEmpty(Model.Meals_Dinner.Vegetables))
                                 {
-                                    <div>🥬 蔬菜：@Model.Meals_Dinner.Vegetables</div>
+                                    <div>🥬 蔬菜:@Model.Meals_Dinner.Vegetables</div>
                                 }
                                 @if (!string.IsNullOrEmpty(Model.Meals_Dinner.Protein))
                                 {
-                                    <div>🥩 蛋白質：@Model.Meals_Dinner.Protein</div>
+                                    <div>🥩 蛋白質:@Model.Meals_Dinner.Protein</div>
                                 }
                                 @if (!string.IsNullOrEmpty(Model.Meals_Dinner.Carbs))
                                 {
-                                    <div>🍚 澱粉：@Model.Meals_Dinner.Carbs</div>
+                                    <div>🍚 澱粉:@Model.Meals_Dinner.Carbs</div>
                                 }
                             </div>
                         </div>
@@ -382,7 +444,7 @@
                     </div>
                     <div class="data-item">
                         <div class="data-label">運動時間</div>
-                        <div class="data-value @(!Model.ExerciseDuration.HasValue ? "empty" : "")">
+                        <div class="data-value @(!Model.ExerciseDuration.HasValue ? "empty" : "") @((Model.ExerciseDuration > 720) ? "text-danger" : "")">
                             @(Model.ExerciseDuration?.ToString("0.0") ?? "未填寫") @(Model.ExerciseDuration.HasValue ? "分鐘" : "")
                         </div>
                     </div>
@@ -401,7 +463,7 @@
                 <div class="data-grid">
                     <div class="data-item">
                         <div class="data-label">水分攝取</div>
-                        <div class="data-value @(!Model.WaterIntake.HasValue ? "empty" : "")">
+                        <div class="data-value @(!Model.WaterIntake.HasValue ? "empty" : "") @((Model.WaterIntake > 5000) ? "text-danger" : "")">
                             @(Model.WaterIntake?.ToString("0") ?? "未填寫") @(Model.WaterIntake.HasValue ? "ml" : "")
                         </div>
                     </div>
@@ -426,13 +488,13 @@
                 <div class="data-grid">
                     <div class="data-item">
                         <div class="data-label">抽菸支數</div>
-                        <div class="data-value @(!Model.Cigarettes.HasValue ? "empty" : "")">
+                        <div class="data-value @(!Model.Cigarettes.HasValue ? "empty" : "") @((Model.Cigarettes > 50) ? "text-danger" : "")">
                             @(Model.Cigarettes?.ToString("0") ?? "未填寫") @(Model.Cigarettes.HasValue ? "支" : "")
                         </div>
                     </div>
                     <div class="data-item">
                         <div class="data-label">嚼檳榔次數</div>
-                        <div class="data-value @(!Model.BetelNut.HasValue ? "empty" : "")">
+                        <div class="data-value @(!Model.BetelNut.HasValue ? "empty" : "") @((Model.BetelNut > 50) ? "text-danger" : "")">
                             @(Model.BetelNut?.ToString("0") ?? "未填寫") @(Model.BetelNut.HasValue ? "次" : "")
                         </div>
                     </div>
@@ -450,14 +512,14 @@
                 </div>
                 <div class="data-item">
                     <div class="data-label">血糖值</div>
-                    <div class="data-value">
+                    <div class="data-value @((Model.BloodSugar > 300) ? "text-danger" : "")">
                         @Model.BloodSugar.Value.ToString("0.0") mg/dL
                     </div>
                 </div>
             </div>
         }
 
-        <!-- ✅ 修正：確保 form 有正確的 action -->
+        <!-- 確認表單 -->
         <form id="confirmForm" asp-controller="DailyHealth" asp-action="@(Model.Id > 0 ? "ConfirmUpdate" : "ConfirmSubmit")" method="post">
             @Html.AntiForgeryToken()
             
@@ -500,9 +562,9 @@
             <input type="hidden" asp-for="BloodSugar" />
 
             <div class="button-group">
-                <a href="@Url.Action("Create", "DailyHealth")" class="btn btn-edit">
-                    ✏️ 有誤，需要修改
-                </a>
+                <button type="button" onclick="goBackToEdit()" class="btn btn-edit">
+                    ✏️ 有誤,需要修改
+                </button>
                 <button type="submit" class="btn btn-confirm">
                     ✓ 確認上傳
                 </button>
@@ -510,16 +572,49 @@
         </form>
     </div>
 
+    <style>
+        .text-danger {
+            color: #dc2626 !important;
+            font-weight: 700 !important;
+        }
+        
+        @@keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+    </style>
+
     <script>
-        // 調試用：檢查表單提交
-        document.getElementById('confirmForm').addEventListener('submit', function(e) {
-            console.log('Form is being submitted');
-            console.log('Action:', this.action);
-            console.log('Method:', this.method);
+        // 返回編輯頁面並保留資料
+        function goBackToEdit() {
+            const form = document.getElementById('confirmForm');
             
-            // 不要阻止預設行為，讓表單正常提交
-            // e.preventDefault(); // 不要使用這行！
-        });
+            // 建立一個新表單並提交到 Create (GET)
+            const editForm = document.createElement('form');
+            editForm.method = 'GET';
+            editForm.action = '@Url.Action("Edit", "DailyHealth", new { id = Model.Id })';
+            
+            // 如果 Id 是 0 (新增),則導向 Create 並帶所有參數
+            if (@Model.Id === 0) {
+                editForm.action = '@Url.Action("Create", "DailyHealth")';
+                
+                // 複製所有隱藏欄位
+                const inputs = form.querySelectorAll('input[type="hidden"]');
+                inputs.forEach(input => {
+                    if (input.name && input.name !== '__RequestVerificationToken' && input.value) {
+                        const newInput = document.createElement('input');
+                        newInput.type = 'hidden';
+                        newInput.name = input.name;
+                        newInput.value = input.value;
+                        editForm.appendChild(newInput);
+                    }
+                });
+            }
+            
+            document.body.appendChild(editForm);
+            editForm.submit();
+        }
     </script>
 </body>
 </html>

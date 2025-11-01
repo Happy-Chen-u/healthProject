@@ -225,6 +225,31 @@
         margin-bottom: 1.5rem;
     }
 
+    /* 🆕 按鈕樣式 */
+    .btn-toggle-details {
+        background: linear-gradient(135deg, #81af74 0%, #5a8a4a 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(129, 175, 116, 0.3);
+        width: 100%;
+    }
+
+        .btn-toggle-details:hover {
+            background: linear-gradient(135deg, #5a8a4a 0%, #3d5f32 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(129, 175, 116, 0.4);
+        }
+
+        .btn-toggle-details.active {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
     @@media (max-width: 768px) {
         .data-grid {
             grid-template-columns: 1fr;
@@ -252,178 +277,206 @@
         </a>
     </div>
 
-    @if (Model != null && Model.Any())
-    {
-        @foreach (var group in Model)
-        {
-            <div class="date-group">
-                <!-- 日期標題 -->
-                <div class="date-header">
-                    <div class="date-title">
-                        📅 @group.Date.ToString("yyyy年MM月dd日 (dddd)")
-                    </div>
-                    <div class="date-summary">
-                        <span class="summary-item">📝 共 @group.Records.Count 筆記錄</span>
-                        @if (group.TotalWater > 0)
-                        {
-                            <span class="summary-item">💧 @group.TotalWater.Value.ToString("0") ml</span>
-                        }
-                        @if (group.TotalExercise > 0)
-                        {
-                            <span class="summary-item">🏃 @group.TotalExercise.Value.ToString("0") 分鐘</span>
-                        }
-                        @if (group.AvgSystolicBP.HasValue && group.AvgDiastolicBP.HasValue)
-                        {
-                            <span class="summary-item">❤️ @group.AvgSystolicBP.Value.ToString("0")/@group.AvgDiastolicBP.Value.ToString("0") mmHg</span>
-                        }
-                    </div>
-                </div>
-
-                <!-- 各筆記錄 -->
-                <div class="record-items">
-                    @foreach (var record in group.Records)
-                    {
-                        <div class="record-item">
-                            <div class="record-time">
-                                ⏰ @(record.RecordTime?.ToString(@"hh\:mm") ?? "未記錄時間")
-                                <a href="@Url.Action("Edit", "DailyHealth", new { id = record.Id })" class="btn-icon btn-edit" style="float: right;">
-                                    ✏️ 編輯
-                                </a>
-                            </div>
-
-                            <div class="data-grid">
-    <!-- 🆕 血壓 - 4個欄位 -->
-    @if (record.BP_First_1_Systolic.HasValue || record.BP_First_1_Diastolic.HasValue || 
-         record.BP_First_2_Systolic.HasValue || record.BP_First_2_Diastolic.HasValue ||
-         record.BP_Second_1_Systolic.HasValue || record.BP_Second_1_Diastolic.HasValue ||
-         record.BP_Second_2_Systolic.HasValue || record.BP_Second_2_Diastolic.HasValue)
-    {
-        <div class="data-item" style="grid-column: 1 / -1;">
-            <div class="data-label">❤️ 血壓測量</div>
-            <div class="data-value" style="line-height: 1.8;">
-                @if (record.BP_First_1_Systolic.HasValue && record.BP_First_1_Diastolic.HasValue)
-                {
-                    <span>第一次第一遍: @record.BP_First_1_Systolic.Value.ToString("0")/@record.BP_First_1_Diastolic.Value.ToString("0") mmHg</span>
-                    <br />
-                }
-                @if (record.BP_First_2_Systolic.HasValue && record.BP_First_2_Diastolic.HasValue)
-                {
-                    <span>第一次第二遍: @record.BP_First_2_Systolic.Value.ToString("0")/@record.BP_First_2_Diastolic.Value.ToString("0") mmHg</span>
-                    <br />
-                }
-                @if (record.BP_Second_1_Systolic.HasValue && record.BP_Second_1_Diastolic.HasValue)
-                {
-                    <span>第二次第一遍: @record.BP_Second_1_Systolic.Value.ToString("0")/@record.BP_Second_1_Diastolic.Value.ToString("0") mmHg</span>
-                    <br />
-                }
-                @if (record.BP_Second_2_Systolic.HasValue && record.BP_Second_2_Diastolic.HasValue)
-                {
-                    <span>第二次第二遍: @record.BP_Second_2_Systolic.Value.ToString("0")/@record.BP_Second_2_Diastolic.Value.ToString("0") mmHg</span>
-                    <br />
-                }
-                @if (record.AvgSystolicBP.HasValue && record.AvgDiastolicBP.HasValue)
-                {
-                    <span style="color: #0891b2; font-weight: 600;">平均: @record.AvgSystolicBP.Value.ToString("0")/@record.AvgDiastolicBP.Value.ToString("0") mmHg</span>
-                }
+    <!-- 🆕 日期搜尋欄位 -->
+    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <label style="display: block; font-weight: 600; color: #333; margin-bottom: 0.5rem;">
+                    🔍 搜尋日期
+                </label>
+                <input type="date" id="searchDate" class="date-input"
+                       style="width: 100%; padding: 0.75rem; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;"
+                       onchange="filterByDate()" />
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+                <button onclick="filterByDate()" class="btn btn-primary" style="white-space: nowrap;">
+                    🔍 搜尋
+                </button>
+                <button onclick="clearSearch()" class="btn btn-secondary" style="white-space: nowrap;">
+                    🔄 顯示全部
+                </button>
             </div>
         </div>
-         }
+        <div id="searchResult" style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;"></div>
+    </div>
 
-                                @if (record.Meals_Breakfast != null)
-                                {
-                                    <div class="data-item">
-                                        <div class="data-label">🌅 早餐</div>
-                                        <div class="data-value meal-lines">
-                                            @Html.Raw(record.Meals_Breakfast.ToString().Replace(", ", "<br />"))
-                                        </div>
-                                    </div>
-                                }
+    @if (Model != null && Model.Any())
+    {
+        <div id="recordsContainer">
+            @foreach (var group in Model)
+            {
+                <div class="date-group" data-date="@group.Date.ToString("yyyy-MM-dd")">
+                    <!-- 日期標題 -->
+                    <div class="date-header">
+                        <div class="date-title">
+                            📅 @group.Date.ToString("yyyy年MM月dd日 (dddd)")
+                        </div>
+                        <div class="date-summary">
+                            <span class="summary-item">📝 共 @group.Records.Count 筆記錄</span>
+                            @if (group.TotalWater > 0)
+                            {
+                                <span class="summary-item">💧 @group.TotalWater.Value.ToString("0") ml</span>
+                            }
+                            @if (group.TotalExercise > 0)
+                            {
+                                <span class="summary-item">🏃 @group.TotalExercise.Value.ToString("0") 分鐘</span>
+                            }
+                            @if (group.AvgSystolicBP.HasValue && group.AvgDiastolicBP.HasValue)
+                            {
+                                <span class="summary-item">❤️ @group.AvgSystolicBP.Value.ToString("0")/@group.AvgDiastolicBP.Value.ToString("0") mmHg</span>
+                            }
+                        </div>
+                    </div>
 
-                                @if (record.Meals_Lunch != null)
-                                {
-                                    <div class="data-item">
-                                        <div class="data-label">☀️ 午餐</div>
-                                        <div class="data-value meal-lines">
-                                            @Html.Raw(record.Meals_Lunch.ToString().Replace(", ", "<br />"))
-                                        </div>
-                                    </div>
-                                }
-
-                                @if (record.Meals_Dinner != null)
-                                {
-                                    <div class="data-item">
-                                        <div class="data-label">🌙 晚餐</div>
-                                        <div class="data-value meal-lines">
-                                            @Html.Raw(record.Meals_Dinner.ToString().Replace(", ", "<br />"))
-                                        </div>
-                                    </div>
-                                }
-
-
-                                <!-- 運動 -->
-                                @if (!string.IsNullOrEmpty(record.ExerciseType) || record.ExerciseDuration.HasValue)
-                                {
-                                    <div class="data-item">
-                                        <div class="data-label">🏃 運動</div>
-                                        <div class="data-value">
-                                            @(record.ExerciseType ?? "運動") 
-                                            @(record.ExerciseDuration.HasValue ? $"{record.ExerciseDuration:0.0}分鐘" : "")
-                                        </div>
-                                    </div>
-                                }
-
-                                <!-- 水分 -->
-                                @if (record.WaterIntake.HasValue)
-                                {
-                                    <div class="data-item">
-                                        <div class="data-label">💧 水分攝取</div>
-                                        <div class="data-value">@record.WaterIntake.Value.ToString("0") ml</div>
-                                    </div>
-                                }
-
-                                <!-- 飲料 -->
-                                @if (!string.IsNullOrEmpty(record.Beverage))
-                                {
-                                    <div class="data-item">
-                                        <div class="data-label">🥤 飲料</div>
-                                        <div class="data-value">@record.Beverage</div>
-                                    </div>
-                                }
-
-                                <!-- 抽菸 -->
-                                @if (record.Cigarettes.HasValue && record.Cigarettes > 0)
-                                {
-                                    <div class="data-item">
-                                        <div class="data-label">🚬 抽菸</div>
-                                        <div class="data-value">@record.Cigarettes.Value.ToString("0") 支</div>
-                                    </div>
-                                }
-
-                                <!-- 檳榔 -->
-                                @if (record.BetelNut.HasValue && record.BetelNut > 0)
-                                {
-                                    <div class="data-item">
-                                        <div class="data-label">🌿 檳榔</div>
-                                        <div class="data-value">@record.BetelNut.Value.ToString("0") 次</div>
-                                    </div>
-                                }
-
-                                <!-- 血糖 -->
-                                @if (record.BloodSugar.HasValue)
-                                {
-                                    <div class="data-item">
-                                        <div class="data-label">🩸 血糖</div>
-                                        <div class="data-value">@record.BloodSugar.Value.ToString("0.0") mg/dL</div>
-                                    </div>
-                                }
-                            </div>
+                    <!-- 🆕 按鈕區 (只有多筆記錄時顯示) -->
+                    @if (group.Records.Count > 1)
+                    {
+                        <div style="padding: 1rem 2rem; background: #f8f9fa; border-bottom: 1px solid #e2e8f0;">
+                            <button onclick="toggleDetails(this)" class="btn-toggle-details">
+                                📋 顯示全部 @group.Records.Count 筆紀錄
+                            </button>
                         </div>
                     }
 
-                    <!-- 🆕 當日統計 - 顯示所有有資料的項目 -->
+                    <!-- 🆕 各筆記錄 (多筆時預設隱藏) -->
+                    <div class="record-items" style="@(group.Records.Count > 1 ? "display: none;" : "")">
+                        @foreach (var record in group.Records)
+                        {
+                            <div class="record-item">
+                                <div class="record-time">
+                                    ⏰ @(record.RecordTime?.ToString(@"hh\:mm") ?? "未記錄時間")
+                                    <a href="@Url.Action("Edit", "DailyHealth", new { id = record.Id })" class="btn-icon btn-edit" style="float: right;">
+                                        ✏️ 編輯
+                                    </a>
+                                </div>
+
+                                <div class="data-grid">
+                                    <!-- 血壓 -->
+                                    @if (record.BP_First_1_Systolic.HasValue || record.BP_First_1_Diastolic.HasValue ||
+                                   record.BP_First_2_Systolic.HasValue || record.BP_First_2_Diastolic.HasValue ||
+                                   record.BP_Second_1_Systolic.HasValue || record.BP_Second_1_Diastolic.HasValue ||
+                                   record.BP_Second_2_Systolic.HasValue || record.BP_Second_2_Diastolic.HasValue)
+                                    {
+                                        <div class="data-item" style="grid-column: 1 / -1;">
+                                            <div class="data-label">❤️ 血壓測量</div>
+                                            <div class="data-value" style="line-height: 1.8;">
+                                                @if (record.BP_First_1_Systolic.HasValue && record.BP_First_1_Diastolic.HasValue)
+                                                {
+                                                    <span>第一次第一遍: @record.BP_First_1_Systolic.Value.ToString("0")/@record.BP_First_1_Diastolic.Value.ToString("0") mmHg</span>
+                                                    <br />
+                                                }
+                                                @if (record.BP_First_2_Systolic.HasValue && record.BP_First_2_Diastolic.HasValue)
+                                                {
+                                                    <span>第一次第二遍: @record.BP_First_2_Systolic.Value.ToString("0")/@record.BP_First_2_Diastolic.Value.ToString("0") mmHg</span>
+                                                    <br />
+                                                }
+                                                @if (record.BP_Second_1_Systolic.HasValue && record.BP_Second_1_Diastolic.HasValue)
+                                                {
+                                                    <span>第二次第一遍: @record.BP_Second_1_Systolic.Value.ToString("0")/@record.BP_Second_1_Diastolic.Value.ToString("0") mmHg</span>
+                                                    <br />
+                                                }
+                                                @if (record.BP_Second_2_Systolic.HasValue && record.BP_Second_2_Diastolic.HasValue)
+                                                {
+                                                    <span>第二次第二遍: @record.BP_Second_2_Systolic.Value.ToString("0")/@record.BP_Second_2_Diastolic.Value.ToString("0") mmHg</span>
+                                                    <br />
+                                                }
+                                                @if (record.AvgSystolicBP.HasValue && record.AvgDiastolicBP.HasValue)
+                                                {
+                                                    <span style="color: #0891b2; font-weight: 600;">平均: @record.AvgSystolicBP.Value.ToString("0")/@record.AvgDiastolicBP.Value.ToString("0") mmHg</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+
+                                    @if (record.Meals_Breakfast != null)
+                                    {
+                                        <div class="data-item">
+                                            <div class="data-label">🌅 早餐</div>
+                                            <div class="data-value meal-lines">
+                                                @Html.Raw(record.Meals_Breakfast.ToString().Replace(", ", "<br />"))
+                                            </div>
+                                        </div>
+                                    }
+
+                                    @if (record.Meals_Lunch != null)
+                                    {
+                                        <div class="data-item">
+                                            <div class="data-label">☀️ 午餐</div>
+                                            <div class="data-value meal-lines">
+                                                @Html.Raw(record.Meals_Lunch.ToString().Replace(", ", "<br />"))
+                                            </div>
+                                        </div>
+                                    }
+
+                                    @if (record.Meals_Dinner != null)
+                                    {
+                                        <div class="data-item">
+                                            <div class="data-label">🌙 晚餐</div>
+                                            <div class="data-value meal-lines">
+                                                @Html.Raw(record.Meals_Dinner.ToString().Replace(", ", "<br />"))
+                                            </div>
+                                        </div>
+                                    }
+
+                                    @if (!string.IsNullOrEmpty(record.ExerciseType) || record.ExerciseDuration.HasValue)
+                                    {
+                                        <div class="data-item">
+                                            <div class="data-label">🏃 運動</div>
+                                            <div class="data-value">
+                                                @(record.ExerciseType ?? "運動")
+                                                @(record.ExerciseDuration.HasValue ? $"{record.ExerciseDuration:0.0}分鐘" : "")
+                                            </div>
+                                        </div>
+                                    }
+
+                                    @if (record.WaterIntake.HasValue)
+                                    {
+                                        <div class="data-item">
+                                            <div class="data-label">💧 水分攝取</div>
+                                            <div class="data-value">@record.WaterIntake.Value.ToString("0") ml</div>
+                                        </div>
+                                    }
+
+                                    @if (!string.IsNullOrEmpty(record.Beverage))
+                                    {
+                                        <div class="data-item">
+                                            <div class="data-label">🥤 飲料</div>
+                                            <div class="data-value">@record.Beverage</div>
+                                        </div>
+                                    }
+
+                                    @if (record.Cigarettes.HasValue && record.Cigarettes > 0)
+                                    {
+                                        <div class="data-item">
+                                            <div class="data-label">🚬 抽菸</div>
+                                            <div class="data-value">@record.Cigarettes.Value.ToString("0") 支</div>
+                                        </div>
+                                    }
+
+                                    @if (record.BetelNut.HasValue && record.BetelNut > 0)
+                                    {
+                                        <div class="data-item">
+                                            <div class="data-label">🌿 檳榔</div>
+                                            <div class="data-value">@record.BetelNut.Value.ToString("0") 次</div>
+                                        </div>
+                                    }
+
+                                    @if (record.BloodSugar.HasValue)
+                                    {
+                                        <div class="data-item">
+                                            <div class="data-label">🩸 血糖</div>
+                                            <div class="data-value">@record.BloodSugar.Value.ToString("0.0") mg/dL</div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- 🆕 今日統計 (永遠顯示,不受按鈕控制) -->
                     @if (group.Records.Count > 1)
                     {
-                        <div class="daily-summary">
+                        <div class="daily-summary" style="margin: 0 1.5rem 1.5rem 1.5rem;">
                             <div class="daily-summary-title">📊 今日統計</div>
                             <div class="data-grid">
                                 @if (group.TotalWater > 0)
@@ -477,15 +530,15 @@
                                         <div class="data-value" style="font-size: 0.9rem; line-height: 1.8;">
                                             @if (!string.IsNullOrEmpty(group.TotalVegetables.Display) && group.TotalVegetables.Display != "0")
                                             {
-                                                <div>🥬 蔬菜：@group.TotalVegetables.Display</div>
+                                                <div>🥬 蔬菜:@group.TotalVegetables.Display</div>
                                             }
                                             @if (!string.IsNullOrEmpty(group.TotalProtein.Display) && group.TotalProtein.Display != "0")
                                             {
-                                                <div>🥩 蛋白質：@group.TotalProtein.Display</div>
+                                                <div>🥩 蛋白質:@group.TotalProtein.Display</div>
                                             }
                                             @if (!string.IsNullOrEmpty(group.TotalCarbs.Display) && group.TotalCarbs.Display != "0")
                                             {
-                                                <div>🍚 澱粉：@group.TotalCarbs.Display</div>
+                                                <div>🍚 澱粉:@group.TotalCarbs.Display</div>
                                             }
                                         </div>
                                     </div>
@@ -494,8 +547,8 @@
                         </div>
                     }
                 </div>
-            </div>
-        }
+            }
+        </div>
     }
     else
     {
@@ -508,3 +561,65 @@
         </div>
     }
 </div>
+
+<script>
+    // 🆕 切換詳細記錄顯示/隱藏
+    function toggleDetails(button) {
+        const dateGroup = button.closest('.date-group');
+        const recordItems = dateGroup.querySelector('.record-items');
+        const isHidden = recordItems.style.display === 'none';
+
+        if (isHidden) {
+            // 顯示詳細記錄
+            recordItems.style.display = 'block';
+            button.textContent = '📋 隱藏詳細記錄';
+            button.classList.add('active');
+        } else {
+            // 隱藏詳細記錄
+            recordItems.style.display = 'none';
+            const count = recordItems.querySelectorAll('.record-item').length;
+            button.textContent = `📋 顯示全部 ${count} 筆紀錄`;
+            button.classList.remove('active');
+        }
+    }
+
+    // 日期搜尋功能
+    function filterByDate() {
+        const searchDate = document.getElementById('searchDate').value;
+        const dateGroups = document.querySelectorAll('.date-group');
+        const resultDiv = document.getElementById('searchResult');
+
+        if (!searchDate) {
+            resultDiv.innerHTML = '<span style="color: #f59e0b;">⚠️ 請選擇日期</span>';
+            return;
+        }
+
+        let foundCount = 0;
+        dateGroups.forEach(group => {
+            const groupDate = group.getAttribute('data-date');
+            if (groupDate === searchDate) {
+                group.style.display = 'block';
+                foundCount++;
+            } else {
+                group.style.display = 'none';
+            }
+        });
+
+        if (foundCount > 0) {
+            resultDiv.innerHTML = `<span style="color: #10b981;">✓ 找到 ${foundCount} 個日期的記錄</span>`;
+        } else {
+            resultDiv.innerHTML = '<span style="color: #ef4444;">✗ 該日期沒有記錄</span>';
+        }
+    }
+
+    // 清除搜尋,顯示全部
+    function clearSearch() {
+        document.getElementById('searchDate').value = '';
+        document.getElementById('searchResult').innerHTML = '';
+
+        const dateGroups = document.querySelectorAll('.date-group');
+        dateGroups.forEach(group => {
+            group.style.display = 'block';
+        });
+    }
+</script>

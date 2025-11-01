@@ -36,10 +36,19 @@ namespace healthProject.Controllers
         }
 
         // ========================================
-        // ➕ 新增今日紀錄 - 病患專用
+        // ➕ 新增今日紀錄 - GET (顯示表單)
         // ========================================
         [HttpGet]
-        public IActionResult Create()
+        public IActionResult Create(
+            int? Id,
+            decimal? BP_First_1_Systolic, decimal? BP_First_1_Diastolic,
+            decimal? BP_First_2_Systolic, decimal? BP_First_2_Diastolic,
+            decimal? BP_Second_1_Systolic, decimal? BP_Second_1_Diastolic,
+            decimal? BP_Second_2_Systolic, decimal? BP_Second_2_Diastolic,
+            string? Meals_Breakfast, string? Meals_Lunch, string? Meals_Dinner,
+            string? ExerciseType, decimal? ExerciseDuration,
+            decimal? WaterIntake, string? Beverage,
+            decimal? Cigarettes, decimal? BetelNut, decimal? BloodSugar)
         {
             if (User.IsInRole("Admin"))
             {
@@ -51,21 +60,48 @@ namespace healthProject.Controllers
                 RecordDate = DateTime.Today,
                 RecordTime = DateTime.Now.TimeOfDay
             };
+
+            // 🆕 如果有帶參數(從 Confirm 返回),填入資料
+            if (BP_First_1_Systolic.HasValue || BloodSugar.HasValue || WaterIntake.HasValue)
+            {
+                model.Id = Id ?? 0;
+                model.BP_First_1_Systolic = BP_First_1_Systolic;
+                model.BP_First_1_Diastolic = BP_First_1_Diastolic;
+                model.BP_First_2_Systolic = BP_First_2_Systolic;
+                model.BP_First_2_Diastolic = BP_First_2_Diastolic;
+                model.BP_Second_1_Systolic = BP_Second_1_Systolic;
+                model.BP_Second_1_Diastolic = BP_Second_1_Diastolic;
+                model.BP_Second_2_Systolic = BP_Second_2_Systolic;
+                model.BP_Second_2_Diastolic = BP_Second_2_Diastolic;
+
+                // 🆕 三餐 JSON 反序列化
+                if (!string.IsNullOrEmpty(Meals_Breakfast))
+                    model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(Meals_Breakfast);
+                if (!string.IsNullOrEmpty(Meals_Lunch))
+                    model.Meals_Lunch = JsonSerializer.Deserialize<MealSelection>(Meals_Lunch);
+                if (!string.IsNullOrEmpty(Meals_Dinner))
+                    model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(Meals_Dinner);
+
+                model.ExerciseType = ExerciseType;
+                model.ExerciseDuration = ExerciseDuration;
+                model.WaterIntake = WaterIntake;
+                model.Beverage = Beverage;
+                model.Cigarettes = Cigarettes;
+                model.BetelNut = BetelNut;
+                model.BloodSugar = BloodSugar;
+            }
+
             return View(model);
         }
 
-
-
         // ========================================
-        // ➕ 新增紀錄 - POST
+        // ➕ 新增今日紀錄 - POST (提交表單)
         // ========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(HealthRecordViewModel model,
-    string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
+            string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
         {
-
-
             // ✅ 驗證血壓完整性
             var bpWarnings = model.ValidateBloodPressure();
             if (bpWarnings.Any())
@@ -103,6 +139,7 @@ namespace healthProject.Controllers
             // 顯示確認頁面
             return View("Confirm", model);
         }
+
 
         // ========================================
         // ✅ 確認上傳
