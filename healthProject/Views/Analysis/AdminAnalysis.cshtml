@@ -348,7 +348,7 @@
                 <div class="input-group">
                     <div class="form-row">
                         <label>病患身分證:</label>
-                        <input type="text" id="idNumber" class="form-input" 
+                        <input type="text" id="idNumber" class="form-input"
                                placeholder="例如: A123456789" maxlength="10" />
                     </div>
                 </div>
@@ -442,6 +442,7 @@
                 </p>
             </div>
 
+            <!-- 報表內容 -->
             <div id="reportContent" class="report-content">
                 <!-- 🆕 每日報表 - 表格顯示 -->
                 <div id="dailyTable" style="display:none;">
@@ -462,8 +463,6 @@
                     </div>
                 </div>
 
-                
-                    
                 <!-- 統計摘要 (週/月/年報表用) -->
                 <div id="summarySection" class="chart-section">
                     <h3 class="chart-title">📊 統計摘要</h3>
@@ -502,7 +501,6 @@
                     </table>
                 </div>
 
-                
                 <!-- 圖表區域 (週/月/年報表用) -->
                 <div id="chartsSection">
                     <div class="chart-section">
@@ -510,31 +508,41 @@
                         <canvas id="bpChart" style="max-height: 300px;"></canvas>
                     </div>
 
-                <div class="chart-section">
-                    <h3 class="chart-title">🩸 血糖趨勢</h3>
-                    <canvas id="bsChart" style="max-height: 300px;"></canvas>
-                </div>
-
-                <div class="chart-section">
-                    <h3 class="chart-title">💧 飲水量趨勢</h3>
-                    <canvas id="waterChart" style="max-height: 300px;"></canvas>
-                </div>
-
-                <div class="chart-section">
-                    <h3 class="chart-title">🏃 運動時間趨勢</h3>
-                    <canvas id="exerciseChart" style="max-height: 300px;"></canvas>
-                </div>
-
-                <!-- 飲料 & 三餐記錄 -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
                     <div class="chart-section">
-                        <h3 class="chart-title">🥤 飲料記錄</h3>
-                        <div id="beverageTable"></div>
+                        <h3 class="chart-title">🩸 血糖趨勢</h3>
+                        <canvas id="bsChart" style="max-height: 300px;"></canvas>
                     </div>
 
                     <div class="chart-section">
-                        <h3 class="chart-title">🍽️ 三餐記錄</h3>
-                        <div id="mealTable"></div>
+                        <h3 class="chart-title">💧 飲水量趨勢</h3>
+                        <canvas id="waterChart" style="max-height: 300px;"></canvas>
+                    </div>
+
+                    <div class="chart-section">
+                        <h3 class="chart-title">🏃 運動時間趨勢</h3>
+                        <canvas id="exerciseChart" style="max-height: 300px;"></canvas>
+                    </div>
+
+                    <!-- 🆕 抽菸和檳榔圖表 -->
+                    <div style="background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <canvas id="cigaretteChart" style="height: 300px;"></canvas>
+                    </div>
+
+                    <div style="background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <canvas id="betelNutChart" style="height: 300px;"></canvas>
+                    </div>
+
+                    <!-- 飲料 & 三餐記錄 -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
+                        <div class="chart-section">
+                            <h3 class="chart-title">🥤 飲料記錄</h3>
+                            <div id="beverageTable"></div>
+                        </div>
+
+                        <div class="chart-section">
+                            <h3 class="chart-title">🍽️ 三餐記錄</h3>
+                            <div id="mealTable"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -543,18 +551,16 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        let currentReportType = 1; // 預設每週報表
+        let currentReportType = 1;
         let currentReport = null;
         let charts = {};
 
-        // 初始化
         document.addEventListener('DOMContentLoaded', function () {
             console.log('✅ 管理員頁面載入完成');
             initializeYearSelect();
             setDefaultDates();
         });
 
-        // 初始化年份選擇器
         function initializeYearSelect() {
             const yearSelect = document.getElementById('yearlyDate');
             const currentYear = new Date().getFullYear();
@@ -566,7 +572,6 @@
             }
         }
 
-        // 設定預設日期
         function setDefaultDates() {
             const today = new Date();
             document.getElementById('dailyDate').valueAsDate = today;
@@ -578,7 +583,6 @@
             document.getElementById('monthlyDate').value = today.toISOString().substr(0, 7);
         }
 
-        // 選擇報表類型
         function selectReportType(type) {
             console.log('選擇報表類型:', type);
             currentReportType = type;
@@ -598,7 +602,6 @@
             document.getElementById('downloadBtn').style.display = 'none';
         }
 
-        // 搜尋病患
         async function searchPatient() {
             const idNumber = document.getElementById('idNumber').value.trim();
 
@@ -616,7 +619,7 @@
             let startDate, endDate;
 
             switch (currentReportType) {
-                case 0: // 每日
+                case 0:
                     const daily = document.getElementById('dailyDate').value;
                     if (!daily) {
                         alert('請選擇日期');
@@ -626,7 +629,7 @@
                     endDate = daily;
                     break;
 
-                case 1: // 每週
+                case 1:
                     const weekStart = document.getElementById('weeklyStartDate').value;
                     if (!weekStart) {
                         alert('請選擇週開始日期');
@@ -638,7 +641,7 @@
                     endDate = weekEnd.toISOString().substr(0, 10);
                     break;
 
-                case 2: // 每月
+                case 2:
                     const monthly = document.getElementById('monthlyDate').value;
                     if (!monthly) {
                         alert('請選擇年月');
@@ -650,7 +653,7 @@
                     endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
                     break;
 
-                case 3: // 每年
+                case 3:
                     const yearVal = document.getElementById('yearlyDate').value;
                     startDate = `${yearVal}-01-01`;
                     endDate = `${yearVal}-12-31`;
@@ -692,33 +695,27 @@
             }
         }
 
-        // 顯示病患資訊
         function displayPatientInfo(data) {
             document.getElementById('patientInfo').style.display = 'block';
             document.getElementById('patientName').textContent = data.patientName;
             document.getElementById('patientId').textContent = maskIdNumber(data.idNumber);
         }
 
-        // 遮罩身分證
         function maskIdNumber(id) {
             if (!id || id.length < 10) return '***';
             return id.substring(0, 4) + '***' + id.substring(7);
         }
 
-        // 🆕 顯示報表 (支援每日/週/月/年)
         function displayReport(data) {
             console.log('📈 顯示報表數據:', data);
             document.getElementById('reportContent').style.display = 'block';
 
-            // 🆕 如果是每日報表,顯示表格;否則顯示圖表
             if (currentReportType === 0) {
-                // 每日報表 - 顯示表格
                 document.getElementById('dailyTable').style.display = 'block';
                 document.getElementById('summarySection').style.display = 'none';
                 document.getElementById('chartsSection').style.display = 'none';
                 displayDailyTable(data);
             } else {
-                // 週/月/年報表 - 顯示圖表
                 document.getElementById('dailyTable').style.display = 'none';
                 document.getElementById('summarySection').style.display = 'block';
                 document.getElementById('chartsSection').style.display = 'block';
@@ -726,20 +723,16 @@
             }
         }
 
-        // 🆕 顯示每日表格
         function displayDailyTable(data) {
             const tbody = document.getElementById('dailyTableBody');
             tbody.innerHTML = '';
 
             const stats = data.statistics;
             const records = data.records;
-
-            // 如果當日有記錄,取第一筆
             const record = records && records.length > 0 ? records[0] : null;
 
             const rows = [];
 
-            // 血壓
             if (stats.avgSystolicBP !== null && stats.avgDiastolicBP !== null) {
                 const isAbnormal = stats.avgSystolicBP > 120 || stats.avgDiastolicBP > 80;
                 rows.push({
@@ -752,7 +745,6 @@
                 });
             }
 
-            // 血糖
             if (stats.avgBloodSugar !== null) {
                 const isAbnormal = stats.avgBloodSugar > 99;
                 rows.push({
@@ -765,7 +757,6 @@
                 });
             }
 
-            // 飲水量
             if (stats.avgWaterIntake !== null) {
                 const isAbnormal = stats.avgWaterIntake < 2000;
                 rows.push({
@@ -778,7 +769,6 @@
                 });
             }
 
-            // 運動時間
             if (stats.avgExerciseDuration !== null) {
                 const isAbnormal = stats.avgExerciseDuration < 30;
                 rows.push({
@@ -791,7 +781,6 @@
                 });
             }
 
-            // 抽菸
             if (stats.avgCigarettes !== null && stats.avgCigarettes > 0) {
                 rows.push({
                     icon: '🚬',
@@ -803,7 +792,17 @@
                 });
             }
 
-            // 產生表格行
+            if (stats.avgBetelNut !== null && stats.avgBetelNut > 0) {
+                rows.push({
+                    icon: '🌿',
+                    name: '嚼檳榔',
+                    value: `${stats.avgBetelNut.toFixed(0)} 次`,
+                    standard: '0 次',
+                    status: '<span style="color: #dc2626; font-weight: 700;">⚠️ 建議戒除</span>',
+                    isAbnormal: true
+                });
+            }
+
             rows.forEach(row => {
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid #e5e7eb';
@@ -812,22 +811,58 @@
                 }
 
                 tr.innerHTML = `
-                        <td style="padding: 1rem; border: 1px solid #e5e7eb;">
-                            <span style="font-size: 1.2rem; margin-right: 0.5rem;">${row.icon}</span>
-                            <strong>${row.name}</strong>
-                        </td>
-                        <td style="padding: 1rem; text-align: center; border: 1px solid #e5e7eb; font-size: 1.1rem; font-weight: 600; ${row.isAbnormal ? 'color: #dc2626;' : ''}">${row.value}</td>
-                        <td style="padding: 1rem; text-align: center; border: 1px solid #e5e7eb; color: #6b7280;">${row.standard}</td>
-                        <td style="padding: 1rem; text-align: center; border: 1px solid #e5e7eb;">${row.status}</td>
-                    `;
+                            <td style="padding: 1rem; border: 1px solid #e5e7eb;">
+                                <span style="font-size: 1.2rem; margin-right: 0.5rem;">${row.icon}</span>
+                                <strong>${row.name}</strong>
+                            </td>
+                            <td style="padding: 1rem; text-align: center; border: 1px solid #e5e7eb; font-size: 1.1rem; font-weight: 600; ${row.isAbnormal ? 'color: #dc2626;' : ''}">${row.value}</td>
+                            <td style="padding: 1rem; text-align: center; border: 1px solid #e5e7eb; color: #6b7280;">${row.standard}</td>
+                            <td style="padding: 1rem; text-align: center; border: 1px solid #e5e7eb;">${row.status}</td>
+                        `;
                 tbody.appendChild(tr);
             });
 
-            // 🆕 三餐記錄
+            // 三餐記錄
             if (record && (record.meals_Breakfast || record.meals_Lunch || record.meals_Dinner)) {
                 const mealTr = document.createElement('tr');
                 mealTr.style.borderBottom = '1px solid #e5e7eb';
                 mealTr.style.background = '#f9fafb';
+
+                const calculateMealTotal = (items) => {
+                    let total = 0;
+                    let others = [];
+
+                    items.forEach(item => {
+                        if (!item || item === '0') return;
+
+                        if (item.includes('+')) {
+                            const parts = item.split('+');
+                            parts.forEach(part => {
+                                const num = parseFloat(part.trim());
+                                if (!isNaN(num)) {
+                                    total += num;
+                                } else {
+                                    others.push(part.trim());
+                                }
+                            });
+                        } else {
+                            const num = parseFloat(item);
+                            if (!isNaN(num)) {
+                                total += num;
+                            } else {
+                                others.push(item);
+                            }
+                        }
+                    });
+
+                    const result = [];
+                    if (total > 0) {
+                        result.push(total % 1 === 0 ? total.toString() : total.toFixed(1));
+                    }
+                    result.push(...others);
+
+                    return result.length > 0 ? result.join(' + ') : null;
+                };
 
                 let totalVeg = [];
                 let totalProtein = [];
@@ -841,57 +876,62 @@
                     }
                 });
 
+                const vegTotal = calculateMealTotal(totalVeg);
+                const proteinTotal = calculateMealTotal(totalProtein);
+                const carbsTotal = calculateMealTotal(totalCarbs);
+
                 let mealContent = '<div style="line-height: 1.8;">';
-                if (totalVeg.length > 0) {
-                    mealContent += `<div>🥬 <strong>蔬菜:</strong> ${totalVeg.join(' + ')}</div>`;
+
+                if (vegTotal) {
+                    mealContent += `<div>🥬 <strong>蔬菜:</strong> ${vegTotal}</div>`;
                 }
-                if (totalProtein.length > 0) {
-                    mealContent += `<div>🥩 <strong>蛋白質:</strong> ${totalProtein.join(' + ')}</div>`;
+                if (proteinTotal) {
+                    mealContent += `<div>🥩 <strong>蛋白質:</strong> ${proteinTotal}</div>`;
                 }
-                if (totalCarbs.length > 0) {
-                    mealContent += `<div>🍚 <strong>澱粉:</strong> ${totalCarbs.join(' + ')}</div>`;
+                if (carbsTotal) {
+                    mealContent += `<div>🍚 <strong>澱粉:</strong> ${carbsTotal}</div>`;
                 }
+
                 mealContent += '</div>';
 
                 mealTr.innerHTML = `
-                        <td style="padding: 1rem; border: 1px solid #e5e7eb;">
-                            <span style="font-size: 1.2rem; margin-right: 0.5rem;">🍽️</span>
-                            <strong>今日三餐總計</strong>
-                        </td>
-                        <td colspan="3" style="padding: 1rem; border: 1px solid #e5e7eb; text-align: left;">
-                            ${mealContent}
-                        </td>
-                    `;
+                            <td style="padding: 1rem; border: 1px solid #e5e7eb;">
+                                <span style="font-size: 1.2rem; margin-right: 0.5rem;">🍽️</span>
+                                <strong>今日三餐總計</strong>
+                            </td>
+                            <td colspan="3" style="padding: 1rem; border: 1px solid #e5e7eb; text-align: left;">
+                                ${mealContent}
+                            </td>
+                        `;
                 tbody.appendChild(mealTr);
             }
 
-            // 🆕 飲料記錄
+            // 飲料記錄
             if (record && record.beverage) {
                 const bevTr = document.createElement('tr');
                 bevTr.style.borderBottom = '1px solid #e5e7eb';
                 bevTr.style.background = '#f9fafb';
 
                 bevTr.innerHTML = `
-                        <td style="padding: 1rem; border: 1px solid #e5e7eb;">
-                            <span style="font-size: 1.2rem; margin-right: 0.5rem;">🥤</span>
-                            <strong>其他飲料</strong>
-                        </td>
-                        <td colspan="3" style="padding: 1rem; border: 1px solid #e5e7eb; text-align: left; font-size: 1.05rem;">
-                            ${record.beverage}
-                        </td>
-                    `;
+                            <td style="padding: 1rem; border: 1px solid #e5e7eb;">
+                                <span style="font-size: 1.2rem; margin-right: 0.5rem;">🥤</span>
+                                <strong>其他飲料</strong>
+                            </td>
+                            <td colspan="3" style="padding: 1rem; border: 1px solid #e5e7eb; text-align: left; font-size: 1.05rem;">
+                                ${record.beverage}
+                            </td>
+                        `;
                 tbody.appendChild(bevTr);
             }
 
-            // 如果沒有數據
             if (rows.length === 0 && (!record || (!record.meals_Breakfast && !record.meals_Lunch && !record.meals_Dinner && !record.beverage))) {
                 tbody.innerHTML = '<tr><td colspan="4" style="padding: 2rem; text-align: center; color: #999;">該日期無健康數據</td></tr>';
             }
         }
 
-        // 顯示圖表報表 (週/月/年)
         function displayChartReport(data) {
             const stats = data.statistics;
+
             document.getElementById('totalDays').textContent = stats.totalDays;
             document.getElementById('highBPDays').textContent = stats.highBPDays;
             document.getElementById('highBPPercentage').textContent = `(${stats.highBPPercentage.toFixed(1)}%)`;
@@ -901,91 +941,418 @@
             document.getElementById('lowWaterPercentage').textContent = `(${stats.lowWaterPercentage.toFixed(1)}%)`;
 
             const avgTableHtml = `
-                    <tr>
-                        <td>血壓</td>
-                        <td>${stats.avgSystolicBP?.toFixed(1) || 'N/A'} / ${stats.avgDiastolicBP?.toFixed(1) || 'N/A'} mmHg</td>
-                        <td>≤ 120/80 mmHg</td>
-                        <td>${(stats.avgSystolicBP > 120 || stats.avgDiastolicBP > 80) ? '<span class="badge badge-danger">偏高</span>' : '<span class="badge badge-success">正常</span>'}</td>
-                    </tr>
-                    <tr>
-                        <td>血糖</td>
-                        <td>${stats.avgBloodSugar?.toFixed(1) || 'N/A'} mg/dL</td>
-                        <td>≤ 99 mg/dL</td>
-                        <td>${stats.avgBloodSugar > 99 ? '<span class="badge badge-danger">偏高</span>' : '<span class="badge badge-success">正常</span>'}</td>
-                    </tr>
-                    <tr>
-                        <td>飲水量</td>
-                        <td>${stats.avgWaterIntake?.toFixed(0) || 'N/A'} ml</td>
-                        <td>≥ 2000 ml</td>
-                        <td>${stats.avgWaterIntake < 2000 ? '<span class="badge badge-warning">不足</span>' : '<span class="badge badge-success">充足</span>'}</td>
-                    </tr>
-                    <tr>
-                        <td>運動時間</td>
-                        <td>${stats.avgExerciseDuration?.toFixed(1) || 'N/A'} 分鐘</td>
-                        <td>≥ 150 分鐘/週</td>
-                        <td>${stats.avgExerciseDuration < 150 ? '<span class="badge badge-warning">不足</span>' : '<span class="badge badge-success">充足</span>'}</td>
-                    </tr>
-                `;
+                        <tr>
+                            <td>血壓</td>
+                            <td>${stats.avgSystolicBP?.toFixed(1) || 'N/A'} / ${stats.avgDiastolicBP?.toFixed(1) || 'N/A'} mmHg</td>
+                            <td>≤ 120/80 mmHg</td>
+                            <td>${(stats.avgSystolicBP > 120 || stats.avgDiastolicBP > 80) ? '<span class="badge badge-danger">偏高</span>' : '<span class="badge badge-success">正常</span>'}</td>
+                        </tr>
+                        <tr>
+                            <td>血糖</td>
+                            <td>${stats.avgBloodSugar?.toFixed(1) || 'N/A'} mg/dL</td>
+                            <td>≤ 99 mg/dL</td>
+                            <td>${stats.avgBloodSugar > 99 ? '<span class="badge badge-danger">偏高</span>' : '<span class="badge badge-success">正常</span>'}</td>
+                        </tr>
+                        <tr>
+                            <td>飲水量</td>
+                            <td>${stats.avgWaterIntake?.toFixed(0) || 'N/A'} ml</td>
+                            <td>≥ 2000 ml</td>
+                            <td>${stats.avgWaterIntake < 2000 ? '<span class="badge badge-warning">不足</span>' : '<span class="badge badge-success">充足</span>'}</td>
+                        </tr>
+                        <tr>
+                            <td>運動時間</td>
+                            <td>${stats.avgExerciseDuration?.toFixed(1) || 'N/A'} 分鐘</td>
+                            <td>≥ 150 分鐘/週</td>
+                            <td>${stats.avgExerciseDuration < 150 ? '<span class="badge badge-warning">不足</span>' : '<span class="badge badge-success">充足</span>'}</td>
+                        </tr>
+                        <tr>
+                            <td>🚬 抽菸 (每日平均)</td>
+                            <td>${stats.avgCigarettes?.toFixed(1) || '0'} 支 (總計 ${stats.totalCigarettes?.toFixed(0) || '0'} 支)</td>
+                            <td>≤ 10 支</td>
+                            <td>${stats.avgCigarettes > 10 ? '<span class="badge badge-danger">偏多</span>' : stats.avgCigarettes > 0 ? '<span class="badge badge-warning">建議戒菸</span>' : '<span class="badge badge-success">良好</span>'}</td>
+                        </tr>
+                        <tr>
+                            <td>🌿 檳榔 (每日平均)</td>
+                            <td>${stats.avgBetelNut?.toFixed(1) || '0'} 次 (總計 ${stats.totalBetelNut?.toFixed(0) || '0'} 次)</td>
+                            <td>≤ 10 次</td>
+                            <td>${stats.avgBetelNut > 10 ? '<span class="badge badge-danger">偏多</span>' : stats.avgBetelNut > 0 ? '<span class="badge badge-warning">建議戒除</span>' : '<span class="badge badge-success">良好</span>'}</td>
+                        </tr>
+                        <tr>
+                            <td>🥬 蔬菜 (每日平均)</td>
+                            <td>${stats.avgVegetables?.toFixed(1) || 'N/A'} 份</td>
+                            <td>建議 3-5 份</td>
+                            <td>${stats.avgVegetables >= 3 ? '<span class="badge badge-success">充足</span>' : '<span class="badge badge-warning">可增加</span>'}</td>
+                        </tr>
+                        <tr>
+                            <td>🥩 蛋白質 (每日平均)</td>
+                            <td>${stats.avgProtein?.toFixed(1) || 'N/A'} 份</td>
+                            <td>建議 3-5 份</td>
+                            <td>${stats.avgProtein >= 3 ? '<span class="badge badge-success">充足</span>' : '<span class="badge badge-warning">可增加</span>'}</td>
+                        </tr>
+                        <tr>
+                            <td>🍚 澱粉 (每日平均)</td>
+                            <td>${stats.avgCarbs?.toFixed(1) || 'N/A'} 份</td>
+                            <td>建議 2-4 份</td>
+                            <td>${stats.avgCarbs >= 2 && stats.avgCarbs <= 4 ? '<span class="badge badge-success">適中</span>' : '<span class="badge badge-warning">需調整</span>'}</td>
+                        </tr>
+                    `;
             document.getElementById('avgTable').innerHTML = avgTableHtml;
 
             drawCharts(data.charts);
+            displayMealRecords(data, currentReportType);
+            displayBeverageRecords(data, currentReportType);
+        }
 
-            // 飲料記錄
-            if (data.charts.beverageRecords && data.charts.beverageRecords.length > 0) {
-                let beverageHtml = '<table><thead><tr><th>日期</th><th>飲料</th></tr></thead><tbody>';
-                data.charts.beverageRecords.forEach(r => {
-                    beverageHtml += `<tr><td>${r.date}</td><td>${r.beverage}</td></tr>`;
-                });
-                beverageHtml += '</tbody></table>';
-                document.getElementById('beverageTable').innerHTML = beverageHtml;
-            } else {
-                document.getElementById('beverageTable').innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
-            }
+        function displayMealRecords(data, reportType) {
+            const mealDiv = document.getElementById('mealTable');
 
-            // 🆕 三餐記錄 - 統計格式
-            if (data.charts.mealRecords && data.charts.mealRecords.length > 0) {
-                let mealHtml = '<table><thead><tr><th>日期</th><th>三餐總計</th></tr></thead><tbody>';
+            if (reportType === 1) {
+                const summary = data.charts.weeklyMealSummary;
+                let html = `
+                            <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
+                                <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">📊 當週總量</h4>
+                                <div style="line-height: 1.8;">
+                                    <div>🥬 蔬菜: ${summary?.totalVegetables?.toFixed(1) || 0} 份 (平均 ${summary?.avgVegetables?.toFixed(1) || 0} 份/天)</div>
+                                    <div>🥩 蛋白質: ${summary?.totalProtein?.toFixed(1) || 0} 份 (平均 ${summary?.avgProtein?.toFixed(1) || 0} 份/天)</div>
+                                    <div>🍚 澱粉: ${summary?.totalCarbs?.toFixed(1) || 0} 份 (平均 ${summary?.avgCarbs?.toFixed(1) || 0} 份/天)</div>
+                                </div>
+                            </div>
+                            <table><thead><tr><th>日期</th><th>三餐總計</th></tr></thead><tbody>`;
 
                 data.charts.mealRecords.forEach(r => {
-                    let mealContent = '<div style="line-height: 1.8; text-align: left;">';
-
-                    if (r.mealData) {
-                        const { vegetables, protein, carbs } = r.mealData;
-
-                        if (vegetables && vegetables.length > 0) {
-                            mealContent += `<div>🥬 <strong>蔬菜:</strong> ${vegetables.join(' + ')}</div>`;
-                        }
-                        if (protein && protein.length > 0) {
-                            mealContent += `<div>🥩 <strong>蛋白質:</strong> ${protein.join(' + ')}</div>`;
-                        }
-                        if (carbs && carbs.length > 0) {
-                            mealContent += `<div>🍚 <strong>澱粉:</strong> ${carbs.join(' + ')}</div>`;
-                        }
-
-                        if ((!vegetables || vegetables.length === 0) &&
-                            (!protein || protein.length === 0) &&
-                            (!carbs || carbs.length === 0)) {
-                            mealContent += '<div style="color: #999;">無記錄</div>';
-                        }
-                    } else {
-                        mealContent += `<div>${r.meals || '無記錄'}</div>`;
-                    }
-
-                    mealContent += '</div>';
-
-                    mealHtml += `<tr><td style="white-space: nowrap;">${r.date}</td><td>${mealContent}</td></tr>`;
+                    html += generateMealRow(r);
                 });
 
-                mealHtml += '</tbody></table>';
-                document.getElementById('mealTable').innerHTML = mealHtml;
-            } else {
-                document.getElementById('mealTable').innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
+                html += '</tbody></table>';
+                mealDiv.innerHTML = html;
+
+            } else if (reportType === 2) {
+                const summary = data.charts.monthlyMealSummary;
+                let html = `
+                            <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
+                                <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">📊 當月總量</h4>
+                                <div style="line-height: 1.8;">
+                                    <div>🥬 蔬菜: ${summary?.totalVegetables?.toFixed(1) || 0} 份 (平均 ${summary?.avgVegetables?.toFixed(1) || 0} 份/天)</div>
+                                    <div>🥩 蛋白質: ${summary?.totalProtein?.toFixed(1) || 0} 份 (平均 ${summary?.avgProtein?.toFixed(1) || 0} 份/天)</div>
+                                    <div>🍚 澱粉: ${summary?.totalCarbs?.toFixed(1) || 0} 份 (平均 ${summary?.avgCarbs?.toFixed(1) || 0} 份/天)</div>
+                                </div>
+                            </div>
+                            <div id="monthlyMealWeeks"></div>`;
+
+                mealDiv.innerHTML = html;
+                generateMonthlyWeeks(data.charts.mealRecords, 'meal');
+
+            } else if (reportType === 3) {
+                const summary = data.charts.yearlyMealSummary;
+                mealDiv.innerHTML = `
+                            <div style="background: #fef3c7; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                                <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">📊 全年總量</h4>
+                                <div style="line-height: 2; font-size: 1.05rem;">
+                                    <div>🥬 蔬菜: ${summary?.totalVegetables?.toFixed(1) || 0} 份 (平均 ${summary?.avgVegetables?.toFixed(1) || 0} 份/天)</div>
+                                    <div>🥩 蛋白質: ${summary?.totalProtein?.toFixed(1) || 0} 份 (平均 ${summary?.avgProtein?.toFixed(1) || 0} 份/天)</div>
+                                    <div>🍚 澱粉: ${summary?.totalCarbs?.toFixed(1) || 0} 份 (平均 ${summary?.avgCarbs?.toFixed(1) || 0} 份/天)</div>
+                                </div>
+                            </div>`;
             }
         }
 
-        // 繪製圖表 (與病患版本相同)
+        function displayBeverageRecords(data, reportType) {
+            const bevDiv = document.getElementById('beverageTable');
+
+            if (reportType === 1) {
+                if (data.charts.beverageRecords && data.charts.beverageRecords.length > 0) {
+                    let html = '<table><thead><tr><th>日期</th><th>飲料</th></tr></thead><tbody>';
+                    data.charts.beverageRecords.forEach(r => {
+                        html += `<tr><td>${r.date}</td><td>${r.beverage}</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                    bevDiv.innerHTML = html;
+                } else {
+                    bevDiv.innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
+                }
+
+            } else if (reportType === 2) {
+                if (data.charts.beverageRecords && data.charts.beverageRecords.length > 0) {
+                    bevDiv.innerHTML = '<div id="monthlyBevWeeks"></div>';
+                    generateMonthlyWeeks(data.charts.beverageRecords, 'beverage');
+                } else {
+                    bevDiv.innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
+                }
+
+            } else if (reportType === 3) {
+                if (data.charts.beverageRecords && data.charts.beverageRecords.length > 0) {
+                    bevDiv.innerHTML = '<div id="yearlyBevMonths"></div>';
+                    generateYearlyMonths(data.charts.beverageRecords);
+                } else {
+                    bevDiv.innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
+                }
+            }
+        }
+
+        function generateMealRow(r) {
+            let mealContent = '<div style="line-height: 1.8; text-align: left;">';
+
+            if (r.mealData) {
+                const { vegetables, protein, carbs } = r.mealData;
+
+                const getTotal = (arr) => {
+                    if (!arr || arr.length === 0) return null;
+                    if (arr.length === 1) {
+                        const val = parseFloat(arr[0]);
+                        return isNaN(val) ? arr[0] : (val % 1 === 0 ? val.toFixed(0) : val.toFixed(1));
+                    }
+                    let total = 0;
+                    arr.forEach(item => {
+                        const num = parseFloat(item);
+                        if (!isNaN(num)) total += num;
+                    });
+                    return total % 1 === 0 ? total.toFixed(0) : total.toFixed(1);
+                };
+
+                const vegTotal = getTotal(vegetables);
+                const protTotal = getTotal(protein);
+                const carbTotal = getTotal(carbs);
+
+                if (vegTotal) {
+                    mealContent += `<div>🥬 蔬菜: ${vegTotal}</div>`;
+                }
+                if (protTotal) {
+                    mealContent += `<div>🥩 蛋白質: ${protTotal}</div>`;
+                }
+                if (carbTotal) {
+                    mealContent += `<div>🍚 澱粉: ${carbTotal}</div>`;
+                }
+
+                if (!vegTotal && !protTotal && !carbTotal) {
+                    mealContent += '<div style="color: #999;">無記錄</div>';
+                }
+            } else {
+                mealContent += `<div>${r.meals || '無記錄'}</div>`;
+            }
+
+            mealContent += '</div>';
+
+            return `<tr><td style="white-space: nowrap;">${r.date}</td><td>${mealContent}</td></tr>`;
+        }
+
+        function generateMonthlyWeeks(records, type) {
+            const targetDiv = type === 'meal' ? 'monthlyMealWeeks' : 'monthlyBevWeeks';
+            const container = document.getElementById(targetDiv);
+
+            if (!records || records.length === 0) {
+                container.innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
+                return;
+            }
+
+            const firstRecord = records[0];
+            const date = new Date(firstRecord.date);
+            const year = date.getFullYear();
+            const month = date.getMonth();
+
+            const monthFirstDay = new Date(year, month, 1);
+            const monthLastDay = new Date(year, month + 1, 0);
+
+            const weeks = [];
+            let currentStart = new Date(monthFirstDay);
+
+            while (currentStart <= monthLastDay) {
+                const weekEnd = new Date(currentStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+
+                const actualEnd = weekEnd > monthLastDay ? monthLastDay : weekEnd;
+
+                weeks.push({
+                    start: new Date(currentStart),
+                    end: actualEnd,
+                    records: []
+                });
+
+                currentStart.setDate(currentStart.getDate() + 7);
+            }
+
+            records.forEach(r => {
+                const recordDate = new Date(r.date);
+                const week = weeks.find(w => recordDate >= w.start && recordDate <= w.end);
+                if (week) {
+                    week.records.push(r);
+                }
+            });
+
+            let html = '';
+            weeks.forEach((week, idx) => {
+                const weekStartStr = `${String(week.start.getMonth() + 1).padStart(2, '0')}/${String(week.start.getDate()).padStart(2, '0')}`;
+                const weekEndStr = `${String(week.end.getMonth() + 1).padStart(2, '0')}/${String(week.end.getDate()).padStart(2, '0')}`;
+
+                html += `
+                            <div class="collapsible-section" style="margin-bottom: 0.5rem;">
+                                <div class="collapsible-header" onclick="toggleSection('week${type}${idx}')" style="cursor: pointer; padding: 0.75rem; background: #f3f4f6; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 600;">📅 ${weekStartStr} ~ ${weekEndStr}</span>
+                                    <span id="icon-week${type}${idx}">▼</span>
+                                </div>
+                                <div id="week${type}${idx}" class="collapsible-content" style="display: none; padding: 1rem; background: #fafafa; border-radius: 0 0 6px 6px;">`;
+
+                if (week.records.length > 0) {
+                    html += `
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <thead>
+                                            <tr>
+                                                <th style="border: 1px solid #e5e7eb; padding: 0.5rem; background: #f9fafb;">日期</th>
+                                                <th style="border: 1px solid #e5e7eb; padding: 0.5rem; background: #f9fafb;">${type === 'meal' ? '三餐' : '飲料'}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+
+                    week.records.forEach(r => {
+                        const displayDate = new Date(r.date);
+                        const dateStr = `${String(displayDate.getMonth() + 1).padStart(2, '0')}/${String(displayDate.getDate()).padStart(2, '0')}`;
+
+                        if (type === 'meal') {
+                            html += generateMealRow({ ...r, date: dateStr });
+                        } else {
+                            html += `<tr>
+                                        <td style="border: 1px solid #e5e7eb; padding: 0.5rem;">${dateStr}</td>
+                                        <td style="border: 1px solid #e5e7eb; padding: 0.5rem;">${r.beverage || '無記錄'}</td>
+                                    </tr>`;
+                        }
+                    });
+
+                    html += `</tbody></table>`;
+                } else {
+                    html += `<p style="text-align:center; padding: 1rem; color: #999;">此週無記錄</p>`;
+                }
+
+                html += `</div></div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function generateYearlyMonths(records) {
+            const container = document.getElementById('yearlyBevMonths');
+
+            if (!records || records.length === 0) {
+                container.innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
+                return;
+            }
+
+            const months = {};
+            records.forEach(r => {
+                const date = new Date(r.date);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+                if (!months[monthKey]) {
+                    months[monthKey] = [];
+                }
+                months[monthKey].push(r);
+            });
+
+            let html = '';
+            Object.keys(months).sort().forEach((monthKey, midx) => {
+                const monthData = months[monthKey];
+                const [year, month] = monthKey.split('-');
+                const monthName = `${year}年${month}月`;
+
+                html += `
+                            <div class="collapsible-section" style="margin-bottom: 0.5rem;">
+                                <div class="collapsible-header" onclick="toggleSection('month${midx}')" style="cursor: pointer; padding: 0.75rem; background: #dbeafe; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 700;">📅 ${monthName}</span>
+                                    <span id="icon-month${midx}">▼</span>
+                                </div>
+                                <div id="month${midx}" class="collapsible-content" style="display: none; padding: 1rem; background: #f0f9ff; border-radius: 0 0 6px 6px;">`;
+
+                const monthFirstDay = new Date(parseInt(year), parseInt(month) - 1, 1);
+                const monthLastDay = new Date(parseInt(year), parseInt(month), 0);
+
+                const weeks = [];
+                let currentStart = new Date(monthFirstDay);
+
+                while (currentStart <= monthLastDay) {
+                    const weekEnd = new Date(currentStart);
+                    weekEnd.setDate(weekEnd.getDate() + 6);
+
+                    const actualEnd = weekEnd > monthLastDay ? monthLastDay : weekEnd;
+
+                    weeks.push({
+                        start: new Date(currentStart),
+                        end: actualEnd,
+                        records: []
+                    });
+
+                    currentStart.setDate(currentStart.getDate() + 7);
+                }
+
+                monthData.forEach(r => {
+                    const recordDate = new Date(r.date);
+                    const week = weeks.find(w => recordDate >= w.start && recordDate <= w.end);
+                    if (week) {
+                        week.records.push(r);
+                    }
+                });
+
+                weeks.forEach((week, widx) => {
+                    const weekStartStr = `${String(week.start.getMonth() + 1).padStart(2, '0')}/${String(week.start.getDate()).padStart(2, '0')}`;
+                    const weekEndStr = `${String(week.end.getMonth() + 1).padStart(2, '0')}/${String(week.end.getDate()).padStart(2, '0')}`;
+
+                    html += `
+                                <div class="collapsible-section" style="margin-bottom: 0.5rem;">
+                                    <div class="collapsible-header" onclick="toggleSection('week${midx}${widx}')" style="cursor: pointer; padding: 0.5rem; background: #f3f4f6; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-weight: 600; font-size: 0.95rem;">📅 ${weekStartStr} ~ ${weekEndStr}</span>
+                                        <span id="icon-week${midx}${widx}">▼</span>
+                                    </div>
+                                    <div id="week${midx}${widx}" class="collapsible-content" style="display: none; padding: 0.75rem; background: #fafafa; border-radius: 0 0 4px 4px;">`;
+
+                    if (week.records.length > 0) {
+                        html += `
+                                        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="border: 1px solid #e5e7eb; padding: 0.4rem; background: #f9fafb;">日期</th>
+                                                    <th style="border: 1px solid #e5e7eb; padding: 0.4rem; background: #f9fafb;">飲料</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>`;
+
+                        week.records.forEach(r => {
+                            const displayDate = new Date(r.date);
+                            const dateStr = `${String(displayDate.getMonth() + 1).padStart(2, '0')}/${String(displayDate.getDate()).padStart(2, '0')}`;
+
+                            html += `<tr>
+                                        <td style="border: 1px solid #e5e7eb; padding: 0.4rem;">${dateStr}</td>
+                                        <td style="border: 1px solid #e5e7eb; padding: 0.4rem;">${r.beverage || '無記錄'}</td>
+                                    </tr>`;
+                        });
+
+                        html += `</tbody></table>`;
+                    } else {
+                        html += `<p style="text-align:center; padding: 1rem; color: #999; font-size: 0.9rem;">此週無記錄</p>`;
+                    }
+
+                    html += `</div></div>`;
+                });
+
+                html += `</div></div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function toggleSection(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById('icon-' + id);
+
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.textContent = '▲';
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '▼';
+            }
+        }
+
         function drawCharts(chartData) {
-            Object.values(charts).forEach(chart => chart.destroy());
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
             charts = {};
 
             if (chartData.bloodPressureData && chartData.bloodPressureData.length > 0) {
@@ -997,22 +1364,30 @@
                         datasets: [{
                             label: '收縮壓',
                             data: chartData.bloodPressureData.map(d => d.value),
-                            borderColor: 'rgb(54, 162, 235)',
-                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
-                            tension: 0.1
+                            borderColor: 'rgb(220, 38, 38)',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            tension: 0.4,
+                            fill: true
                         }, {
                             label: '舒張壓',
                             data: chartData.bloodPressureData.map(d => d.value2),
-                            borderColor: 'rgb(75, 192, 192)',
-                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                            tension: 0.1
+                            borderColor: 'rgb(37, 99, 235)',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            tension: 0.4,
+                            fill: true
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            title: { display: true, text: '血壓趨勢 (標準值: 120/80 mmHg)' }
+                            title: { display: true, text: '❤️ 血壓趨勢 (標準值: 120/80 mmHg)' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'mmHg' }
+                            }
                         }
                     }
                 });
@@ -1027,9 +1402,10 @@
                         datasets: [{
                             label: '血糖',
                             data: chartData.bloodSugarData.map(d => d.value),
-                            borderColor: 'rgb(255, 99, 132)',
-                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                            tension: 0.1,
+                            borderColor: 'rgb(220, 38, 38)',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            tension: 0.4,
+                            fill: true,
                             pointBackgroundColor: chartData.bloodSugarData.map(d => d.isAbnormal ? 'red' : 'green')
                         }]
                     },
@@ -1037,7 +1413,13 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            title: { display: true, text: '血糖趨勢 (標準值: ≤99 mg/dL)' }
+                            title: { display: true, text: '🩸 血糖趨勢 (標準值: ≤99 mg/dL)' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'mg/dL' }
+                            }
                         }
                     }
                 });
@@ -1052,8 +1434,8 @@
                         datasets: [{
                             label: '飲水量 (ml)',
                             data: chartData.waterIntakeData.map(d => d.value),
-                            backgroundColor: chartData.waterIntakeData.map(d => d.isAbnormal ? 'rgba(255, 159, 64, 0.5)' : 'rgba(54, 162, 235, 0.5)'),
-                            borderColor: chartData.waterIntakeData.map(d => d.isAbnormal ? 'rgb(255, 159, 64)' : 'rgb(54, 162, 235)'),
+                            backgroundColor: chartData.waterIntakeData.map(d => d.isAbnormal ? 'rgba(239, 108, 0, 0.6)' : 'rgba(6, 182, 212, 0.6)'),
+                            borderColor: chartData.waterIntakeData.map(d => d.isAbnormal ? 'rgb(239, 108, 0)' : 'rgb(8, 145, 178)'),
                             borderWidth: 1
                         }]
                     },
@@ -1061,7 +1443,13 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            title: { display: true, text: '飲水量趨勢 (建議: ≥2000 ml)' }
+                            title: { display: true, text: '💧 飲水量趨勢 (建議: ≥2000 ml)' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'ml' }
+                            }
                         }
                     }
                 });
@@ -1076,8 +1464,8 @@
                         datasets: [{
                             label: '運動時間 (分鐘)',
                             data: chartData.exerciseDurationData.map(d => d.value),
-                            backgroundColor: chartData.exerciseDurationData.map(d => d.isAbnormal ? 'rgba(255, 159, 64, 0.5)' : 'rgba(75, 192, 192, 0.5)'),
-                            borderColor: chartData.exerciseDurationData.map(d => d.isAbnormal ? 'rgb(255, 159, 64)' : 'rgb(75, 192, 192)'),
+                            backgroundColor: chartData.exerciseDurationData.map(d => d.isAbnormal ? 'rgba(239, 108, 0, 0.6)' : 'rgba(16, 185, 129, 0.6)'),
+                            borderColor: chartData.exerciseDurationData.map(d => d.isAbnormal ? 'rgb(239, 108, 0)' : 'rgb(5, 150, 105)'),
                             borderWidth: 1
                         }]
                     },
@@ -1085,14 +1473,97 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            title: { display: true, text: '運動時間趨勢 (建議: ≥150 分鐘/週)' }
+                            title: { display: true, text: '🏃 運動時間趨勢 (建議: ≥150 分鐘/週)' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: '分鐘' }
+                            }
                         }
                     }
                 });
             }
+
+            if (chartData.cigarettesData && chartData.cigarettesData.length > 0) {
+                const cigCtx = document.getElementById('cigaretteChart').getContext('2d');
+                charts.cigarette = new Chart(cigCtx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.cigarettesData.map(d => d.date),
+                        datasets: [{
+                            label: '抽菸支數',
+                            data: chartData.cigarettesData.map(d => d.value),
+                            borderColor: 'rgb(220, 38, 38)',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: chartData.cigarettesData.map(d => d.isAbnormal ? 'rgb(220, 38, 38)' : 'rgb(22, 163, 74)')
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: '🚬 抽菸趨勢 (建議: 0 支)',
+                                font: { size: 16, weight: 'bold' }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: '支' }
+                            }
+                        }
+                    }
+                });
+                console.log('✅ 抽菸圖表已繪製', chartData.cigarettesData.length, '筆資料');
+            } else {
+                console.warn('⚠️ 無抽菸數據');
+            }
+
+            if (chartData.betelNutData && chartData.betelNutData.length > 0) {
+                const betelCtx = document.getElementById('betelNutChart').getContext('2d');
+                charts.betelNut = new Chart(betelCtx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.betelNutData.map(d => d.date),
+                        datasets: [{
+                            label: '檳榔次數',
+                            data: chartData.betelNutData.map(d => d.value),
+                            borderColor: 'rgb(22, 163, 74)',
+                            backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: chartData.betelNutData.map(d => d.isAbnormal ? 'rgb(220, 38, 38)' : 'rgb(22, 163, 74)')
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: '🌿 檳榔趨勢 (建議: 0 次)',
+                                font: { size: 16, weight: 'bold' }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: '次' }
+                            }
+                        }
+                    }
+                });
+                console.log('✅ 檳榔圖表已繪製', chartData.betelNutData.length, '筆資料');
+            } else {
+                console.warn('⚠️ 無檳榔數據');
+            }
         }
 
-        // 下載 PDF
         function downloadPdf() {
             if (!currentReport) {
                 alert('請先查詢報表');

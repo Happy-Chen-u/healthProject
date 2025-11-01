@@ -229,7 +229,7 @@ namespace healthProject.Controllers
         }
 
         // ========================================
-        // 🔍 產生分析報表 (修正版)
+        // 🔍 產生分析報表 (修正版 - 年報表特殊處理)
         // ========================================
         private async Task<AnalysisViewModel> GenerateAnalysisAsync(
             int userId,
@@ -251,36 +251,19 @@ namespace healthProject.Controllers
                 .OrderBy(g => g.Date)
                 .ToList();
 
-            // ✅ 修正:建立合併的三餐物件
             var aggregatedRecords = dailyGroups.Select(d => new HealthRecordViewModel
             {
                 RecordDate = d.Date,
-
-                // 血壓:使用當日所有測量的平均
                 BP_First_1_Systolic = d.AvgSystolicBP,
                 BP_First_1_Diastolic = d.AvgDiastolicBP,
-
-                // 血糖:使用當日平均
                 BloodSugar = d.AvgBloodSugar,
-
-                // 飲水量:使用當日總和
                 WaterIntake = d.TotalWater > 0 ? d.TotalWater : null,
-
-                // 運動時間:使用當日總和
                 ExerciseDuration = d.TotalExercise > 0 ? d.TotalExercise : null,
-
-                // 抽菸:使用當日總和
                 Cigarettes = d.TotalCigarettes > 0 ? d.TotalCigarettes : null,
-
-                // 檳榔:使用當日總和
                 BetelNut = d.TotalBetelNut > 0 ? d.TotalBetelNut : null,
-
-                // ✅ 三餐:建立合併的物件 (讓 MealsDisplay 自動計算)
                 Meals_Breakfast = d.HasAnyMeals ? CreateDailyMealSummary(d, "Breakfast") : null,
                 Meals_Lunch = d.HasAnyMeals ? CreateDailyMealSummary(d, "Lunch") : null,
                 Meals_Dinner = d.HasAnyMeals ? CreateDailyMealSummary(d, "Dinner") : null,
-
-                // 飲料:合併顯示
                 Beverage = string.Join(", ", d.Records
                     .Where(r => !string.IsNullOrEmpty(r.Beverage))
                     .Select(r => r.Beverage)
@@ -288,7 +271,25 @@ namespace healthProject.Controllers
             }).ToList();
 
             var statistics = CalculateStatistics(aggregatedRecords);
-            var charts = GenerateChartData(aggregatedRecords, reportType);
+
+            // ✅ 年報表特殊處理：圖表用月平均,但三餐飲料用原始每日數據
+            ChartData charts;
+            if (reportType == ReportType.Yearly)
+            {
+                var monthlyRecords = AggregateToMonthly(aggregatedRecords);
+                charts = GenerateChartData(monthlyRecords, reportType);
+
+                // ✅ 但三餐和飲料用原始每日數據
+                charts.MealRecords = GenerateDailyMealRecords(aggregatedRecords);
+                charts.BeverageRecords = GenerateDailyBeverageRecords(aggregatedRecords);
+
+                // ✅ 重新計算三餐統計
+                charts.YearlyMealSummary = CalculateMealStatistics(aggregatedRecords);
+            }
+            else
+            {
+                charts = GenerateChartData(aggregatedRecords, reportType);
+            }
 
             return new AnalysisViewModel
             {
@@ -302,6 +303,117 @@ namespace healthProject.Controllers
                 Charts = charts
             };
         }
+        private List<HealthRecordViewModel> AggregateToMonthly(List<HealthRecordViewModel> dailyRecords)
+        {
+            var monthlyRecords = new List<HealthRecordViewModel>();
+
+            var groupedByMonth = dailyRecords
+                .GroupBy(r => new { r.RecordDate.Year, r.RecordDate.Month })
+                .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month);
+
+            foreach (var monthGroup in groupedByMonth)
+            {
+                var records = monthGroup.ToList();
+                var firstDay = new DateTime(monthGroup.Key.Year, monthGroup.Key.Month, 1);
+
+                monthlyRecords.Add(new HealthRecordViewModel
+                {
+                    RecordDate = firstDay,
+
+                    // 血壓平均
+                    BP_First_1_Systolic = records.Any(r => r.BP_First_1_Systolic.HasValue)
+                        ? records.Where(r => r.BP_First_1_Systolic.HasValue).Average(r => r.BP_First_1_Systolic.Value)
+                        : null,
+                    BP_First_1_Diastolic = records.Any(r => r.BP_First_1_Diastolic.HasValue)
+                        ? records.Where(r => r.BP_First_1_Diastolic.HasValue).Average(r => r.BP_First_1_Diastolic.Value)
+                        : null,
+
+                    // 血糖平均
+                    BloodSugar = records.Any(r => r.BloodSugar.HasValue)
+                        ? records.Where(r => r.BloodSugar.HasValue).Average(r => r.BloodSugar.Value)
+                        : null,
+
+                    // 飲水平均
+                    WaterIntake = records.Any(r => r.WaterIntake.HasValue)
+                        ? records.Where(r => r.WaterIntake.HasValue).Average(r => r.WaterIntake.Value)
+                        : null,
+
+                    // 運動平均
+                    ExerciseDuration = records.Any(r => r.ExerciseDuration.HasValue)
+                        ? records.Where(r => r.ExerciseDuration.HasValue).Average(r => r.ExerciseDuration.Value)
+                        : null,
+
+                    // 🆕 抽菸平均
+                    Cigarettes = records.Any(r => r.Cigarettes.HasValue)
+                        ? records.Where(r => r.Cigarettes.HasValue).Average(r => r.Cigarettes.Value)
+                        : null,
+
+                    // 🆕 檳榔平均
+                    BetelNut = records.Any(r => r.BetelNut.HasValue)
+                        ? records.Where(r => r.BetelNut.HasValue).Average(r => r.BetelNut.Value)
+                        : null
+                });
+            }
+
+            return monthlyRecords;
+        }
+
+
+
+        // ========================================
+        // 🆕 產生每日三餐記錄 (給年報表用)
+        // ========================================
+        private List<MealRecord> GenerateDailyMealRecords(List<HealthRecordViewModel> records)
+        {
+            var mealRecords = new List<MealRecord>();
+
+            foreach (var record in records.Where(r =>
+                r.Meals_Breakfast != null || r.Meals_Lunch != null || r.Meals_Dinner != null))
+            {
+                // ✅ 計算當天三餐總和
+                decimal totalVeg = 0, totalProt = 0, totalCarb = 0;
+
+                foreach (var meal in new[] { record.Meals_Breakfast, record.Meals_Lunch, record.Meals_Dinner })
+                {
+                    if (meal != null)
+                    {
+                        if (decimal.TryParse(meal.Vegetables, out decimal v)) totalVeg += v;
+                        if (decimal.TryParse(meal.Protein, out decimal p)) totalProt += p;
+                        if (decimal.TryParse(meal.Carbs, out decimal c)) totalCarb += c;
+                    }
+                }
+
+                mealRecords.Add(new MealRecord
+                {
+                    Date = record.RecordDate.ToString("yyyy/MM/dd"),
+                    MealData = new MealStatistics
+                    {
+                        // ✅ 直接顯示總和,不是算式
+                        Vegetables = totalVeg > 0 ? new List<string> { totalVeg.ToString("0.#") } : new List<string>(),
+                        Protein = totalProt > 0 ? new List<string> { totalProt.ToString("0.#") } : new List<string>(),
+                        Carbs = totalCarb > 0 ? new List<string> { totalCarb.ToString("0.#") } : new List<string>()
+                    }
+                });
+            }
+
+            return mealRecords;
+        }
+
+        // ========================================
+        // 🆕 產生每日飲料記錄 (給年報表用)
+        // ========================================
+        private List<BeverageRecord> GenerateDailyBeverageRecords(List<HealthRecordViewModel> records)
+        {
+            return records
+                .Where(r => !string.IsNullOrEmpty(r.Beverage))
+                .Select(r => new BeverageRecord
+                {
+                    Date = r.RecordDate.ToString("yyyy/MM/dd"),
+                    Beverage = r.Beverage
+                })
+                .ToList();
+        }
+
 
 
         // ========================================
@@ -329,8 +441,9 @@ namespace healthProject.Controllers
             return parts.Any() ? string.Join(", ", parts) : "未記錄";
         }
 
+        
         // ========================================
-        // 📈 計算統計數據 (使用每日聚合後的數據)
+        // 📈 計算統計數據
         // ========================================
         private AnalysisStatistics CalculateStatistics(List<HealthRecordViewModel> records)
         {
@@ -339,15 +452,21 @@ namespace healthProject.Controllers
                 return new AnalysisStatistics { TotalDays = 0 };
             }
 
-            // 取得有血壓數據的記錄
             var bpRecords = records.Where(r =>
                 r.BP_First_1_Systolic.HasValue || r.BP_First_1_Diastolic.HasValue).ToList();
 
-            return new AnalysisStatistics
-            {
-                TotalDays = records.Count, // 🆕 改為天數,不是筆數
+            // 🆕 計算三餐總計與平均
+            var mealStats = CalculateMealStatistics(records);
 
-                // 平均血壓 (各天平均的平均)
+            // 🆕 計算抽菸檳榔總計
+            var totalCigs = records.Where(r => r.Cigarettes.HasValue).Sum(r => r.Cigarettes.Value);
+            var totalBetel = records.Where(r => r.BetelNut.HasValue).Sum(r => r.BetelNut.Value);
+
+            var stats = new AnalysisStatistics
+            {
+                TotalDays = records.Count,
+
+                // 血壓
                 AvgSystolicBP = bpRecords.Any(r => r.BP_First_1_Systolic.HasValue)
                     ? bpRecords.Where(r => r.BP_First_1_Systolic.HasValue)
                         .Average(r => r.BP_First_1_Systolic.Value)
@@ -358,25 +477,35 @@ namespace healthProject.Controllers
                         .Average(r => r.BP_First_1_Diastolic.Value)
                     : null,
 
-                // 平均血糖
+                // 血糖
                 AvgBloodSugar = records.Where(r => r.BloodSugar.HasValue).Any()
                     ? records.Where(r => r.BloodSugar.HasValue).Average(r => r.BloodSugar.Value)
                     : null,
 
-                // 平均飲水量 (各天總和的平均)
+                // 飲水
                 AvgWaterIntake = records.Where(r => r.WaterIntake.HasValue).Any()
                     ? records.Where(r => r.WaterIntake.HasValue).Average(r => r.WaterIntake.Value)
                     : null,
 
-                // 平均運動時間 (各天總和的平均)
+                // 運動
                 AvgExerciseDuration = records.Where(r => r.ExerciseDuration.HasValue).Any()
                     ? records.Where(r => r.ExerciseDuration.HasValue).Average(r => r.ExerciseDuration.Value)
                     : null,
 
-                // 平均抽菸
-                AvgCigarettes = records.Where(r => r.Cigarettes.HasValue).Any()
-                    ? records.Where(r => r.Cigarettes.HasValue).Average(r => r.Cigarettes.Value)
-                    : null,
+                // 🆕 抽菸
+                TotalCigarettes = totalCigs,
+                AvgCigarettes = records.Count > 0 ? totalCigs / records.Count : 0,
+                SmokingDays = records.Count(r => r.Cigarettes.HasValue && r.Cigarettes.Value > 0),
+
+                // 🆕 檳榔
+                TotalBetelNut = totalBetel,
+                AvgBetelNut = records.Count > 0 ? totalBetel / records.Count : 0,
+                BetelNutDays = records.Count(r => r.BetelNut.HasValue && r.BetelNut.Value > 0),
+
+                // 🆕 三餐平均
+                AvgVegetables = mealStats.AvgVegetables,
+                AvgProtein = mealStats.AvgProtein,
+                AvgCarbs = mealStats.AvgCarbs,
 
                 // 異常天數
                 HighBPDays = records.Count(r =>
@@ -391,6 +520,47 @@ namespace healthProject.Controllers
 
                 LowExerciseDays = records.Count(r =>
                     r.ExerciseDuration.HasValue && r.ExerciseDuration.Value < 150)
+            };
+
+            return stats;
+        }
+
+        // 🆕 計算三餐統計
+        private MealSummary CalculateMealStatistics(List<HealthRecordViewModel> records)
+        {
+            var totalVeg = 0m;
+            var totalProtein = 0m;
+            var totalCarbs = 0m;
+            var mealCount = 0;
+
+            foreach (var record in records)
+            {
+                var meals = new[] { record.Meals_Breakfast, record.Meals_Lunch, record.Meals_Dinner };
+
+                foreach (var meal in meals)
+                {
+                    if (meal == null) continue;
+                    mealCount++;
+
+                    if (!string.IsNullOrEmpty(meal.Vegetables) && decimal.TryParse(meal.Vegetables, out var veg))
+                        totalVeg += veg;
+                    if (!string.IsNullOrEmpty(meal.Protein) && decimal.TryParse(meal.Protein, out var protein))
+                        totalProtein += protein;
+                    if (!string.IsNullOrEmpty(meal.Carbs) && decimal.TryParse(meal.Carbs, out var carbs))
+                        totalCarbs += carbs;
+                }
+            }
+
+            return new MealSummary
+            {
+                TotalVegetables = totalVeg,
+                TotalProtein = totalProtein,
+                TotalCarbs = totalCarbs,
+                AvgVegetables = records.Count > 0 ? totalVeg / records.Count : 0,
+                AvgProtein = records.Count > 0 ? totalProtein / records.Count : 0,
+                AvgCarbs = records.Count > 0 ? totalCarbs / records.Count : 0,
+                DaysWithMeals = records.Count(r =>
+                    r.Meals_Breakfast != null || r.Meals_Lunch != null || r.Meals_Dinner != null)
             };
         }
 
@@ -477,8 +647,9 @@ namespace healthProject.Controllers
         }
 
 
+       
         // ========================================
-        // 📊 產生圖表數據
+        // 📊 產生圖表數據 (修正版)
         // ========================================
         private ChartData GenerateChartData(List<HealthRecordViewModel> records, ReportType reportType)
         {
@@ -488,7 +659,7 @@ namespace healthProject.Controllers
             {
                 var dateStr = FormatDateForChart(record.RecordDate, reportType);
 
-                // 血壓數據
+                // 血壓
                 if (record.BP_First_1_Systolic.HasValue || record.BP_First_1_Diastolic.HasValue)
                 {
                     charts.BloodPressureData.Add(new ChartPoint
@@ -501,7 +672,7 @@ namespace healthProject.Controllers
                     });
                 }
 
-                // 血糖數據
+                // 血糖
                 if (record.BloodSugar.HasValue)
                 {
                     charts.BloodSugarData.Add(new ChartPoint
@@ -512,7 +683,7 @@ namespace healthProject.Controllers
                     });
                 }
 
-                // 飲水量數據
+                // 飲水量
                 if (record.WaterIntake.HasValue)
                 {
                     charts.WaterIntakeData.Add(new ChartPoint
@@ -523,7 +694,7 @@ namespace healthProject.Controllers
                     });
                 }
 
-                // 運動時間數據
+                // 運動時間
                 if (record.ExerciseDuration.HasValue)
                 {
                     charts.ExerciseDurationData.Add(new ChartPoint
@@ -534,46 +705,58 @@ namespace healthProject.Controllers
                     });
                 }
 
-                // 🆕 三餐記錄 - 改為統計格式
-                if (record.Meals_Breakfast != null || record.Meals_Lunch != null || record.Meals_Dinner != null)
+                // 抽菸
+                if (record.Cigarettes.HasValue && record.Cigarettes.Value > 0)
                 {
-                    var vegetables = new List<string>();
-                    var protein = new List<string>();
-                    var carbs = new List<string>();
+                    charts.CigarettesData.Add(new ChartPoint
+                    {
+                        Date = dateStr,
+                        Value = record.Cigarettes,
+                        IsAbnormal = record.Cigarettes.Value > 10
+                    });
+                }
 
-                    // 收集早午晚餐的各營養素
+                // 檳榔
+                if (record.BetelNut.HasValue && record.BetelNut.Value > 0)
+                {
+                    charts.BetelNutData.Add(new ChartPoint
+                    {
+                        Date = dateStr,
+                        Value = record.BetelNut,
+                        IsAbnormal = record.BetelNut.Value > 10
+                    });
+                }
+
+                // ✅ 三餐記錄 (非年報表才處理,年報表在外面特別處理)
+                if (reportType != ReportType.Yearly &&
+                    (record.Meals_Breakfast != null || record.Meals_Lunch != null || record.Meals_Dinner != null))
+                {
+                    decimal totalVeg = 0, totalProt = 0, totalCarb = 0;
+
                     foreach (var meal in new[] { record.Meals_Breakfast, record.Meals_Lunch, record.Meals_Dinner })
                     {
                         if (meal != null)
                         {
-                            if (!string.IsNullOrEmpty(meal.Vegetables) && meal.Vegetables != "0")
-                                vegetables.Add(meal.Vegetables);
-                            if (!string.IsNullOrEmpty(meal.Protein) && meal.Protein != "0")
-                                protein.Add(meal.Protein);
-                            if (!string.IsNullOrEmpty(meal.Carbs) && meal.Carbs != "0")
-                                carbs.Add(meal.Carbs);
+                            if (decimal.TryParse(meal.Vegetables, out decimal v)) totalVeg += v;
+                            if (decimal.TryParse(meal.Protein, out decimal p)) totalProt += p;
+                            if (decimal.TryParse(meal.Carbs, out decimal c)) totalCarb += c;
                         }
                     }
-
-                    // ✅ 計算總和
-                    var vegTotal = CalculateMealTotal(vegetables);
-                    var proteinTotal = CalculateMealTotal(protein);
-                    var carbsTotal = CalculateMealTotal(carbs);
 
                     charts.MealRecords.Add(new MealRecord
                     {
                         Date = record.RecordDate.ToString("MM/dd"),
                         MealData = new MealStatistics
                         {
-                            Vegetables = string.IsNullOrEmpty(vegTotal) ? new List<string>() : new List<string> { vegTotal },
-                            Protein = string.IsNullOrEmpty(proteinTotal) ? new List<string>() : new List<string> { proteinTotal },
-                            Carbs = string.IsNullOrEmpty(carbsTotal) ? new List<string>() : new List<string> { carbsTotal }
+                            Vegetables = totalVeg > 0 ? new List<string> { totalVeg.ToString("0.#") } : new List<string>(),
+                            Protein = totalProt > 0 ? new List<string> { totalProt.ToString("0.#") } : new List<string>(),
+                            Carbs = totalCarb > 0 ? new List<string> { totalCarb.ToString("0.#") } : new List<string>()
                         }
                     });
                 }
 
-                // 飲料記錄
-                if (!string.IsNullOrEmpty(record.Beverage))
+                // ✅ 飲料記錄 (非年報表才處理)
+                if (reportType != ReportType.Yearly && !string.IsNullOrEmpty(record.Beverage))
                 {
                     charts.BeverageRecords.Add(new BeverageRecord
                     {
@@ -582,6 +765,11 @@ namespace healthProject.Controllers
                     });
                 }
             }
+
+            // 計算三餐統計
+            charts.WeeklyMealSummary = CalculateMealStatistics(records);
+            charts.MonthlyMealSummary = CalculateMealStatistics(records);
+            charts.YearlyMealSummary = CalculateMealStatistics(records);
 
             return charts;
         }
