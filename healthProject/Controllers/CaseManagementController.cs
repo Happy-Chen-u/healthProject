@@ -183,21 +183,68 @@ namespace healthProject.Controllers
         // ========================================
         // 🔍 查詢病患 
         // ========================================
-       
+
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> SearchPatient([FromBody] SearchRequest request)
         {
             try
             {
-                var patient = await GetPatientByIdNumberAsync(request.idNumber);
+                var connStr = _configuration.GetConnectionString("DefaultConnection")
+                    + ";SSL Mode=Require;Trust Server Certificate=True;";
 
-                if (patient == null)
+                using var conn = new NpgsqlConnection(connStr);
+                await conn.OpenAsync();
+
+                // 查詢病患基本資料
+                string sqlPatient = @"
+            SELECT ""Id"", ""FullName"", ""IDNumber"", ""Username""
+            FROM public.""Users""
+            WHERE ""IDNumber"" = @idNumber;
+        ";
+
+                PatientData patient = null;
+                using (var cmd = new NpgsqlCommand(sqlPatient, conn))
                 {
-                    return Json(new { success = false, message = "查無此病患資料" });
+                    cmd.Parameters.AddWithValue("@idNumber", request.idNumber);
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    if (await reader.ReadAsync())
+                    {
+                        patient = new PatientData
+                        {
+                            Id = reader.GetInt32(0),
+                            FullName = reader.GetString(1),
+                            IDNumber = reader.GetString(2),
+                            Username = reader.GetString(3)
+                        };
+                    }
                 }
 
-                // ⭐ 不再檢查是否已有紀錄，直接回傳病患資訊
+                if (patient == null)
+                    return Json(new { success = false, message = "查無此病患資料" });
+
+                // 查詢歷史紀錄數量與最新評估日期
+                string sqlRecord = @"
+            SELECT COUNT(*) AS RecordCount, MAX(""AssessmentDate"") AS LastRecordDate
+            FROM public.""CaseManagement""
+            WHERE ""IDNumber"" = @idNumber;
+        ";
+
+                int recordCount = 0;
+                string lastRecordDate = "--";
+
+                using (var cmd = new NpgsqlCommand(sqlRecord, conn))
+                {
+                    cmd.Parameters.AddWithValue("@idNumber", request.idNumber);
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    if (await reader.ReadAsync())
+                    {
+                        recordCount = reader["RecordCount"] != DBNull.Value ? Convert.ToInt32(reader["RecordCount"]) : 0;
+                        if (reader["LastRecordDate"] != DBNull.Value)
+                            lastRecordDate = Convert.ToDateTime(reader["LastRecordDate"]).ToString("yyyy-MM-dd");
+                    }
+                }
+
                 return Json(new
                 {
                     success = true,
@@ -206,7 +253,9 @@ namespace healthProject.Controllers
                         id = patient.Id,
                         name = patient.FullName,
                         idNumber = patient.IDNumber,
-                        username = patient.Username
+                        username = patient.Username,
+                        recordCount = recordCount,
+                        lastRecordDate = lastRecordDate
                     }
                 });
             }
@@ -220,6 +269,14 @@ namespace healthProject.Controllers
         public class SearchRequest
         {
             public string idNumber { get; set; }
+        }
+
+        public class PatientData
+        {
+            public int Id { get; set; }
+            public string FullName { get; set; }
+            public string IDNumber { get; set; }
+            public string Username { get; set; }
         }
 
 

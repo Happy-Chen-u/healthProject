@@ -2,81 +2,153 @@
 
 @{
     ViewData["Title"] = "個案目標詳細內容";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    Layout = null;  /* 若希望跟 ViewTargets 相同風格，建議不使用 _Layout */
 }
 
-<style>
-    body {
-        background-color: #e5eef5;
-        font-family: "Microsoft JhengHei", sans-serif;
-    }
-
-    h2 {
-        text-align: center;
-        color: #2c3e50;
-        margin-top: 20px;
-    }
-
-    table {
-        width: 70%;
-        margin: 20px auto;
-        border-collapse: collapse;
-        background-color: #fff;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-
-    th, td {
-        padding: 10px 15px;
-        text-align: center;
-        border-bottom: 1px solid #ddd;
-    }
-
-    th {
-        background-color: #a897e6;
-        color: white;
-    }
-
-    tr:hover {
-        background-color: #f3f0ff;
-    }
-
-    .back-btn {
-        display: block;
-        width: fit-content;
-        margin: 20px auto;
-        background-color: #9a8cd1;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 6px;
-        text-decoration: none;
-    }
-
-        .back-btn:hover {
-            background-color: #7d6bb3;
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-</style>
 
-<h2>個案目標詳細內容</h2>
+        body {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFE0B2 100%);
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            padding: 2rem 1rem;
+            min-height: 100vh;
+        }
 
-<table>
-    <thead>
-        <tr>
-            <th>指標</th>
-            <th>目標值</th>
-            <th>是否達成</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr><td>腰圍</td><td>@Model.WaistTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
-        <tr><td>體重</td><td>@Model.WeightTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
-        <tr><td>空腹血糖</td><td>@Model.FastingGlucoseTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
-        <tr><td>醣化血紅素 (HbA1c)</td><td>@Model.HbA1cTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
-        <tr><td>三酸甘油脂</td><td>@Model.TriglyceridesTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
-        <tr><td>高密度脂蛋白膽固醇 (HDL)</td><td>@Model.HDL_CholesterolTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
-        <tr><td>低密度脂蛋白膽固醇 (LDL)</td><td>@Model.LDL_CholesterolTarget_Value</td><td>@(Model.Achievement ? "✅" : "❌")</td></tr>
-    </tbody>
-</table>
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
 
-<a asp-action="ViewTargets" class="back-btn">← 返回列表</a>
+        .header {
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-top: 1.5rem;
+        }
+
+        th {
+            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            color: white;
+            padding: 1rem;
+            font-size: 1.1rem;
+        }
+
+        td {
+            padding: 0.9rem;
+            text-align: center;
+            border-bottom: 1px solid #FFE0B2;
+            font-size: 1rem;
+        }
+
+        tr:hover {
+            background-color: #FFF3E0;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 2rem;
+            background: linear-gradient(135deg, #90A4AE 0%, #78909C 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+            .back-btn:hover {
+                background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            }
+
+        .checkmark {
+            font-size: 1.3rem;
+        }
+
+            .checkmark.success {
+                color: #43A047;
+            }
+
+            .checkmark.fail {
+                color: #E53935;
+            }
+
+        /* 手機版 */
+        @@media (max-width: 768px) {
+            th, td
+
+        {
+            font-size: 0.9rem;
+            padding: 0.7rem;
+        }
+
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="header-title">🎯 個案目標詳細內容</h1>
+        </div>
+
+        <div class="content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>指標</th>
+                        <th>目標值</th>
+                        <th>是否達成</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>腰圍</td><td>@Model.WaistTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
+                    <tr><td>體重</td><td>@Model.WeightTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
+                    <tr><td>空腹血糖</td><td>@Model.FastingGlucoseTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
+                    <tr><td>醣化血紅素 (HbA1c)</td><td>@Model.HbA1cTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
+                    <tr><td>三酸甘油脂</td><td>@Model.TriglyceridesTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
+                    <tr><td>高密度脂蛋白膽固醇 (HDL)</td><td>@Model.HDL_CholesterolTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
+                    <tr><td>低密度脂蛋白膽固醇 (LDL)</td><td>@Model.LDL_CholesterolTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
+                </tbody>
+            </table>
+
+            <div style="text-align:center;">
+                <a asp-action="ViewTargets" class="back-btn">← 返回列表</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

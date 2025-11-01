@@ -994,6 +994,10 @@
                         `✅ 找到個案: ${result.data.name} (${result.data.idNumber})`;
                     document.getElementById('patientInfo').classList.add('show');
 
+                        // 🆕 顯示歷史紀錄與最新評估日期
+                    document.getElementById('recordCount').innerText = result.data.recordCount || 0;
+                    document.getElementById('lastRecord').innerText = result.data.lastRecordDate || '--';
+
                     // 設定查看歷史紀錄的連結
                     document.getElementById('btnViewHistory').href =
                         `@Url.Action("ViewAllRecords", "CaseManagement")?searchIdNumber=${result.data.idNumber}`;
