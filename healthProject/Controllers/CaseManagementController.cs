@@ -309,7 +309,6 @@ namespace healthProject.Controllers
         // 📋 查看個案目標值是否達標（ViewTargets/ViewDetails）
         // ========================================
 
-        // 查看所有個案目標值狀態
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> ViewTargets(string idNumber = null)
@@ -323,15 +322,21 @@ namespace healthProject.Controllers
             {
                 await conn.OpenAsync();
 
+                // 取每個個案最新一筆紀錄
                 string sql = @"
-            SELECT ""Name"", ""IDNumber"",
-                   ""WaistTarget_Value"", ""WeightTarget_Value"", 
-                   ""FastingGlucoseTarget_Value"", ""HbA1cTarget_Value"", 
-                   ""TriglyceridesTarget_Value"", ""HDL_CholesterolTarget_Value"", 
-                   ""LDL_CholesterolTarget_Value"", ""Achievement"", ""AssessmentDate""
+            SELECT DISTINCT ON (""IDNumber"")
+                ""Name"", ""IDNumber"",
+                ""Weight"", ""WeightTarget_Value"",
+                ""CurrentWaist_Value"", ""WaistTarget_Value"",
+                ""FastingGlucose_Value"", ""FastingGlucoseTarget_Value"",
+                ""HbA1c_Value"", ""HbA1cTarget_Value"",
+                ""Triglycerides_Value"", ""TriglyceridesTarget_Value"",
+                ""HDL_Value"", ""HDL_CholesterolTarget_Value"",
+                ""LDL_Value"", ""LDL_CholesterolTarget_Value"",
+                ""AssessmentDate""
             FROM public.""CaseManagement""
             WHERE (@idNumber IS NULL OR ""IDNumber"" ILIKE '%' || @idNumber || '%')
-            ORDER BY ""AssessmentDate"" DESC;
+            ORDER BY ""IDNumber"", ""AssessmentDate"" DESC;
         ";
 
                 await using (var cmd = new NpgsqlCommand(sql, conn))
@@ -340,29 +345,46 @@ namespace healthProject.Controllers
 
                     await using (var reader = await cmd.ExecuteReaderAsync())
                     {
-                        var grouped = new Dictionary<string, (string Name, int Achieved, int Total)>();
-
                         while (await reader.ReadAsync())
                         {
-                            var id = reader["IDNumber"].ToString();
-                            var name = reader["Name"].ToString();
-                            bool achieved = Convert.ToBoolean(reader["Achievement"]);
+                            int achievedCount = 0;
+                            int total = 7;
 
-                            int total = 7; // 七項指標
-                            int achievedCount = achieved ? 7 : 0; // 目前假設 Achievement = true 表示全部達成
+                            // 這裡用與 TargetDetails 一樣的判斷邏輯
+                            decimal? weight = reader["Weight"] as decimal?;
+                            decimal? weightTarget = reader["WeightTarget_Value"] as decimal?;
+                            if (CheckAchievement(weight, weightTarget, "weight")) achievedCount++;
 
-                            if (!grouped.ContainsKey(id))
-                                grouped[id] = (name, achievedCount, total);
-                        }
+                            decimal? waist = reader["CurrentWaist_Value"] as decimal?;
+                            decimal? waistTarget = reader["WaistTarget_Value"] as decimal?;
+                            if (CheckAchievement(waist, waistTarget, "waist")) achievedCount++;
 
-                        foreach (var g in grouped)
-                        {
+                            decimal? glucose = reader["FastingGlucose_Value"] as decimal?;
+                            decimal? glucoseTarget = reader["FastingGlucoseTarget_Value"] as decimal?;
+                            if (CheckAchievement(glucose, glucoseTarget, "glucose")) achievedCount++;
+
+                            decimal? hba1c = reader["HbA1c_Value"] as decimal?;
+                            decimal? hba1cTarget = reader["HbA1cTarget_Value"] as decimal?;
+                            if (CheckAchievement(hba1c, hba1cTarget, "hba1c")) achievedCount++;
+
+                            decimal? triglycerides = reader["Triglycerides_Value"] as decimal?;
+                            decimal? triglyceridesTarget = reader["TriglyceridesTarget_Value"] as decimal?;
+                            if (CheckAchievement(triglycerides, triglyceridesTarget, "triglycerides")) achievedCount++;
+
+                            decimal? hdl = reader["HDL_Value"] as decimal?;
+                            decimal? hdlTarget = reader["HDL_CholesterolTarget_Value"] as decimal?;
+                            if (CheckAchievement(hdl, hdlTarget, "hdl")) achievedCount++;
+
+                            decimal? ldl = reader["LDL_Value"] as decimal?;
+                            decimal? ldlTarget = reader["LDL_CholesterolTarget_Value"] as decimal?;
+                            if (CheckAchievement(ldl, ldlTarget, "ldl")) achievedCount++;
+
                             list.Add(new TargetSummaryViewModel
                             {
-                                Name = g.Value.Name,
-                                IDNumber = g.Key,
-                                AchievedCount = g.Value.Achieved,
-                                UnachievedCount = g.Value.Total - g.Value.Achieved
+                                Name = reader["Name"].ToString(),
+                                IDNumber = reader["IDNumber"].ToString(),
+                                AchievedCount = achievedCount,
+                                UnachievedCount = total - achievedCount
                             });
                         }
                     }
@@ -374,62 +396,196 @@ namespace healthProject.Controllers
         }
 
 
-        // 顯示某位個案的詳細目標達成狀況
+
+
+
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> TargetDetails(string idNumber)
         {
             if (string.IsNullOrEmpty(idNumber))
-                return BadRequest("缺少身分證字號參數");
-
-            var connStr = _configuration.GetConnectionString("DefaultConnection")
-                + ";SSL Mode=Require;Trust Server Certificate=True;";
-
-            await using (var conn = new NpgsqlConnection(connStr))
             {
-                await conn.OpenAsync();
+                TempData["ErrorMessage"] = "缺少身分證字號參數";
+                return RedirectToAction("ViewTargets");
+            }
 
-                string sql = @"
-            SELECT *
-            FROM public.""CaseManagement""
-            WHERE ""IDNumber"" = @id
-            ORDER BY ""AssessmentDate"" DESC
-            LIMIT 1;
-        ";
+            try
+            {
+                var connStr = _configuration.GetConnectionString("DefaultConnection")
+                    + ";SSL Mode=Require;Trust Server Certificate=True;";
 
-                await using (var cmd = new NpgsqlCommand(sql, conn))
+                var viewModel = new CaseManagementViewModel
                 {
-                    cmd.Parameters.AddWithValue("@id", idNumber);
+                    EvaluationRecords = new List<EvaluationRecord>()
+                };
 
-                    await using (var reader = await cmd.ExecuteReaderAsync())
+                await using (var conn = new NpgsqlConnection(connStr))
+                {
+                    await conn.OpenAsync();
+
+                    // 查詢該身分證字號的所有評估記錄
+                    string sql = @"
+                SELECT ""Id"", ""Name"", ""IDNumber"", ""AssessmentDate"", ""AnnualAssessment_Date"",
+                       ""Weight"", ""WeightTarget_Value"",
+                       ""CurrentWaist_Value"", ""WaistTarget_Value"",
+                       ""FastingGlucose_Value"", ""FastingGlucoseTarget_Value"",
+                       ""HbA1c_Value"", ""HbA1cTarget_Value"",
+                       ""Triglycerides_Value"", ""TriglyceridesTarget_Value"",
+                       ""HDL_Value"", ""HDL_CholesterolTarget_Value"",
+                       ""LDL_Value"", ""LDL_CholesterolTarget_Value""
+                FROM public.""CaseManagement""
+                WHERE ""IDNumber"" = @idNumber
+                ORDER BY COALESCE(""AssessmentDate"", ""AnnualAssessment_Date"") DESC";
+
+                    await using (var cmd = new NpgsqlCommand(sql, conn))
                     {
-                        if (await reader.ReadAsync())
-                        {
-                            var record = new CaseManagementViewModel
-                            {
-                                Name = reader["Name"].ToString(),
-                                IDNumber = reader["IDNumber"].ToString(),
-                                WaistTarget_Value = reader["WaistTarget_Value"] as decimal?,
-                                WeightTarget_Value = reader["WeightTarget_Value"] as decimal?,
-                                FastingGlucoseTarget_Value = reader["FastingGlucoseTarget_Value"] as decimal?,
-                                HbA1cTarget_Value = reader["HbA1cTarget_Value"] as decimal?,
-                                TriglyceridesTarget_Value = reader["TriglyceridesTarget_Value"] as decimal?,
-                                HDL_CholesterolTarget_Value = reader["HDL_CholesterolTarget_Value"] as decimal?,
-                                LDL_CholesterolTarget_Value = reader["LDL_CholesterolTarget_Value"] as decimal?,
-                                Achievement = Convert.ToBoolean(reader["Achievement"])
-                            };
+                        cmd.Parameters.AddWithValue("@idNumber", idNumber);
 
-                            return View(record);
+                        await using (var reader = await cmd.ExecuteReaderAsync())
+                        {
+                            bool isFirstRecord = true;
+
+                            while (await reader.ReadAsync())
+                            {
+                                // 設定個案基本資料 (只需要設定一次)
+                                if (isFirstRecord)
+                                {
+                                    viewModel.Name = reader["Name"].ToString();
+                                    viewModel.IDNumber = reader["IDNumber"].ToString();
+                                    isFirstRecord = false;
+                                }
+
+                                // 決定評估日期 (優先使用 AssessmentDate，其次 AnnualAssessment_Date)
+                                DateTime? evalDate = reader["AssessmentDate"] as DateTime?
+                                    ?? reader["AnnualAssessment_Date"] as DateTime?;
+
+                                // 如果沒有評估日期，跳過這筆記錄
+                                if (evalDate == null)
+                                    continue;
+
+                                // 讀取各項數值
+                                decimal? weight = reader["Weight"] as decimal?;
+                                decimal? weightTarget = reader["WeightTarget_Value"] as decimal?;
+
+                                decimal? waist = reader["CurrentWaist_Value"] as decimal?;
+                                decimal? waistTarget = reader["WaistTarget_Value"] as decimal?;
+
+                                decimal? glucose = reader["FastingGlucose_Value"] as decimal?;
+                                decimal? glucoseTarget = reader["FastingGlucoseTarget_Value"] as decimal?;
+
+                                decimal? hba1c = reader["HbA1c_Value"] as decimal?;
+                                decimal? hba1cTarget = reader["HbA1cTarget_Value"] as decimal?;
+
+                                decimal? triglycerides = reader["Triglycerides_Value"] as decimal?;
+                                decimal? triglyceridesTarget = reader["TriglyceridesTarget_Value"] as decimal?;
+
+                                decimal? hdl = reader["HDL_Value"] as decimal?;
+                                decimal? hdlTarget = reader["HDL_CholesterolTarget_Value"] as decimal?;
+
+                                decimal? ldl = reader["LDL_Value"] as decimal?;
+                                decimal? ldlTarget = reader["LDL_CholesterolTarget_Value"] as decimal?;
+
+                                // 建立評估記錄
+                                var evaluationRecord = new EvaluationRecord
+                                {
+                                    CaseId = reader.GetInt32(0),
+                                    EvaluationDate = evalDate.Value,
+
+                                    // 腰圍
+                                    WaistTarget_Value = waistTarget?.ToString("0.0") ?? "-",
+                                    WaistCurrent_Value = waist?.ToString("0.0") ?? "-",
+                                    WaistAchievement = CheckAchievement(waist, waistTarget, "waist"),
+
+                                    // 體重
+                                    WeightTarget_Value = weightTarget?.ToString("0.0") ?? "-",
+                                    WeightCurrent_Value = weight?.ToString("0.0") ?? "-",
+                                    WeightAchievement = CheckAchievement(weight, weightTarget, "weight"),
+
+                                    // 空腹血糖
+                                    FastingGlucoseTarget_Value = glucoseTarget?.ToString("0") ?? "-",
+                                    FastingGlucoseCurrent_Value = glucose?.ToString("0") ?? "-",
+                                    FastingGlucoseAchievement = CheckAchievement(glucose, glucoseTarget, "glucose"),
+
+                                    // HbA1c
+                                    HbA1cTarget_Value = hba1cTarget?.ToString("0.0") ?? "-",
+                                    HbA1cCurrent_Value = hba1c?.ToString("0.0") ?? "-",
+                                    HbA1cAchievement = CheckAchievement(hba1c, hba1cTarget, "hba1c"),
+
+                                    // 三酸甘油脂
+                                    TriglyceridesTarget_Value = triglyceridesTarget?.ToString("0") ?? "-",
+                                    TriglyceridesCurrent_Value = triglycerides?.ToString("0") ?? "-",
+                                    TriglyceridesAchievement = CheckAchievement(triglycerides, triglyceridesTarget, "triglycerides"),
+
+                                    // HDL
+                                    HDL_CholesterolTarget_Value = hdlTarget?.ToString("0") ?? "-",
+                                    HDL_CholesterolCurrent_Value = hdl?.ToString("0") ?? "-",
+                                    HDL_CholesterolAchievement = CheckAchievement(hdl, hdlTarget, "hdl"),
+
+                                    // LDL
+                                    LDL_CholesterolTarget_Value = ldlTarget?.ToString("0") ?? "-",
+                                    LDL_CholesterolCurrent_Value = ldl?.ToString("0") ?? "-",
+                                    LDL_CholesterolAchievement = CheckAchievement(ldl, ldlTarget, "ldl")
+                                };
+
+                                viewModel.EvaluationRecords.Add(evaluationRecord);
+                            }
                         }
                     }
                 }
-            }
 
-            return NotFound("找不到該個案的紀錄");
+                if (!viewModel.EvaluationRecords.Any())
+                {
+                    TempData["ErrorMessage"] = "找不到該個案的評估記錄";
+                    return RedirectToAction("ViewTargets");
+                }
+
+                return View("TargetDetails", viewModel);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "查詢個案目標詳細內容失敗 - IDNumber: {IDNumber}", idNumber);
+                TempData["ErrorMessage"] = $"查詢失敗: {ex.Message}";
+                return RedirectToAction("ViewTargets");
+            }
         }
 
+        // ========================================
+        // 🔍 輔助方法：判斷是否達成目標
+        // ========================================
 
+        /// <summary>
+        /// 判斷指標是否達成目標
+        /// </summary>
+        /// <param name="currentValue">當前值</param>
+        /// <param name="targetValue">目標值</param>
+        /// <param name="type">指標類型 (waist, weight, glucose, hba1c, triglycerides, hdl, ldl)</param>
+        /// <returns>是否達成</returns>
+        private bool CheckAchievement(decimal? currentValue, decimal? targetValue, string type)
+        {
+            // 如果任一值為 null，視為未達成
+            if (currentValue == null || targetValue == null)
+                return false;
 
+            switch (type.ToLower())
+            {
+                case "waist":
+                case "weight":
+                case "glucose":
+                case "hba1c":
+                case "triglycerides":
+                case "ldl":
+                    // 這些指標是"越低越好"，當前值要小於等於目標值
+                    return currentValue <= targetValue;
+
+                case "hdl":
+                    // HDL 是"越高越好"，當前值要大於等於目標值
+                    return currentValue >= targetValue;
+
+                default:
+                    return false;
+            }
+        }
 
 
         // ========================================

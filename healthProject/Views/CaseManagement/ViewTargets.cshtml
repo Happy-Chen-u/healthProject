@@ -253,8 +253,10 @@
                                 <td>@item.AchievedCount</td>
                                 <td>@item.UnachievedCount</td>
                                 <td>
-                                    <a asp-action="TargetDetails" asp-route-idNumber="@item.IDNumber" class="details-btn">
-                                        查看最新詳細內容
+                                    <a asp-action="TargetDetails"
+                                       asp-route-idNumber="@item.IDNumber"
+                                       class="btn btn-primary">
+                                        查看詳細評估記錄
                                     </a>
                                 </td>
                             </tr>

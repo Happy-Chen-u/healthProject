@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -10,13 +11,11 @@ namespace healthProject.Models
         [Key]
         public int Id { get; set; }
 
-        //[ForeignKey("User")]
         public int UserId { get; set; }
-       // public virtual UserDBModel User { get; set; }
 
         [ForeignKey("User")]
         [Required, StringLength(12)]
-        public string IDNumber { get; set; } // 新增身分證字號，外鍵連接到 Users.IDNumber
+        public string IDNumber { get; set; }
 
         [Required, StringLength(100)]
         public string Name { get; set; }
@@ -173,6 +172,53 @@ namespace healthProject.Models
         public decimal? LDL_CholesterolTarget_Value { get; set; }
 
         public string? Notes { get; set; }
+
+        // ⭐ 新增：用於傳遞多筆評估記錄到 View (不對應資料庫欄位)
+        [NotMapped]
+        public List<EvaluationRecord> EvaluationRecords { get; set; } = new List<EvaluationRecord>();
+
+    }
+
+
+    // 評估記錄 DTO (Data Transfer Object)
+    public class EvaluationRecord
+    {
+        public int CaseId { get; set; }
+        public DateTime EvaluationDate { get; set; }
+
+        // 腰圍
+        public string WaistTarget_Value { get; set; }
+        public string WaistCurrent_Value { get; set; }
+        public bool WaistAchievement { get; set; }
+
+        // 體重
+        public string WeightTarget_Value { get; set; }
+        public string WeightCurrent_Value { get; set; }
+        public bool WeightAchievement { get; set; }
+
+        // 空腹血糖
+        public string FastingGlucoseTarget_Value { get; set; }
+        public string FastingGlucoseCurrent_Value { get; set; }
+        public bool FastingGlucoseAchievement { get; set; }
+
+        // HbA1c
+        public string HbA1cTarget_Value { get; set; }
+        public string HbA1cCurrent_Value { get; set; }
+        public bool HbA1cAchievement { get; set; }
+
+        // 三酸甘油脂
+        public string TriglyceridesTarget_Value { get; set; }
+        public string TriglyceridesCurrent_Value { get; set; }
+        public bool TriglyceridesAchievement { get; set; }
+
+        // HDL
+        public string HDL_CholesterolTarget_Value { get; set; }
+        public string HDL_CholesterolCurrent_Value { get; set; }
+        public bool HDL_CholesterolAchievement { get; set; }
+
+        // LDL
+        public string LDL_CholesterolTarget_Value { get; set; }
+        public string LDL_CholesterolCurrent_Value { get; set; }
+        public bool LDL_CholesterolAchievement { get; set; }
     }
 }
-

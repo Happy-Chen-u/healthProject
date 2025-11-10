@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "個案目標詳細內容";
-    Layout = null;  /* 若希望跟 ViewTargets 相同風格，建議不使用 _Layout */
+    Layout = null;
 }
 
 <!DOCTYPE html>
@@ -26,7 +26,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
             background: white;
             border-radius: 25px;
@@ -50,20 +50,52 @@
             padding: 2rem;
         }
 
+        .evaluation-section {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid #FFE0B2;
+        }
+
+            .evaluation-section:last-of-type {
+                border-bottom: none;
+            }
+
+        .evaluation-date {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .evaluation-date-label {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #F57C00;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .evaluation-date-value {
+            font-size: 1.1rem;
+            color: #E65100;
+            margin-top: 0.3rem;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            margin-top: 1.5rem;
         }
 
         th {
             background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
             color: white;
             padding: 1rem;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
         }
 
         td {
@@ -107,13 +139,26 @@
                 color: #E53935;
             }
 
+        .current-value {
+            font-weight: 600;
+            color: #1976D2;
+        }
+
         /* 手機版 */
         @@media (max-width: 768px) {
             th, td
 
         {
-            font-size: 0.9rem;
-            padding: 0.7rem;
+            font-size: 0.85rem;
+            padding: 0.6rem 0.3rem;
+        }
+
+        .evaluation-date-label {
+            font-size: 1rem;
+        }
+
+        .evaluation-date-value {
+            font-size: 0.95rem;
         }
 
         }
@@ -126,24 +171,89 @@
         </div>
 
         <div class="content">
-            <table>
-                <thead>
-                    <tr>
-                        <th>指標</th>
-                        <th>目標值</th>
-                        <th>是否達成</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td>腰圍</td><td>@Model.WaistTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
-                    <tr><td>體重</td><td>@Model.WeightTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
-                    <tr><td>空腹血糖</td><td>@Model.FastingGlucoseTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
-                    <tr><td>醣化血紅素 (HbA1c)</td><td>@Model.HbA1cTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
-                    <tr><td>三酸甘油脂</td><td>@Model.TriglyceridesTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
-                    <tr><td>高密度脂蛋白膽固醇 (HDL)</td><td>@Model.HDL_CholesterolTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
-                    <tr><td>低密度脂蛋白膽固醇 (LDL)</td><td>@Model.LDL_CholesterolTarget_Value</td><td><span class="checkmark @(Model.Achievement ? "success" : "fail")">@(Model.Achievement ? "✅" : "❌")</span></td></tr>
-                </tbody>
-            </table>
+
+            <!-- 個案基本資料 -->
+            <div class="case-info" style="margin-bottom: 2rem; padding: 1rem 1.5rem; background: #FFF3E0; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <div style="font-size: 1.2rem; font-weight: 700; color: #F57C00; margin-bottom: 0.5rem;">👤 個案資訊</div>
+                <div style="font-size: 1.1rem; color: #E65100;">姓名: <span style="font-weight:600">@Model.Name</span></div>
+                <div style="font-size: 1.1rem; color: #E65100;">身分證字號: <span style="font-weight:600">@Model.IDNumber</span></div>
+            </div>
+
+            @if (Model.EvaluationRecords != null && Model.EvaluationRecords.Any())
+            {
+                @foreach (var evaluation in Model.EvaluationRecords)
+                {
+                    <div class="evaluation-section">
+                        <div class="evaluation-date">
+                            <div class="evaluation-date-label">
+                                📅 評估日期
+                            </div>
+                            <div class="evaluation-date-value">
+                                @evaluation.EvaluationDate.ToString("yyyy年MM月dd日")
+                            </div>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>指標</th>
+                                    <th>目標值</th>
+                                    <th>此次評估值</th>
+                                    <th>是否達成</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>腰圍</td>
+                                    <td>@evaluation.WaistTarget_Value</td>
+                                    <td class="current-value">@evaluation.WaistCurrent_Value</td>
+                                    <td><span class="checkmark @(evaluation.WaistAchievement ? "success" : "fail")">@(evaluation.WaistAchievement ? "✅" : "❌")</span></td>
+                                </tr>
+                                <tr>
+                                    <td>體重</td>
+                                    <td>@evaluation.WeightTarget_Value</td>
+                                    <td class="current-value">@evaluation.WeightCurrent_Value</td>
+                                    <td><span class="checkmark @(evaluation.WeightAchievement ? "success" : "fail")">@(evaluation.WeightAchievement ? "✅" : "❌")</span></td>
+                                </tr>
+                                <tr>
+                                    <td>飯前血糖值</td>
+                                    <td>@evaluation.FastingGlucoseTarget_Value</td>
+                                    <td class="current-value">@evaluation.FastingGlucoseCurrent_Value</td>
+                                    <td><span class="checkmark @(evaluation.FastingGlucoseAchievement ? "success" : "fail")">@(evaluation.FastingGlucoseAchievement ? "✅" : "❌")</span></td>
+                                </tr>
+                                <tr>
+                                    <td>醣化血紅素</td>
+                                    <td>@evaluation.HbA1cTarget_Value</td>
+                                    <td class="current-value">@evaluation.HbA1cCurrent_Value</td>
+                                    <td><span class="checkmark @(evaluation.HbA1cAchievement ? "success" : "fail")">@(evaluation.HbA1cAchievement ? "✅" : "❌")</span></td>
+                                </tr>
+                                <tr>
+                                    <td>三酸甘油脂</td>
+                                    <td>@evaluation.TriglyceridesTarget_Value</td>
+                                    <td class="current-value">@evaluation.TriglyceridesCurrent_Value</td>
+                                    <td><span class="checkmark @(evaluation.TriglyceridesAchievement ? "success" : "fail")">@(evaluation.TriglyceridesAchievement ? "✅" : "❌")</span></td>
+                                </tr>
+                                <tr>
+                                    <td>高密度脂蛋白膽固醇</td>
+                                    <td>@evaluation.HDL_CholesterolTarget_Value</td>
+                                    <td class="current-value">@evaluation.HDL_CholesterolCurrent_Value</td>
+                                    <td><span class="checkmark @(evaluation.HDL_CholesterolAchievement ? "success" : "fail")">@(evaluation.HDL_CholesterolAchievement ? "✅" : "❌")</span></td>
+                                </tr>
+                                <tr>
+                                    <td>低密度脂蛋白膽固醇</td>
+                                    <td>@evaluation.LDL_CholesterolTarget_Value</td>
+                                    <td class="current-value">@evaluation.LDL_CholesterolCurrent_Value</td>
+                                    <td><span class="checkmark @(evaluation.LDL_CholesterolAchievement ? "success" : "fail")">@(evaluation.LDL_CholesterolAchievement ? "✅" : "❌")</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+            else
+            {
+                <p style="text-align: center; color: #666; padding: 2rem;">目前尚無評估記錄</p>
+            }
 
             <div style="text-align:center;">
                 <a asp-action="ViewTargets" class="back-btn">← 返回列表</a>
