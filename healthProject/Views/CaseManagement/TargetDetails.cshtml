@@ -245,6 +245,56 @@
                                     <td class="current-value">@evaluation.LDL_CholesterolCurrent_Value</td>
                                     <td><span class="checkmark @(evaluation.LDL_CholesterolAchievement ? "success" : "fail")">@(evaluation.LDL_CholesterolAchievement ? "✅" : "❌")</span></td>
                                 </tr>
+                                <tr>
+                                    <td>抽菸</td>
+                                    <td>無</td>
+                                    <td class="current-value">
+                                        @if (evaluation.SmokingNone)
+                                        {
+                                            <span>無</span>
+                                        }
+                                        else if (evaluation.SmokingUsually)
+                                        {
+                                            <span>偶爾</span>
+                                        }
+                                        else if (evaluation.SmokingUnder10)
+                                        {
+                                            <span>平均一天約吸10支菸以下</span>
+                                        }
+                                        else if (evaluation.SmokingOver10)
+                                        {
+                                            <span>平均一天約吸10支菸(含)以上</span>
+                                        }
+                                        else
+                                        {
+                                            <span>未填寫</span>
+                                        }
+                                    </td>
+                                    <td><span class="checkmark @(evaluation.SmokingNone ? "success" : "fail")">@(evaluation.SmokingNone ? "✅" : "❌")</span></td>
+                                </tr>
+                                <tr>
+                                    <td>嚼檳榔</td>
+                                    <td>無</td>
+                                    <td class="current-value">
+                                        @if (evaluation.BetelNutNone)
+                                        {
+                                            <span>無</span>
+                                        }
+                                        else if (evaluation.BetelNutUsually)
+                                        {
+                                            <span>偶爾</span>
+                                        }
+                                        else if (evaluation.BetelNutAlways)
+                                        {
+                                            <span>經常</span>
+                                        }
+                                        else
+                                        {
+                                            <span>未填寫</span>
+                                        }
+                                    </td>
+                                    <td><span class="checkmark @(evaluation.BetelNutNone ? "success" : "fail")">@(evaluation.BetelNutNone ? "✅" : "❌")</span></td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>

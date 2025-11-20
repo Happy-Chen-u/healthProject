@@ -220,5 +220,16 @@ namespace healthProject.Models
         public string LDL_CholesterolTarget_Value { get; set; }
         public string LDL_CholesterolCurrent_Value { get; set; }
         public bool LDL_CholesterolAchievement { get; set; }
+
+        // 抽菸
+        public bool SmokingNone { get; set; }
+        public bool SmokingUsually { get; set; }
+        public bool SmokingUnder10 { get; set; }
+        public bool SmokingOver10 { get; set; }
+
+        // 嚼檳榔
+        public bool BetelNutNone { get; set; }
+        public bool BetelNutUsually { get; set; }
+        public bool BetelNutAlways { get; set; }
     }
 }

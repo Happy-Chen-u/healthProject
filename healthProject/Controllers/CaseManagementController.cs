@@ -306,7 +306,7 @@ namespace healthProject.Controllers
 
 
         // ========================================
-        // 📋 查看個案目標值是否達標（ViewTargets/ViewDetails）
+        // 📋 查看個案目標值是否達標(ViewTargets/ViewDetails)
         // ========================================
 
         [Authorize(Roles = "Admin")]
@@ -324,20 +324,22 @@ namespace healthProject.Controllers
 
                 // 取每個個案最新一筆紀錄
                 string sql = @"
-            SELECT DISTINCT ON (""IDNumber"")
-                ""Name"", ""IDNumber"",
-                ""Weight"", ""WeightTarget_Value"",
-                ""CurrentWaist_Value"", ""WaistTarget_Value"",
-                ""FastingGlucose_Value"", ""FastingGlucoseTarget_Value"",
-                ""HbA1c_Value"", ""HbA1cTarget_Value"",
-                ""Triglycerides_Value"", ""TriglyceridesTarget_Value"",
-                ""HDL_Value"", ""HDL_CholesterolTarget_Value"",
-                ""LDL_Value"", ""LDL_CholesterolTarget_Value"",
-                ""AssessmentDate""
-            FROM public.""CaseManagement""
-            WHERE (@idNumber IS NULL OR ""IDNumber"" ILIKE '%' || @idNumber || '%')
-            ORDER BY ""IDNumber"", ""AssessmentDate"" DESC;
-        ";
+    SELECT DISTINCT ON (""IDNumber"")
+        ""Name"", ""IDNumber"",
+        ""Weight"", ""WeightTarget_Value"",
+        ""CurrentWaist_Value"", ""WaistTarget_Value"",
+        ""FastingGlucose_Value"", ""FastingGlucoseTarget_Value"",
+        ""HbA1c_Value"", ""HbA1cTarget_Value"",
+        ""Triglycerides_Value"", ""TriglyceridesTarget_Value"",
+        ""HDL_Value"", ""HDL_CholesterolTarget_Value"",
+        ""LDL_Value"", ""LDL_CholesterolTarget_Value"",
+        ""SmokingNone"",""SmokingUsually"",""SmokingUnder10"",""SmokingOver10"",
+        ""BetelNutNone"",""BetelNutUsually"",""BetelNutAlways"",
+        ""AssessmentDate""
+    FROM public.""CaseManagement""
+    WHERE (@idNumber IS NULL OR ""IDNumber"" ILIKE '%' || @idNumber || '%')
+    ORDER BY ""IDNumber"", ""AssessmentDate"" DESC;
+";
 
                 await using (var cmd = new NpgsqlCommand(sql, conn))
                 {
@@ -348,36 +350,50 @@ namespace healthProject.Controllers
                         while (await reader.ReadAsync())
                         {
                             int achievedCount = 0;
-                            int total = 7;
+                            int total = 9; // 原本7項 + 抽菸 + 嚼檳榔 = 9項
 
-                            // 這裡用與 TargetDetails 一樣的判斷邏輯
+                            // 體重
                             decimal? weight = reader["Weight"] as decimal?;
                             decimal? weightTarget = reader["WeightTarget_Value"] as decimal?;
                             if (CheckAchievement(weight, weightTarget, "weight")) achievedCount++;
 
+                            // 腰圍
                             decimal? waist = reader["CurrentWaist_Value"] as decimal?;
                             decimal? waistTarget = reader["WaistTarget_Value"] as decimal?;
                             if (CheckAchievement(waist, waistTarget, "waist")) achievedCount++;
 
+                            // 空腹血糖
                             decimal? glucose = reader["FastingGlucose_Value"] as decimal?;
                             decimal? glucoseTarget = reader["FastingGlucoseTarget_Value"] as decimal?;
                             if (CheckAchievement(glucose, glucoseTarget, "glucose")) achievedCount++;
 
+                            // HbA1c
                             decimal? hba1c = reader["HbA1c_Value"] as decimal?;
                             decimal? hba1cTarget = reader["HbA1cTarget_Value"] as decimal?;
                             if (CheckAchievement(hba1c, hba1cTarget, "hba1c")) achievedCount++;
 
+                            // 三酸甘油脂
                             decimal? triglycerides = reader["Triglycerides_Value"] as decimal?;
                             decimal? triglyceridesTarget = reader["TriglyceridesTarget_Value"] as decimal?;
                             if (CheckAchievement(triglycerides, triglyceridesTarget, "triglycerides")) achievedCount++;
 
+                            // HDL
                             decimal? hdl = reader["HDL_Value"] as decimal?;
                             decimal? hdlTarget = reader["HDL_CholesterolTarget_Value"] as decimal?;
                             if (CheckAchievement(hdl, hdlTarget, "hdl")) achievedCount++;
 
+                            // LDL
                             decimal? ldl = reader["LDL_Value"] as decimal?;
                             decimal? ldlTarget = reader["LDL_CholesterolTarget_Value"] as decimal?;
                             if (CheckAchievement(ldl, ldlTarget, "ldl")) achievedCount++;
+
+                            // 抽菸 - 目標是 SmokingNone = true
+                            bool smokingNone = reader["SmokingNone"] as bool? ?? false;
+                            if (smokingNone) achievedCount++;
+
+                            // 嚼檳榔 - 目標是 BetelNutNone = true
+                            bool betelNutNone = reader["BetelNutNone"] as bool? ?? false;
+                            if (betelNutNone) achievedCount++;
 
                             list.Add(new TargetSummaryViewModel
                             {
@@ -394,10 +410,6 @@ namespace healthProject.Controllers
             ViewBag.SearchIdNumber = idNumber;
             return View(list);
         }
-
-
-
-
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
@@ -425,17 +437,19 @@ namespace healthProject.Controllers
 
                     // 查詢該身分證字號的所有評估記錄
                     string sql = @"
-                SELECT ""Id"", ""Name"", ""IDNumber"", ""AssessmentDate"", ""AnnualAssessment_Date"",
-                       ""Weight"", ""WeightTarget_Value"",
-                       ""CurrentWaist_Value"", ""WaistTarget_Value"",
-                       ""FastingGlucose_Value"", ""FastingGlucoseTarget_Value"",
-                       ""HbA1c_Value"", ""HbA1cTarget_Value"",
-                       ""Triglycerides_Value"", ""TriglyceridesTarget_Value"",
-                       ""HDL_Value"", ""HDL_CholesterolTarget_Value"",
-                       ""LDL_Value"", ""LDL_CholesterolTarget_Value""
-                FROM public.""CaseManagement""
-                WHERE ""IDNumber"" = @idNumber
-                ORDER BY COALESCE(""AssessmentDate"", ""AnnualAssessment_Date"") DESC";
+        SELECT ""Id"", ""Name"", ""IDNumber"", ""AssessmentDate"", ""AnnualAssessment_Date"",
+               ""Weight"", ""WeightTarget_Value"",
+               ""CurrentWaist_Value"", ""WaistTarget_Value"",
+               ""FastingGlucose_Value"", ""FastingGlucoseTarget_Value"",
+               ""HbA1c_Value"", ""HbA1cTarget_Value"",
+               ""Triglycerides_Value"", ""TriglyceridesTarget_Value"",
+               ""HDL_Value"", ""HDL_CholesterolTarget_Value"",
+               ""LDL_Value"", ""LDL_CholesterolTarget_Value"",
+               ""SmokingNone"",""SmokingUsually"",""SmokingUnder10"",""SmokingOver10"",
+               ""BetelNutNone"",""BetelNutUsually"",""BetelNutAlways""
+        FROM public.""CaseManagement""
+        WHERE ""IDNumber"" = @idNumber
+        ORDER BY COALESCE(""AssessmentDate"", ""AnnualAssessment_Date"") DESC";
 
                     await using (var cmd = new NpgsqlCommand(sql, conn))
                     {
@@ -455,11 +469,11 @@ namespace healthProject.Controllers
                                     isFirstRecord = false;
                                 }
 
-                                // 決定評估日期 (優先使用 AssessmentDate，其次 AnnualAssessment_Date)
+                                // 決定評估日期 (優先使用 AssessmentDate,其次 AnnualAssessment_Date)
                                 DateTime? evalDate = reader["AssessmentDate"] as DateTime?
                                     ?? reader["AnnualAssessment_Date"] as DateTime?;
 
-                                // 如果沒有評估日期，跳過這筆記錄
+                                // 如果沒有評估日期,跳過這筆記錄
                                 if (evalDate == null)
                                     continue;
 
@@ -484,6 +498,17 @@ namespace healthProject.Controllers
 
                                 decimal? ldl = reader["LDL_Value"] as decimal?;
                                 decimal? ldlTarget = reader["LDL_CholesterolTarget_Value"] as decimal?;
+
+                                // 讀取抽菸相關欄位
+                                bool smokingNone = reader["SmokingNone"] as bool? ?? false;
+                                bool smokingUsually = reader["SmokingUsually"] as bool? ?? false;
+                                bool smokingUnder10 = reader["SmokingUnder10"] as bool? ?? false;
+                                bool smokingOver10 = reader["SmokingOver10"] as bool? ?? false;
+
+                                // 讀取嚼檳榔相關欄位
+                                bool betelNutNone = reader["BetelNutNone"] as bool? ?? false;
+                                bool betelNutUsually = reader["BetelNutUsually"] as bool? ?? false;
+                                bool betelNutAlways = reader["BetelNutAlways"] as bool? ?? false;
 
                                 // 建立評估記錄
                                 var evaluationRecord = new EvaluationRecord
@@ -524,7 +549,18 @@ namespace healthProject.Controllers
                                     // LDL
                                     LDL_CholesterolTarget_Value = ldlTarget?.ToString("0") ?? "-",
                                     LDL_CholesterolCurrent_Value = ldl?.ToString("0") ?? "-",
-                                    LDL_CholesterolAchievement = CheckAchievement(ldl, ldlTarget, "ldl")
+                                    LDL_CholesterolAchievement = CheckAchievement(ldl, ldlTarget, "ldl"),
+
+                                    // 抽菸
+                                    SmokingNone = smokingNone,
+                                    SmokingUsually = smokingUsually,
+                                    SmokingUnder10 = smokingUnder10,
+                                    SmokingOver10 = smokingOver10,
+
+                                    // 嚼檳榔
+                                    BetelNutNone = betelNutNone,
+                                    BetelNutUsually = betelNutUsually,
+                                    BetelNutAlways = betelNutAlways
                                 };
 
                                 viewModel.EvaluationRecords.Add(evaluationRecord);
@@ -551,7 +587,7 @@ namespace healthProject.Controllers
         }
 
         // ========================================
-        // 🔍 輔助方法：判斷是否達成目標
+        // 🔍 輔助方法:判斷是否達成目標
         // ========================================
 
         /// <summary>
@@ -563,7 +599,7 @@ namespace healthProject.Controllers
         /// <returns>是否達成</returns>
         private bool CheckAchievement(decimal? currentValue, decimal? targetValue, string type)
         {
-            // 如果任一值為 null，視為未達成
+            // 如果任一值為 null,視為未達成
             if (currentValue == null || targetValue == null)
                 return false;
 
@@ -575,11 +611,11 @@ namespace healthProject.Controllers
                 case "hba1c":
                 case "triglycerides":
                 case "ldl":
-                    // 這些指標是"越低越好"，當前值要小於等於目標值
+                    // 這些指標是"越低越好",當前值要小於等於目標值
                     return currentValue <= targetValue;
 
                 case "hdl":
-                    // HDL 是"越高越好"，當前值要大於等於目標值
+                    // HDL 是"越高越好",當前值要大於等於目標值
                     return currentValue >= targetValue;
 
                 default:
