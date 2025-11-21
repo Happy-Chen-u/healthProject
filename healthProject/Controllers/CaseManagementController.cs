@@ -437,7 +437,7 @@ namespace healthProject.Controllers
 
                     // 查詢該身分證字號的所有評估記錄
                     string sql = @"
-        SELECT ""Id"", ""Name"", ""IDNumber"", ""AssessmentDate"", ""AnnualAssessment_Date"",
+        SELECT ""Id"", ""Name"", ""IDNumber"", ""Gender"", ""BirthDate"",""AssessmentDate"", ""AnnualAssessment_Date"",
                ""Weight"", ""WeightTarget_Value"",
                ""CurrentWaist_Value"", ""WaistTarget_Value"",
                ""FastingGlucose_Value"", ""FastingGlucoseTarget_Value"",
@@ -466,6 +466,8 @@ namespace healthProject.Controllers
                                 {
                                     viewModel.Name = reader["Name"].ToString();
                                     viewModel.IDNumber = reader["IDNumber"].ToString();
+                                    viewModel.Gender = reader["Gender"].ToString();
+                                    viewModel.BirthDate = reader["BirthDate"] as DateTime? ?? DateTime.MinValue;
                                     isFirstRecord = false;
                                 }
 
