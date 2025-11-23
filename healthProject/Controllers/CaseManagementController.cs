@@ -103,6 +103,55 @@ namespace healthProject.Controllers
             }
         }
 
+        // 取得病患詳細資料（供表單使用）
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<IActionResult> GetPatientInfo(string idNumber)
+        {
+            try
+            {
+                var connStr = _configuration.GetConnectionString("DefaultConnection")
+                    + ";SSL Mode=Require;Trust Server Certificate=True;";
+
+                using var conn = new NpgsqlConnection(connStr);
+                await conn.OpenAsync();
+
+                string sql = @"
+            SELECT ""Id"", ""FullName"", ""IDNumber"", ""PhoneNumber""
+            FROM public.""Users""
+            WHERE ""IDNumber"" = @idNumber;
+        ";
+
+                using var cmd = new NpgsqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@idNumber", idNumber);
+
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        data = new
+                        {
+                            id = reader.GetInt32(0),
+                            name = reader.GetString(1),
+                            idNumber = reader.GetString(2),
+                            gender = "男", // 如果 Users 表有性別欄位，請替換
+                            birthDate = "", // 如果 Users 表有生日欄位，請替換
+                            birthDateDisplay = "--"
+                        }
+                    });
+                }
+
+                return Json(new { success = false, message = "查無資料" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "取得病患資料失敗");
+                return Json(new { success = false, message = "系統錯誤" });
+            }
+        }
+
         // 在 CaseManagementController 裡加入這個 action（供病患查看自己的紀錄列表）
         [HttpGet]
         public async Task<IActionResult> PatientRecords()
@@ -637,17 +686,52 @@ namespace healthProject.Controllers
 
             if (!string.IsNullOrEmpty(searchIdNumber))
             {
-                // 搜尋特定病患的紀錄
-                records = await GetRecordsByIdNumberAsync(searchIdNumber);
+                // 搜尋特定病患的最新一筆紀錄
+                records = await GetLatestRecordsByIdNumberAsync(searchIdNumber);
                 ViewBag.SearchIdNumber = searchIdNumber;
             }
             else
             {
-                // 顯示所有紀錄
-                records = await GetAllRecordsAsync();
+                // 顯示所有個案的最新一筆紀錄
+                records = await GetLatestRecordsForAllPatientsAsync();
             }
 
             return View(records);
+        }
+
+        // ========================================
+        // 📋 PatientHistory - 顯示個案所有歷史記錄 + 日期篩選
+        // ========================================
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> PatientHistory(string idNumber, int? year = null, int? month = null)
+        {
+            if (string.IsNullOrEmpty(idNumber))
+            {
+                TempData["ErrorMessage"] = "缺少身分證字號參數";
+                return RedirectToAction("ViewAllRecords");
+            }
+
+            try
+            {
+                var records = await GetPatientHistoryAsync(idNumber, year, month);
+
+                if (!records.Any())
+                {
+                    TempData["ErrorMessage"] = "查無此個案的評估記錄";
+                    return RedirectToAction("ViewAllRecords");
+                }
+
+                ViewBag.SelectedYear = year;
+                ViewBag.SelectedMonth = month;
+
+                return View(records);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "查詢個案歷史記錄失敗 - IDNumber: {IDNumber}", idNumber);
+                TempData["ErrorMessage"] = $"查詢失敗: {ex.Message}";
+                return RedirectToAction("ViewAllRecords");
+            }
         }
 
 
@@ -691,6 +775,85 @@ namespace healthProject.Controllers
                 _logger.LogError(ex, "更新紀錄失敗");
                 ModelState.AddModelError("", "更新紀錄失敗，請稍後再試");
                 return View(model);
+            }
+        }
+        // 在 CaseManagementController.cs 加入
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<IActionResult> GetLatestPatientData(string idNumber)
+        {
+            try
+            {
+                var connStr = _configuration.GetConnectionString("DefaultConnection")
+                    + ";SSL Mode=Require;Trust Server Certificate=True;";
+
+                using var conn = new NpgsqlConnection(connStr);
+                await conn.OpenAsync();
+
+                // 先查 Users 表取得基本資料
+                string sqlUser = @"
+            SELECT ""Id"", ""FullName"", ""IDNumber""
+            FROM public.""Users""
+            WHERE ""IDNumber"" = @idNumber;
+        ";
+
+                int userId = 0;
+                string fullName = "";
+
+                using (var cmd = new NpgsqlCommand(sqlUser, conn))
+                {
+                    cmd.Parameters.AddWithValue("@idNumber", idNumber);
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    if (await reader.ReadAsync())
+                    {
+                        userId = reader.GetInt32(0);
+                        fullName = reader.GetString(1);
+                    }
+                }
+
+                if (userId == 0)
+                    return Json(new { success = false, message = "查無此病患" });
+
+                // 查詢最新一筆紀錄的性別和生日
+                string sqlLatest = @"
+            SELECT ""Gender"", ""BirthDate""
+            FROM public.""CaseManagement""
+            WHERE ""IDNumber"" = @idNumber
+            ORDER BY ""Id"" DESC
+            LIMIT 1;
+        ";
+
+                string gender = "";
+                string birthDate = "";
+
+                using (var cmd = new NpgsqlCommand(sqlLatest, conn))
+                {
+                    cmd.Parameters.AddWithValue("@idNumber", idNumber);
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    if (await reader.ReadAsync())
+                    {
+                        gender = reader.IsDBNull(0) ? "" : reader.GetString(0);
+                        birthDate = reader.IsDBNull(1) ? "" : reader.GetDateTime(1).ToString("yyyy-MM-dd");
+                    }
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        userId = userId,
+                        name = fullName,
+                        idNumber = idNumber,
+                        gender = gender,
+                        birthDate = birthDate
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "取得病患資料失敗");
+                return Json(new { success = false, message = "系統錯誤" });
             }
         }
 
@@ -1014,6 +1177,291 @@ namespace healthProject.Controllers
             return records;
         }
 
+        /// <summary>
+        /// 取得所有個案的最新一筆紀錄
+        /// </summary>
+        private async Task<List<CaseManagementViewModel>> GetLatestRecordsForAllPatientsAsync()
+        {
+            var records = new List<CaseManagementViewModel>();
+            var connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+            await using var connection = new NpgsqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            // 使用 DISTINCT ON 取得每個身分證字號的最新一筆
+            var query = @"
+        SELECT DISTINCT ON (""IDNumber"")
+            ""Id"", ""UserId"", ""IDNumber"", ""Name"", ""Gender"", ""BirthDate"", 
+            ""Height"", ""Weight"", ""BMI_Value"", ""CurrentWaist_Value"",
+            ""AssessmentDate"", ""AnnualAssessment_Date"", ""FollowUpDate"", ""AnnualAssessment""
+        FROM ""CaseManagement""
+        ORDER BY ""IDNumber"", 
+                 COALESCE(""AssessmentDate"", ""AnnualAssessment_Date"") DESC NULLS LAST, 
+                 ""Id"" DESC
+        LIMIT 100";
+
+            await using var command = new NpgsqlCommand(query, connection);
+            await using var reader = await command.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                records.Add(new CaseManagementViewModel
+                {
+                    Id = reader.GetInt32(0),
+                    UserId = reader.GetInt32(1),
+                    IDNumber = reader.GetString(2),
+                    Name = reader.GetString(3),
+                    Gender = reader.GetString(4),
+                    BirthDate = reader.GetDateTime(5),
+                    Height = reader.GetDecimal(6),
+                    Weight = reader.GetDecimal(7),
+                    BMI_Value = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
+                    CurrentWaist_Value = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
+                    AssessmentDate = reader.IsDBNull(10) ? null : reader.GetDateTime(10),
+                    AnnualAssessment_Date = reader.IsDBNull(11) ? null : reader.GetDateTime(11),
+                    FollowUpDate = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
+                    AnnualAssessment = reader.GetBoolean(13)
+                });
+            }
+
+            return records;
+        }
+
+        /// <summary>
+        /// 根據身分證查詢該個案的最新一筆紀錄
+        /// </summary>
+        private async Task<List<CaseManagementViewModel>> GetLatestRecordsByIdNumberAsync(string idNumber)
+        {
+            var records = new List<CaseManagementViewModel>();
+            var connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+            await using var connection = new NpgsqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            var query = @"
+        SELECT ""Id"", ""UserId"", ""IDNumber"", ""Name"", ""Gender"", ""BirthDate"", 
+               ""Height"", ""Weight"", ""BMI_Value"", ""CurrentWaist_Value"",
+               ""AssessmentDate"", ""AnnualAssessment_Date"", ""FollowUpDate"", ""AnnualAssessment""
+        FROM ""CaseManagement""
+        WHERE ""IDNumber"" = @IDNumber
+        ORDER BY COALESCE(""AssessmentDate"", ""AnnualAssessment_Date"") DESC NULLS LAST, ""Id"" DESC
+        LIMIT 1";
+
+            await using var command = new NpgsqlCommand(query, connection);
+            command.Parameters.AddWithValue("@IDNumber", idNumber);
+
+            await using var reader = await command.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+            {
+                records.Add(new CaseManagementViewModel
+                {
+                    Id = reader.GetInt32(0),
+                    UserId = reader.GetInt32(1),
+                    IDNumber = reader.GetString(2),
+                    Name = reader.GetString(3),
+                    Gender = reader.GetString(4),
+                    BirthDate = reader.GetDateTime(5),
+                    Height = reader.GetDecimal(6),
+                    Weight = reader.GetDecimal(7),
+                    BMI_Value = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
+                    CurrentWaist_Value = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
+                    AssessmentDate = reader.IsDBNull(10) ? null : reader.GetDateTime(10),
+                    AnnualAssessment_Date = reader.IsDBNull(11) ? null : reader.GetDateTime(11),
+                    FollowUpDate = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
+                    AnnualAssessment = reader.GetBoolean(13)
+                });
+            }
+
+            return records;
+        }
+
+        /// <summary>
+        /// 取得個案所有歷史記錄 (支援年月篩選) - 完整版
+        /// </summary>
+        private async Task<List<CaseManagementViewModel>> GetPatientHistoryAsync(string idNumber, int? year, int? month)
+        {
+            var records = new List<CaseManagementViewModel>();
+            var connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+            await using var connection = new NpgsqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            // 建立查詢語句 (包含年月篩選) - 抓取所有欄位
+            var queryBuilder = new System.Text.StringBuilder(@"
+        SELECT ""Id"", ""UserId"", ""IDNumber"", ""Name"", ""Gender"", ""BirthDate"",
+               ""Height"", ""Weight"", ""BMI"", ""BMI_Value"",
+               ""AssessmentDate"", ""FollowUpDate"",
+               ""AnnualAssessment"", ""AnnualAssessment_Date"",
+               ""SystolicBP"", ""SystolicBP_Value"", ""DiastolicBP"", ""DiastolicBP_Value"",
+               ""BloodPressureGuidance722"",
+               ""CurrentWaist"", ""CurrentWaist_Value"", ""FastingGlucose"", ""FastingGlucose_Value"", ""HbA1c"", ""HbA1c_Value"",
+               ""HDL"", ""HDL_Value"", ""LDL"", ""LDL_Value"", ""Triglycerides"", ""Triglycerides_Value"",
+               ""ExerciseNone"", ""ExerciseUsually"", ""ExerciseAlways"",
+               ""SmokingNone"", ""SmokingUsually"", ""SmokingUnder10"", ""SmokingOver10"",
+               ""BetelNutNone"", ""BetelNutUsually"", ""BetelNutAlways"",
+               ""CoronaryHigh"", ""CoronaryMedium"", ""CoronaryLow"", ""CoronaryNotApplicable"",
+               ""DiabetesHigh"", ""DiabetesMedium"", ""DiabetesLow"", ""DiabetesNotApplicabe"",
+               ""HypertensionHigh"", ""HypertensionMedium"", ""HypertensionLow"", ""HypertensionNotApplicable"",
+               ""StrokeHigh"", ""StrokeMedium"", ""StrokeLow"", ""StrokeNotApplicable"",
+               ""CardiovascularHigh"", ""CardiovascularMedium"", ""CardiovascularLow"", ""CardiovascularNotApplicable"",
+               ""SmokingService"", ""SmokingServiceType1"", ""SmokingServiceType2"",
+               ""SmokingServiceType2_Provide"", ""SmokingServiceType2_Referral"",
+               ""BetelNutService"", ""BetelQuitGoal"", ""BetelQuitYear"", ""BetelQuitMonth"", ""BetelQuitDay"",
+               ""OralExam"", ""OralExamYear"", ""OralExamMonth"",
+               ""DietManagement"", ""DailyCalories1200"", ""DailyCalories1500"", ""DailyCalories1800"",
+               ""DailyCalories2000"", ""DailyCaloriesOther"", ""DailyCaloriesOtherValue"",
+               ""ReduceFriedFood"", ""ReduceSweetFood"", ""ReduceSalt"", ""ReduceSugaryDrinks"",
+               ""ReduceOther"", ""ReduceOtherValue"",
+               ""ExerciseRecommendation"", ""ExerciseGuidance"", ""SocialExerciseResources"",
+               ""SocialExerciseResources_Text"",
+               ""Achievement"", ""WaistTarget_Value"", ""WeightTarget_Value"",
+               ""OtherReminders"", ""FastingGlucoseTarget"", ""FastingGlucoseTarget_Value"",
+               ""HbA1cTarget"", ""HbA1cTarget_Value"", ""TriglyceridesTarget"", ""TriglyceridesTarget_Value"",
+               ""HDL_CholesterolTarget"", ""HDL_CholesterolTarget_Value"",
+               ""LDL_CholesterolTarget"", ""LDL_CholesterolTarget_Value"",
+               ""Notes""
+        FROM ""CaseManagement""
+        WHERE ""IDNumber"" = @IDNumber");
+
+            if (year.HasValue)
+            {
+                queryBuilder.Append(@" AND EXTRACT(YEAR FROM COALESCE(""AssessmentDate"", ""AnnualAssessment_Date"")) = @Year");
+            }
+
+            if (month.HasValue)
+            {
+                queryBuilder.Append(@" AND EXTRACT(MONTH FROM COALESCE(""AssessmentDate"", ""AnnualAssessment_Date"")) = @Month");
+            }
+
+            queryBuilder.Append(@" ORDER BY COALESCE(""AssessmentDate"", ""AnnualAssessment_Date"") DESC NULLS LAST, ""Id"" DESC");
+
+            await using var command = new NpgsqlCommand(queryBuilder.ToString(), connection);
+            command.Parameters.AddWithValue("@IDNumber", idNumber);
+
+            if (year.HasValue)
+                command.Parameters.AddWithValue("@Year", year.Value);
+
+            if (month.HasValue)
+                command.Parameters.AddWithValue("@Month", month.Value);
+
+            await using var reader = await command.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                records.Add(new CaseManagementViewModel
+                {
+                    Id = reader.GetInt32(0),
+                    UserId = reader.GetInt32(1),
+                    IDNumber = reader.GetString(2),
+                    Name = reader.GetString(3),
+                    Gender = reader.GetString(4),
+                    BirthDate = reader.GetDateTime(5),
+                    Height = reader.GetDecimal(6),
+                    Weight = reader.GetDecimal(7),
+                    BMI = reader.GetBoolean(8),
+                    BMI_Value = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
+                    AssessmentDate = reader.IsDBNull(10) ? null : reader.GetDateTime(10),
+                    FollowUpDate = reader.IsDBNull(11) ? null : reader.GetDateTime(11),
+                    AnnualAssessment = reader.GetBoolean(12),
+                    AnnualAssessment_Date = reader.IsDBNull(13) ? null : reader.GetDateTime(13),
+                    SystolicBP = reader.GetBoolean(14),
+                    SystolicBP_Value = reader.IsDBNull(15) ? null : reader.GetDecimal(15),
+                    DiastolicBP = reader.GetBoolean(16),
+                    DiastolicBP_Value = reader.IsDBNull(17) ? null : reader.GetDecimal(17),
+                    BloodPressureGuidance722 = reader.GetBoolean(18),
+                    CurrentWaist = reader.GetBoolean(19),
+                    CurrentWaist_Value = reader.IsDBNull(20) ? null : reader.GetDecimal(20),
+                    FastingGlucose = reader.GetBoolean(21),
+                    FastingGlucose_Value = reader.IsDBNull(22) ? null : reader.GetDecimal(22),
+                    HbA1c = reader.GetBoolean(23),
+                    HbA1c_Value = reader.IsDBNull(24) ? null : reader.GetDecimal(24),
+                    HDL = reader.GetBoolean(25),
+                    HDL_Value = reader.IsDBNull(26) ? null : reader.GetDecimal(26),
+                    LDL = reader.GetBoolean(27),
+                    LDL_Value = reader.IsDBNull(28) ? null : reader.GetDecimal(28),
+                    Triglycerides = reader.GetBoolean(29),
+                    Triglycerides_Value = reader.IsDBNull(30) ? null : reader.GetDecimal(30),
+                    ExerciseNone = reader.GetBoolean(31),
+                    ExerciseUsually = reader.GetBoolean(32),
+                    ExerciseAlways = reader.GetBoolean(33),
+                    SmokingNone = reader.GetBoolean(34),
+                    SmokingUsually = reader.GetBoolean(35),
+                    SmokingUnder10 = reader.GetBoolean(36),
+                    SmokingOver10 = reader.GetBoolean(37),
+                    BetelNutNone = reader.GetBoolean(38),
+                    BetelNutUsually = reader.GetBoolean(39),
+                    BetelNutAlways = reader.GetBoolean(40),
+                    CoronaryHigh = reader.GetBoolean(41),
+                    CoronaryMedium = reader.GetBoolean(42),
+                    CoronaryLow = reader.GetBoolean(43),
+                    CoronaryNotApplicable = reader.GetBoolean(44),
+                    DiabetesHigh = reader.GetBoolean(45),
+                    DiabetesMedium = reader.GetBoolean(46),
+                    DiabetesLow = reader.GetBoolean(47),
+                    DiabetesNotApplicabe = reader.GetBoolean(48),
+                    HypertensionHigh = reader.GetBoolean(49),
+                    HypertensionMedium = reader.GetBoolean(50),
+                    HypertensionLow = reader.GetBoolean(51),
+                    HypertensionNotApplicable = reader.GetBoolean(52),
+                    StrokeHigh = reader.GetBoolean(53),
+                    StrokeMedium = reader.GetBoolean(54),
+                    StrokeLow = reader.GetBoolean(55),
+                    StrokeNotApplicable = reader.GetBoolean(56),
+                    CardiovascularHigh = reader.GetBoolean(57),
+                    CardiovascularMedium = reader.GetBoolean(58),
+                    CardiovascularLow = reader.GetBoolean(59),
+                    CardiovascularNotApplicable = reader.GetBoolean(60),
+                    SmokingService = reader.GetBoolean(61),
+                    SmokingServiceType1 = reader.GetBoolean(62),
+                    SmokingServiceType2 = reader.GetBoolean(63),
+                    SmokingServiceType2_Provide = reader.GetBoolean(64),
+                    SmokingServiceType2_Referral = reader.GetBoolean(65),
+                    BetelNutService = reader.GetBoolean(66),
+                    BetelQuitGoal = reader.GetBoolean(67),
+                    BetelQuitYear = reader.IsDBNull(68) ? null : reader.GetInt32(68),
+                    BetelQuitMonth = reader.IsDBNull(69) ? null : reader.GetInt32(69),
+                    BetelQuitDay = reader.IsDBNull(70) ? null : reader.GetInt32(70),
+                    OralExam = reader.GetBoolean(71),
+                    OralExamYear = reader.IsDBNull(72) ? null : reader.GetInt32(72),
+                    OralExamMonth = reader.IsDBNull(73) ? null : reader.GetInt32(73),
+                    DietManagement = reader.GetBoolean(74),
+                    DailyCalories1200 = reader.GetBoolean(75),
+                    DailyCalories1500 = reader.GetBoolean(76),
+                    DailyCalories1800 = reader.GetBoolean(77),
+                    DailyCalories2000 = reader.GetBoolean(78),
+                    DailyCaloriesOther = reader.GetBoolean(79),
+                    DailyCaloriesOtherValue = reader.IsDBNull(80) ? null : reader.GetString(80),
+                    ReduceFriedFood = reader.GetBoolean(81),
+                    ReduceSweetFood = reader.GetBoolean(82),
+                    ReduceSalt = reader.GetBoolean(83),
+                    ReduceSugaryDrinks = reader.GetBoolean(84),
+                    ReduceOther = reader.GetBoolean(85),
+                    ReduceOtherValue = reader.IsDBNull(86) ? null : reader.GetString(86),
+                    ExerciseRecommendation = reader.GetBoolean(87),
+                    ExerciseGuidance = reader.GetBoolean(88),
+                    SocialExerciseResources = reader.GetBoolean(89),
+                    SocialExerciseResources_Text = reader.IsDBNull(90) ? null : reader.GetString(90),
+                    Achievement = reader.GetBoolean(91),
+                    WaistTarget_Value = reader.IsDBNull(92) ? null : reader.GetDecimal(92),
+                    WeightTarget_Value = reader.IsDBNull(93) ? null : reader.GetDecimal(93),
+                    OtherReminders = reader.GetBoolean(94),
+                    FastingGlucoseTarget = reader.GetBoolean(95),
+                    FastingGlucoseTarget_Value = reader.IsDBNull(96) ? null : reader.GetDecimal(96),
+                    HbA1cTarget = reader.GetBoolean(97),
+                    HbA1cTarget_Value = reader.IsDBNull(98) ? null : reader.GetDecimal(98),
+                    TriglyceridesTarget = reader.GetBoolean(99),
+                    TriglyceridesTarget_Value = reader.IsDBNull(100) ? null : reader.GetDecimal(100),
+                    HDL_CholesterolTarget = reader.GetBoolean(101),
+                    HDL_CholesterolTarget_Value = reader.IsDBNull(102) ? null : reader.GetDecimal(102),
+                    LDL_CholesterolTarget = reader.GetBoolean(103),
+                    LDL_CholesterolTarget_Value = reader.IsDBNull(104) ? null : reader.GetDecimal(104),
+                    Notes = reader.IsDBNull(105) ? null : reader.GetString(105)
+                });
+            }
+
+            return records;
+        }
 
         // 根據 ID 取得紀錄 (完整版 - 包含所有欄位)
         private async Task<CaseManagementViewModel> GetRecordByIdAsync(int id)

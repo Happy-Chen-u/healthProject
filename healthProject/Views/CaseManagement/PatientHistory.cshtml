@@ -1,0 +1,692 @@
+﻿@model List<CaseManagementViewModel>
+@{
+    ViewData["Title"] = "個案完整歷史記錄";
+    Layout = null;
+    var patientName = Model.FirstOrDefault()?.Name ?? "未知";
+    var patientId = Model.FirstOrDefault()?.IDNumber ?? "未知";
+    var patientGender = Model.FirstOrDefault()?.Gender ?? "未知";
+    var patientBirthDate = Model.FirstOrDefault()?.BirthDate ?? DateTime.MinValue;
+
+    // 輔助函數
+    string GetExerciseStatus(CaseManagementViewModel m)
+    {
+        if (m.ExerciseNone) return "無";
+        if (m.ExerciseUsually) return "偶爾";
+        if (m.ExerciseAlways) return "經常";
+        return "--";
+    }
+
+    string GetSmokingStatus(CaseManagementViewModel m)
+    {
+        if (m.SmokingNone) return "無";
+        if (m.SmokingUsually) return "偶爾";
+        if (m.SmokingUnder10) return "10支/日以下";
+        if (m.SmokingOver10) return "10支/日以上";
+        return "--";
+    }
+
+    string GetBetelNutStatus(CaseManagementViewModel m)
+    {
+        if (m.BetelNutNone) return "無";
+        if (m.BetelNutUsually) return "偶爾";
+        if (m.BetelNutAlways) return "經常";
+        return "--";
+    }
+
+    string GetRiskLevel(bool high, bool medium, bool low, bool na)
+    {
+        if (high) return "高";
+        if (medium) return "中";
+        if (low) return "低";
+        if (na) return "不適用";
+        return "--";
+    }
+
+    string GetSmokingService(CaseManagementViewModel m)
+    {
+        if (m.SmokingServiceType1) return "戒菸指導";
+        if (m.SmokingServiceType2_Provide) return "提供戒菸服務";
+        return "--";
+    }
+
+    string GetDailyCalories(CaseManagementViewModel m)
+    {
+        if (m.DailyCalories1200) return "1200";
+        if (m.DailyCalories1500) return "1500";
+        if (m.DailyCalories1800) return "1800";
+        if (m.DailyCalories2000) return "2000";
+        if (m.DailyCaloriesOther) return m.DailyCaloriesOtherValue ?? "其他";
+        return "--";
+    }
+
+    string GetReduceItems(CaseManagementViewModel m)
+    {
+        var items = new List<string>();
+        if (m.ReduceFriedFood) items.Add("油炸物");
+        if (m.ReduceSweetFood) items.Add("甜食");
+        if (m.ReduceSalt) items.Add("鹽");
+        if (m.ReduceSugaryDrinks) items.Add("含糖飲料");
+        if (m.ReduceOther) items.Add(m.ReduceOtherValue ?? "其他");
+        return items.Count > 0 ? string.Join("、", items) : "--";
+    }
+
+    string GetExerciseAdvice(CaseManagementViewModel m)
+    {
+        if (m.ExerciseGuidance) return "提供運動指導";
+        if (m.SocialExerciseResources) return "社區運動資源: " + (m.SocialExerciseResources_Text ?? "");
+        return "--";
+    }
+}
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background: #f0f4f8;
+            padding: 20px;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .top-buttons {
+            max-width: 1600px;
+            margin: 0 auto 20px auto;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            color: white;
+        }
+
+        .btn-back {
+            background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+        }
+
+        .btn-back:hover {
+            background: linear-gradient(135deg, #607D8B 0%, #546E7A 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        /* 日期篩選器 */
+        .filter-container {
+            max-width: 1600px;
+            margin: 0 auto 20px auto;
+            background: white;
+            border: 2px solid #5a9;
+            border-radius: 10px;
+            padding: 15px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .filter-form {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: #357;
+            font-size: 14px;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border: 2px solid #9cb;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 120px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #5a9;
+        }
+
+        .btn-filter {
+            padding: 8px 20px;
+            background: #5a9;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-filter:hover {
+            background: #4a8;
+        }
+
+        .record-container {
+            max-width: 1600px;
+            margin: 0 auto 30px auto;
+            background: white;
+            border: 2px solid #5a9;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            page-break-inside: avoid;
+        }
+
+        .main-title {
+            background: #5a9;
+            color: white;
+            text-align: center;
+            padding: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .patient-row {
+            display: flex;
+            border-bottom: 1px solid #bcd;
+            background: #f8fdf9;
+            flex-wrap: wrap;
+        }
+
+        .patient-cell {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border-right: 1px solid #cde;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .patient-cell:last-child {
+            border-right: none;
+        }
+
+        .patient-cell strong {
+            color: #357;
+            white-space: nowrap;
+        }
+
+        .patient-cell span {
+            font-weight: 500;
+        }
+
+        .date-row {
+            display: flex;
+            border-bottom: 2px solid #5a9;
+            background: #eef6f0;
+            flex-wrap: wrap;
+        }
+
+        .date-cell {
+            padding: 10px 20px;
+            border-right: 1px solid #cde;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .date-cell strong {
+            color: #357;
+        }
+
+        .record-type-badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-first {
+            background: #d4edda;
+            color: #2a5a3a;
+        }
+
+        .badge-annual {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .badge-latest {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .section-title {
+            background: #5a9;
+            color: white;
+            padding: 8px 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1400px;
+        }
+
+        th, td {
+            border: 1px solid #bcd;
+            padding: 10px 8px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #e8f4ea;
+            color: #2a5a3a;
+            font-weight: 600;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        td {
+            background: white;
+            min-width: 100px;
+            font-weight: 500;
+        }
+
+        .quit-section {
+            font-size: 12px;
+            text-align: left;
+            min-width: 160px;
+        }
+
+        .quit-section label {
+            display: block;
+            margin-bottom: 3px;
+            color: #357;
+            font-weight: 500;
+        }
+
+        .quit-section .value {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .notes-content {
+            padding: 15px;
+            background: #fafafa;
+            min-height: 60px;
+            border: 1px solid #eee;
+            margin: 10px 15px;
+            border-radius: 5px;
+        }
+
+        .edit-button-row {
+            padding: 15px 20px;
+            text-align: center;
+            background: #f8fdf9;
+            border-top: 2px solid #5a9;
+        }
+
+        .btn-edit {
+            padding: 10px 30px;
+            background: #5a9;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-edit:hover {
+            background: #4a8;
+            color: white;
+            text-decoration: none;
+        }
+
+        .empty-message {
+            max-width: 1600px;
+            margin: 50px auto;
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border: 2px solid #5a9;
+            border-radius: 10px;
+            color: #357;
+            font-size: 1.2rem;
+        }
+
+        .record-separator {
+            height: 30px;
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFE0B2 100%);
+        }
+
+        @@media print {
+            .top-buttons, .filter-container {
+                display: none;
+            }
+
+            .record-container {
+                page-break-after: always;
+                margin-bottom: 0;
+            }
+
+            .record-separator {
+                display: none;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .top-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .filter-form {
+                flex-direction: column;
+            }
+
+            .filter-select {
+                width: 100%;
+            }
+
+            .date-row {
+                flex-direction: column;
+            }
+
+            .patient-cell {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 頂部按鈕 -->
+    <div class="top-buttons">
+        <a href="@Url.Action("ViewAllRecords", "CaseManagement")" class="btn btn-back">← 返回個案列表</a>
+    </div>
+
+    <!-- 日期篩選器 -->
+    <div class="filter-container">
+        <form method="get" asp-action="PatientHistory" class="filter-form">
+            <input type="hidden" name="idNumber" value="@patientId" />
+            <span class="filter-label">📅 篩選評估日期:</span>
+            
+            <select name="year" class="filter-select">
+                <option value="">全部年份</option>
+                @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 10; y--)
+                {
+                    <option value="@y" selected="@(ViewBag.SelectedYear == y)">@y 年</option>
+                }
+            </select>
+
+            <select name="month" class="filter-select">
+                <option value="">全部月份</option>
+                @for (int m = 1; m <= 12; m++)
+                {
+                    <option value="@m" selected="@(ViewBag.SelectedMonth == m)">@m 月</option>
+                }
+            </select>
+
+            <button type="submit" class="btn-filter">🔍 查詢</button>
+
+            @if (ViewBag.SelectedYear != null || ViewBag.SelectedMonth != null)
+            {
+                <a href="@Url.Action("PatientHistory", "CaseManagement", new { idNumber = patientId })" 
+                   class="btn-filter" style="background:#78909C;">
+                    清除篩選
+                </a>
+            }
+
+            <span style="margin-left: auto; color: #666;">
+                共 <strong style="color:#5a9;">@Model.Count</strong> 筆記錄
+            </span>
+        </form>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            var record = Model[i];
+            bool isAnnualAssessment = record.AnnualAssessment;
+            bool isLatest = (i == 0);
+            bool isFirst = (i == Model.Count - 1);
+
+            <div class="record-container">
+                <div class="main-title">
+                    代謝症候群疾病管理紀錄表
+                    @if (isLatest) { <span style="background:#ffc107; padding:4px 10px; border-radius:8px; margin-left:10px; font-size:14px;">✨ 最新</span> }
+                    @if (isFirst) { <span style="background:#2196f3; padding:4px 10px; border-radius:8px; margin-left:10px; font-size:14px;">🎯 首次</span> }
+                </div>
+
+                <!-- 病患資訊列 -->
+                <div class="patient-row">
+                    <div class="patient-cell"><strong>姓名:</strong><span>@record.Name</span></div>
+                    <div class="patient-cell"><strong>身分證字號:</strong><span>@record.IDNumber</span></div>
+                    <div class="patient-cell"><strong>性別:</strong><span>@record.Gender</span></div>
+                    <div class="patient-cell"><strong>生日:</strong><span>@record.BirthDate.ToString("yyyy/MM/dd")</span></div>
+                </div>
+
+                <!-- 日期列 -->
+                <div class="date-row">
+                    <div class="date-cell">
+                        @if (isAnnualAssessment)
+                        {
+                            <span class="record-type-badge badge-annual">年度評估</span>
+                            <strong>年度評估日期:</strong>
+                            <span>@(record.AnnualAssessment_Date?.ToString("yyyy/MM/dd") ?? record.AssessmentDate?.ToString("yyyy/MM/dd") ?? "--")</span>
+                        }
+                        else
+                        {
+                            <span class="record-type-badge badge-first">收案評估</span>
+                            <strong>收案評估日期:</strong>
+                            <span>@(record.AssessmentDate?.ToString("yyyy/MM/dd") ?? "--")</span>
+                        }
+                    </div>
+                    <div class="date-cell">
+                        <strong>建議回診日期:</strong>
+                        <span>@(record.FollowUpDate?.ToString("yyyy/MM/dd") ?? "--")</span>
+                    </div>
+                </div>
+
+                <!-- 評估指數 -->
+                <div class="section-title">評估指數</div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>身高(公分)</th>
+                                <th>體重(公斤)</th>
+                                <th>BMI(kg/m²)</th>
+                                <th>腰圍(公分)</th>
+                                <th>運動</th>
+                                <th>抽菸</th>
+                                <th>嚼檳榔</th>
+                                <th>飯前血糖值(mg/dL)</th>
+                                <th>收縮壓(mmHg)</th>
+                                <th>舒張壓(mmHg)</th>
+                                <th>三酸甘油脂(mg/dL)</th>
+                                <th>高密度脂蛋白膽固醇(mg/dL)</th>
+                                <th>低密度脂蛋白膽固醇(mg/dL)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>@record.Height</td>
+                                <td>@record.Weight</td>
+                                <td>@(record.BMI_Value?.ToString("F1") ?? "--")</td>
+                                <td>@(record.CurrentWaist_Value?.ToString() ?? "--")</td>
+                                <td>@GetExerciseStatus(record)</td>
+                                <td>@GetSmokingStatus(record)</td>
+                                <td>@GetBetelNutStatus(record)</td>
+                                <td>@(record.FastingGlucose_Value?.ToString() ?? "--")</td>
+                                <td>@(record.SystolicBP_Value?.ToString() ?? "--")</td>
+                                <td>@(record.DiastolicBP_Value?.ToString() ?? "--")</td>
+                                <td>@(record.Triglycerides_Value?.ToString() ?? "--")</td>
+                                <td>@(record.HDL_Value?.ToString() ?? "--")</td>
+                                <td>@(record.LDL_Value?.ToString() ?? "--")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 疾病管理指引 -->
+                <div class="section-title">疾病管理指引</div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>是否需722血壓表</th>
+                                <th>戒菸</th>
+                                <th>戒檳</th>
+                                <th>每日建議攝取熱量</th>
+                                <th>盡量減少</th>
+                                <th>運動建議</th>
+                                <th>目標腰圍(cm)</th>
+                                <th>目標體重(kg)</th>
+                                <th>飯前血糖目標值</th>
+                                <th>醣化血紅素目標值</th>
+                                <th>三酸甘油脂目標值</th>
+                                <th>高密度脂蛋白目標值</th>
+                                <th>低密度脂蛋白目標值</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>@(record.BloodPressureGuidance722 ? "是" : "否")</td>
+                                <td>@GetSmokingService(record)</td>
+                                <td>
+                                    <div class="quit-section">
+                                        <label>戒檳目標:</label>
+                                        <div class="value">
+                                            @if (record.BetelQuitYear.HasValue && record.BetelQuitMonth.HasValue && record.BetelQuitDay.HasValue)
+                                            {
+                                                @($"{record.BetelQuitYear}/{record.BetelQuitMonth}/{record.BetelQuitDay}")
+                                            }
+                                            else
+                                            {
+                                                @("--")
+                                            }
+                                        </div>
+                                        <label>口腔檢查:</label>
+                                        <div class="value">
+                                            @if (record.OralExamYear.HasValue && record.OralExamMonth.HasValue)
+                                            {
+                                                @($"{record.OralExamYear}/{record.OralExamMonth}")
+                                            }
+                                            else
+                                            {
+                                                @("--")
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@GetDailyCalories(record)</td>
+                                <td>@GetReduceItems(record)</td>
+                                <td>@GetExerciseAdvice(record)</td>
+                                <td>@(record.WaistTarget_Value?.ToString() ?? "--")</td>
+                                <td>@(record.WeightTarget_Value?.ToString() ?? "--")</td>
+                                <td>@(record.FastingGlucoseTarget_Value?.ToString() ?? "--")</td>
+                                <td>@(record.HbA1cTarget_Value?.ToString() ?? "--")</td>
+                                <td>@(record.TriglyceridesTarget_Value?.ToString() ?? "--")</td>
+                                <td>@(record.HDL_CholesterolTarget_Value?.ToString() ?? "--")</td>
+                                <td>@(record.LDL_CholesterolTarget_Value?.ToString() ?? "--")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 得到慢性病的風險 -->
+                <div class="section-title">得到慢性病的風險</div>
+                <div class="table-wrapper">
+                    <table style="min-width: 800px;">
+                        <thead>
+                            <tr>
+                                <th style="width:20%">冠心病</th>
+                                <th style="width:20%">糖尿病</th>
+                                <th style="width:20%">高血壓</th>
+                                <th style="width:20%">腦中風</th>
+                                <th style="width:20%">心血管不良事件</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>@GetRiskLevel(record.CoronaryHigh, record.CoronaryMedium, record.CoronaryLow, record.CoronaryNotApplicable)</td>
+                                <td>@GetRiskLevel(record.DiabetesHigh, record.DiabetesMedium, record.DiabetesLow, record.DiabetesNotApplicabe)</td>
+                                <td>@GetRiskLevel(record.HypertensionHigh, record.HypertensionMedium, record.HypertensionLow, record.HypertensionNotApplicable)</td>
+                                <td>@GetRiskLevel(record.StrokeHigh, record.StrokeMedium, record.StrokeLow, record.StrokeNotApplicable)</td>
+                                <td>@GetRiskLevel(record.CardiovascularHigh, record.CardiovascularMedium, record.CardiovascularLow, record.CardiovascularNotApplicable)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 其他備註 -->
+                <div class="section-title">其他備註</div>
+                <div class="notes-content">
+                    @(string.IsNullOrEmpty(record.Notes) ? "無" : record.Notes)
+                </div>
+
+                <!-- 編輯按鈕 -->
+                <div class="edit-button-row">
+                    <a href="@Url.Action("Edit", "CaseManagement", new { id = record.Id })" class="btn-edit">
+                        ✏️ 編輯此筆記錄
+                    </a>
+                </div>
+            </div>
+
+            @if (i < Model.Count - 1)
+            {
+                <div class="record-separator"></div>
+            }
+        }
+    }
+    else
+    {
+        <div class="empty-message">
+            📭 
+            @if (ViewBag.SelectedYear != null || ViewBag.SelectedMonth != null)
+            {
+                <text>此時段沒有評估記錄</text>
+            }
+            else
+            {
+                <text>此個案目前沒有評估記錄</text>
+            }
+        </div>
+    }
+</body>
+</html>

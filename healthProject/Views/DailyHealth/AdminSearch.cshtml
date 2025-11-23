@@ -3,717 +3,706 @@
     Layout = null;
 }
 
-<style>
-    .admin-container {
-        max-width: 1200px;
-        margin: 2rem auto;
-        padding: 0 1rem;
-    }
-
-    body {
-        background-color: #e1eae0;
-        font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-        min-height: 100vh;
-        margin: 0;
-        padding: 0;
-    }
-
-    .page-header {
-        background: linear-gradient(135deg, #337f4b 0%, #275a37 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 15px;
-        text-align: center;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
-    }
-
-    .page-header h1 {
-        margin: 0;
-        font-size: 1.8rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-
-    .search-section {
-        background: white;
-        border-radius: 15px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .search-title {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #337f4b;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .search-group {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .search-input {
-        flex: 1;
-        min-width: 250px;
-        padding: 1rem;
-        border: 2px solid #e2e8f0;
-        border-radius: 10px;
-        font-size: 1rem;
-        font-family: inherit;
-    }
-
-    .search-input:focus {
-        outline: none;
-        border-color: #81af74;
-        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-    }
-
-    .btn-search {
-        background: linear-gradient(135deg, #81af74 0%, #275a37 100%);
-        color: white;
-        padding: 1rem 2rem;
-        border: none;
-        border-radius: 10px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
-    }
-
-    .btn-search:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
-    }
-
-    .patient-info {
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-        border: 2px solid #10b981;
-        padding: 1.5rem;
-        border-radius: 10px;
-        margin-top: 1.5rem;
-        display: none;
-    }
-
-    .patient-info.show {
-        display: block;
-    }
-
-    .patient-name {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #059669;
-        margin-bottom: 0.5rem;
-    }
-
-    .patient-id {
-        color: #064e3b;
-        font-size: 0.95rem;
-    }
-
-    .results-section {
-        display: none;
-    }
-
-    .results-section.show {
-        display: block;
-    }
-
-    .date-group {
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        margin-bottom: 2rem;
-    }
-
-    .date-header {
-        background: linear-gradient(#e0ecdd);
-        padding: 1.5rem 2rem;
-        border-bottom: 3px solid #74a86f;
-    }
-
-    .date-title {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #408355;
-        margin-bottom: 0.5rem;
-    }
-
-    .date-summary {
-        display: flex;
-        gap: 2rem;
-        flex-wrap: wrap;
-        font-size: 0.9rem;
-        color: #2f5d3f;
-    }
-
-    .record-items {
-        padding: 1.5rem;
-    }
-
-    .record-item {
-        background: #f8fafc;
-        border-left: 4px solid #63885e;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .record-item:last-child {
-        margin-bottom: 0;
-    }
-
-    .record-time {
-        font-size: 0.95rem;
-        color: #64748b;
-        margin-bottom: 1rem;
-        font-weight: 600;
-    }
-
-    .data-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
-    }
-
-    .data-item {
-        padding: 0.75rem;
-        background: white;
-        border-radius: 6px;
-        border-left: 3px solid #63885e;
-    }
-
-    .data-label {
-        font-size: 0.85rem;
-        color: #64748b;
-        margin-bottom: 0.5rem;
-    }
-
-    .data-value {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #1e293b;
-    }
-
-    .daily-summary {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin: 0 1.5rem 1.5rem 1.5rem;
-    }
-
-    .daily-summary-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #92400e;
-        margin-bottom: 1rem;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 3rem 2rem;
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        color: #64748b;
-    }
-
-    .empty-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        opacity: 0.5;
-    }
-
-    .btn {
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: 10px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-block;
-        transition: all 0.3s ease;
-    }
-
-    .btn-secondary {
-        background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
-        color: white;
-        box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
-    }
-
-    .btn-secondary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
-        text-decoration: none;
-        color: white;
-    }
-
-    /* 🆕 按鈕樣式 */
-    .btn-toggle-details {
-        background: linear-gradient(135deg, #81af74 0%, #5a8a4a 100%);
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(129, 175, 116, 0.3);
-        width: 100%;
-    }
-
-    .btn-toggle-details:hover {
-        background: linear-gradient(135deg, #5a8a4a 0%, #3d5f32 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(129, 175, 116, 0.4);
-    }
-
-    .btn-toggle-details.active {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    }
-
-    @@media (max-width: 768px) {
-        .search-group {
-            flex-direction: column;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        .admin-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
         }
 
-        .data-grid {
-            grid-template-columns: 1fr;
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
         }
 
-        .date-summary {
-            flex-direction: column;
+        .page-header {
+            background: linear-gradient(135deg, #337f4b 0%, #275a37 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px; /* 🆕 加圓角 */
+            text-align: center;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+            .page-header h1 {
+                margin: 0;
+                font-size: 1.5rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+
+        .search-section {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 12px; /* 🆕 加圓角 */
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #337f4b;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
             gap: 0.5rem;
         }
-    }
-</style>
 
-<div class="admin-container">
-    <div class="page-header">
-        <h1>
-            <span>🔍</span>
-            <span>查詢病患健康資訊</span>
-        </h1>
-    </div>
-
-    <div style="margin-bottom: 1.5rem;">
-        <a href="@Url.Action("Dashboard", "Home")" class="btn btn-secondary">
-            ← 返回主選單
-        </a>
-    </div>
-
-    <div class="search-section">
-        <div class="search-title">
-            <span>👤</span>
-            <span>輸入病患身分證字號</span>
-        </div>
-        <div class="search-group">
-            <input type="text"
-                   id="searchIdNumber"
-                   class="search-input"
-                   placeholder="請輸入身分證字號 (例如: A123456789)"
-                   maxlength="10" />
-            <button type="button" class="btn-search" onclick="searchPatient()">
-                🔍 搜尋
-            </button>
-        </div>
-
-        <div id="patientInfo" class="patient-info">
-            <div class="patient-name" id="patientName"></div>
-            <div class="patient-id" id="patientId"></div>
-        </div>
-    </div>
-
-    <div id="resultsSection" class="results-section">
-        <div id="recordsContainer"></div>
-        <div id="emptyState" class="empty-state" style="display: none;">
-            <div class="empty-icon">📝</div>
-            <div>此病患尚無健康資訊紀錄</div>
-        </div>
-    </div>
-</div>
-
-<script>
-    // ✅ 在最前面定義 parseMeal 函數
-    function parseMeal(mealData) {
-        if (!mealData) return null;
-        if (typeof mealData === "object") return mealData;
-        try {
-            return JSON.parse(mealData);
-        } catch {
-            return null;
+        .search-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 1rem;
+            align-items: end;
+            margin-bottom: 1rem;
         }
-    }
 
-    // ✅ 計算三餐總和
-    function calculateMealTotal(items) {
-        let total = 0;
-        let others = [];
-        
-        items.forEach(item => {
-            if (typeof item === 'number') {
-                total += item;
-            } else if (typeof item === 'string') {
-                // 處理 "1+1.5" 這種算式
-                if (item.includes('+')) {
-                    const parts = item.split('+');
-                    parts.forEach(part => {
-                        const num = parseFloat(part.trim());
-                        if (!isNaN(num)) {
-                            total += num;
-                        } else {
-                            others.push(part.trim());
-                        }
-                    });
-                } else {
-                    const num = parseFloat(item);
-                    if (!isNaN(num)) {
-                        total += num;
-                    } else {
-                        others.push(item);
-                    }
-                }
+        .search-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .search-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 6px; /* 🆕 加圓角 */
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+            .search-input:focus {
+                outline: none;
+                border-color: #81af74;
             }
-        });
-        
-        const parts = [];
-        if (total > 0) {
-            parts.push(total % 1 === 0 ? total.toString() : total.toFixed(1));
-        }
-        parts.push(...others);
-        
-        return parts.length > 0 ? parts.join(' + ') : null;
-    }
 
-    async function searchPatient() {
-        const idNumber = document.getElementById('searchIdNumber').value.trim();
-
-        if (!idNumber) {
-            alert('請輸入身分證字號');
-            return;
+        .btn-search {
+            background: #337f4b;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 6px; /* 🆕 加圓角 */
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            height: fit-content;
         }
 
-        try {
-            const response = await fetch('@Url.Action("SearchPatientRecords", "DailyHealth")', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': '@Html.AntiForgeryToken()'
-                },
-                body: JSON.stringify({ idNumber: idNumber })
+            .btn-search:hover {
+                background: #275a37;
+            }
+
+        .date-filter {
+            background: #f8f8f8;
+            border-top: 1px solid #ddd;
+            border-radius: 0 0 8px 8px; /* 🆕 下方圓角 */
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+            .date-filter.show {
+                display: block;
+            }
+
+        .date-filter-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .date-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .patient-info {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            border-radius: 8px; /* 🆕 加圓角 */
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+            .patient-info.show {
+                display: block;
+            }
+
+        .patient-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+            color: #1b5e20;
+        }
+
+        .patient-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .patient-detail-label {
+            font-weight: 600;
+        }
+
+        .results-section {
+            display: none;
+        }
+
+            .results-section.show {
+                display: block;
+            }
+
+        /* 🆕 日期標題 */
+        .date-header {
+            background: #e0ecdd;
+            border: 1px solid #74a86f;
+            border-bottom: 2px solid #74a86f;
+            border-radius: 8px 8px 0 0; /* 🆕 上方圓角 */
+            padding: 0.75rem 1rem;
+            margin-bottom: 0;
+        }
+
+        .date-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #408355;
+            margin: 0;
+        }
+
+        /* 🆕 表格容器 */
+        .record-tables {
+            margin-bottom: 2rem;
+            border-radius: 8px; /* 🆕 整體圓角 */
+            overflow: hidden; /* 🆕 讓內部表格圓角生效 */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 🆕 輕微陰影 */
+        }
+
+        /* 🆕 722血壓測量表格 */
+        .bp-table-container {
+            margin-bottom: 0;
+        }
+
+        .bp-table-title {
+            background: #ffebee;
+            border: 1px solid #e57373;
+            border-top: none;
+            border-bottom: none;
+            padding: 0.4rem;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #c62828;
+        }
+
+        .bp-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-left: 1px solid #e57373;
+            border-right: 1px solid #e57373;
+            border-bottom: 1px solid #e57373;
+        }
+
+            .bp-table th {
+                background: #ffcdd2;
+                padding: 0.4rem;
+                text-align: center;
+                font-weight: 600;
+                color: #b71c1c;
+                border: 1px solid #e57373;
+                font-size: 0.85rem;
+            }
+
+            .bp-table td {
+                padding: 0.4rem;
+                text-align: center;
+                border: 1px solid #e57373;
+                background: white;
+                color: #1e293b;
+                font-weight: 600;
+                font-size: 0.95rem;
+            }
+
+        /* 🆕 生活習慣與飲食記錄表格 */
+        .lifestyle-table-container {
+            margin-bottom: 0;
+        }
+
+        .lifestyle-table-title {
+            background: #e8f5e9;
+            border: 1px solid #66bb6a;
+            border-top: none;
+            border-bottom: none;
+            padding: 0.4rem;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #2e7d32;
+        }
+
+        .lifestyle-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-left: 1px solid #66bb6a;
+            border-right: 1px solid #66bb6a;
+            border-bottom: 1px solid #66bb6a;
+            border-radius: 0 0 8px 8px; /* 🆕 下方圓角 */
+            overflow: hidden; /* 🆕 讓圓角生效 */
+        }
+
+            .lifestyle-table th {
+                background: #c8e6c9;
+                padding: 0.4rem;
+                text-align: center;
+                font-weight: 600;
+                color: #1b5e20;
+                border: 1px solid #66bb6a;
+                font-size: 0.85rem;
+            }
+
+            .lifestyle-table td {
+                padding: 0.4rem;
+                text-align: center;
+                border: 1px solid #66bb6a;
+                background: white;
+                color: #1e293b;
+                font-size: 0.85rem;
+            }
+
+            /* 🆕 最後一行的圓角 */
+            .lifestyle-table tbody tr:last-child td:first-child {
+                border-bottom-left-radius: 8px;
+            }
+
+            .lifestyle-table tbody tr:last-child td:last-child {
+                border-bottom-right-radius: 8px;
+            }
+
+        .meal-content {
+            text-align: left;
+            line-height: 1.4;
+            font-size: 0.8rem;
+        }
+
+        .empty-cell {
+            color: #bbb;
+            font-style: italic;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 12px; /* 🆕 加圓角 */
+            color: #64748b;
+        }
+
+        .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .btn {
+            padding: 0.5rem 1.2rem;
+            border: none;
+            border-radius: 6px; /* 🆕 加圓角 */
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-secondary {
+            background: #607D8B;
+            color: white;
+        }
+
+            .btn-secondary:hover {
+                background: #455A64;
+                text-decoration: none;
+                color: white;
+            }
+
+        @@media (max-width: 768px) {
+            .search-row, .date-inputs {
+                grid-template-columns: 1fr;
+            }
+
+            .lifestyle-table, .bp-table {
+                font-size: 0.75rem;
+            }
+
+                .lifestyle-table th, .lifestyle-table td,
+                .bp-table th, .bp-table td {
+                    padding: 0.3rem 0.2rem;
+                }
+
+            .patient-details {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .meal-content {
+                font-size: 0.7rem;
+            }
+        }
+
+        @@media print {
+            .search-section, .btn, .page-header {
+                display: none;
+            }
+
+            body {
+                background: white;
+            }
+
+            .bp-table, .lifestyle-table {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="page-header">
+            <h1>
+                <span>🔍</span>
+                <span>查詢病患健康資訊</span>
+            </h1>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <a href="@Url.Action("Dashboard", "Home")" class="btn btn-secondary">
+                ← 返回主選單
+            </a>
+        </div>
+
+        <div class="search-section">
+            <div class="search-title">
+                <span>👤</span>
+                <span>輸入病患身分證字號</span>
+            </div>
+            <div class="search-row">
+                <div class="search-group">
+                    <label class="search-label">身分證字號</label>
+                    <input type="text"
+                           id="searchIdNumber"
+                           class="search-input"
+                           placeholder="例如: A123456789"
+                           maxlength="10" />
+                </div>
+                <div></div>
+                <button type="button" class="btn-search" onclick="searchPatient()">
+                    🔍 搜尋
+                </button>
+            </div>
+
+            <!-- 病患資訊 -->
+            <div id="patientInfo" class="patient-info">
+                <div class="patient-details">
+                    <div class="patient-detail-item">
+                        <span class="patient-detail-label">姓名:</span>
+                        <span id="patientName"></span>
+                    </div>
+                    <div class="patient-detail-item">
+                        <span class="patient-detail-label">身分證字號:</span>
+                        <span id="patientId"></span>
+                    </div>
+                    <div class="patient-detail-item" id="genderItem" style="display: none;">
+                        <span class="patient-detail-label">性別:</span>
+                        <span id="patientGender"></span>
+                    </div>
+                    <div class="patient-detail-item" id="birthDateItem" style="display: none;">
+                        <span class="patient-detail-label">生日:</span>
+                        <span id="patientBirthDate"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日期篩選 -->
+            <div id="dateFilter" class="date-filter">
+                <div class="date-filter-title">📅 日期篩選 (選填)</div>
+                <div class="date-inputs">
+                    <div class="search-group">
+                        <label class="search-label">開始日期</label>
+                        <input type="date" id="startDate" class="search-input" />
+                    </div>
+                    <div class="search-group">
+                        <label class="search-label">結束日期</label>
+                        <input type="date" id="endDate" class="search-input" />
+                    </div>
+                    <button type="button" class="btn-search" onclick="applyDateFilter()">
+                        🔍 篩選
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultsSection" class="results-section">
+            <div id="recordsContainer"></div>
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-icon">📝</div>
+                <div>此病患尚無健康資訊紀錄</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPatientId = null;
+
+        function parseMeal(mealData) {
+            if (!mealData) return null;
+            if (typeof mealData === "object") return mealData;
+            try {
+                return JSON.parse(mealData);
+            } catch {
+                return null;
+            }
+        }
+
+        function formatMealContent(mealList) {
+            if (!mealList || mealList.length === 0) return '<span class="empty-cell">-</span>';
+
+            const allVeg = [], allProtein = [], allCarbs = [];
+
+            mealList.forEach(m => {
+                const meal = parseMeal(m);
+                if (meal) {
+                    if (meal.vegetables && meal.vegetables !== '0') allVeg.push(meal.vegetables);
+                    if (meal.protein && meal.protein !== '0') allProtein.push(meal.protein);
+                    if (meal.carbs && meal.carbs !== '0') allCarbs.push(meal.carbs);
+                }
             });
 
-            const result = await response.json();
+            const parts = [];
+            if (allVeg.length > 0) parts.push(`🥬 ${allVeg.join('+')}`);
+            if (allProtein.length > 0) parts.push(`🥩 ${allProtein.join('+')}`);
+            if (allCarbs.length > 0) parts.push(`🍚 ${allCarbs.join('+')}`);
 
-            if (result.success) {
-                document.getElementById('patientName').textContent = result.data.patientName;
-                document.getElementById('patientId').textContent = `身分證字號:${result.data.idNumber}`;
-                document.getElementById('patientInfo').classList.add('show');
-                displayRecords(result.data.records);
-            } else {
-                alert(result.message || '查無此病患');
-                document.getElementById('patientInfo').classList.remove('show');
-                document.getElementById('resultsSection').classList.remove('show');
+            return parts.length > 0 ? `<div class="meal-content">${parts.join('<br>')}</div>` : '<span class="empty-cell">-</span>';
+        }
+
+        async function searchPatient() {
+            const idNumber = document.getElementById('searchIdNumber').value.trim();
+
+            if (!idNumber) {
+                alert('請輸入身分證字號');
+                return;
             }
-        } catch (error) {
-            console.error('搜尋失敗:', error);
-            alert('搜尋失敗,請稍後再試');
+
+            currentPatientId = idNumber;
+
+            try {
+                const response = await fetch('@Url.Action("SearchPatientRecords", "DailyHealth")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': '@Html.AntiForgeryToken()'
+                    },
+                    body: JSON.stringify({
+                        idNumber: idNumber,
+                        startDate: null,
+                        endDate: null
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('patientName').textContent = result.data.patientName;
+                    document.getElementById('patientId').textContent = result.data.idNumber;
+
+                    if (result.data.gender) {
+                        document.getElementById('patientGender').textContent = result.data.gender;
+                        document.getElementById('genderItem').style.display = 'flex';
+                    }
+                    if (result.data.birthDate) {
+                        document.getElementById('patientBirthDate').textContent = result.data.birthDate;
+                        document.getElementById('birthDateItem').style.display = 'flex';
+                    }
+
+                    document.getElementById('patientInfo').classList.add('show');
+                    document.getElementById('dateFilter').classList.add('show');
+                    displayRecords(result.data.dailyStats);
+                } else {
+                    alert(result.message || '查無此病患');
+                    document.getElementById('patientInfo').classList.remove('show');
+                    document.getElementById('dateFilter').classList.remove('show');
+                    document.getElementById('resultsSection').classList.remove('show');
+                }
+            } catch (error) {
+                console.error('搜尋失敗:', error);
+                alert('搜尋失敗，請稍後再試');
+            }
         }
-    }
 
-    function displayRecords(groupedRecords) {
-        const resultsSection = document.getElementById('resultsSection');
-        const recordsContainer = document.getElementById('recordsContainer');
-        const emptyState = document.getElementById('emptyState');
+        async function applyDateFilter() {
+            if (!currentPatientId) {
+                alert('請先搜尋病患');
+                return;
+            }
 
-        resultsSection.classList.add('show');
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
 
-        if (!groupedRecords || groupedRecords.length === 0) {
-            recordsContainer.innerHTML = '';
-            emptyState.style.display = 'block';
-            return;
+            try {
+                const response = await fetch('@Url.Action("SearchPatientRecords", "DailyHealth")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': '@Html.AntiForgeryToken()'
+                    },
+                    body: JSON.stringify({
+                        idNumber: currentPatientId,
+                        startDate: startDate || null,
+                        endDate: endDate || null
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayRecords(result.data.dailyStats);
+                } else {
+                    alert('篩選失敗');
+                }
+            } catch (error) {
+                console.error('篩選失敗:', error);
+                alert('篩選失敗，請稍後再試');
+            }
         }
 
-        emptyState.style.display = 'none';
+        function displayRecords(dailyStats) {
+            const resultsSection = document.getElementById('resultsSection');
+            const recordsContainer = document.getElementById('recordsContainer');
+            const emptyState = document.getElementById('emptyState');
 
-        recordsContainer.innerHTML = groupedRecords.map(group => {
-            const records = group.records;
-            const date = new Date(group.date);
-            const dateStr = `${date.getFullYear()}年${String(date.getMonth() + 1).padStart(2, '0')}月${String(date.getDate()).padStart(2, '0')}日`;
+            resultsSection.classList.add('show');
 
-            // 計算當日統計
-            const totalWater = records.reduce((sum, r) => sum + (r.waterIntake || 0), 0);
-            const totalExercise = records.reduce((sum, r) => sum + (r.exerciseDuration || 0), 0);
-            
-            const systolicReadings = records.flatMap(r => [
-                r.bp_First_1_Systolic, r.bp_First_2_Systolic, 
-                r.bp_Second_1_Systolic, r.bp_Second_2_Systolic
-            ].filter(v => v != null));
-            const diastolicReadings = records.flatMap(r => [
-                r.bp_First_1_Diastolic, r.bp_First_2_Diastolic,
-                r.bp_Second_1_Diastolic, r.bp_Second_2_Diastolic
-            ].filter(v => v != null));
-            
-            const avgSystolic = systolicReadings.length > 0 
-                ? Math.round(systolicReadings.reduce((a, b) => a + b, 0) / systolicReadings.length) 
-                : null;
-            const avgDiastolic = diastolicReadings.length > 0 
-                ? Math.round(diastolicReadings.reduce((a, b) => a + b, 0) / diastolicReadings.length) 
-                : null;
+            if (!dailyStats || dailyStats.length === 0) {
+                recordsContainer.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
 
-            let summaryItems = `<span class="summary-item">📝 共 ${records.length} 筆記錄</span>`;
-            if (totalWater > 0) summaryItems += `<span class="summary-item">💧 ${totalWater} ml</span>`;
-            if (totalExercise > 0) summaryItems += `<span class="summary-item">🏃 ${totalExercise} 分鐘</span>`;
-            if (avgSystolic && avgDiastolic) summaryItems += `<span class="summary-item">❤️ ${avgSystolic}/${avgDiastolic} mmHg</span>`;
+            emptyState.style.display = 'none';
 
-            // 各筆記錄
-            const recordItems = records.map(record => {
-                const time = record.recordTime ? new Date(`2000-01-01T${record.recordTime}`).toLocaleTimeString('zh-TW', {hour: '2-digit', minute: '2-digit'}) : '未記錄時間';
-                
-                let dataItems = '';
+            recordsContainer.innerHTML = dailyStats.map(dayStat => {
+                const date = new Date(dayStat.date);
+                const dateStr = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
 
-                // 血壓
-                if (record.bp_First_1_Systolic || record.bp_First_1_Diastolic || 
-                    record.bp_First_2_Systolic || record.bp_First_2_Diastolic ||
-                    record.bp_Second_1_Systolic || record.bp_Second_1_Diastolic ||
-                    record.bp_Second_2_Systolic || record.bp_Second_2_Diastolic) {
-                    
-                    const sysValues = [record.bp_First_1_Systolic, record.bp_First_2_Systolic, 
-                                      record.bp_Second_1_Systolic, record.bp_Second_2_Systolic].filter(v => v);
-                    const diaValues = [record.bp_First_1_Diastolic, record.bp_First_2_Diastolic,
-                                      record.bp_Second_1_Diastolic, record.bp_Second_2_Diastolic].filter(v => v);
-                    const avgSys = sysValues.length > 0 ? Math.round(sysValues.reduce((a, b) => a + b, 0) / sysValues.length) : null;
-                    const avgDia = diaValues.length > 0 ? Math.round(diaValues.reduce((a, b) => a + b, 0) / diaValues.length) : null;
-                    
-                    dataItems += `
-                        <div class="data-item" style="grid-column: 1 / -1;">
-                            <div class="data-label">❤️ 血壓測量</div>
-                            <div class="data-value" style="line-height: 1.8;">`;
-                    
-                    if (record.bp_First_1_Systolic && record.bp_First_1_Diastolic) {
-                        dataItems += `第一次第一遍: ${Math.round(record.bp_First_1_Systolic)}/${Math.round(record.bp_First_1_Diastolic)} mmHg<br>`;
-                    }
-                    if (record.bp_First_2_Systolic && record.bp_First_2_Diastolic) {
-                        dataItems += `第一次第二遍: ${Math.round(record.bp_First_2_Systolic)}/${Math.round(record.bp_First_2_Diastolic)} mmHg<br>`;
-                    }
-                    if (record.bp_Second_1_Systolic && record.bp_Second_1_Diastolic) {
-                        dataItems += `第二次第一遍: ${Math.round(record.bp_Second_1_Systolic)}/${Math.round(record.bp_Second_1_Diastolic)} mmHg<br>`;
-                    }
-                    if (record.bp_Second_2_Systolic && record.bp_Second_2_Diastolic) {
-                        dataItems += `第二次第二遍: ${Math.round(record.bp_Second_2_Systolic)}/${Math.round(record.bp_Second_2_Diastolic)} mmHg<br>`;
-                    }
-                    if (avgSys && avgDia) {
-                        dataItems += `<span style="color: #0891b2; font-weight: 600;">平均: ${avgSys}/${avgDia} mmHg</span>`;
-                    }
-                    dataItems += `</div></div>`;
+                // 722血壓測量表格
+                let bpSection = '';
+                if (dayStat.bloodPressure && dayStat.bloodPressure.readings.length > 0) {
+                    bpSection = `
+                        <div class="bp-table-container">
+                            <div class="bp-table-title">722血壓測量</div>
+                            <table class="bp-table">
+                                <thead>
+                                    <tr>
+                                        <th>第一次第一遍</th>
+                                        <th>第一次第二遍</th>
+                                        <th>第二次第一遍</th>
+                                        <th>第二次第二遍</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        ${['第一次第一遍', '第一次第二遍', '第二次第一遍', '第二次第二遍'].map(label => {
+                                            const reading = dayStat.bloodPressure.readings.find(r => r.label === label);
+                                            return `<td>${reading ? `${reading.systolic}/${reading.diastolic}` : '<span class="empty-cell">-</span>'}</td>`;
+                                        }).join('')}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
                 }
 
-                // 三餐
-                const breakfast = parseMeal(record.meals_Breakfast || record.Meals_Breakfast);
-                if (breakfast && (breakfast.vegetables || breakfast.protein || breakfast.carbs)) {
-                    dataItems += `
-                        <div class="data-item">
-                            <div class="data-label">🌅 早餐</div>
-                            <div class="data-value meal-lines">
-                                ${breakfast.vegetables ? `🥬 蔬菜:${breakfast.vegetables}<br>` : ""}
-                                ${breakfast.protein ? `🥩 蛋白質:${breakfast.protein}<br>` : ""}
-                                ${breakfast.carbs ? `🍚 澱粉:${breakfast.carbs}` : ""}
-                            </div>
-                        </div>`;
-                }
+                // 生活習慣與飲食記錄表格
+                const exerciseText = dayStat.exercise
+                    ? dayStat.exercise.map(e => `${e.type} ${e.duration}分`).join(', ')
+                    : '-';
 
-                const lunch = parseMeal(record.meals_Lunch || record.Meals_Lunch);
-                if (lunch && (lunch.vegetables || lunch.protein || lunch.carbs)) {
-                    dataItems += `
-                        <div class="data-item">
-                            <div class="data-label">☀️ 午餐</div>
-                            <div class="data-value meal-lines">
-                                ${lunch.vegetables ? `🥬 蔬菜:${lunch.vegetables}<br>` : ""}
-                                ${lunch.protein ? `🥩 蛋白質:${lunch.protein}<br>` : ""}
-                                ${lunch.carbs ? `🍚 澱粉:${lunch.carbs}` : ""}
-                            </div>
-                        </div>`;
-                }
-
-                const dinner = parseMeal(record.meals_Dinner || record.Meals_Dinner);
-                if (dinner && (dinner.vegetables || dinner.protein || dinner.carbs)) {
-                    dataItems += `
-                        <div class="data-item">
-                            <div class="data-label">🌙 晚餐</div>
-                            <div class="data-value meal-lines">
-                                ${dinner.vegetables ? `🥬 蔬菜:${dinner.vegetables}<br>` : ""}
-                                ${dinner.protein ? `🥩 蛋白質:${dinner.protein}<br>` : ""}
-                                ${dinner.carbs ? `🍚 澱粉:${dinner.carbs}` : ""}
-                            </div>
-                        </div>`;
-                }
-
-                if (record.exerciseType || record.exerciseDuration) {
-                    dataItems += `
-                        <div class="data-item">
-                            <div class="data-label">🏃 運動</div>
-                            <div class="data-value">${record.exerciseType || '運動'} ${record.exerciseDuration ? record.exerciseDuration.toFixed(1) + '分鐘' : ''}</div>
-                        </div>`;
-                }
-
-                if (record.waterIntake) {
-                    dataItems += `
-                        <div class="data-item">
-                            <div class="data-label">💧 水分攝取</div>
-                            <div class="data-value">${Math.round(record.waterIntake)} ml</div>
-                        </div>`;
-                }
-
-                if (record.beverage) {
-                    dataItems += `
-                        <div class="data-item">
-                            <div class="data-label">🥤 飲料</div>
-                            <div class="data-value">${record.beverage}</div>
-                        </div>`;
-                }
-
-                if (record.cigarettes) {
-                    dataItems += `
-                        <div class="data-item">
-                            <div class="data-label">🚬 抽菸</div>
-                            <div class="data-value">${Math.round(record.cigarettes)} 支</div>
-                        </div>`;
-                }
-
-                if (record.betelNut) {
-                    dataItems += `
-                        <div class="data-item">
-                            <div class="data-label">🌿 檳榔</div>
-                            <div class="data-value">${Math.round(record.betelNut)} 次</div>
-                        </div>`;
-                }
-
-                if (record.bloodSugar) {
-                    dataItems += `
-                        <div class="data-item">
-                            <div class="data-label">🩸 血糖</div>
-                            <div class="data-value">${record.bloodSugar.toFixed(1)} mg/dL</div>
-                        </div>`;
-                }
+                const lifestyleSection = `
+                    <div class="lifestyle-table-container">
+                        <div class="lifestyle-table-title">生活習慣與飲食記錄</div>
+                        <table class="lifestyle-table">
+                            <thead>
+                                <tr>
+                                    <th>血糖</th>
+                                    <th>運動</th>
+                                    <th>水分</th>
+                                    <th>飲料</th>
+                                    <th>早餐</th>
+                                    <th>午餐</th>
+                                    <th>晚餐</th>
+                                    <th>抽菸</th>
+                                    <th>檳榔</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>${dayStat.bloodSugar ? `${dayStat.bloodSugar}` : '<span class="empty-cell">-</span>'}</td>
+                                    <td>${exerciseText !== '-' ? exerciseText : '<span class="empty-cell">-</span>'}</td>
+                                    <td>${dayStat.water ? `${Math.round(dayStat.water)}ml` : '<span class="empty-cell">-</span>'}</td>
+                                    <td>${dayStat.beverage || '<span class="empty-cell">-</span>'}</td>
+                                    <td>${formatMealContent(dayStat.breakfast)}</td>
+                                    <td>${formatMealContent(dayStat.lunch)}</td>
+                                    <td>${formatMealContent(dayStat.dinner)}</td>
+                                    <td>${dayStat.cigarettes ? `${Math.round(dayStat.cigarettes)}支` : '<span class="empty-cell">-</span>'}</td>
+                                    <td>${dayStat.betelNut ? `${Math.round(dayStat.betelNut)}次` : '<span class="empty-cell">-</span>'}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
 
                 return `
-                    <div class="record-item">
-                        <div class="record-time">⏰ ${time}</div>
-                        <div class="data-grid">
-                            ${dataItems || '<div style="grid-column: 1 / -1; text-align: center; color: #94a3b8;">無資料</div>'}
+                    <div class="record-tables">
+                        <div class="date-header">
+                            <div class="date-title">日期：${dateStr}</div>
                         </div>
-                    </div>`;
+                        ${bpSection}
+                        ${lifestyleSection}
+                    </div>
+                `;
             }).join('');
+        }
 
-            // ✅ 統計三餐總攝取
-            const allVeg = [], allProtein = [], allCarbs = [];
-            records.forEach(r => {
-                const meals = [r.meals_Breakfast, r.meals_Lunch, r.meals_Dinner];
-                meals.forEach(m => {
-                    const meal = parseMeal(m);
-                    if (meal) {
-                        if (meal.vegetables && meal.vegetables !== '0') allVeg.push(meal.vegetables);
-                        if (meal.protein && meal.protein !== '0') allProtein.push(meal.protein);
-                        if (meal.carbs && meal.carbs !== '0') allCarbs.push(meal.carbs);
-                    }
-                });
-            });
-
-            const vegTotal = calculateMealTotal(allVeg);
-            const proteinTotal = calculateMealTotal(allProtein);
-            const carbsTotal = calculateMealTotal(allCarbs);
-
-            // 其他統計
-            const totalCigs = records.reduce((sum, r) => sum + (r.cigarettes || 0), 0);
-            const totalBetel = records.reduce((sum, r) => sum + (r.betelNut || 0), 0);
-            const bsValues = records.map(r => r.bloodSugar).filter(v => v);
-            const avgBS = bsValues.length > 0 ? bsValues.reduce((a, b) => a + b, 0) / bsValues.length : null;
-
-            // ✅ 今日統計 (永遠顯示,不受按鈕控制)
-            let dailySummary = '';
-            if (records.length > 1) {
-                dailySummary = `
-                    <div class="daily-summary">
-                        <div class="daily-summary-title">📊 今日統計</div>
-                        <div class="data-grid">
-                            ${totalWater > 0 ? `<div class="data-item"><div class="data-label">💧 總水分</div><div class="data-value">${totalWater} ml</div></div>` : ''}
-                            ${totalExercise > 0 ? `<div class="data-item"><div class="data-label">🏃 總運動</div><div class="data-value">${totalExercise} 分鐘</div></div>` : ''}
-                            ${avgSystolic && avgDiastolic ? `<div class="data-item"><div class="data-label">❤️ 平均血壓</div><div class="data-value">${avgSystolic}/${avgDiastolic} mmHg</div></div>` : ''}
-                            ${avgBS ? `<div class="data-item"><div class="data-label">🩸 平均血糖</div><div class="data-value">${avgBS.toFixed(1)} mg/dL</div></div>` : ''}
-                            ${totalCigs > 0 ? `<div class="data-item"><div class="data-label">🚬 總抽菸量</div><div class="data-value">${totalCigs} 支</div></div>` : ''}
-                            ${totalBetel > 0 ? `<div class="data-item"><div class="data-label">🌿 總檳榔量</div><div class="data-value">${totalBetel} 次</div></div>` : ''}
-                            ${(vegTotal || proteinTotal || carbsTotal) ? `
-                                <div class="data-item" style="grid-column: 1 / -1;">
-                                    <div class="data-label">🍽️ 今日三餐總計</div>
-                                    <div class="data-value" style="line-height: 1.8;">
-                                        ${vegTotal ? `<div>🥬 蔬菜: ${vegTotal}</div>` : ''}
-                                        ${proteinTotal ? `<div>🥩 蛋白質: ${proteinTotal}</div>` : ''}
-                                        ${carbsTotal ? `<div>🍚 澱粉: ${carbsTotal}</div>` : ''}
-                                    </div>
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>`;
+        document.getElementById('searchIdNumber')?.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchPatient();
             }
-
-            // ✅ 按鈕 (只有多筆記錄時顯示)
-            const toggleButton = records.length > 1 ? `
-                <div style="padding: 1rem 2rem; background: #f8f9fa; border-bottom: 1px solid #e2e8f0;">
-                    <button onclick="toggleDetailsAdmin(this)" class="btn-toggle-details">
-                        📋 顯示全部 ${records.length} 筆紀錄
-                    </button>
-                </div>` : '';
-
-            return `
-                <div class="date-group">
-                    <div class="date-header">
-                        <div class="date-title">📅 ${dateStr}</div>
-                        <div class="date-summary">${summaryItems}</div>
-                    </div>
-                    ${toggleButton}
-                    <div class="record-items" style="${records.length > 1 ? 'display: none;' : ''}">
-                        ${recordItems}
-                    </div>
-                    ${dailySummary}
-                </div>`;
-        }).join('');
-    }
-
-    // ✅ 切換詳細記錄顯示/隱藏
-    function toggleDetailsAdmin(button) {
-        const dateGroup = button.closest('.date-group');
-        const recordItems = dateGroup.querySelector('.record-items');
-        const isHidden = recordItems.style.display === 'none';
-        
-        if (isHidden) {
-            recordItems.style.display = 'block';
-            button.textContent = '📋 隱藏詳細記錄';
-            button.classList.add('active');
-        } else {
-            recordItems.style.display = 'none';
-            const count = recordItems.querySelectorAll('.record-item').length;
-            button.textContent = `📋 顯示全部 ${count} 筆紀錄`;
-            button.classList.remove('active');
-        }
-    }
-
-    // Enter 鍵搜尋
-    document.getElementById('searchIdNumber')?.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            searchPatient();
-        }
-    });
-</script>
+        });
+    </script>
+</body>
+</html>

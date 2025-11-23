@@ -2,7 +2,10 @@
 @{
     ViewData["Title"] = "編輯個案紀錄";
     Layout = null;
+
+    bool isAnnualAssessment = Model.AnnualAssessment;
 }
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -17,893 +20,1121 @@
         }
 
         body {
-            background: linear-gradient(135deg, #FFF8E1 0%, #FFE0B2 100%);
-            min-height: 100vh;
-            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-            padding: 2rem 1rem;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background: #f0f4f8;
+            padding: 20px;
+            font-size: 13px;
+            color: #333;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1600px;
             margin: 0 auto;
             background: white;
-            border-radius: 25px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
+            border: 2px solid #5a9;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .header {
-            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+        .main-title {
+            background: #5a9;
             color: white;
-            padding: 2rem;
             text-align: center;
-            position: relative;
+            padding: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
         }
 
-        .header-icon {
-            background: white;
-            color: #FF9800;
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
+        .patient-row {
+            display: flex;
+            border-bottom: 1px solid #bcd;
+            background: #f8fdf9;
+            flex-wrap: wrap;
+        }
+
+        .patient-cell {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border-right: 1px solid #cde;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            margin: 0 auto 1rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            gap: 8px;
         }
 
-        .header-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
+            .patient-cell:last-child {
+                border-right: none;
+            }
+
+            .patient-cell strong {
+                color: #357;
+                white-space: nowrap;
+            }
+
+            .patient-cell span {
+                font-weight: 500;
+            }
+
+            .patient-cell input, .patient-cell select {
+                padding: 5px 8px;
+                border: 1px solid #9cb;
+                border-radius: 4px;
+                font-size: 13px;
+            }
+
+            .patient-cell select {
+                min-width: 80px;
+            }
+
+        .date-row {
+            display: flex;
+            border-bottom: 2px solid #5a9;
+            background: #eef6f0;
+            flex-wrap: wrap;
         }
 
-        .form-content {
-            padding: 2rem;
+        .date-cell {
+            padding: 10px 20px;
+            border-right: 1px solid #cde;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
         }
 
-        .form-section {
-            background: linear-gradient(135deg, #FFECB3 0%, #FFE082 100%);
-            border: 2px solid #FFB74D;
-            padding: 1.5rem;
+            .date-cell strong {
+                color: #357;
+            }
+
+            .date-cell input[type="date"] {
+                padding: 6px 10px;
+                border: 1px solid #9cb;
+                border-radius: 4px;
+                font-size: 13px;
+            }
+
+        .record-type-badge {
+            padding: 4px 12px;
             border-radius: 15px;
-            margin-bottom: 1.5rem;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-first {
+            background: #d4edda;
+            color: #2a5a3a;
+        }
+
+        .badge-annual {
+            background: #cce5ff;
+            color: #004085;
         }
 
         .section-title {
-            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            background: #5a9;
             color: white;
-            padding: 0.75rem 1rem;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin: -1.5rem -1.5rem 1rem -1.5rem;
+            padding: 8px 15px;
+            font-weight: bold;
+            font-size: 14px;
         }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-label {
-            display: block;
-            color: #E65100;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
-        }
-
-        .form-control {
+        table {
             width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #FFB74D;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-family: inherit;
+            border-collapse: collapse;
+            min-width: 1400px;
+        }
+
+        th, td {
+            border: 1px solid #bcd;
+            padding: 10px 8px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #e8f4ea;
+            color: #2a5a3a;
+            font-weight: 600;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        td {
             background: white;
+            min-width: 100px;
         }
 
-            .form-control:focus {
+        input[type="text"], input[type="number"], input[type="date"], select, textarea {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #bcd;
+            border-radius: 3px;
+            font-size: 12px;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        select {
+            min-width: 90px;
+        }
+
+            input:focus, select:focus, textarea:focus {
                 outline: none;
-                border-color: #FF9800;
-                box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+                border-color: #5a9;
+                box-shadow: 0 0 0 2px rgba(85,170,153,0.2);
             }
 
-        .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
+        input[readonly] {
+            background: #f5f5f5;
         }
 
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        .multi-select {
+            position: relative;
+            min-width: 100px;
         }
 
-            .checkbox-item input[type="checkbox"] {
-                width: 20px;
-                height: 20px;
-                cursor: pointer;
+        .multi-btn {
+            width: 100%;
+            min-height: 32px;
+            padding: 6px 8px;
+            border: 1px solid #bcd;
+            border-radius: 3px;
+            background: white;
+            cursor: pointer;
+            text-align: left;
+            font-size: 11px;
+        }
+
+            .multi-btn:hover {
+                border-color: #5a9;
             }
 
-            .checkbox-item label {
-                color: #E65100;
-                font-weight: 700;
-                cursor: pointer;
-            }
-
-        .value-input {
+        .multi-dropdown {
             display: none;
-            margin-top: 0.5rem;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #bcd;
+            border-radius: 3px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+            min-width: 120px;
         }
 
-            .value-input.show {
+            .multi-dropdown.show {
                 display: block;
             }
 
-        .button-group {
+        .multi-item {
+            padding: 8px 10px;
             display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 2rem;
-            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+            .multi-item:hover {
+                background: #e8f4ea;
+            }
+
+        .tag {
+            display: inline-block;
+            background: #d4edda;
+            color: #2a5a3a;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 10px;
+            margin: 1px;
+        }
+
+        .conditional-input {
+            display: none;
+            margin-top: 5px;
+        }
+
+            .conditional-input.show {
+                display: block;
+            }
+
+        .quit-section {
+            font-size: 11px;
+            text-align: left;
+            min-width: 160px;
+        }
+
+            .quit-section label {
+                display: block;
+                margin-bottom: 3px;
+                color: #357;
+                font-weight: 500;
+            }
+
+        .date-selects {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+            .date-selects select {
+                width: auto;
+                min-width: 60px;
+                padding: 3px 5px;
+                font-size: 11px;
+            }
+
+            .date-selects span {
+                font-size: 11px;
+                color: #666;
+            }
+
+        .button-row {
+            padding: 20px;
+            text-align: center;
+            background: #f8fdf9;
+            border-top: 2px solid #5a9;
         }
 
         .btn {
-            padding: 1rem 2.5rem;
+            padding: 12px 35px;
+            margin: 0 10px;
             border: none;
-            border-radius: 25px;
-            font-size: 1rem;
+            border-radius: 5px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
             text-decoration: none;
             display: inline-block;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
+        .btn-save {
+            background: #5a9;
             color: white;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
         }
 
-            .btn-primary:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            .btn-save:hover {
+                background: #4a8;
             }
 
-        .btn-secondary {
-            background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+        .btn-cancel {
+            background: #8aa;
             color: white;
-            box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
         }
 
-            .btn-secondary:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
-                text-decoration: none;
+            .btn-cancel:hover {
+                background: #799;
                 color: white;
+                text-decoration: none;
             }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #EF5350 0%, #E53935 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(239, 83, 80, 0.3);
-        }
-
-            .btn-danger:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(239, 83, 80, 0.4);
-            }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1rem;
-        }
-
-        .alert-danger {
-            background: #FFEBEE;
-            border: 2px solid #EF5350;
-            color: #C62828;
-        }
 
         .alert-info {
-            background: #E3F2FD;
-            border: 2px solid #42A5F5;
-            color: #1565C0;
+            background: #cce5ff;
+            border: 1px solid #4a90a4;
+            color: #004085;
+            padding: 12px 20px;
+            margin: 15px;
+            border-radius: 5px;
             font-weight: 600;
         }
 
         @@media (max-width: 768px) {
             body {
-                padding: 1rem 0.5rem;
+                padding: 10px;
             }
 
-            .header {
-                padding: 1.5rem;
-            }
-
-            .header-title {
-                font-size: 1.3rem;
-            }
-
-            .form-content {
-                padding: 1rem;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .button-group {
+            .date-row {
                 flex-direction: column;
+            }
+
+            .patient-cell {
+                min-width: 100%;
+            }
+
+            .button-row {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
             }
 
             .btn {
                 width: 100%;
-                margin-bottom: 0.5rem;
+                margin: 0;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div class="header-icon">✏️</div>
-            <h1 class="header-title">編輯個案紀錄</h1>
+        <div class="main-title">代謝症候群疾病管理紀錄表 - 編輯</div>
+
+        <div class="alert-info">
+            📝 編輯模式 - 個案: @Model.Name (@Model.IDNumber)
         </div>
-        <div class="form-content">
-            <div class="alert alert-info">
-                📝 編輯模式 - 個案: @Model.Name (@Model.IDNumber)
+
+        <form asp-action="Edit" method="post" id="editForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="UserId" />
+            <input type="hidden" asp-for="IDNumber" />
+            <input type="hidden" asp-for="Name" />
+            <input type="hidden" asp-for="AnnualAssessment" />
+            <input type="hidden" asp-for="AnnualAssessment_Date" />
+
+            <!-- 用於 JavaScript 初始化的隱藏資料 -->
+            <input type="hidden" id="initExerciseNone" value="@Model.ExerciseNone.ToString().ToLower()" />
+            <input type="hidden" id="initExerciseUsually" value="@Model.ExerciseUsually.ToString().ToLower()" />
+            <input type="hidden" id="initExerciseAlways" value="@Model.ExerciseAlways.ToString().ToLower()" />
+            <input type="hidden" id="initSmokingNone" value="@Model.SmokingNone.ToString().ToLower()" />
+            <input type="hidden" id="initSmokingUsually" value="@Model.SmokingUsually.ToString().ToLower()" />
+            <input type="hidden" id="initSmokingUnder10" value="@Model.SmokingUnder10.ToString().ToLower()" />
+            <input type="hidden" id="initSmokingOver10" value="@Model.SmokingOver10.ToString().ToLower()" />
+            <input type="hidden" id="initBetelNutNone" value="@Model.BetelNutNone.ToString().ToLower()" />
+            <input type="hidden" id="initBetelNutUsually" value="@Model.BetelNutUsually.ToString().ToLower()" />
+            <input type="hidden" id="initBetelNutAlways" value="@Model.BetelNutAlways.ToString().ToLower()" />
+            <input type="hidden" id="initBP722" value="@Model.BloodPressureGuidance722.ToString().ToLower()" />
+            <input type="hidden" id="initSmokingServiceType1" value="@Model.SmokingServiceType1.ToString().ToLower()" />
+            <input type="hidden" id="initSmokingServiceType2_Provide" value="@Model.SmokingServiceType2_Provide.ToString().ToLower()" />
+            <input type="hidden" id="initCal1200" value="@Model.DailyCalories1200.ToString().ToLower()" />
+            <input type="hidden" id="initCal1500" value="@Model.DailyCalories1500.ToString().ToLower()" />
+            <input type="hidden" id="initCal1800" value="@Model.DailyCalories1800.ToString().ToLower()" />
+            <input type="hidden" id="initCal2000" value="@Model.DailyCalories2000.ToString().ToLower()" />
+            <input type="hidden" id="initCalOther" value="@Model.DailyCaloriesOther.ToString().ToLower()" />
+            <input type="hidden" id="initExerciseGuidance" value="@Model.ExerciseGuidance.ToString().ToLower()" />
+            <input type="hidden" id="initSocialResources" value="@Model.SocialExerciseResources.ToString().ToLower()" />
+            <input type="hidden" id="initReduceFried" value="@Model.ReduceFriedFood.ToString().ToLower()" />
+            <input type="hidden" id="initReduceSweet" value="@Model.ReduceSweetFood.ToString().ToLower()" />
+            <input type="hidden" id="initReduceSalt" value="@Model.ReduceSalt.ToString().ToLower()" />
+            <input type="hidden" id="initReduceSugar" value="@Model.ReduceSugaryDrinks.ToString().ToLower()" />
+            <input type="hidden" id="initReduceOther" value="@Model.ReduceOther.ToString().ToLower()" />
+            <input type="hidden" id="initCoronaryHigh" value="@Model.CoronaryHigh.ToString().ToLower()" />
+            <input type="hidden" id="initCoronaryMedium" value="@Model.CoronaryMedium.ToString().ToLower()" />
+            <input type="hidden" id="initCoronaryLow" value="@Model.CoronaryLow.ToString().ToLower()" />
+            <input type="hidden" id="initCoronaryNA" value="@Model.CoronaryNotApplicable.ToString().ToLower()" />
+            <input type="hidden" id="initDiabetesHigh" value="@Model.DiabetesHigh.ToString().ToLower()" />
+            <input type="hidden" id="initDiabetesMedium" value="@Model.DiabetesMedium.ToString().ToLower()" />
+            <input type="hidden" id="initDiabetesLow" value="@Model.DiabetesLow.ToString().ToLower()" />
+            <input type="hidden" id="initDiabetesNA" value="@Model.DiabetesNotApplicabe.ToString().ToLower()" />
+            <input type="hidden" id="initHypertensionHigh" value="@Model.HypertensionHigh.ToString().ToLower()" />
+            <input type="hidden" id="initHypertensionMedium" value="@Model.HypertensionMedium.ToString().ToLower()" />
+            <input type="hidden" id="initHypertensionLow" value="@Model.HypertensionLow.ToString().ToLower()" />
+            <input type="hidden" id="initHypertensionNA" value="@Model.HypertensionNotApplicable.ToString().ToLower()" />
+            <input type="hidden" id="initStrokeHigh" value="@Model.StrokeHigh.ToString().ToLower()" />
+            <input type="hidden" id="initStrokeMedium" value="@Model.StrokeMedium.ToString().ToLower()" />
+            <input type="hidden" id="initStrokeLow" value="@Model.StrokeLow.ToString().ToLower()" />
+            <input type="hidden" id="initStrokeNA" value="@Model.StrokeNotApplicable.ToString().ToLower()" />
+            <input type="hidden" id="initCardiovascularHigh" value="@Model.CardiovascularHigh.ToString().ToLower()" />
+            <input type="hidden" id="initCardiovascularMedium" value="@Model.CardiovascularMedium.ToString().ToLower()" />
+            <input type="hidden" id="initCardiovascularLow" value="@Model.CardiovascularLow.ToString().ToLower()" />
+            <input type="hidden" id="initCardiovascularNA" value="@Model.CardiovascularNotApplicable.ToString().ToLower()" />
+
+            <!-- 病患資訊列 -->
+            <div class="patient-row">
+                <div class="patient-cell"><strong>姓名：</strong><span>@Model.Name</span></div>
+                <div class="patient-cell"><strong>身分證字號：</strong><span>@Model.IDNumber</span></div>
+                <div class="patient-cell">
+                    <strong>性別：</strong>
+                    <select asp-for="Gender" id="selectGender">
+                        <option value="">請選擇</option>
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                    </select>
+                </div>
+                <div class="patient-cell">
+                    <strong>生日：</strong>
+                    <input asp-for="BirthDate" type="date" />
+                </div>
             </div>
 
-            @if (!ViewData.ModelState.IsValid)
-            {
-                <div class="alert alert-danger">
-                    <div asp-validation-summary="All"></div>
+            <!-- 日期列 -->
+            <div class="date-row">
+                <div class="date-cell">
+                    @if (isAnnualAssessment)
+                    {
+                        <span class="record-type-badge badge-annual">年度評估</span>
+                        <strong>年度評估日期：</strong>
+                    }
+                    else
+                    {
+                        <span class="record-type-badge badge-first">收案評估</span>
+                        <strong>收案評估日期：</strong>
+                    }
+                    <input asp-for="AssessmentDate" type="date" />
                 </div>
-            }
-
-            <!-- 表單 -->
-            <form asp-action="Edit" method="post" id="editForm">
-                @Html.AntiForgeryToken()
-                <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="UserId" />
-                <input type="hidden" asp-for="IDNumber" />
-
-                <!-- 基本資料 -->
-                <div class="form-section">
-                    <div class="section-title">基本資料與生理量測</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label asp-for="Name" class="form-label">姓名 *</label>
-                            <input asp-for="Name" class="form-control" required />
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="Gender" class="form-label">性別 *</label>
-                            <select asp-for="Gender" class="form-control" required>
-                                <option value="">請選擇</option>
-                                <option value="男">男</option>
-                                <option value="女">女</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="BirthDate" class="form-label">出生日期 *</label>
-                            <input asp-for="BirthDate" type="date" class="form-control" required />
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label asp-for="Height" class="form-label">身高 (公分) *</label>
-                            <input asp-for="Height" type="number" step="0.01" class="form-control" required />
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="Weight" class="form-label">體重 (公斤) *</label>
-                            <input asp-for="Weight" type="number" step="0.01" class="form-control" required />
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="checkbox-item">
-                            <input asp-for="BMI" type="checkbox" id="chkBMI" />
-                            <label for="chkBMI">BMI值</label>
-                        </div>
-                        <input asp-for="BMI_Value" type="text" id="BMIValue" class="form-control value-input @(Model.BMI ? "show" : "")" placeholder="自動計算" readonly />
-                    </div>
+                <div class="date-cell">
+                    <strong>建議回診日期：</strong>
+                    <input asp-for="FollowUpDate" type="date" />
                 </div>
+            </div>
 
-                <!-- 日期資訊 -->
-                <div class="form-section">
-                    <div class="section-title">評估與回診日期</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label asp-for="AssessmentDate" class="form-label">評估日期</label>
-                            <input asp-for="AssessmentDate" type="date" class="form-control" />
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="FollowUpDate" class="form-label">建議回診日期</label>
-                            <input asp-for="FollowUpDate" type="date" class="form-control" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">年度評估</label>
-                            <div class="checkbox-group">
-                                <div class="checkbox-item">
-                                    <input asp-for="AnnualAssessment" type="checkbox" id="AnnualAssessment" />
-                                    <label for="AnnualAssessment">是否進行年度評估</label>
+            <!-- 評估指數 -->
+            <div class="section-title">評估指數</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>身高(公分)</th>
+                            <th>體重(公斤)</th>
+                            <th>BMI(kg/m²)</th>
+                            <th>腰圍(公分)</th>
+                            <th>運動</th>
+                            <th>抽菸</th>
+                            <th>嚼檳榔</th>
+                            <th>飯前血糖值(mg/dL)</th>
+                            <th>收縮壓(mmHg)</th>
+                            <th>舒張壓(mmHg)</th>
+                            <th>三酸甘油脂(mg/dL)</th>
+                            <th>高密度脂蛋白膽固醇(mg/dL)</th>
+                            <th>低密度脂蛋白膽固醇(mg/dL)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input asp-for="Height" type="number" step="0.1" id="inputHeight" onchange="calcBMI()" /></td>
+                            <td><input asp-for="Weight" type="number" step="0.1" id="inputWeight" onchange="calcBMI()" /></td>
+                            <td>
+                                <input type="text" id="displayBMI" value="@(Model.BMI_Value?.ToString("F1") ?? "")" readonly />
+                                <input type="hidden" asp-for="BMI" id="hiddenBMI" />
+                                <input type="hidden" asp-for="BMI_Value" id="hiddenBMI_Value" />
+                            </td>
+                            <td>
+                                <input asp-for="CurrentWaist_Value" type="number" step="0.1" />
+                                <input type="hidden" asp-for="CurrentWaist" value="true" />
+                            </td>
+                            <td>
+                                <select id="selectExercise" onchange="updateExercise()">
+                                    <option value="">請選擇</option>
+                                    <option value="none">無</option>
+                                    <option value="sometimes">偶爾</option>
+                                    <option value="always">經常</option>
+                                </select>
+                                <input type="hidden" asp-for="ExerciseNone" id="exerciseNone" />
+                                <input type="hidden" asp-for="ExerciseUsually" id="exerciseUsually" />
+                                <input type="hidden" asp-for="ExerciseAlways" id="exerciseAlways" />
+                            </td>
+                            <td>
+                                <select id="selectSmoking" onchange="updateSmoking()">
+                                    <option value="">請選擇</option>
+                                    <option value="none">無</option>
+                                    <option value="sometimes">偶爾</option>
+                                    <option value="under10">10支/日以下</option>
+                                    <option value="over10">10支/日以上</option>
+                                </select>
+                                <input type="hidden" asp-for="SmokingNone" id="smokingNone" />
+                                <input type="hidden" asp-for="SmokingUsually" id="smokingUsually" />
+                                <input type="hidden" asp-for="SmokingUnder10" id="smokingUnder10" />
+                                <input type="hidden" asp-for="SmokingOver10" id="smokingOver10" />
+                            </td>
+                            <td>
+                                <select id="selectBetelNut" onchange="updateBetelNut()">
+                                    <option value="">請選擇</option>
+                                    <option value="none">無</option>
+                                    <option value="sometimes">偶爾</option>
+                                    <option value="always">經常</option>
+                                </select>
+                                <input type="hidden" asp-for="BetelNutNone" id="betelNutNone" />
+                                <input type="hidden" asp-for="BetelNutUsually" id="betelNutUsually" />
+                                <input type="hidden" asp-for="BetelNutAlways" id="betelNutAlways" />
+                            </td>
+                            <td>
+                                <input asp-for="FastingGlucose_Value" type="number" />
+                                <input type="hidden" asp-for="FastingGlucose" value="true" />
+                            </td>
+                            <td>
+                                <input asp-for="SystolicBP_Value" type="number" />
+                                <input type="hidden" asp-for="SystolicBP" value="true" />
+                            </td>
+                            <td>
+                                <input asp-for="DiastolicBP_Value" type="number" />
+                                <input type="hidden" asp-for="DiastolicBP" value="true" />
+                            </td>
+                            <td>
+                                <input asp-for="Triglycerides_Value" type="number" />
+                                <input type="hidden" asp-for="Triglycerides" value="true" />
+                            </td>
+                            <td>
+                                <input asp-for="HDL_Value" type="number" />
+                                <input type="hidden" asp-for="HDL" value="true" />
+                            </td>
+                            <td>
+                                <input asp-for="LDL_Value" type="number" />
+                                <input type="hidden" asp-for="LDL" value="true" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 疾病管理指引 -->
+            <div class="section-title">疾病管理指引</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>是否需722血壓表</th>
+                            <th>戒菸</th>
+                            <th>戒檳</th>
+                            <th>每日建議攝取熱量</th>
+                            <th>盡量減少</th>
+                            <th>運動建議</th>
+                            <th>目標腰圍(cm)</th>
+                            <th>目標體重(kg)</th>
+                            <th>飯前血糖目標值</th>
+                            <th>醣化血紅素目標值</th>
+                            <th>三酸甘油脂目標值</th>
+                            <th>高密度脂蛋白目標值</th>
+                            <th>低密度脂蛋白目標值</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <select id="selectBP722" onchange="updateBP722()">
+                                    <option value="">請選擇</option>
+                                    <option value="yes">是</option>
+                                    <option value="no">否</option>
+                                </select>
+                                <input type="hidden" asp-for="BloodPressureGuidance722" id="hiddenBP722" />
+                            </td>
+                            <td>
+                                <select id="selectQuitSmoking" onchange="updateQuitSmoking()">
+                                    <option value="">請選擇</option>
+                                    <option value="guide">戒菸指導</option>
+                                    <option value="provide">提供戒菸服務</option>
+                                </select>
+                                <input type="hidden" asp-for="SmokingService" id="smokingService" />
+                                <input type="hidden" asp-for="SmokingServiceType1" id="smokingServiceType1" />
+                                <input type="hidden" asp-for="SmokingServiceType2" id="smokingServiceType2" />
+                                <input type="hidden" asp-for="SmokingServiceType2_Provide" id="smokingServiceType2_Provide" />
+                                <input type="hidden" asp-for="SmokingServiceType2_Referral" id="smokingServiceType2_Referral" />
+                            </td>
+                            <td>
+                                <div class="quit-section">
+                                    <label>戒檳目標：</label>
+                                    <div class="date-selects">
+                                        <select asp-for="BetelQuitYear" id="quitYear">
+                                            <option value="">年</option>
+                                            @for (int y = DateTime.Now.Year; y <= DateTime.Now.Year + 5; y++)
+                                            {
+                                                <option value="@y">@y</option>
+                                            }
+                                        </select>
+                                        <span>/</span>
+                                        <select asp-for="BetelQuitMonth" id="quitMonth">
+                                            <option value="">月</option>
+                                            @for (int m = 1; m <= 12; m++)
+                                            {
+                                                <option value="@m">@m</option>
+                                            }
+                                        </select>
+                                        <span>/</span>
+                                        <select asp-for="BetelQuitDay" id="quitDay">
+                                            <option value="">日</option>
+                                            @for (int d = 1; d <= 31; d++)
+                                            {
+                                                <option value="@d">@d</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <label>口腔檢查：</label>
+                                    <div class="date-selects">
+                                        <select asp-for="OralExamYear" id="oralYear">
+                                            <option value="">年</option>
+                                            @for (int y = DateTime.Now.Year; y <= DateTime.Now.Year + 5; y++)
+                                            {
+                                                <option value="@y">@y</option>
+                                            }
+                                        </select>
+                                        <span>/</span>
+                                        <select asp-for="OralExamMonth" id="oralMonth">
+                                            <option value="">月</option>
+                                            @for (int m = 1; m <= 12; m++)
+                                            {
+                                                <option value="@m">@m</option>
+                                            }
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="value-input @(Model.AnnualAssessment ? "show" : "")" id="annualDateValue">
-                                <input asp-for="AnnualAssessment_Date" type="date" class="form-control" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 血壓 -->
-                <div class="form-section">
-                    <div class="section-title">血壓</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="SystolicBP" type="checkbox" id="SystolicBP" onchange="toggleValueInput('SystolicBP','SystolicBPValue')" />
-                                <label for="SystolicBP">收縮壓 (mmHg)</label>
-                            </div>
-                            <div id="SystolicBPValue" class="value-input @(Model.SystolicBP ? "show" : "")">
-                                <input asp-for="SystolicBP_Value" type="number" step="0.01" class="form-control" placeholder="收縮壓 (mmHg)" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="DiastolicBP" type="checkbox" id="DiastolicBP" onchange="toggleValueInput('DiastolicBP','DiastolicBPValue')" />
-                                <label for="DiastolicBP">舒張壓 (mmHg)</label>
-                            </div>
-                            <div id="DiastolicBPValue" class="value-input @(Model.DiastolicBP ? "show" : "")">
-                                <input asp-for="DiastolicBP_Value" type="number" step="0.01" class="form-control" placeholder="舒張壓 (mmHg)" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">是否提供血壓指導 (722)</label>
-                            <div class="checkbox-item">
-                                <input asp-for="BloodPressureGuidance722" type="checkbox" id="BloodPressureGuidance722" />
-                                <label for="BloodPressureGuidance722">已提供</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 腰圍 / 血糖 / 脂質 -->
-                <div class="form-section">
-                    <div class="section-title">腰圍 / 血糖 / 脂質</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="CurrentWaist" type="checkbox" id="CurrentWaist" onchange="toggleValueInput('CurrentWaist','CurrentWaistValue')" />
-                                <label for="CurrentWaist">腰圍 (cm)</label>
-                            </div>
-                            <div id="CurrentWaistValue" class="value-input @(Model.CurrentWaist ? "show" : "")">
-                                <input asp-for="CurrentWaist_Value" type="number" step="0.01" class="form-control" placeholder="腰圍 (cm)" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="FastingGlucose" type="checkbox" id="FastingGlucose" onchange="toggleValueInput('FastingGlucose','FastingGlucoseValue')" />
-                                <label for="FastingGlucose">飯前血糖值 (mg/dL)%</label>
-                            </div>
-                            <div id="FastingGlucoseValue" class="value-input @(Model.FastingGlucose ? "show" : "")">
-                                <input asp-for="FastingGlucose_Value" type="number" step="0.01" class="form-control" placeholder="飯前血糖值 (mg/dL)%" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="HbA1c" type="checkbox" id="HbA1c" onchange="toggleValueInput('HbA1c','HbA1cValue')" />
-                                <label for="HbA1c">醣化血紅素 (mg/dL)%</label>
-                            </div>
-                            <div id="HbA1cValue" class="value-input @(Model.HbA1c ? "show" : "")">
-                                <input asp-for="HbA1c_Value" type="number" step="0.01" class="form-control" placeholder="醣化血紅素 (mg/dL)%" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="HDL" type="checkbox" id="HDL" onchange="toggleValueInput('HDL','HDLValue')" />
-                                <label for="HDL">高密度脂蛋白膽固醇值 (mg/dL)</label>
-                            </div>
-                            <div id="HDLValue" class="value-input @(Model.HDL ? "show" : "")">
-                                <input asp-for="HDL_Value" type="number" step="0.01" class="form-control" placeholder="高密度脂蛋白膽固醇值 (mg/dL)" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="LDL" type="checkbox" id="LDL" onchange="toggleValueInput('LDL','LDLValue')" />
-                                <label for="LDL">低密度脂蛋白膽固醇值 (mg/dL)</label>
-                            </div>
-                            <div id="LDLValue" class="value-input @(Model.LDL ? "show" : "")">
-                                <input asp-for="LDL_Value" type="number" step="0.01" class="form-control" placeholder="低密度脂蛋白膽固醇值 (mg/dL)" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="Triglycerides" type="checkbox" id="Triglycerides" onchange="toggleValueInput('Triglycerides','TriglyceridesValue')" />
-                                <label for="Triglycerides">三酸甘油脂值 (mg/dL)</label>
-                            </div>
-                            <div id="TriglyceridesValue" class="value-input @(Model.Triglycerides ? "show" : "")">
-                                <input asp-for="Triglycerides_Value" type="number" step="0.01" class="form-control" placeholder="三酸甘油脂值 (mg/dL)" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 生活型態 -->
-                <div class="form-section">
-                    <div class="section-title">生活型態</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">運動狀況</label>
-                            <div class="checkbox-group">
-                                <div class="checkbox-item"><input asp-for="ExerciseNone" type="checkbox" /> <label>無</label></div>
-                                <div class="checkbox-item"><input asp-for="ExerciseUsually" type="checkbox" /> <label>偶爾</label></div>
-                                <div class="checkbox-item"><input asp-for="ExerciseAlways" type="checkbox" /> <label>經常(每週累計達150分鐘)</label></div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">抽菸</label>
-                            <div class="checkbox-group">
-                                <div class="checkbox-item"><input asp-for="SmokingNone" type="checkbox" /> <label>無</label></div>
-                                <div class="checkbox-item"><input asp-for="SmokingUsually" type="checkbox" /> <label>偶爾</label></div>
-                                <div class="checkbox-item"><input asp-for="SmokingUnder10" type="checkbox" /> <label>平均一天約吸10支菸以下</label></div>
-                                <div class="checkbox-item"><input asp-for="SmokingOver10" type="checkbox" /> <label>平均一天約吸10支菸(含)以上</label></div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">嚼檳榔</label>
-                            <div class="checkbox-group">
-                                <div class="checkbox-item"><input asp-for="BetelNutNone" type="checkbox" /> <label>無</label></div>
-                                <div class="checkbox-item"><input asp-for="BetelNutUsually" type="checkbox" /> <label>偶爾</label></div>
-                                <div class="checkbox-item"><input asp-for="BetelNutAlways" type="checkbox" /> <label>經常</label></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 疾病風險評估 -->
-                <div class="form-section">
-                    <div class="section-title">得到慢性病的風險</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">冠心病</label>
-                            <div class="checkbox-group">
-                                <div class="checkbox-item"><input asp-for="CoronaryHigh" type="checkbox" /> <label>高</label></div>
-                                <div class="checkbox-item"><input asp-for="CoronaryMedium" type="checkbox" /> <label>中</label></div>
-                                <div class="checkbox-item"><input asp-for="CoronaryLow" type="checkbox" /> <label>低</label></div>
-                                <div class="checkbox-item"><input asp-for="CoronaryNotApplicable" type="checkbox" /> <label>不適用</label></div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">糖尿病</label>
-                            <div class="checkbox-group">
-                                <div class="checkbox-item"><input asp-for="DiabetesHigh" type="checkbox" /> <label>高</label></div>
-                                <div class="checkbox-item"><input asp-for="DiabetesMedium" type="checkbox" /> <label>中</label></div>
-                                <div class="checkbox-item"><input asp-for="DiabetesLow" type="checkbox" /> <label>低</label></div>
-                                <div class="checkbox-item"><input asp-for="DiabetesNotApplicabe" type="checkbox" /> <label>不適用</label></div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">高血壓</label>
-                            <div class="checkbox-group">
-                                <div class="checkbox-item"><input asp-for="HypertensionHigh" type="checkbox" /> <label>高</label></div>
-                                <div class="checkbox-item"><input asp-for="HypertensionMedium" type="checkbox" /> <label>中</label></div>
-                                <div class="checkbox-item"><input asp-for="HypertensionLow" type="checkbox" /> <label>低</label></div>
-                                <div class="checkbox-item"><input asp-for="HypertensionNotApplicable" type="checkbox" /> <label>不適用</label></div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">腦中風</label>
-                            <div class="checkbox-group">
-                                <div class="checkbox-item"><input asp-for="StrokeHigh" type="checkbox" /> <label>高</label></div>
-                                <div class="checkbox-item"><input asp-for="StrokeMedium" type="checkbox" /> <label>中</label></div>
-                                <div class="checkbox-item"><input asp-for="StrokeLow" type="checkbox" /> <label>低</label></div>
-                                <div class="checkbox-item"><input asp-for="StrokeNotApplicable" type="checkbox" /> <label>不適用</label></div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">心血管不良事件</label>
-                            <div class="checkbox-group">
-                                <div class="checkbox-item"><input asp-for="CardiovascularHigh" type="checkbox" /> <label>高</label></div>
-                                <div class="checkbox-item"><input asp-for="CardiovascularMedium" type="checkbox" /> <label>中</label></div>
-                                <div class="checkbox-item"><input asp-for="CardiovascularLow" type="checkbox" /> <label>低</label></div>
-                                <div class="checkbox-item"><input asp-for="CardiovascularNotApplicable" type="checkbox" /> <label>不適用</label></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 戒菸 / 戒檳服務 -->
-                <div class="form-section">
-                    <div class="section-title">戒菸 / 戒檳服務</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="SmokingService" type="checkbox" id="SmokingService" />
-                                <label for="SmokingService">戒菸(吸菸≧10支/日或尼古丁成癮度≧4分，可提供或轉介戒菸服務)</label>
-                            </div>
-                            <div class="checkbox-group" style="margin-top: 0.5rem;">
-                                <div class="checkbox-item">
-                                    <input asp-for="SmokingServiceType1" type="checkbox" id="SmokingServiceType1" />
-                                    <label for="SmokingServiceType1">戒菸指導(無意願接受戒菸服務或&lt;10支/日或尼古丁成癮度&lt;4分)</label>
+                                <input type="hidden" asp-for="BetelNutService" id="betelNutService" />
+                                <input type="hidden" asp-for="BetelQuitGoal" id="betelQuitGoal" />
+                                <input type="hidden" asp-for="OralExam" id="oralExam" />
+                            </td>
+                            <td>
+                                <select id="selectCalories" onchange="updateCalories()">
+                                    <option value="">請選擇</option>
+                                    <option value="1200">1200</option>
+                                    <option value="1500">1500</option>
+                                    <option value="1800">1800</option>
+                                    <option value="2000">2000</option>
+                                    <option value="other">其他</option>
+                                </select>
+                                <div class="conditional-input" id="caloriesOtherBox">
+                                    <input asp-for="DailyCaloriesOtherValue" type="text" placeholder="輸入熱量" />
                                 </div>
-                                <div class="checkbox-item">
-                                    <input asp-for="SmokingServiceType2" type="checkbox" />
-                                    <label>戒菸服務(≧10支/日或尼古丁成癮度≧4分):</label>
+                                <input type="hidden" asp-for="DietManagement" id="dietManagement" />
+                                <input type="hidden" asp-for="DailyCalories1200" id="cal1200" />
+                                <input type="hidden" asp-for="DailyCalories1500" id="cal1500" />
+                                <input type="hidden" asp-for="DailyCalories1800" id="cal1800" />
+                                <input type="hidden" asp-for="DailyCalories2000" id="cal2000" />
+                                <input type="hidden" asp-for="DailyCaloriesOther" id="calOther" />
+                            </td>
+                            <td>
+                                <div class="multi-select">
+                                    <div class="multi-btn" onclick="toggleDropdown('reduceDD')">
+                                        <span id="reduceText">點擊複選...</span>
+                                    </div>
+                                    <div class="multi-dropdown" id="reduceDD">
+                                        <div class="multi-item"><input type="checkbox" id="chkFried" onchange="updateReduce()" /><label for="chkFried">油炸物</label></div>
+                                        <div class="multi-item"><input type="checkbox" id="chkSweet" onchange="updateReduce()" /><label for="chkSweet">甜食</label></div>
+                                        <div class="multi-item"><input type="checkbox" id="chkSalt" onchange="updateReduce()" /><label for="chkSalt">鹽</label></div>
+                                        <div class="multi-item"><input type="checkbox" id="chkSugar" onchange="updateReduce()" /><label for="chkSugar">含糖飲料</label></div>
+                                        <div class="multi-item"><input type="checkbox" id="chkReduceOther" onchange="updateReduce()" /><label for="chkReduceOther">其他</label></div>
+                                    </div>
                                 </div>
-                                <div class="checkbox-item" style="margin-left: 1.5rem;">
-                                    <input asp-for="SmokingServiceType2_Provide" type="checkbox" />
-                                    <label>提供戒菸服務</label>
+                                <div class="conditional-input" id="reduceOtherBox">
+                                    <input asp-for="ReduceOtherValue" type="text" placeholder="輸入其他" />
                                 </div>
-                                <div class="checkbox-item" style="margin-left: 1.5rem;">
-                                    <input asp-for="SmokingServiceType2_Referral" type="checkbox" />
-                                    <label>同意轉介戒菸服務</label>
+                                <input type="hidden" asp-for="ReduceFriedFood" id="reduceFried" />
+                                <input type="hidden" asp-for="ReduceSweetFood" id="reduceSweet" />
+                                <input type="hidden" asp-for="ReduceSalt" id="reduceSalt" />
+                                <input type="hidden" asp-for="ReduceSugaryDrinks" id="reduceSugar" />
+                                <input type="hidden" asp-for="ReduceOther" id="reduceOther" />
+                            </td>
+                            <td>
+                                <select id="selectExerciseAdvice" onchange="updateExerciseAdvice()">
+                                    <option value="">請選擇</option>
+                                    <option value="guide">提供運動指導</option>
+                                    <option value="resource">社區運動資源</option>
+                                </select>
+                                <div class="conditional-input" id="resourceBox">
+                                    <input asp-for="SocialExerciseResources_Text" type="text" placeholder="輸入資源" />
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="checkbox-item">
-                            <input asp-for="BetelNutService" type="checkbox" id="BetelNutService" />
-                            <label for="BetelNutService">戒檳(6個月內有嚼檳榔)</label>
-                        </div>
-                        <div class="checkbox-group" style="margin-top: 0.5rem;">
-                            <div class="checkbox-item"><input asp-for="BetelQuitGoal" type="checkbox" /> <label>戒檳目標</label></div>
-                            <div class="form-group">
-                                <label class="form-label">預計戒檳日期 (年/月/日)</label>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <input asp-for="BetelQuitYear" type="number" class="form-control" placeholder="年" />
-                                    <input asp-for="BetelQuitMonth" type="number" class="form-control" placeholder="月" />
-                                    <input asp-for="BetelQuitDay" type="number" class="form-control" placeholder="日" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                <input type="hidden" asp-for="ExerciseRecommendation" id="exerciseRecommendation" />
+                                <input type="hidden" asp-for="ExerciseGuidance" id="exerciseGuidance" />
+                                <input type="hidden" asp-for="SocialExerciseResources" id="socialResources" />
+                            </td>
+                            <td>
+                                <input asp-for="WaistTarget_Value" type="number" step="0.1" />
+                                <input type="hidden" asp-for="Achievement" />
+                            </td>
+                            <td><input asp-for="WeightTarget_Value" type="number" step="0.1" /></td>
+                            <td>
+                                <input asp-for="FastingGlucoseTarget_Value" type="number" />
+                                <input type="hidden" asp-for="FastingGlucoseTarget" />
+                            </td>
+                            <td>
+                                <input asp-for="HbA1cTarget_Value" type="number" step="0.1" />
+                                <input type="hidden" asp-for="HbA1cTarget" />
+                                <input type="hidden" asp-for="HbA1c" value="true" />
+                                <input type="hidden" asp-for="HbA1c_Value" />
+                            </td>
+                            <td>
+                                <input asp-for="TriglyceridesTarget_Value" type="number" />
+                                <input type="hidden" asp-for="TriglyceridesTarget" />
+                            </td>
+                            <td>
+                                <input asp-for="HDL_CholesterolTarget_Value" type="number" />
+                                <input type="hidden" asp-for="HDL_CholesterolTarget" />
+                            </td>
+                            <td>
+                                <input asp-for="LDL_CholesterolTarget_Value" type="number" />
+                                <input type="hidden" asp-for="LDL_CholesterolTarget" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                <!-- 口腔檢查 -->
-                <div class="form-section">
-                    <div class="section-title">口腔檢查</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">安排口腔黏膜檢查</label>
-                            <div class="checkbox-item">
-                                <input asp-for="OralExam" type="checkbox" />
-                                <label>是</label>
-                            </div>
-                            <div style="margin-top: 0.5rem;">
-                                <label class="form-label">檢查時間 (年 / 月)</label>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <input asp-for="OralExamYear" type="number" class="form-control" placeholder="年" />
-                                    <input asp-for="OralExamMonth" type="number" class="form-control" placeholder="月" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <!-- 得到慢性病的風險 -->
+            <div class="section-title">得到慢性病的風險</div>
+            <div class="table-wrapper">
+                <table style="min-width: 800px;">
+                    <thead>
+                        <tr>
+                            <th style="width:20%">冠心病</th>
+                            <th style="width:20%">糖尿病</th>
+                            <th style="width:20%">高血壓</th>
+                            <th style="width:20%">腦中風</th>
+                            <th style="width:20%">心血管不良事件</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <select id="selectCoronary" onchange="updateCoronary()">
+                                    <option value="">請選擇</option>
+                                    <option value="high">高</option>
+                                    <option value="medium">中</option>
+                                    <option value="low">低</option>
+                                    <option value="na">不適用</option>
+                                </select>
+                                <input type="hidden" asp-for="CoronaryHigh" id="coronaryHigh" />
+                                <input type="hidden" asp-for="CoronaryMedium" id="coronaryMedium" />
+                                <input type="hidden" asp-for="CoronaryLow" id="coronaryLow" />
+                                <input type="hidden" asp-for="CoronaryNotApplicable" id="coronaryNA" />
+                            </td>
+                            <td>
+                                <select id="selectDiabetes" onchange="updateDiabetes()">
+                                    <option value="">請選擇</option>
+                                    <option value="high">高</option>
+                                    <option value="medium">中</option>
+                                    <option value="low">低</option>
+                                    <option value="na">不適用</option>
+                                </select>
+                                <input type="hidden" asp-for="DiabetesHigh" id="diabetesHigh" />
+                                <input type="hidden" asp-for="DiabetesMedium" id="diabetesMedium" />
+                                <input type="hidden" asp-for="DiabetesLow" id="diabetesLow" />
+                                <input type="hidden" asp-for="DiabetesNotApplicabe" id="diabetesNA" />
+                            </td>
+                            <td>
+                                <select id="selectHypertension" onchange="updateHypertension()">
+                                    <option value="">請選擇</option>
+                                    <option value="high">高</option>
+                                    <option value="medium">中</option>
+                                    <option value="low">低</option>
+                                    <option value="na">不適用</option>
+                                </select>
+                                <input type="hidden" asp-for="HypertensionHigh" id="hypertensionHigh" />
+                                <input type="hidden" asp-for="HypertensionMedium" id="hypertensionMedium" />
+                                <input type="hidden" asp-for="HypertensionLow" id="hypertensionLow" />
+                                <input type="hidden" asp-for="HypertensionNotApplicable" id="hypertensionNA" />
+                            </td>
+                            <td>
+                                <select id="selectStroke" onchange="updateStroke()">
+                                    <option value="">請選擇</option>
+                                    <option value="high">高</option>
+                                    <option value="medium">中</option>
+                                    <option value="low">低</option>
+                                    <option value="na">不適用</option>
+                                </select>
+                                <input type="hidden" asp-for="StrokeHigh" id="strokeHigh" />
+                                <input type="hidden" asp-for="StrokeMedium" id="strokeMedium" />
+                                <input type="hidden" asp-for="StrokeLow" id="strokeLow" />
+                                <input type="hidden" asp-for="StrokeNotApplicable" id="strokeNA" />
+                            </td>
+                            <td>
+                                <select id="selectCardiovascular" onchange="updateCardiovascular()">
+                                    <option value="">請選擇</option>
+                                    <option value="high">高</option>
+                                    <option value="medium">中</option>
+                                    <option value="low">低</option>
+                                    <option value="na">不適用</option>
+                                </select>
+                                <input type="hidden" asp-for="CardiovascularHigh" id="cardiovascularHigh" />
+                                <input type="hidden" asp-for="CardiovascularMedium" id="cardiovascularMedium" />
+                                <input type="hidden" asp-for="CardiovascularLow" id="cardiovascularLow" />
+                                <input type="hidden" asp-for="CardiovascularNotApplicable" id="cardiovascularNA" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                <!-- 飲食管理 -->
-                <div class="form-section">
-                    <div class="section-title">飲食管理</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <div class="checkbox-item"><input asp-for="DietManagement" type="checkbox" /> <label class="form-label">每日建議攝取熱量:(大卡/天)</label></div>
-                            <div class="checkbox-item" style="margin-left: 1.5rem;">
-                                <input asp-for="DailyCalories1200" type="checkbox" />
-                                <label>1200 大卡</label>
-                            </div>
-                            <div class="checkbox-item" style="margin-left: 1.5rem;">
-                                <input asp-for="DailyCalories1500" type="checkbox" />
-                                <label>1500 大卡</label>
-                            </div>
-                            <div class="checkbox-item" style="margin-left: 1.5rem;">
-                                <input asp-for="DailyCalories1800" type="checkbox" />
-                                <label>1800 大卡</label>
-                            </div>
-                            <div class="checkbox-item" style="margin-left: 1.5rem;">
-                                <input asp-for="DailyCalories2000" type="checkbox" />
-                                <label>2000 大卡</label>
-                            </div>
-                            <div class="checkbox-item" style="margin-left: 1.5rem;">
-                                <input asp-for="DailyCaloriesOther" type="checkbox" id="DailyCaloriesOther" />
-                                <label>其他</label>
-                            </div>
-                            <div class="value-input @(Model.DailyCaloriesOther ? "show" : "")" id="DailyCaloriesOtherValue" style="margin-left: 3rem; margin-top: 5px;">
-                                <input asp-for="DailyCaloriesOtherValue" class="form-control" placeholder="其他熱量說明" />
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">盡量減少</label>
-                            <div class="checkbox-item" style="margin-left: 1.5rem;">
-                                <input asp-for="ReduceFriedFood" type="checkbox" />
-                                <label>油炸物</label>
-                            </div>
-                            <div class="checkbox-item" style="margin-left: 1.5rem;">
-                                <input asp-for="ReduceSweetFood" type="checkbox" />
-                                <label>甜食</label>
-                            </div>
-                            <div class="checkbox-item" style="margin-left: 1.5rem;">
-                                <input asp-for="ReduceSalt" type="checkbox" />
-                                <label>鹽</label>
-                            </div>
-                            <div class="checkbox-item" style="margin-left: 1.5rem;">
-                                <input asp-for="ReduceSugaryDrinks" type="checkbox" />
-                                <label>含糖飲料</label>
-                            </div>
-                            <div class="checkbox-item" style="margin-left: 1.5rem;">
-                                <input asp-for="ReduceOther" type="checkbox" id="ReduceOther" />
-                                <label>其他</label>
-                            </div>
-                            <div class="value-input @(Model.ReduceOther ? "show" : "")" id="ReduceOtherValue" style="margin-left: 3rem; margin-top: 5px;">
-                                <input asp-for="ReduceOtherValue" class="form-control" placeholder="其他需減少的飲食" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <!-- 其他備註 -->
+            <div class="section-title">其他備註</div>
+            <div style="padding:15px;">
+                <textarea asp-for="Notes" rows="3" placeholder="請輸入其他備註或提醒事項..." style="text-align:left;"></textarea>
+                <input type="hidden" asp-for="OtherReminders" value="false" />
+            </div>
 
-                <!-- 運動建議 / 社區資源 -->
-                <div class="form-section">
-                    <div class="section-title">運動建議與資源</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <div class="checkbox-item"><input asp-for="ExerciseRecommendation" type="checkbox" /> <label>運動建議:</label></div>
-                            <div class="checkbox-item"><input asp-for="ExerciseGuidance" type="checkbox" /> <label>提供運動指導:每週累積150分鐘中等費力運動(活動時仍可交談，但無法唱歌)</label></div>
-                            <div class="checkbox-item">
-                                <input asp-for="SocialExerciseResources" type="checkbox" /> <label>提供社區運動資源</label>
-                                <div class="form-group" style="display: inline-block; margin-left: 10px;">
-                                    <input asp-for="SocialExerciseResources_Text"
-                                           class="form-control"
-                                           placeholder="請輸入社區運動資源" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 想達成的目標 -->
-                <div class="form-section">
-                    <div class="section-title">目標設定</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">想達成的腰圍及體重</label>
-                            <div class="checkbox-item"><input asp-for="Achievement" type="checkbox" /> <label>勾選</label></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">腰圍 (cm)</label>
-                            <input asp-for="WaistTarget_Value" type="number" step="0.01" class="form-control" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">體重 (kg)</label>
-                            <input asp-for="WeightTarget_Value" type="number" step="0.01" class="form-control" />
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 其他叮嚀與目標值 -->
-                <div class="form-section">
-                    <div class="section-title">其他叮嚀 / 目標值</div>
-
-                    <!-- 其他叮嚀 checkbox -->
-                    <div class="form-group">
-                        <div class="checkbox-item">
-                            <input asp-for="OtherReminders" type="checkbox" />
-                            <label>其他叮嚀</label>
-                        </div>
-                    </div>
-
-                    <!-- (1) 飯前血糖 & 醣化血紅素 -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="FastingGlucoseTarget" type="checkbox" id="FastingGlucoseTarget"
-                                       onchange="toggleValueInput('FastingGlucoseTarget','FastingGlucoseTargetValue')" />
-                                <label for="FastingGlucoseTarget">飯前血糖個人目標值 mg/dL(%)</label>
-                            </div>
-                            <div id="FastingGlucoseTargetValue" class="value-input @(Model.FastingGlucoseTarget ? "show" : "")">
-                                <input asp-for="FastingGlucoseTarget_Value" type="number" step="0.01"
-                                       class="form-control" placeholder="飯前血糖目標值 mg/dL" />
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="HbA1cTarget" type="checkbox" id="HbA1cTarget"
-                                       onchange="toggleValueInput('HbA1cTarget','HbA1cTargetValue')" />
-                                <label for="HbA1cTarget">醣化血紅素個人目標值 mg/dL(%)</label>
-                            </div>
-                            <div id="HbA1cTargetValue" class="value-input @(Model.HbA1cTarget ? "show" : "")">
-                                <input asp-for="HbA1cTarget_Value" type="number" step="0.01"
-                                       class="form-control" placeholder="醣化血紅素目標 mg/dL" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- (2) 三酸甘油脂 -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="TriglyceridesTarget" type="checkbox" id="TriglyceridesTarget"
-                                       onchange="toggleValueInput('TriglyceridesTarget','TriglyceridesTargetValue')" />
-                                <label for="TriglyceridesTarget">三酸甘油脂個人目標值 (mg/dL)</label>
-                            </div>
-                            <div id="TriglyceridesTargetValue" class="value-input @(Model.TriglyceridesTarget ? "show" : "")">
-                                <input asp-for="TriglyceridesTarget_Value" type="number" step="0.01"
-                                       class="form-control" placeholder="三酸甘油脂個人目標值" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- (3) HDL & LDL 膽固醇 -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="HDL_CholesterolTarget" type="checkbox" id="HDL_CholesterolTarget"
-                                       onchange="toggleValueInput('HDL_CholesterolTarget','HDL_CholesterolTargetValue')" />
-                                <label for="HDL_CholesterolTarget">高密度脂蛋白膽固醇個人目標值 (mg/dL)</label>
-                            </div>
-                            <div id="HDL_CholesterolTargetValue" class="value-input @(Model.HDL_CholesterolTarget ? "show" : "")">
-                                <input asp-for="HDL_CholesterolTarget_Value" type="number" step="0.01"
-                                       class="form-control" placeholder="高密度脂蛋白膽固醇個人目標值" />
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <div class="checkbox-item">
-                                <input asp-for="LDL_CholesterolTarget" type="checkbox" id="LDL_CholesterolTarget"
-                                       onchange="toggleValueInput('LDL_CholesterolTarget','LDL_CholesterolTargetValue')" />
-                                <label for="LDL_CholesterolTarget">低密度脂蛋白膽固醇個人目標值 (mg/dL)</label>
-                            </div>
-                            <div id="LDL_CholesterolTargetValue" class="value-input @(Model.LDL_CholesterolTarget ? "show" : "")">
-                                <input asp-for="LDL_CholesterolTarget_Value" type="number" step="0.01"
-                                       class="form-control" placeholder="低密度脂蛋白膽固醇個人目標值" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 備註 -->
-                <div class="form-section">
-                    <div class="section-title">備註</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">其他備註</label>
-                            <textarea asp-for="Notes" class="form-control" rows="3" placeholder="其他備註或提醒"></textarea>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 按鈕 -->
-                <div class="button-group">
-                    <a href="@Url.Action("ViewAllRecords", "CaseManagement")" class="btn btn-secondary">
-                        ← 取消
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        ✓ 儲存變更
-                    </button>
-                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">
-                        🗑️ 刪除紀錄
-                    </button>
-                </div>
-            </form>
-
-            <!-- 隱藏的刪除表單 -->
-            <form asp-action="Delete" method="post" id="deleteForm" style="display:none;">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="id" value="@Model.Id" />
-            </form>
-        </div>
+            <!-- 按鈕 -->
+            <div class="button-row">
+                <a href="@Url.Action("Details", new { id = Model.Id })" class="btn btn-cancel">← 取消</a>
+                <button type="submit" class="btn btn-save">✓ 儲存變更</button>
+            </div>
+        </form>
     </div>
 
     <script>
-        // 切換數值輸入框
-        function toggleValueInput(checkboxId, valueId) {
-            const checkbox = document.getElementById(checkboxId);
-            const valueInput = document.getElementById(valueId);
-            if (checkbox.checked) {
-                valueInput.classList.add('show');
-            } else {
-                valueInput.classList.remove('show');
-            }
-        }
-
-        // 確認刪除
-        function confirmDelete() {
-            if (confirm('⚠️ 確定要刪除此紀錄嗎？此操作無法復原！')) {
-                document.getElementById('deleteForm').submit();
-            }
-        }
-
-        // 當頁面載入時執行
+        // 頁面載入時初始化所有下拉選單的值
         document.addEventListener('DOMContentLoaded', function () {
-            // AnnualAssessment 控制
-            const annualChk = document.getElementById('AnnualAssessment');
-            const annualDateValue = document.getElementById('annualDateValue');
-            if (annualChk) {
-                annualChk.addEventListener('change', function () {
-                    if (annualChk.checked) annualDateValue.classList.add('show');
-                    else annualDateValue.classList.remove('show');
-                });
+            initializeSelects();
+            initializeCheckboxes();
+            updateReduce(); // 更新多選顯示文字
+        });
+
+        function initializeSelects() {
+            // 運動
+            if (document.getElementById('initExerciseNone').value === 'true') {
+                document.getElementById('selectExercise').value = 'none';
+            } else if (document.getElementById('initExerciseUsually').value === 'true') {
+                document.getElementById('selectExercise').value = 'sometimes';
+            } else if (document.getElementById('initExerciseAlways').value === 'true') {
+                document.getElementById('selectExercise').value = 'always';
             }
 
-            // DailyCaloriesOther 控制
-            const dailyOtherChk = document.getElementById('DailyCaloriesOther');
-            const dailyOtherVal = document.getElementById('DailyCaloriesOtherValue');
-            if (dailyOtherChk) {
-                dailyOtherChk.addEventListener('change', function () {
-                    if (dailyOtherChk.checked) dailyOtherVal.classList.add('show');
-                    else dailyOtherVal.classList.remove('show');
-                });
+            // 抽菸
+            if (document.getElementById('initSmokingNone').value === 'true') {
+                document.getElementById('selectSmoking').value = 'none';
+            } else if (document.getElementById('initSmokingUsually').value === 'true') {
+                document.getElementById('selectSmoking').value = 'sometimes';
+            } else if (document.getElementById('initSmokingUnder10').value === 'true') {
+                document.getElementById('selectSmoking').value = 'under10';
+            } else if (document.getElementById('initSmokingOver10').value === 'true') {
+                document.getElementById('selectSmoking').value = 'over10';
             }
 
-            // ReduceOther 控制
-            const reduceOtherChk = document.getElementById('ReduceOther');
-            const reduceOtherVal = document.getElementById('ReduceOtherValue');
-            if (reduceOtherChk) {
-                reduceOtherChk.addEventListener('change', function () {
-                    if (reduceOtherChk.checked) reduceOtherVal.classList.add('show');
-                    else reduceOtherVal.classList.remove('show');
-                });
+            // 嚼檳榔
+            if (document.getElementById('initBetelNutNone').value === 'true') {
+                document.getElementById('selectBetelNut').value = 'none';
+            } else if (document.getElementById('initBetelNutUsually').value === 'true') {
+                document.getElementById('selectBetelNut').value = 'sometimes';
+            } else if (document.getElementById('initBetelNutAlways').value === 'true') {
+                document.getElementById('selectBetelNut').value = 'always';
             }
 
-            // BMI 計算
-            const chkBMI = document.getElementById("chkBMI");
-            const bmiInput = document.getElementById("BMIValue");
-            const heightInput = document.getElementById("Height");
-            const weightInput = document.getElementById("Weight");
+            // 722血壓表
+            if (document.getElementById('initBP722').value === 'true') {
+                document.getElementById('selectBP722').value = 'yes';
+            } else {
+                document.getElementById('selectBP722').value = 'no';
+            }
 
-            if (chkBMI && bmiInput && heightInput && weightInput) {
-                // 當勾選 BMI 時自動顯示與計算
-                chkBMI.addEventListener("change", function () {
-                    if (chkBMI.checked) {
-                        bmiInput.classList.add("show");
-                        calculateBMI();
-                    } else {
-                        bmiInput.classList.remove("show");
-                        bmiInput.value = "";
-                    }
-                });
+            // 戒菸服務
+            if (document.getElementById('initSmokingServiceType1').value === 'true') {
+                document.getElementById('selectQuitSmoking').value = 'guide';
+            } else if (document.getElementById('initSmokingServiceType2_Provide').value === 'true') {
+                document.getElementById('selectQuitSmoking').value = 'provide';
+            }
 
-                // 監聽身高與體重輸入變化
-                [heightInput, weightInput].forEach(input => {
-                    input.addEventListener("input", function () {
-                        if (chkBMI.checked) calculateBMI();
-                    });
-                });
+            // 每日熱量
+            if (document.getElementById('initCal1200').value === 'true') {
+                document.getElementById('selectCalories').value = '1200';
+            } else if (document.getElementById('initCal1500').value === 'true') {
+                document.getElementById('selectCalories').value = '1500';
+            } else if (document.getElementById('initCal1800').value === 'true') {
+                document.getElementById('selectCalories').value = '1800';
+            } else if (document.getElementById('initCal2000').value === 'true') {
+                document.getElementById('selectCalories').value = '2000';
+            } else if (document.getElementById('initCalOther').value === 'true') {
+                document.getElementById('selectCalories').value = 'other';
+                document.getElementById('caloriesOtherBox').classList.add('show');
+            }
 
-                // 計算 BMI
-                function calculateBMI() {
-                    const height = parseFloat(heightInput.value);
-                    const weight = parseFloat(weightInput.value);
-                    if (height > 0 && weight > 0) {
-                        const bmi = weight / Math.pow(height / 100, 2);
-                        bmiInput.value = bmi.toFixed(1);
-                    } else {
-                        bmiInput.value = "";
-                    }
-                }
+            // 運動建議
+            if (document.getElementById('initExerciseGuidance').value === 'true') {
+                document.getElementById('selectExerciseAdvice').value = 'guide';
+            } else if (document.getElementById('initSocialResources').value === 'true') {
+                document.getElementById('selectExerciseAdvice').value = 'resource';
+                document.getElementById('resourceBox').classList.add('show');
+            }
 
-                // 頁面載入時如果已勾選 BMI，計算一次
-                if (chkBMI.checked) {
-                    calculateBMI();
-                }
+            // 冠心病風險
+            if (document.getElementById('initCoronaryHigh').value === 'true') {
+                document.getElementById('selectCoronary').value = 'high';
+            } else if (document.getElementById('initCoronaryMedium').value === 'true') {
+                document.getElementById('selectCoronary').value = 'medium';
+            } else if (document.getElementById('initCoronaryLow').value === 'true') {
+                document.getElementById('selectCoronary').value = 'low';
+            } else if (document.getElementById('initCoronaryNA').value === 'true') {
+                document.getElementById('selectCoronary').value = 'na';
+            }
+
+            // 糖尿病風險
+            if (document.getElementById('initDiabetesHigh').value === 'true') {
+                document.getElementById('selectDiabetes').value = 'high';
+            } else if (document.getElementById('initDiabetesMedium').value === 'true') {
+                document.getElementById('selectDiabetes').value = 'medium';
+            } else if (document.getElementById('initDiabetesLow').value === 'true') {
+                document.getElementById('selectDiabetes').value = 'low';
+            } else if (document.getElementById('initDiabetesNA').value === 'true') {
+                document.getElementById('selectDiabetes').value = 'na';
+            }
+
+            // 高血壓風險
+            if (document.getElementById('initHypertensionHigh').value === 'true') {
+                document.getElementById('selectHypertension').value = 'high';
+            } else if (document.getElementById('initHypertensionMedium').value === 'true') {
+                document.getElementById('selectHypertension').value = 'medium';
+            } else if (document.getElementById('initHypertensionLow').value === 'true') {
+                document.getElementById('selectHypertension').value = 'low';
+            } else if (document.getElementById('initHypertensionNA').value === 'true') {
+                document.getElementById('selectHypertension').value = 'na';
+            }
+
+            // 腦中風風險
+            if (document.getElementById('initStrokeHigh').value === 'true') {
+                document.getElementById('selectStroke').value = 'high';
+            } else if (document.getElementById('initStrokeMedium').value === 'true') {
+                document.getElementById('selectStroke').value = 'medium';
+            } else if (document.getElementById('initStrokeLow').value === 'true') {
+                document.getElementById('selectStroke').value = 'low';
+            } else if (document.getElementById('initStrokeNA').value === 'true') {
+                document.getElementById('selectStroke').value = 'na';
+            }
+
+            // 心血管風險
+            if (document.getElementById('initCardiovascularHigh').value === 'true') {
+                document.getElementById('selectCardiovascular').value = 'high';
+            } else if (document.getElementById('initCardiovascularMedium').value === 'true') {
+                document.getElementById('selectCardiovascular').value = 'medium';
+            } else if (document.getElementById('initCardiovascularLow').value === 'true') {
+                document.getElementById('selectCardiovascular').value = 'low';
+            } else if (document.getElementById('initCardiovascularNA').value === 'true') {
+                document.getElementById('selectCardiovascular').value = 'na';
+            }
+        }
+
+        function initializeCheckboxes() {
+            // 盡量減少 checkbox
+            document.getElementById('chkFried').checked = document.getElementById('initReduceFried').value === 'true';
+            document.getElementById('chkSweet').checked = document.getElementById('initReduceSweet').value === 'true';
+            document.getElementById('chkSalt').checked = document.getElementById('initReduceSalt').value === 'true';
+            document.getElementById('chkSugar').checked = document.getElementById('initReduceSugar').value === 'true';
+            document.getElementById('chkReduceOther').checked = document.getElementById('initReduceOther').value === 'true';
+
+            if (document.getElementById('chkReduceOther').checked) {
+                document.getElementById('reduceOtherBox').classList.add('show');
+            }
+        }
+
+        // BMI 計算
+        function calcBMI() {
+            const h = parseFloat(document.getElementById('inputHeight').value);
+            const w = parseFloat(document.getElementById('inputWeight').value);
+            if (h > 0 && w > 0) {
+                const bmi = w / Math.pow(h / 100, 2);
+                document.getElementById('displayBMI').value = bmi.toFixed(1);
+                document.getElementById('hiddenBMI').value = 'true';
+                document.getElementById('hiddenBMI_Value').value = bmi.toFixed(1);
+            }
+        }
+
+        // 下拉選單更新函數
+        function updateExercise() {
+            const v = document.getElementById('selectExercise').value;
+            document.getElementById('exerciseNone').value = (v === 'none');
+            document.getElementById('exerciseUsually').value = (v === 'sometimes');
+            document.getElementById('exerciseAlways').value = (v === 'always');
+        }
+
+        function updateSmoking() {
+            const v = document.getElementById('selectSmoking').value;
+            document.getElementById('smokingNone').value = (v === 'none');
+            document.getElementById('smokingUsually').value = (v === 'sometimes');
+            document.getElementById('smokingUnder10').value = (v === 'under10');
+            document.getElementById('smokingOver10').value = (v === 'over10');
+        }
+
+        function updateBetelNut() {
+            const v = document.getElementById('selectBetelNut').value;
+            document.getElementById('betelNutNone').value = (v === 'none');
+            document.getElementById('betelNutUsually').value = (v === 'sometimes');
+            document.getElementById('betelNutAlways').value = (v === 'always');
+        }
+
+        function updateBP722() {
+            const v = document.getElementById('selectBP722').value;
+            document.getElementById('hiddenBP722').value = (v === 'yes');
+        }
+
+        function updateQuitSmoking() {
+            const v = document.getElementById('selectQuitSmoking').value;
+            document.getElementById('smokingService').value = (v !== '');
+            document.getElementById('smokingServiceType1').value = (v === 'guide');
+            document.getElementById('smokingServiceType2').value = (v === 'provide');
+            document.getElementById('smokingServiceType2_Provide').value = (v === 'provide');
+            document.getElementById('smokingServiceType2_Referral').value = 'false';
+        }
+
+        function updateCalories() {
+            const v = document.getElementById('selectCalories').value;
+            document.getElementById('dietManagement').value = (v !== '');
+            document.getElementById('cal1200').value = (v === '1200');
+            document.getElementById('cal1500').value = (v === '1500');
+            document.getElementById('cal1800').value = (v === '1800');
+            document.getElementById('cal2000').value = (v === '2000');
+            document.getElementById('calOther').value = (v === 'other');
+            document.getElementById('caloriesOtherBox').classList.toggle('show', v === 'other');
+        }
+
+        function updateExerciseAdvice() {
+            const v = document.getElementById('selectExerciseAdvice').value;
+            document.getElementById('exerciseRecommendation').value = (v !== '');
+            document.getElementById('exerciseGuidance').value = (v === 'guide');
+            document.getElementById('socialResources').value = (v === 'resource');
+            document.getElementById('resourceBox').classList.toggle('show', v === 'resource');
+        }
+
+        // 多選下拉
+        function toggleDropdown(id) {
+            document.getElementById(id).classList.toggle('show');
+        }
+
+        function updateReduce() {
+            const items = [
+                { id: 'chkFried', hidden: 'reduceFried', text: '油炸物' },
+                { id: 'chkSweet', hidden: 'reduceSweet', text: '甜食' },
+                { id: 'chkSalt', hidden: 'reduceSalt', text: '鹽' },
+                { id: 'chkSugar', hidden: 'reduceSugar', text: '含糖飲料' },
+                { id: 'chkReduceOther', hidden: 'reduceOther', text: '其他' }
+            ];
+            const selected = [];
+            items.forEach(item => {
+                const checked = document.getElementById(item.id).checked;
+                document.getElementById(item.hidden).value = checked;
+                if (checked) selected.push(item.text);
+            });
+            const el = document.getElementById('reduceText');
+            el.innerHTML = selected.length === 0 ? '點擊複選...' : selected.map(t => `<span class="tag">${t}</span>`).join('');
+            document.getElementById('reduceOtherBox').classList.toggle('show', document.getElementById('chkReduceOther').checked);
+        }
+
+        // 疾病風險更新
+        function updateCoronary() {
+            const v = document.getElementById('selectCoronary').value;
+            document.getElementById('coronaryHigh').value = (v === 'high');
+            document.getElementById('coronaryMedium').value = (v === 'medium');
+            document.getElementById('coronaryLow').value = (v === 'low');
+            document.getElementById('coronaryNA').value = (v === 'na');
+        }
+
+        function updateDiabetes() {
+            const v = document.getElementById('selectDiabetes').value;
+            document.getElementById('diabetesHigh').value = (v === 'high');
+            document.getElementById('diabetesMedium').value = (v === 'medium');
+            document.getElementById('diabetesLow').value = (v === 'low');
+            document.getElementById('diabetesNA').value = (v === 'na');
+        }
+
+        function updateHypertension() {
+            const v = document.getElementById('selectHypertension').value;
+            document.getElementById('hypertensionHigh').value = (v === 'high');
+            document.getElementById('hypertensionMedium').value = (v === 'medium');
+            document.getElementById('hypertensionLow').value = (v === 'low');
+            document.getElementById('hypertensionNA').value = (v === 'na');
+        }
+
+        function updateStroke() {
+            const v = document.getElementById('selectStroke').value;
+            document.getElementById('strokeHigh').value = (v === 'high');
+            document.getElementById('strokeMedium').value = (v === 'medium');
+            document.getElementById('strokeLow').value = (v === 'low');
+            document.getElementById('strokeNA').value = (v === 'na');
+        }
+
+        function updateCardiovascular() {
+            const v = document.getElementById('selectCardiovascular').value;
+            document.getElementById('cardiovascularHigh').value = (v === 'high');
+            document.getElementById('cardiovascularMedium').value = (v === 'medium');
+            document.getElementById('cardiovascularLow').value = (v === 'low');
+            document.getElementById('cardiovascularNA').value = (v === 'na');
+        }
+
+        // 點擊外部關閉下拉選單
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.multi-select')) {
+                document.querySelectorAll('.multi-dropdown').forEach(d => d.classList.remove('show'));
             }
         });
     </script>
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
-    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 </body>
 </html>

@@ -193,10 +193,10 @@
             margin-bottom: 1rem;
         }
 
-            .record-card:hover {
-                background: #FFF3E0;
-                border-color: #FFB74D;
-            }
+        .record-card:hover {
+            background: #FFF3E0;
+            border-color: #FFB74D;
+        }
 
         .card-row {
             display: flex;
@@ -205,10 +205,10 @@
             border-bottom: 1px solid #FFE0B2;
         }
 
-            .card-row:last-child {
-                border-bottom: none;
-                padding-top: 1rem;
-            }
+        .card-row:last-child {
+            border-bottom: none;
+            padding-top: 1rem;
+        }
 
         .card-label {
             font-weight: 600;
@@ -222,126 +222,120 @@
 
         /* 平板尺寸 (768px - 1024px) */
         @@media (max-width: 1024px) {
-            .container
-        {
-            border-radius: 20px;
-        }
+            .container {
+                border-radius: 20px;
+            }
 
-        .content {
-            padding: 1.5rem;
-        }
+            .content {
+                padding: 1.5rem;
+            }
 
-        table {
-            font-size: 0.9rem;
-        }
+            table {
+                font-size: 0.9rem;
+            }
 
-        th, td {
-            padding: 0.6rem 0.8rem;
-        }
-
+            th, td {
+                padding: 0.6rem 0.8rem;
+            }
         }
 
         /* 手機尺寸 (最大 768px) */
         @@media (max-width: 768px) {
-            body
-        {
-            padding: 1rem 0.5rem;
-        }
+            body {
+                padding: 1rem 0.5rem;
+            }
 
-        .container {
-            border-radius: 15px;
-        }
+            .container {
+                border-radius: 15px;
+            }
 
-        .header {
-            padding: 1.5rem 1rem;
-        }
+            .header {
+                padding: 1.5rem 1rem;
+            }
 
-        .header-title {
-            font-size: 1.5rem;
-        }
+            .header-title {
+                font-size: 1.5rem;
+            }
 
-        .content {
-            padding: 1rem;
-        }
+            .content {
+                padding: 1rem;
+            }
 
-        .search-section {
-            padding: 1rem;
-        }
+            .search-section {
+                padding: 1rem;
+            }
 
-        .search-form {
-            flex-direction: column;
-        }
+            .search-form {
+                flex-direction: column;
+            }
 
-        .search-input {
-            width: 100%;
-            min-width: 100%;
-        }
+            .search-input {
+                width: 100%;
+                min-width: 100%;
+            }
 
-        .btn {
-            width: 100%;
-        }
+            .btn {
+                width: 100%;
+            }
 
-        .button-group {
-            flex-direction: column;
-        }
+            .button-group {
+                flex-direction: column;
+            }
 
-        /* 隱藏桌面表格,顯示手機卡片 */
-        .desktop-table {
-            display: none;
-        }
+            /* 隱藏桌面表格,顯示手機卡片 */
+            .desktop-table {
+                display: none;
+            }
 
-        .mobile-cards {
-            display: block;
-        }
+            .mobile-cards {
+                display: block;
+            }
 
-        .empty-message {
-            padding: 2rem 1rem;
-            font-size: 1.1rem;
-        }
-
+            .empty-message {
+                padding: 2rem 1rem;
+                font-size: 1.1rem;
+            }
         }
 
         /* 小手機尺寸 (最大 480px) */
         @@media (max-width: 480px) {
-            body
-        {
-            padding: 0.5rem;
-        }
+            body {
+                padding: 0.5rem;
+            }
 
-        .header {
-            padding: 1.2rem 0.8rem;
-        }
+            .header {
+                padding: 1.2rem 0.8rem;
+            }
 
-        .header-title {
-            font-size: 1.3rem;
-        }
+            .header-title {
+                font-size: 1.3rem;
+            }
 
-        .content {
-            padding: 0.8rem;
-        }
+            .content {
+                padding: 0.8rem;
+            }
 
-        .search-section {
-            padding: 0.8rem;
-        }
+            .search-section {
+                padding: 0.8rem;
+            }
 
-        .btn {
-            padding: 0.7rem 1rem;
-            font-size: 0.95rem;
-        }
+            .btn {
+                padding: 0.7rem 1rem;
+                font-size: 0.95rem;
+            }
 
-        .record-card {
-            padding: 1rem;
-        }
+            .record-card {
+                padding: 1rem;
+            }
 
-        .card-row {
-            flex-direction: column;
-            gap: 0.3rem;
-        }
+            .card-row {
+                flex-direction: column;
+                gap: 0.3rem;
+            }
 
-        .card-value {
-            text-align: left;
-        }
-
+            .card-value {
+                text-align: left;
+            }
         }
     </style>
 </head>
@@ -349,6 +343,7 @@
     <div class="container">
         <div class="header">
             <h1 class="header-title">📋 所有個案紀錄</h1>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.9;">每個個案顯示最新一筆評估</p>
         </div>
 
         <div class="content">
@@ -400,7 +395,7 @@
                                 <th>姓名</th>
                                 <th>性別</th>
                                 <th>出生日期</th>
-                                <th>評估日期</th>
+                                <th>最新評估日期</th>
                                 <th>回診日期</th>
                                 <th>操作</th>
                             </tr>
@@ -417,13 +412,13 @@
                                     <td>@(record.FollowUpDate?.ToString("yyyy/MM/dd") ?? "-")</td>
                                     <td>
                                         <div class="action-buttons">
-                                            <a href="@Url.Action("Details", "CaseManagement", new { id = record.Id })"
+                                            <a href="@Url.Action("PatientHistory", "CaseManagement", new { idNumber = record.IDNumber })"
                                                class="btn btn-primary btn-small">
-                                                查看
+                                                📋 查看歷史
                                             </a>
                                             <a href="@Url.Action("Edit", "CaseManagement", new { id = record.Id })"
                                                class="btn btn-secondary btn-small">
-                                                編輯
+                                                ✏️ 編輯
                                             </a>
                                         </div>
                                     </td>
@@ -455,7 +450,7 @@
                                 <span class="card-value">@record.BirthDate.ToString("yyyy/MM/dd")</span>
                             </div>
                             <div class="card-row">
-                                <span class="card-label">評估日期</span>
+                                <span class="card-label">最新評估日期</span>
                                 <span class="card-value">@(record.AssessmentDate?.ToString("yyyy/MM/dd") ?? "-")</span>
                             </div>
                             <div class="card-row">
@@ -464,9 +459,9 @@
                             </div>
                             <div class="card-row">
                                 <div class="action-buttons" style="width: 100%;">
-                                    <a href="@Url.Action("Details", "CaseManagement", new { id = record.Id })"
+                                    <a href="@Url.Action("PatientHistory", "CaseManagement", new { idNumber = record.IDNumber })"
                                        class="btn btn-primary btn-small">
-                                        📋 查看
+                                        📋 查看歷史
                                     </a>
                                     <a href="@Url.Action("Edit", "CaseManagement", new { id = record.Id })"
                                        class="btn btn-secondary btn-small">
@@ -479,7 +474,7 @@
                 </div>
 
                 <p class="record-count">
-                    共 @Model.Count 筆紀錄
+                    共 @Model.Count 個個案
                 </p>
             }
             else

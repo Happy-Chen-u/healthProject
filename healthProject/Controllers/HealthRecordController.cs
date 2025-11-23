@@ -100,13 +100,66 @@ namespace healthProject.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(HealthRecordViewModel model,
-            string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
+    string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
         {
             // ✅ 驗證血壓完整性
             var bpWarnings = model.ValidateBloodPressure();
             if (bpWarnings.Any())
             {
                 TempData["BPWarnings"] = string.Join("\n", bpWarnings);
+            }
+
+            // 🆕 檢查今日血壓是否已全部填寫
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var todayRecords = await GetUserRecordsByDateAsync(userId, DateTime.Today);
+
+            bool todayHasAllBP = todayRecords.Any(r =>
+                r.BP_First_1_Systolic.HasValue && r.BP_First_1_Diastolic.HasValue &&
+                r.BP_First_2_Systolic.HasValue && r.BP_First_2_Diastolic.HasValue &&
+                r.BP_Second_1_Systolic.HasValue && r.BP_Second_1_Diastolic.HasValue &&
+                r.BP_Second_2_Systolic.HasValue && r.BP_Second_2_Diastolic.HasValue
+            );
+
+            // 檢查當前表單是否有填血壓
+            bool currentHasBP = model.BP_First_1_Systolic.HasValue || model.BP_First_1_Diastolic.HasValue ||
+                               model.BP_First_2_Systolic.HasValue || model.BP_First_2_Diastolic.HasValue ||
+                               model.BP_Second_1_Systolic.HasValue || model.BP_Second_1_Diastolic.HasValue ||
+                               model.BP_Second_2_Systolic.HasValue || model.BP_Second_2_Diastolic.HasValue;
+
+            // 檢查是否有填其他資訊
+            bool hasOtherData = !string.IsNullOrEmpty(Meals_Breakfast) || !string.IsNullOrEmpty(Meals_Lunch) ||
+                               !string.IsNullOrEmpty(Meals_Dinner) || !string.IsNullOrEmpty(model.ExerciseType) ||
+                               model.ExerciseDuration.HasValue || model.WaterIntake.HasValue ||
+                               !string.IsNullOrEmpty(model.Beverage) || model.Cigarettes.HasValue ||
+                               model.BetelNut.HasValue || model.BloodSugar.HasValue;
+
+            // 🆕 如果今日血壓已全部填寫，且本次又填了血壓，顯示警告
+            if (todayHasAllBP && currentHasBP)
+            {
+                ViewBag.HasOtherData = hasOtherData;
+                ViewBag.FormData = new
+                {
+                    model.BP_First_1_Systolic,
+                    model.BP_First_1_Diastolic,
+                    model.BP_First_2_Systolic,
+                    model.BP_First_2_Diastolic,
+                    model.BP_Second_1_Systolic,
+                    model.BP_Second_1_Diastolic,
+                    model.BP_Second_2_Systolic,
+                    model.BP_Second_2_Diastolic,
+                    Meals_Breakfast,
+                    Meals_Lunch,
+                    Meals_Dinner,
+                    model.ExerciseType,
+                    model.ExerciseDuration,
+                    model.WaterIntake,
+                    model.Beverage,
+                    model.Cigarettes,
+                    model.BetelNut,
+                    model.BloodSugar
+                };
+
+                return View("BPWarning", model);
             }
 
             // 🆕 手動處理三餐 JSON
@@ -131,7 +184,6 @@ namespace healthProject.Controllers
                 return View(model);
             }
 
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             model.UserId = userId;
             model.RecordDate = DateTime.Today;
             model.RecordTime = DateTime.Now.TimeOfDay;
@@ -336,50 +388,103 @@ namespace healthProject.Controllers
 
                 var records = await GetUserRecordsAsync(patient.Id);
 
-                // 確保三餐欄位是物件 (不是已序列化的字串)
-                object ToMealObject(MealSelection m) =>
-                    m == null ? null : new
-                    {
-                        Vegetables = string.IsNullOrWhiteSpace(m.Vegetables) ? null : m.Vegetables,
-                        Protein = string.IsNullOrWhiteSpace(m.Protein) ? null : m.Protein,
-                        Carbs = string.IsNullOrWhiteSpace(m.Carbs) ? null : m.Carbs
-                    };
+                // 🆕 日期篩選
+                if (!string.IsNullOrEmpty(request.startDate) || !string.IsNullOrEmpty(request.endDate))
+                {
+                    DateTime? start = string.IsNullOrEmpty(request.startDate) ? null : DateTime.Parse(request.startDate);
+                    DateTime? end = string.IsNullOrEmpty(request.endDate) ? null : DateTime.Parse(request.endDate);
 
-                var groupedRecords = records
+                    if (start.HasValue)
+                    {
+                        records = records.Where(r => r.RecordDate >= start.Value).ToList();
+                    }
+                    if (end.HasValue)
+                    {
+                        records = records.Where(r => r.RecordDate <= end.Value).ToList();
+                    }
+                }
+
+                // 按日期分組並計算每日統計
+                var dailyStats = records
                     .GroupBy(r => r.RecordDate.Date)
-                    .Select(g => new
-                    {
-                        date = g.Key.ToString("yyyy-MM-dd"),
-                        records = g.OrderBy(r => r.RecordTime).Select(r => new
+                    .Select(g => {
+                        var dayRecords = g.ToList();
+
+                        var bpReadings = new List<object>();
+                        foreach (var r in dayRecords)
                         {
-                            recordTime = r.RecordTime?.ToString(@"hh\:mm"),
+                            if (r.BP_First_1_Systolic.HasValue && r.BP_First_1_Diastolic.HasValue)
+                                bpReadings.Add(new
+                                {
+                                    label = "第一次第一遍",
+                                    systolic = Math.Round(r.BP_First_1_Systolic.Value),
+                                    diastolic = Math.Round(r.BP_First_1_Diastolic.Value)
+                                });
+                            if (r.BP_First_2_Systolic.HasValue && r.BP_First_2_Diastolic.HasValue)
+                                bpReadings.Add(new
+                                {
+                                    label = "第一次第二遍",
+                                    systolic = Math.Round(r.BP_First_2_Systolic.Value),
+                                    diastolic = Math.Round(r.BP_First_2_Diastolic.Value)
+                                });
+                            if (r.BP_Second_1_Systolic.HasValue && r.BP_Second_1_Diastolic.HasValue)
+                                bpReadings.Add(new
+                                {
+                                    label = "第二次第一遍",
+                                    systolic = Math.Round(r.BP_Second_1_Systolic.Value),
+                                    diastolic = Math.Round(r.BP_Second_1_Diastolic.Value)
+                                });
+                            if (r.BP_Second_2_Systolic.HasValue && r.BP_Second_2_Diastolic.HasValue)
+                                bpReadings.Add(new
+                                {
+                                    label = "第二次第二遍",
+                                    systolic = Math.Round(r.BP_Second_2_Systolic.Value),
+                                    diastolic = Math.Round(r.BP_Second_2_Diastolic.Value)
+                                });
+                        }
 
-                            // 血壓 (維持原樣)
-                            bp_First_1_Systolic = r.BP_First_1_Systolic,
-                            bp_First_1_Diastolic = r.BP_First_1_Diastolic,
-                            bp_First_2_Systolic = r.BP_First_2_Systolic,
-                            bp_First_2_Diastolic = r.BP_First_2_Diastolic,
-                            bp_Second_1_Systolic = r.BP_Second_1_Systolic,
-                            bp_Second_1_Diastolic = r.BP_Second_1_Diastolic,
-                            bp_Second_2_Systolic = r.BP_Second_2_Systolic,
-                            bp_Second_2_Diastolic = r.BP_Second_2_Diastolic,
+                        var totalWater = dayRecords.Sum(r => r.WaterIntake ?? 0);
+                        var totalExercise = dayRecords.Sum(r => r.ExerciseDuration ?? 0);
+                        var totalCigarettes = dayRecords.Sum(r => r.Cigarettes ?? 0);
+                        var totalBetelNut = dayRecords.Sum(r => r.BetelNut ?? 0);
 
-                            // 三餐 - 明確轉成物件 (避免字串包 JSON 的情況)
-                            meals_Breakfast = ToMealObject(r.Meals_Breakfast),
-                            meals_Lunch = ToMealObject(r.Meals_Lunch),
-                            meals_Dinner = ToMealObject(r.Meals_Dinner),
+                        var bloodSugars = dayRecords.Where(r => r.BloodSugar.HasValue).Select(r => r.BloodSugar.Value).ToList();
+                        var avgBloodSugar = bloodSugars.Any() ? bloodSugars.Average() : (decimal?)null;
 
-                            // 其他欄位
-                            exerciseType = r.ExerciseType,
-                            exerciseDuration = r.ExerciseDuration,
-                            waterIntake = r.WaterIntake,
-                            beverage = r.Beverage,
-                            cigarettes = r.Cigarettes,
-                            betelNut = r.BetelNut,
-                            bloodSugar = r.BloodSugar
-                        }).ToList()
+                        var exercises = dayRecords
+                            .Where(r => !string.IsNullOrEmpty(r.ExerciseType) || r.ExerciseDuration.HasValue)
+                            .Select(r => new {
+                                type = r.ExerciseType ?? "運動",
+                                duration = r.ExerciseDuration ?? 0
+                            })
+                            .Where(e => e.duration > 0)
+                            .ToList();
+
+                        var beverages = dayRecords
+                            .Where(r => !string.IsNullOrEmpty(r.Beverage))
+                            .Select(r => r.Beverage)
+                            .ToList();
+
+                        var breakfastMeals = dayRecords.Where(r => r.Meals_Breakfast != null).Select(r => r.Meals_Breakfast).ToList();
+                        var lunchMeals = dayRecords.Where(r => r.Meals_Lunch != null).Select(r => r.Meals_Lunch).ToList();
+                        var dinnerMeals = dayRecords.Where(r => r.Meals_Dinner != null).Select(r => r.Meals_Dinner).ToList();
+
+                        return new
+                        {
+                            date = g.Key.ToString("yyyy-MM-dd"),
+                            bloodPressure = bpReadings.Any() ? new { readings = bpReadings } : null,
+                            bloodSugar = avgBloodSugar.HasValue ? Math.Round(avgBloodSugar.Value, 1) : (decimal?)null,
+                            exercise = exercises.Any() ? exercises : null,
+                            water = totalWater > 0 ? totalWater : (decimal?)null,
+                            beverage = beverages.Any() ? string.Join(", ", beverages) : null,
+                            breakfast = breakfastMeals.Any() ? breakfastMeals : null,
+                            lunch = lunchMeals.Any() ? lunchMeals : null,
+                            dinner = dinnerMeals.Any() ? dinnerMeals : null,
+                            cigarettes = totalCigarettes > 0 ? totalCigarettes : (decimal?)null,
+                            betelNut = totalBetelNut > 0 ? totalBetelNut : (decimal?)null
+                        };
                     })
-                    .OrderByDescending(g => g.date)
+                    .OrderByDescending(s => s.date)
                     .ToList();
 
                 return Json(new
@@ -389,7 +494,9 @@ namespace healthProject.Controllers
                     {
                         patientName = patient.FullName,
                         idNumber = patient.IDNumber,
-                        records = groupedRecords
+                        gender = patient.Gender,
+                        birthDate = patient.BirthDate?.ToString("yyyy/MM/dd"),
+                        dailyStats = dailyStats
                     }
                 });
             }
@@ -400,6 +507,66 @@ namespace healthProject.Controllers
             }
         }
 
+        // 🆕 修改 SearchRequest 類別
+        
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmWithoutBP(string formDataJson)
+        {
+            try
+            {
+                var formData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, System.Text.Json.JsonElement>>(formDataJson);
+
+                var model = new HealthRecordViewModel
+                {
+                    UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)),
+                    RecordDate = DateTime.Today,
+                    RecordTime = DateTime.Now.TimeOfDay,
+
+                    // 🆕 不包含血壓資料
+                    BP_First_1_Systolic = null,
+                    BP_First_1_Diastolic = null,
+                    BP_First_2_Systolic = null,
+                    BP_First_2_Diastolic = null,
+                    BP_Second_1_Systolic = null,
+                    BP_Second_1_Diastolic = null,
+                    BP_Second_2_Systolic = null,
+                    BP_Second_2_Diastolic = null
+                };
+
+                // 恢復其他資料
+                if (formData.ContainsKey("Meals_Breakfast") && formData["Meals_Breakfast"].ValueKind == System.Text.Json.JsonValueKind.String && !string.IsNullOrEmpty(formData["Meals_Breakfast"].GetString()))
+                    model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(formData["Meals_Breakfast"].GetString());
+                if (formData.ContainsKey("Meals_Lunch") && formData["Meals_Lunch"].ValueKind == System.Text.Json.JsonValueKind.String && !string.IsNullOrEmpty(formData["Meals_Lunch"].GetString()))
+                    model.Meals_Lunch = JsonSerializer.Deserialize<MealSelection>(formData["Meals_Lunch"].GetString());
+                if (formData.ContainsKey("Meals_Dinner") && formData["Meals_Dinner"].ValueKind == System.Text.Json.JsonValueKind.String && !string.IsNullOrEmpty(formData["Meals_Dinner"].GetString()))
+                    model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(formData["Meals_Dinner"].GetString());
+
+                if (formData.ContainsKey("ExerciseType") && formData["ExerciseType"].ValueKind == System.Text.Json.JsonValueKind.String)
+                    model.ExerciseType = formData["ExerciseType"].GetString();
+                if (formData.ContainsKey("ExerciseDuration") && formData["ExerciseDuration"].ValueKind == System.Text.Json.JsonValueKind.Number)
+                    model.ExerciseDuration = formData["ExerciseDuration"].GetDecimal();
+                if (formData.ContainsKey("WaterIntake") && formData["WaterIntake"].ValueKind == System.Text.Json.JsonValueKind.Number)
+                    model.WaterIntake = formData["WaterIntake"].GetDecimal();
+                if (formData.ContainsKey("Beverage") && formData["Beverage"].ValueKind == System.Text.Json.JsonValueKind.String)
+                    model.Beverage = formData["Beverage"].GetString();
+                if (formData.ContainsKey("Cigarettes") && formData["Cigarettes"].ValueKind == System.Text.Json.JsonValueKind.Number)
+                    model.Cigarettes = formData["Cigarettes"].GetDecimal();
+                if (formData.ContainsKey("BetelNut") && formData["BetelNut"].ValueKind == System.Text.Json.JsonValueKind.Number)
+                    model.BetelNut = formData["BetelNut"].GetDecimal();
+                if (formData.ContainsKey("BloodSugar") && formData["BloodSugar"].ValueKind == System.Text.Json.JsonValueKind.Number)
+                    model.BloodSugar = formData["BloodSugar"].GetDecimal();
+
+                // 顯示確認頁面
+                return View("Confirm", model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "處理表單資料失敗");
+                return RedirectToAction("Create");
+            }
+        }
 
 
         // ========================================
@@ -585,17 +752,24 @@ namespace healthProject.Controllers
             return null;
         }
 
-        private async Task<UserDBModel> GetPatientByIdNumberAsync(string idNumber)
+        private async Task<PatientBasicInfo> GetPatientByIdNumberAsync(string idNumber)
         {
             var connStr = _configuration.GetConnectionString("DefaultConnection");
             await using var conn = new NpgsqlConnection(connStr);
             await conn.OpenAsync();
 
+            // 🆕 從 Users 和 CaseManagement 表聯合查詢
             var query = @"
-                SELECT ""Id"", ""FullName"", ""IDNumber""
-                FROM ""Users""
-                WHERE ""IDNumber"" = @IDNumber AND ""IsActive"" = true
-                LIMIT 1";
+        SELECT 
+            u.""Id"", 
+            u.""FullName"", 
+            u.""IDNumber"",
+            cm.""Gender"",
+            cm.""BirthDate""
+        FROM ""Users"" u
+        LEFT JOIN ""CaseManagement"" cm ON u.""IDNumber"" = cm.""IDNumber""
+        WHERE u.""IDNumber"" = @IDNumber AND u.""IsActive"" = true
+        LIMIT 1";
 
             await using var cmd = new NpgsqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@IDNumber", idNumber);
@@ -603,15 +777,27 @@ namespace healthProject.Controllers
             await using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return new UserDBModel
+                return new PatientBasicInfo
                 {
                     Id = reader.GetInt32(0),
                     FullName = reader.GetString(1),
-                    IDNumber = reader.GetString(2)
+                    IDNumber = reader.GetString(2),
+                    Gender = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    BirthDate = reader.IsDBNull(4) ? null : reader.GetDateTime(4)
                 };
             }
 
             return null;
+        }
+
+        // 🆕 新增 PatientBasicInfo 類別（放在 SearchRequest 下方）
+        public class PatientBasicInfo
+        {
+            public int Id { get; set; }
+            public string FullName { get; set; }
+            public string IDNumber { get; set; }
+            public string Gender { get; set; }
+            public DateTime? BirthDate { get; set; }
         }
 
         // ========================================
@@ -890,6 +1076,8 @@ namespace healthProject.Controllers
         public class SearchRequest
         {
             public string idNumber { get; set; }
+            public string startDate { get; set; }
+            public string endDate { get; set; }
         }
 
         // 🆕 新增：取得特定日期的所有紀錄
