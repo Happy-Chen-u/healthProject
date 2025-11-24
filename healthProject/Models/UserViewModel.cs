@@ -5,6 +5,10 @@ namespace healthProject.Models
 {
     public class UserViewModel
     {
+        [Required(ErrorMessage = "特殊符號為必填")]
+        [StringLength(1, MinimumLength = 1, ErrorMessage = "特殊符號必須為1個字元")]
+        public string SpecialSymbol { get; set; }
+
         [Required(ErrorMessage = "身分證字號為必填")]
         [StringLength(10, MinimumLength = 10, ErrorMessage = "身分證字號必須為10碼")]
         public string IDNumber { get; set; }
@@ -18,4 +22,3 @@ namespace healthProject.Models
         public string PhoneNumber { get; set; }
     }
 }
-

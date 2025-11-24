@@ -10,466 +10,274 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
     <style>
-        .admin-container {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
         body {
             background-color: #f5f5f5;
             font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-            min-height: 100vh;
             margin: 0;
-            padding: 0;
+            padding: 20px;
         }
 
-        .page-header {
-            background: linear-gradient(135deg, #337f4b 0%, #275a37 100%);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 12px; /* 🆕 加圓角 */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .page-title {
             text-align: center;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            color: #333;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
         }
 
-            .page-header h1 {
-                margin: 0;
-                font-size: 1.5rem;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.5rem;
-            }
-
-        .search-section {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 12px; /* 🆕 加圓角 */
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .search-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #337f4b;
-            margin-bottom: 1rem;
+        .search-container {
             display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
             align-items: center;
-            gap: 0.5rem;
         }
 
-        .search-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr auto;
-            gap: 1rem;
-            align-items: end;
-            margin-bottom: 1rem;
+        .search-box {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 15px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            gap: 8px;
         }
 
-        .search-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
-        }
-
-        .search-label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #475569;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 6px; /* 🆕 加圓角 */
-            font-size: 0.95rem;
-            font-family: inherit;
-        }
-
-            .search-input:focus {
-                outline: none;
-                border-color: #81af74;
+            .search-box label {
+                font-size: 14px;
+                color: #333;
+                white-space: nowrap;
+                margin: 0;
             }
 
-        .btn-search {
-            background: #337f4b;
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border: none;
-            border-radius: 6px; /* 🆕 加圓角 */
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            height: fit-content;
-        }
-
-            .btn-search:hover {
-                background: #275a37;
+            .search-box input {
+                padding: 5px 10px;
+                border: 1px solid #ccc;
+                border-radius: 3px;
+                font-size: 14px;
+                width: 180px;
             }
 
-        .date-filter {
-            background: #f8f8f8;
-            border-top: 1px solid #ddd;
-            border-radius: 0 0 8px 8px; /* 🆕 下方圓角 */
-            padding: 1rem;
-            margin-top: 1rem;
+            .search-box button {
+                padding: 5px 18px;
+                background: #5a9a5a;
+                color: white;
+                border: none;
+                border-radius: 3px;
+                cursor: pointer;
+                font-size: 14px;
+            }
+
+                .search-box button:hover {
+                    background: #4a8a4a;
+                }
+
+        .date-filter-box {
             display: none;
         }
 
-            .date-filter.show {
-                display: block;
+            .date-filter-box.show {
+                display: inline-flex;
             }
-
-        .date-filter-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #475569;
-            margin-bottom: 0.5rem;
-        }
-
-        .date-inputs {
-            display: grid;
-            grid-template-columns: 1fr 1fr auto;
-            gap: 1rem;
-            align-items: end;
-        }
 
         .patient-info {
-            background: #e8f5e9;
-            border: 1px solid #4caf50;
-            border-radius: 8px; /* 🆕 加圓角 */
-            padding: 1rem;
-            margin-top: 1rem;
+            background: #f7f5e7;
+            border: 2px solid #455a64;
+            padding: 12px 20px;
+            margin-bottom: 15px;
             display: none;
+            font-size: 14px;
+            border-radius: 12px;
+            overflow: hidden;
         }
 
             .patient-info.show {
                 display: block;
             }
 
-        .patient-details {
+        .patient-info-content {
             display: flex;
+            gap: 30px;
             flex-wrap: wrap;
-            gap: 1.5rem;
-            font-size: 0.9rem;
-            color: #1b5e20;
         }
 
-        .patient-detail-item {
+        .patient-info-item {
             display: flex;
-            align-items: center;
-            gap: 0.3rem;
+            gap: 8px;
         }
 
-        .patient-detail-label {
-            font-weight: 600;
+        .patient-info-label {
+            font-weight: bold;
         }
 
-        .results-section {
+        .record-container {
             display: none;
         }
 
-            .results-section.show {
+            .record-container.show {
                 display: block;
             }
 
-        /* 🆕 日期標題 */
+        .record-block {
+            margin-bottom: 0;
+            border: 2px solid #455a64;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
         .date-header {
-            background: #e0ecdd;
-            border: 1px solid #74a86f;
-            border-bottom: 2px solid #74a86f;
-            border-radius: 8px 8px 0 0; /* 🆕 上方圓角 */
-            padding: 0.75rem 1rem;
-            margin-bottom: 0;
-        }
-
-        .date-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #408355;
-            margin: 0;
-        }
-
-        /* 🆕 表格容器 */
-        .record-tables {
-            margin-bottom: 2rem;
-            border-radius: 8px; /* 🆕 整體圓角 */
-            overflow: hidden; /* 🆕 讓內部表格圓角生效 */
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 🆕 輕微陰影 */
-        }
-
-        /* 🆕 722血壓測量表格 */
-        .bp-table-container {
-            margin-bottom: 0;
-        }
-
-        .bp-table-title {
-            background: #ffebee;
-            border: 1px solid #e57373;
-            border-top: none;
-            border-bottom: none;
-            padding: 0.4rem;
-            text-align: center;
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #c62828;
-        }
-
-        .bp-table {
-            width: 100%;
-            border-collapse: collapse;
-            border-left: 1px solid #e57373;
-            border-right: 1px solid #e57373;
-            border-bottom: 1px solid #e57373;
-        }
-
-            .bp-table th {
-                background: #ffcdd2;
-                padding: 0.4rem;
-                text-align: center;
-                font-weight: 600;
-                color: #b71c1c;
-                border: 1px solid #e57373;
-                font-size: 0.85rem;
-            }
-
-            .bp-table td {
-                padding: 0.4rem;
-                text-align: center;
-                border: 1px solid #e57373;
-                background: white;
-                color: #1e293b;
-                font-weight: 600;
-                font-size: 0.95rem;
-            }
-
-        /* 🆕 生活習慣與飲食記錄表格 */
-        .lifestyle-table-container {
-            margin-bottom: 0;
-        }
-
-        .lifestyle-table-title {
             background: #e8f5e9;
-            border: 1px solid #66bb6a;
-            border-top: none;
-            border-bottom: none;
-            padding: 0.4rem;
-            text-align: center;
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #2e7d32;
+            border-bottom: 2px solid #455a64;
+            padding: 10px 15px;
+            font-weight: bold;
+            font-size: 15px;
+            padding: 10px 5px;
+            text-align: left;
         }
 
-        .lifestyle-table {
+        .bp-section {
+            border-bottom: 2px solid #455a64;
+        }
+
+        .section-title {
+            padding: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .bp-title {
+            background: #699a54;
+            color: #ebebeb;
+        }
+
+        .lifestyle-title {
+            background: #699a54;
+            color: #ebebeb;
+        }
+
+        .data-table {
             width: 100%;
             border-collapse: collapse;
-            border-left: 1px solid #66bb6a;
-            border-right: 1px solid #66bb6a;
-            border-bottom: 1px solid #66bb6a;
-            border-radius: 0 0 8px 8px; /* 🆕 下方圓角 */
-            overflow: hidden; /* 🆕 讓圓角生效 */
         }
 
-            .lifestyle-table th {
-                background: #c8e6c9;
-                padding: 0.4rem;
+            .data-table th {
+                background: #f5f5f5;
+                padding: 8px;
                 text-align: center;
-                font-weight: 600;
-                color: #1b5e20;
-                border: 1px solid #66bb6a;
-                font-size: 0.85rem;
+                font-weight: bold;
+                font-size: 13px;
+                border: 1px solid #455a64;
             }
 
-            .lifestyle-table td {
-                padding: 0.4rem;
+            .data-table td {
+                padding: 8px;
                 text-align: center;
-                border: 1px solid #66bb6a;
-                background: white;
-                color: #1e293b;
-                font-size: 0.85rem;
+                font-size: 13px;
+                border: 1px solid #455a64;
             }
 
-            /* 🆕 最後一行的圓角 */
-            .lifestyle-table tbody tr:last-child td:first-child {
-                border-bottom-left-radius: 8px;
-            }
+        .bp-section .data-table th {
+            background: #d4decf;
+        }
 
-            .lifestyle-table tbody tr:last-child td:last-child {
-                border-bottom-right-radius: 8px;
-            }
+        .lifestyle-section .data-table th {
+            background: #d4decf;
+        }
 
         .meal-content {
             text-align: left;
-            line-height: 1.4;
-            font-size: 0.8rem;
+            font-size: 12px;
+            line-height: 1.3;
+            padding: 4px;
         }
 
         .empty-cell {
-            color: #bbb;
+            color: #999;
             font-style: italic;
         }
 
         .empty-state {
             text-align: center;
-            padding: 2rem;
+            padding: 40px;
             background: white;
-            border: 1px solid #ddd;
-            border-radius: 12px; /* 🆕 加圓角 */
-            color: #64748b;
+            border: 2px solid #455a64;
+            color: #666;
+            margin-top: 20px;
+            border-radius: 12px;
         }
 
-        .empty-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        .btn {
-            padding: 0.5rem 1.2rem;
-            border: none;
-            border-radius: 6px; /* 🆕 加圓角 */
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-secondary {
+        .btn-back {
+            padding: 8px 18px;
             background: #607D8B;
             color: white;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
         }
 
-            .btn-secondary:hover {
+            .btn-back:hover {
                 background: #455A64;
-                text-decoration: none;
                 color: white;
+                text-decoration: none;
             }
-
-        @@media (max-width: 768px) {
-            .search-row, .date-inputs {
-                grid-template-columns: 1fr;
-            }
-
-            .lifestyle-table, .bp-table {
-                font-size: 0.75rem;
-            }
-
-                .lifestyle-table th, .lifestyle-table td,
-                .bp-table th, .bp-table td {
-                    padding: 0.3rem 0.2rem;
-                }
-
-            .patient-details {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .meal-content {
-                font-size: 0.7rem;
-            }
-        }
-
-        @@media print {
-            .search-section, .btn, .page-header {
-                display: none;
-            }
-
-            body {
-                background: white;
-            }
-
-            .bp-table, .lifestyle-table {
-                page-break-inside: avoid;
-            }
-        }
     </style>
 </head>
 <body>
-    <div class="admin-container">
-        <div class="page-header">
-            <h1>
-                <span>🔍</span>
-                <span>查詢病患健康資訊</span>
-            </h1>
+    <div class="container">
+        <h1 class="page-title">🔍 查詢病患健康資訊</h1>
+
+        <div style="margin-bottom: 15px;">
+            <a href="@Url.Action("Dashboard", "Home")" class="btn-back">← 返回主選單</a>
         </div>
 
-        <div style="margin-bottom: 1rem;">
-            <a href="@Url.Action("Dashboard", "Home")" class="btn btn-secondary">
-                ← 返回主選單
-            </a>
+        <div class="search-container">
+            <div class="search-box">
+                <label>輸入病患身分證字號：</label>
+                <input type="text" id="searchIdNumber" placeholder="例如: A123456789" maxlength="10" />
+                <button type="button" onclick="searchPatient()">搜尋</button>
+            </div>
+
+            <div class="search-box date-filter-box" id="dateFilterBox">
+                <label>日期篩選 年/月/日：</label>
+                <input type="date" id="filterDate" />
+                <button type="button" onclick="applyDateFilter()">搜尋</button>
+            </div>
         </div>
 
-        <div class="search-section">
-            <div class="search-title">
-                <span>👤</span>
-                <span>輸入病患身分證字號</span>
-            </div>
-            <div class="search-row">
-                <div class="search-group">
-                    <label class="search-label">身分證字號</label>
-                    <input type="text"
-                           id="searchIdNumber"
-                           class="search-input"
-                           placeholder="例如: A123456789"
-                           maxlength="10" />
+        <div class="patient-info" id="patientInfo">
+            <div class="patient-info-content">
+                <div class="patient-info-item">
+                    <span class="patient-info-label">姓名：</span>
+                    <span id="patientName"></span>
                 </div>
-                <div></div>
-                <button type="button" class="btn-search" onclick="searchPatient()">
-                    🔍 搜尋
-                </button>
-            </div>
-
-            <!-- 病患資訊 -->
-            <div id="patientInfo" class="patient-info">
-                <div class="patient-details">
-                    <div class="patient-detail-item">
-                        <span class="patient-detail-label">姓名:</span>
-                        <span id="patientName"></span>
-                    </div>
-                    <div class="patient-detail-item">
-                        <span class="patient-detail-label">身分證字號:</span>
-                        <span id="patientId"></span>
-                    </div>
-                    <div class="patient-detail-item" id="genderItem" style="display: none;">
-                        <span class="patient-detail-label">性別:</span>
-                        <span id="patientGender"></span>
-                    </div>
-                    <div class="patient-detail-item" id="birthDateItem" style="display: none;">
-                        <span class="patient-detail-label">生日:</span>
-                        <span id="patientBirthDate"></span>
-                    </div>
+                <div class="patient-info-item">
+                    <span class="patient-info-label">身分證字號：</span>
+                    <span id="patientId"></span>
                 </div>
-            </div>
-
-            <!-- 日期篩選 -->
-            <div id="dateFilter" class="date-filter">
-                <div class="date-filter-title">📅 日期篩選 (選填)</div>
-                <div class="date-inputs">
-                    <div class="search-group">
-                        <label class="search-label">開始日期</label>
-                        <input type="date" id="startDate" class="search-input" />
-                    </div>
-                    <div class="search-group">
-                        <label class="search-label">結束日期</label>
-                        <input type="date" id="endDate" class="search-input" />
-                    </div>
-                    <button type="button" class="btn-search" onclick="applyDateFilter()">
-                        🔍 篩選
-                    </button>
+                <div class="patient-info-item">
+                    <span class="patient-info-label">性別：</span>
+                    <span id="patientGender"></span>
+                </div>
+                <div class="patient-info-item">
+                    <span class="patient-info-label">生日：</span>
+                    <span id="patientBirthDate"></span>
                 </div>
             </div>
         </div>
 
-        <div id="resultsSection" class="results-section">
-            <div id="recordsContainer"></div>
+        <div id="recordContainer" class="record-container">
+            <div id="recordsContent"></div>
             <div id="emptyState" class="empty-state" style="display: none;">
-                <div class="empty-icon">📝</div>
-                <div>此病患尚無健康資訊紀錄</div>
+                <div style="font-size: 48px; margin-bottom: 15px;">📝</div>
+                <div>此日期範圍內沒有健康資訊紀錄</div>
             </div>
         </div>
     </div>
@@ -538,24 +346,19 @@
                 if (result.success) {
                     document.getElementById('patientName').textContent = result.data.patientName;
                     document.getElementById('patientId').textContent = result.data.idNumber;
-
-                    if (result.data.gender) {
-                        document.getElementById('patientGender').textContent = result.data.gender;
-                        document.getElementById('genderItem').style.display = 'flex';
-                    }
-                    if (result.data.birthDate) {
-                        document.getElementById('patientBirthDate').textContent = result.data.birthDate;
-                        document.getElementById('birthDateItem').style.display = 'flex';
-                    }
+                    document.getElementById('patientGender').textContent = result.data.gender || '-';
+                    document.getElementById('patientBirthDate').textContent = result.data.birthDate || '-';
 
                     document.getElementById('patientInfo').classList.add('show');
-                    document.getElementById('dateFilter').classList.add('show');
+                    document.getElementById('dateFilterBox').classList.add('show');
+                    document.getElementById('filterDate').value = '';
+
                     displayRecords(result.data.dailyStats);
                 } else {
                     alert(result.message || '查無此病患');
                     document.getElementById('patientInfo').classList.remove('show');
-                    document.getElementById('dateFilter').classList.remove('show');
-                    document.getElementById('resultsSection').classList.remove('show');
+                    document.getElementById('dateFilterBox').classList.remove('show');
+                    document.getElementById('recordContainer').classList.remove('show');
                 }
             } catch (error) {
                 console.error('搜尋失敗:', error);
@@ -569,8 +372,12 @@
                 return;
             }
 
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
+            const filterDate = document.getElementById('filterDate').value;
+
+            if (!filterDate) {
+                alert('請選擇日期');
+                return;
+            }
 
             try {
                 const response = await fetch('@Url.Action("SearchPatientRecords", "DailyHealth")', {
@@ -581,8 +388,8 @@
                     },
                     body: JSON.stringify({
                         idNumber: currentPatientId,
-                        startDate: startDate || null,
-                        endDate: endDate || null
+                        startDate: filterDate,
+                        endDate: filterDate
                     })
                 });
 
@@ -591,109 +398,104 @@
                 if (result.success) {
                     displayRecords(result.data.dailyStats);
                 } else {
-                    alert('篩選失敗');
+                    alert('查詢失敗');
                 }
             } catch (error) {
-                console.error('篩選失敗:', error);
-                alert('篩選失敗，請稍後再試');
+                console.error('查詢失敗:', error);
+                alert('查詢失敗，請稍後再試');
             }
         }
 
         function displayRecords(dailyStats) {
-            const resultsSection = document.getElementById('resultsSection');
-            const recordsContainer = document.getElementById('recordsContainer');
+            const recordContainer = document.getElementById('recordContainer');
+            const recordsContent = document.getElementById('recordsContent');
             const emptyState = document.getElementById('emptyState');
 
-            resultsSection.classList.add('show');
+            recordContainer.classList.add('show');
 
             if (!dailyStats || dailyStats.length === 0) {
-                recordsContainer.innerHTML = '';
+                recordsContent.innerHTML = '';
                 emptyState.style.display = 'block';
                 return;
             }
 
             emptyState.style.display = 'none';
 
-            recordsContainer.innerHTML = dailyStats.map(dayStat => {
+            recordsContent.innerHTML = dailyStats.map(dayStat => {
                 const date = new Date(dayStat.date);
                 const dateStr = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
 
-                // 722血壓測量表格
-                let bpSection = '';
-                if (dayStat.bloodPressure && dayStat.bloodPressure.readings.length > 0) {
-                    bpSection = `
-                        <div class="bp-table-container">
-                            <div class="bp-table-title">722血壓測量</div>
-                            <table class="bp-table">
-                                <thead>
-                                    <tr>
-                                        <th>第一次第一遍</th>
-                                        <th>第一次第二遍</th>
-                                        <th>第二次第一遍</th>
-                                        <th>第二次第二遍</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        ${['第一次第一遍', '第一次第二遍', '第二次第一遍', '第二次第二遍'].map(label => {
-                                            const reading = dayStat.bloodPressure.readings.find(r => r.label === label);
-                                            return `<td>${reading ? `${reading.systolic}/${reading.diastolic}` : '<span class="empty-cell">-</span>'}</td>`;
-                                        }).join('')}
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                }
+                const bpReadings = ['第一次第一遍', '第一次第二遍', '第二次第一遍', '第二次第二遍'].map(label => {
+                    if (dayStat.bloodPressure && dayStat.bloodPressure.readings) {
+                        const reading = dayStat.bloodPressure.readings.find(r => r.label === label);
+                        return reading ? `${Math.round(reading.systolic)}/${Math.round(reading.diastolic)}` : '';
+                    }
+                    return '';
+                });
 
-                // 生活習慣與飲食記錄表格
                 const exerciseText = dayStat.exercise
                     ? dayStat.exercise.map(e => `${e.type} ${e.duration}分`).join(', ')
-                    : '-';
-
-                const lifestyleSection = `
-                    <div class="lifestyle-table-container">
-                        <div class="lifestyle-table-title">生活習慣與飲食記錄</div>
-                        <table class="lifestyle-table">
-                            <thead>
-                                <tr>
-                                    <th>血糖</th>
-                                    <th>運動</th>
-                                    <th>水分</th>
-                                    <th>飲料</th>
-                                    <th>早餐</th>
-                                    <th>午餐</th>
-                                    <th>晚餐</th>
-                                    <th>抽菸</th>
-                                    <th>檳榔</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>${dayStat.bloodSugar ? `${dayStat.bloodSugar}` : '<span class="empty-cell">-</span>'}</td>
-                                    <td>${exerciseText !== '-' ? exerciseText : '<span class="empty-cell">-</span>'}</td>
-                                    <td>${dayStat.water ? `${Math.round(dayStat.water)}ml` : '<span class="empty-cell">-</span>'}</td>
-                                    <td>${dayStat.beverage || '<span class="empty-cell">-</span>'}</td>
-                                    <td>${formatMealContent(dayStat.breakfast)}</td>
-                                    <td>${formatMealContent(dayStat.lunch)}</td>
-                                    <td>${formatMealContent(dayStat.dinner)}</td>
-                                    <td>${dayStat.cigarettes ? `${Math.round(dayStat.cigarettes)}支` : '<span class="empty-cell">-</span>'}</td>
-                                    <td>${dayStat.betelNut ? `${Math.round(dayStat.betelNut)}次` : '<span class="empty-cell">-</span>'}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                `;
+                    : '';
 
                 return `
-                    <div class="record-tables">
-                        <div class="date-header">
-                            <div class="date-title">日期：${dateStr}</div>
-                        </div>
-                        ${bpSection}
-                        ${lifestyleSection}
-                    </div>
-                `;
+                                    <div class="record-block">
+                                        <div class="date-header">日期：${dateStr}</div>
+
+                                        <div class="bp-section">
+                                            <div class="section-title bp-title">722血壓測量</div>
+                                            <table class="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>第一次第一遍</th>
+                                                        <th>第一次第二遍</th>
+                                                        <th>第二次第一遍</th>
+                                                        <th>第二次第二遍</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>${bpReadings[0] || '<span class="empty-cell">-</span>'}</td>
+                                                        <td>${bpReadings[1] || '<span class="empty-cell">-</span>'}</td>
+                                                        <td>${bpReadings[2] || '<span class="empty-cell">-</span>'}</td>
+                                                        <td>${bpReadings[3] || '<span class="empty-cell">-</span>'}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div class="lifestyle-section">
+                                            <div class="section-title lifestyle-title">生活習慣與飲食記錄</div>
+                                            <table class="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>血糖</th>
+                                                        <th>運動</th>
+                                                        <th>水分</th>
+                                                        <th>飲料</th>
+                                                        <th>早餐</th>
+                                                        <th>午餐</th>
+                                                        <th>晚餐</th>
+                                                        <th>抽菸</th>
+                                                        <th>檳榔</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>${dayStat.bloodSugar ? `${dayStat.bloodSugar}` : '<span class="empty-cell">-</span>'}</td>
+                                                        <td>${exerciseText || '<span class="empty-cell">-</span>'}</td>
+                                                        <td>${dayStat.water ? `${Math.round(dayStat.water)}ml` : '<span class="empty-cell">-</span>'}</td>
+                                                        <td>${dayStat.beverage || '<span class="empty-cell">-</span>'}</td>
+                                                        <td>${formatMealContent(dayStat.breakfast)}</td>
+                                                        <td>${formatMealContent(dayStat.lunch)}</td>
+                                                        <td>${formatMealContent(dayStat.dinner)}</td>
+                                                        <td>${dayStat.cigarettes ? `${Math.round(dayStat.cigarettes)}支` : '<span class="empty-cell">-</span>'}</td>
+                                                        <td>${dayStat.betelNut ? `${Math.round(dayStat.betelNut)}次` : '<span class="empty-cell">-</span>'}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                `;
             }).join('');
         }
 
@@ -701,6 +503,13 @@
             if (e.key === 'Enter') {
                 e.preventDefault();
                 searchPatient();
+            }
+        });
+
+        document.getElementById('filterDate')?.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyDateFilter();
             }
         });
     </script>

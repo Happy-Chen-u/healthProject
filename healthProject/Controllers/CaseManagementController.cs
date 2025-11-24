@@ -28,6 +28,11 @@ namespace healthProject.Controllers
         // ========================================
         // ✅ 建立新個案帳號（Users）
         // ========================================
+        // ========================================
+        // ✅ 建立新個案帳號(Users)
+        // ========================================
+
+        // 🆕 顯示表單頁面 (GET)
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public IActionResult Create()
@@ -35,6 +40,7 @@ namespace healthProject.Controllers
             return View();
         }
 
+        // 處理表單提交 (POST)
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -42,17 +48,21 @@ namespace healthProject.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["ErrorMessage"] = "輸入資料格式錯誤，請重新檢查。";
+                TempData["ErrorMessage"] = "輸入資料格式錯誤,請重新檢查。";
                 return View(viewModel);
             }
 
             try
             {
+                // 組合密碼:特殊符號 + 身分證字號
+                string defaultPassword = viewModel.SpecialSymbol + viewModel.IDNumber;
+
                 var model = new UserDBModel
                 {
+                    SpecialSymbol = viewModel.SpecialSymbol,  // 儲存特殊符號
                     IDNumber = viewModel.IDNumber,
                     Username = viewModel.IDNumber,
-                    PasswordHash = viewModel.IDNumber, // 預設密碼 = 身分證號
+                    PasswordHash = defaultPassword, // 預設密碼 = 特殊符號 + 身分證號
                     Role = "Patient",
                     FullName = viewModel.FullName,
                     PhoneNumber = viewModel.PhoneNumber,
@@ -69,15 +79,16 @@ namespace healthProject.Controllers
                 {
                     conn.Open();
                     string sql = @"
-                        INSERT INTO public.""Users"" 
-                        (""IDNumber"", ""Username"", ""PasswordHash"", ""Role"", ""FullName"", 
-                         ""CreatedDate"", ""IsActive"", ""PhoneNumber"", ""IsFirstLogin"", ""LineUserId"")
-                        VALUES 
-                        (@idnumber, @username, @passwordhash, @role, @fullname, 
-                         @createddate, @isactive, @phonenumber, @isfirstlogin, @lineuserid);";
+                INSERT INTO public.""Users"" 
+                (""SpecialSymbol"", ""IDNumber"", ""Username"", ""PasswordHash"", ""Role"", ""FullName"", 
+                 ""CreatedDate"", ""IsActive"", ""PhoneNumber"", ""IsFirstLogin"", ""LineUserId"")
+                VALUES 
+                (@specialsymbol, @idnumber, @username, @passwordhash, @role, @fullname, 
+                 @createddate, @isactive, @phonenumber, @isfirstlogin, @lineuserid);";
 
                     using (var cmd = new NpgsqlCommand(sql, conn))
                     {
+                        cmd.Parameters.AddWithValue("@specialsymbol", model.SpecialSymbol);
                         cmd.Parameters.AddWithValue("@idnumber", model.IDNumber);
                         cmd.Parameters.AddWithValue("@username", model.Username);
                         cmd.Parameters.AddWithValue("@passwordhash", model.PasswordHash);
@@ -93,12 +104,12 @@ namespace healthProject.Controllers
                     }
                 }
 
-                TempData["SuccessMessage"] = $"✅ 已成功新增個案：{model.FullName}（身分證字號：{model.IDNumber}）！預設密碼為身分證字號。";
+                TempData["SuccessMessage"] = $"✅ 已成功新增個案:{model.FullName}(身分證字號:{model.IDNumber})!預設密碼為 {defaultPassword}。";
                 return RedirectToAction("Create");
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"❌ 發生錯誤：{ex.Message}";
+                TempData["ErrorMessage"] = $"❌ 發生錯誤:{ex.Message}";
                 return View(viewModel);
             }
         }
@@ -1279,9 +1290,7 @@ namespace healthProject.Controllers
         /// <summary>
         /// 取得個案所有歷史記錄 (支援年月篩選) - 完整版
         /// </summary>
-        /// <summary>
-        /// 取得個案所有歷史記錄 (支援年月篩選) - 自動判斷第一筆為收案評估
-        /// </summary>
+        
         private async Task<List<CaseManagementViewModel>> GetPatientHistoryAsync(string idNumber, int? year, int? month)
         {
             var records = new List<CaseManagementViewModel>();

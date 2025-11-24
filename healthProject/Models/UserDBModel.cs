@@ -7,6 +7,7 @@ namespace healthProject.Models
     {
         public int Id { get; set; }
         public string IDNumber { get; set; }
+        public string SpecialSymbol { get; set; }  // 🆕 新增特殊符號欄位
         public string Username { get; set; }
         public string PasswordHash { get; set; }
         public string Role { get; set; }  // 'Patient' 或 'Admin'

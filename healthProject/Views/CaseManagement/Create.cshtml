@@ -1,4 +1,4 @@
-﻿@model healthProject.Models.UserDBModel
+﻿@model healthProject.Models.UserViewModel
 @{
     ViewData["Title"] = "新增個案資料";
     Layout = null;
@@ -112,11 +112,11 @@
             background: white;
         }
 
-            .form-control:focus {
-                outline: none;
-                border-color: #FF9800;
-                box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
-            }
+        .form-control:focus {
+            outline: none;
+            border-color: #FF9800;
+            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
+        }
 
         .button-group {
             display: flex;
@@ -144,10 +144,10 @@
             box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
         }
 
-            .btn-primary:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-            }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
 
         .btn-secondary {
             background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
@@ -155,12 +155,12 @@
             box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
         }
 
-            .btn-secondary:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
-                text-decoration: none;
-                color: white;
-            }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
+            text-decoration: none;
+            color: white;
+        }
 
         .alert {
             padding: 1rem;
@@ -178,6 +178,49 @@
             background: #E8F5E9;
             border: 2px solid #66BB6A;
             color: #2E7D32;
+        }
+
+        /* 確認對話框樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #E65100;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .modal-body {
+            font-size: 1.1rem;
+            color: #424242;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
         }
 
         @@media (max-width: 768px) {
@@ -204,6 +247,10 @@
             .btn {
                 width: 100%;
             }
+
+            .modal-content {
+                margin: 50% auto;
+            }
         }
     </style>
 </head>
@@ -229,11 +276,16 @@
                 </div>
             }
 
-            <form asp-action="Create" method="post" class="mt-4">
+            <form id="caseForm" asp-action="Create" method="post" class="mt-4">
                 <div class="form-section">
                     <div class="section-title">個案資料</div>
 
                     <div class="form-row">
+                        <div class="form-group">
+                            <label asp-for="SpecialSymbol" class="form-label">特殊符號 *</label>
+                            <input asp-for="SpecialSymbol" class="form-control" placeholder="請輸入1個特殊符號" maxlength="1" required />
+                            <span asp-validation-for="SpecialSymbol" class="text-danger"></span>
+                        </div>
                         <div class="form-group">
                             <label asp-for="IDNumber" class="form-label">身分證字號 *</label>
                             <input asp-for="IDNumber" class="form-control" placeholder="請輸入身分證字號" required />
@@ -253,7 +305,7 @@
                 </div>
 
                 <div class="button-group">
-                    <button type="submit" class="btn btn-primary">新增個案</button>
+                    <button type="button" id="submitBtn" class="btn btn-primary">新增個案</button>
                     <a href="@Url.Action("Index", "CaseManagement")" class="btn btn-secondary">
                         返回上一頁
                     </a>
@@ -261,6 +313,66 @@
             </form>
         </div>
     </div>
+
+    <!-- 確認對話框 -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">確認新增個案</div>
+            <div class="modal-body" id="confirmMessage"></div>
+            <div class="modal-buttons">
+                <button type="button" id="confirmBtn" class="btn btn-primary">確認</button>
+                <button type="button" id="cancelBtn" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('caseForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const confirmModal = document.getElementById('confirmModal');
+            const confirmMessage = document.getElementById('confirmMessage');
+            const confirmBtn = document.getElementById('confirmBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+
+            const symbolInput = document.getElementById('SpecialSymbol');
+            const nameInput = document.getElementById('FullName');
+
+            // 點擊新增個案按鈕
+            submitBtn.addEventListener('click', function() {
+                // 檢查表單驗證
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const symbol = symbolInput.value;
+                const name = nameInput.value;
+
+                // 顯示確認訊息
+                confirmMessage.innerHTML = `確認 <strong>${symbol}</strong> 特殊符號與個案 <strong>${name}</strong> 相同?`;
+                confirmModal.style.display = 'block';
+            });
+
+            // 點擊確認按鈕
+            confirmBtn.addEventListener('click', function() {
+                confirmModal.style.display = 'none';
+                form.submit();
+            });
+
+            // 點擊取消按鈕
+            cancelBtn.addEventListener('click', function() {
+                confirmModal.style.display = 'none';
+            });
+
+            // 點擊對話框外部關閉
+            window.addEventListener('click', function(event) {
+                if (event.target === confirmModal) {
+                    confirmModal.style.display = 'none';
+                }
+            });
+        });
+    </script>
 
     @section Scripts {
         @{
