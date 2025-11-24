@@ -1279,6 +1279,9 @@ namespace healthProject.Controllers
         /// <summary>
         /// 取得個案所有歷史記錄 (支援年月篩選) - 完整版
         /// </summary>
+        /// <summary>
+        /// 取得個案所有歷史記錄 (支援年月篩選) - 自動判斷第一筆為收案評估
+        /// </summary>
         private async Task<List<CaseManagementViewModel>> GetPatientHistoryAsync(string idNumber, int? year, int? month)
         {
             var records = new List<CaseManagementViewModel>();
@@ -1286,6 +1289,23 @@ namespace healthProject.Controllers
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
+
+            // 先取得該個案的第一筆紀錄 ID (按評估日期排序)
+            int? firstRecordId = null;
+            var queryFirstRecord = @"
+        SELECT ""Id""
+        FROM ""CaseManagement""
+        WHERE ""IDNumber"" = @IDNumber
+        ORDER BY COALESCE(""AssessmentDate"", ""AnnualAssessment_Date"") ASC NULLS LAST, ""Id"" ASC
+        LIMIT 1";
+
+            await using (var cmdFirst = new NpgsqlCommand(queryFirstRecord, connection))
+            {
+                cmdFirst.Parameters.AddWithValue("@IDNumber", idNumber);
+                var result = await cmdFirst.ExecuteScalarAsync();
+                if (result != null)
+                    firstRecordId = Convert.ToInt32(result);
+            }
 
             // 建立查詢語句 (包含年月篩選) - 抓取所有欄位
             var queryBuilder = new System.Text.StringBuilder(@"
@@ -1349,7 +1369,7 @@ namespace healthProject.Controllers
 
             while (await reader.ReadAsync())
             {
-                records.Add(new CaseManagementViewModel
+                var record = new CaseManagementViewModel
                 {
                     Id = reader.GetInt32(0),
                     UserId = reader.GetInt32(1),
@@ -1457,7 +1477,15 @@ namespace healthProject.Controllers
                     LDL_CholesterolTarget = reader.GetBoolean(103),
                     LDL_CholesterolTarget_Value = reader.IsDBNull(104) ? null : reader.GetDecimal(104),
                     Notes = reader.IsDBNull(105) ? null : reader.GetString(105)
-                });
+                };
+
+                // ⭐ 關鍵邏輯：如果這筆紀錄的 Id 等於第一筆的 Id,強制設為收案評估
+                if (firstRecordId.HasValue && record.Id == firstRecordId.Value)
+                {
+                    record.AnnualAssessment = false; // 強制設為收案評估
+                }
+
+                records.Add(record);
             }
 
             return records;
