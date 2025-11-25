@@ -438,64 +438,64 @@
                     : '';
 
                 return `
-                                    <div class="record-block">
-                                        <div class="date-header">日期：${dateStr}</div>
+                                            <div class="record-block">
+                                                <div class="date-header">日期：${dateStr}</div>
 
-                                        <div class="bp-section">
-                                            <div class="section-title bp-title">722血壓測量</div>
-                                            <table class="data-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>第一次第一遍</th>
-                                                        <th>第一次第二遍</th>
-                                                        <th>第二次第一遍</th>
-                                                        <th>第二次第二遍</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td>${bpReadings[0] || '<span class="empty-cell">-</span>'}</td>
-                                                        <td>${bpReadings[1] || '<span class="empty-cell">-</span>'}</td>
-                                                        <td>${bpReadings[2] || '<span class="empty-cell">-</span>'}</td>
-                                                        <td>${bpReadings[3] || '<span class="empty-cell">-</span>'}</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                                <div class="bp-section">
+                                                    <div class="section-title bp-title">722血壓測量</div>
+                                                    <table class="data-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>第一次第一遍</th>
+                                                                <th>第一次第二遍</th>
+                                                                <th>第二次第一遍</th>
+                                                                <th>第二次第二遍</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>${bpReadings[0] || '<span class="empty-cell">-</span>'}</td>
+                                                                <td>${bpReadings[1] || '<span class="empty-cell">-</span>'}</td>
+                                                                <td>${bpReadings[2] || '<span class="empty-cell">-</span>'}</td>
+                                                                <td>${bpReadings[3] || '<span class="empty-cell">-</span>'}</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
 
-                                        <div class="lifestyle-section">
-                                            <div class="section-title lifestyle-title">生活習慣與飲食記錄</div>
-                                            <table class="data-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>血糖</th>
-                                                        <th>運動</th>
-                                                        <th>水分</th>
-                                                        <th>飲料</th>
-                                                        <th>早餐</th>
-                                                        <th>午餐</th>
-                                                        <th>晚餐</th>
-                                                        <th>抽菸</th>
-                                                        <th>檳榔</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td>${dayStat.bloodSugar ? `${dayStat.bloodSugar}` : '<span class="empty-cell">-</span>'}</td>
-                                                        <td>${exerciseText || '<span class="empty-cell">-</span>'}</td>
-                                                        <td>${dayStat.water ? `${Math.round(dayStat.water)}ml` : '<span class="empty-cell">-</span>'}</td>
-                                                        <td>${dayStat.beverage || '<span class="empty-cell">-</span>'}</td>
-                                                        <td>${formatMealContent(dayStat.breakfast)}</td>
-                                                        <td>${formatMealContent(dayStat.lunch)}</td>
-                                                        <td>${formatMealContent(dayStat.dinner)}</td>
-                                                        <td>${dayStat.cigarettes ? `${Math.round(dayStat.cigarettes)}支` : '<span class="empty-cell">-</span>'}</td>
-                                                        <td>${dayStat.betelNut ? `${Math.round(dayStat.betelNut)}次` : '<span class="empty-cell">-</span>'}</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                `;
+                                                <div class="lifestyle-section">
+                                                    <div class="section-title lifestyle-title">生活習慣與飲食記錄</div>
+                                                    <table class="data-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>血糖</th>
+                                                                <th>運動</th>
+                                                                <th>水分</th>
+                                                                <th>飲料</th>
+                                                                <th>早餐</th>
+                                                                <th>午餐</th>
+                                                                <th>晚餐</th>
+                                                                <th>抽菸</th>
+                                                                <th>檳榔</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>${dayStat.bloodSugar ? `${dayStat.bloodSugar}` : '<span class="empty-cell">-</span>'}</td>
+                                                                <td>${exerciseText || '<span class="empty-cell">-</span>'}</td>
+                                                                <td>${dayStat.water ? `${Math.round(dayStat.water)}ml` : '<span class="empty-cell">-</span>'}</td>
+                                                                <td>${dayStat.beverage || '<span class="empty-cell">-</span>'}</td>
+                                                                <td>${formatMealContent(dayStat.breakfast)}</td>
+                                                                <td>${formatMealContent(dayStat.lunch)}</td>
+                                                                <td>${formatMealContent(dayStat.dinner)}</td>
+                                                                <td>${dayStat.cigarettes ? `${Math.round(dayStat.cigarettes)}支` : '<span class="empty-cell">-</span>'}</td>
+                                                                <td>${dayStat.betelNut ? `${Math.round(dayStat.betelNut)}次` : '<span class="empty-cell">-</span>'}</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        `;
             }).join('');
         }
 
@@ -510,6 +510,17 @@
             if (e.key === 'Enter') {
                 e.preventDefault();
                 applyDateFilter();
+            }
+        });
+        window.addEventListener('DOMContentLoaded', function () {
+            const autoSearchId = '@ViewBag.AutoSearchIdNumber';
+            if (autoSearchId && autoSearchId !== '') {
+                console.log('🔍 自動搜尋個案:', autoSearchId);
+                document.getElementById('searchIdNumber').value = autoSearchId;
+                // 延遲 300ms 讓頁面完全載入後再搜尋
+                setTimeout(() => {
+                    searchPatient();
+                }, 300);
             }
         });
     </script>

@@ -568,6 +568,27 @@ namespace healthProject.Controllers
             }
         }
 
+        // ========================================
+        // 📊 查看個案填寫紀錄 - 管理員專用 (顯示特定個案紀錄)
+        // ========================================
+        // ========================================
+        // 📊 查看個案填寫紀錄 - 管理員專用 (直接跳轉到 AdminSearch 並自動搜尋)
+        // ========================================
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public IActionResult GetPatientRecords(string idNumber)
+        {
+            if (string.IsNullOrEmpty(idNumber))
+            {
+                TempData["ErrorMessage"] = "請提供個案的身分證字號。";
+                return RedirectToAction("Index");
+            }
+
+            // 直接返回 AdminSearch 頁面,並透過 ViewBag 傳遞身分證字號
+            ViewBag.AutoSearchIdNumber = idNumber;
+            return View("AdminSearch");
+        }
+
 
         // ========================================
         // 🧠 資料庫操作 - 新增
@@ -634,6 +655,9 @@ namespace healthProject.Controllers
 
             await cmd.ExecuteNonQueryAsync();
         }
+
+
+
 
         // ========================================
         // 🧠 資料庫操作 - 更新

@@ -3,6 +3,7 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using healthProject.Services;
 using Hangfire.Dashboard;
+using healthProject;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 // ========================================
 builder.Services.AddScoped<ReportService>();
 builder.Services.AddScoped<ScheduledJobService>();
+builder.Services.AddHostedService<BackgroundJobService>();
 
 // ========================================
 // ?? 加入 Hangfire (週報排程)
@@ -75,7 +77,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // ========================================
-// ?? 啟用 Hangfire Dashboard (僅管理員可查看)
+// 啟用 Hangfire Dashboard (僅管理員可查看)
 // ========================================
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
@@ -84,7 +86,7 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 });
 
 // ========================================
-// ?? 設定每週日晚上 8 點發送週報
+// 設定每週日晚上 8 點發送週報
 // ========================================
 RecurringJob.AddOrUpdate<ScheduledJobService>(
     "send-weekly-reports",

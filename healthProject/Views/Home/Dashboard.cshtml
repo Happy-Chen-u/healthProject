@@ -118,7 +118,6 @@
                 text-decoration: none;
             }
 
-
         .page-card-icon {
             font-size: 3.5rem;
             margin-bottom: 1rem;
@@ -181,6 +180,49 @@
                 transform: translateY(-2px);
             }
 
+        /* 對話框樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #c54141;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .modal-body {
+            font-size: 1.1rem;
+            color: #424242;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
         @@media (max-width: 768px) {
             .dashboard-title {
                 font-size: 1.8rem;
@@ -215,6 +257,10 @@
 
             .page-card {
                 padding: 2rem 1.5rem;
+            }
+
+            .modal-content {
+                margin: 50% auto;
             }
         }
     </style>
@@ -260,7 +306,6 @@
                     </p>
                 </a>
 
-                <!-- ✅ 新增健康分析卡片 -->
                 <a href="@Url.Action("Index", "Analysis")" class="page-card">
                     <div class="page-card-icon">📈</div>
                     <h3 class="page-card-title">健康分析</h3>
@@ -270,17 +315,57 @@
                 </a>
             </div>
 
+            @if (User.IsInRole("Admin"))
+            {
+                <a href="@Url.Action("MissedRecordsStatus", "CaseManagement")" class="page-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                    <div class="page-card-icon">⚠️</div>
+                    <h3 class="page-card-title">個案填寫狀況</h3>
+                    <p class="page-card-description">
+                        查看未填寫健康資訊的個案
+                    </p>
+                </a>
+            }
+
             <!-- 操作按鈕 -->
             <div class="action-buttons">
                 <a href="@Url.Action("ChangePassword", "Account")" class="btn-secondary">
                     🔐 變更密碼
                 </a>
-                <form method="post" action="@Url.Action("Logout", "Account")" style="display: inline;">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn-danger">🚪 登出</button>
-                </form>
+                <button type="button" onclick="confirmLogout()" class="btn-danger">🚪 登出</button>
             </div>
         </div>
     </div>
+
+    <!-- ✅ 登出確認對話框 -->
+    <div id="logoutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">確認登出</div>
+            <div class="modal-body">您確定要登出系統嗎?</div>
+            <div class="modal-buttons">
+                <form method="post" action="@Url.Action("Logout", "Account")" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-danger">確認登出</button>
+                </form>
+                <button type="button" onclick="closeLogoutModal()" class="btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function confirmLogout() {
+            document.getElementById('logoutModal').style.display = 'block';
+        }
+
+        function closeLogoutModal() {
+            document.getElementById('logoutModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('logoutModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
 </body>
 </html>

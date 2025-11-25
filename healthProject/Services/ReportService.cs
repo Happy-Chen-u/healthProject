@@ -2,8 +2,11 @@
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using SkiaSharp;  
-
+using SkiaSharp;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+using System.Text;
 
 
 namespace healthProject.Services
@@ -12,7 +15,6 @@ namespace healthProject.Services
     {
         public ReportService()
         {
-            // 設定 QuestPDF 授權 (社群版免費)
             QuestPDF.Settings.License = LicenseType.Community;
         }
 
@@ -21,7 +23,6 @@ namespace healthProject.Services
         // ========================================
         public byte[] GeneratePdfReport(AnalysisViewModel analysis)
         {
-            // ✅ 明確指定使用 QuestPDF 的 Document
             return QuestPDF.Fluent.Document.Create(container =>
             {
                 container.Page(page =>
@@ -30,13 +31,8 @@ namespace healthProject.Services
                     page.Margin(40);
                     page.DefaultTextStyle(x => x.FontFamily("Microsoft JhengHei"));
 
-                    // 頁首
                     page.Header().Element(ComposeHeader);
-
-                    // 內容
                     page.Content().Element(c => ComposeContent(c, analysis));
-
-                    // 頁尾
                     page.Footer().AlignCenter().Text(x =>
                     {
                         x.CurrentPageNumber();
@@ -77,7 +73,7 @@ namespace healthProject.Services
                 // 基本資訊
                 column.Item().Element(c => ComposeBasicInfo(c, analysis));
 
-                // 統計摘要
+                // 統計摘要(包含檳榔、三餐)
                 column.Item().Element(c => ComposeStatistics(c, analysis));
 
                 // 圖表區域
@@ -92,6 +88,14 @@ namespace healthProject.Services
 
                 if (analysis.Charts.ExerciseDurationData.Any())
                     column.Item().Element(c => ComposeExerciseChart(c, analysis));
+
+                // 🆕 抽菸圖表
+                if (analysis.Charts.CigarettesData?.Any() == true)
+                    column.Item().Element(c => ComposeCigaretteChart(c, analysis));
+
+                // 🆕 檳榔圖表
+                if (analysis.Charts.BetelNutData?.Any() == true)
+                    column.Item().Element(c => ComposeBetelNutChart(c, analysis));
 
                 // 飲料記錄表格
                 if (analysis.Charts.BeverageRecords.Any())
@@ -132,9 +136,9 @@ namespace healthProject.Services
         }
 
         // ========================================
-        // 📈 統計摘要
+        // 📈 統計摘要(完整版)
         // ========================================
-        private void ComposeStatistics(QuestPDF.Infrastructure.IContainer container, AnalysisViewModel analysis)
+        private void ComposeStatistics(IContainer container, AnalysisViewModel analysis)
         {
             var stats = analysis.Statistics;
 
@@ -146,10 +150,10 @@ namespace healthProject.Services
                 {
                     table.ColumnsDefinition(columns =>
                     {
-                        columns.RelativeColumn();
-                        columns.RelativeColumn();
-                        columns.RelativeColumn();
-                        columns.RelativeColumn();
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(2);
+                        columns.RelativeColumn(1);
                     });
 
                     // 表頭
@@ -158,54 +162,88 @@ namespace healthProject.Services
                         header.Cell().Background(Colors.Blue.Lighten3).Padding(5).Text("項目").Bold();
                         header.Cell().Background(Colors.Blue.Lighten3).Padding(5).Text("平均值").Bold();
                         header.Cell().Background(Colors.Blue.Lighten3).Padding(5).Text("異常天數").Bold();
-                        header.Cell().Background(Colors.Blue.Lighten3).Padding(5).Text("異常比例").Bold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(5).Text("比例").Bold();
                     });
 
                     // 血壓
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text("血壓");
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
-                        .Text($"{stats.AvgSystolicBP:F1}/{stats.AvgDiastolicBP:F1} mmHg");
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
-                        .Text($"{stats.HighBPDays}/{stats.TotalDays} 天");
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
-                        .Text($"{stats.HighBPPercentage:F1}%")
-                        .FontColor(stats.HighBPPercentage > 30 ? Colors.Red.Medium : Colors.Green.Medium);
+                    AddStatRow(table, "血壓",
+                        $"{stats.AvgSystolicBP:F1}/{stats.AvgDiastolicBP:F1} mmHg",
+                        $"{stats.HighBPDays}/{stats.TotalDays}",
+                        stats.HighBPPercentage);
 
                     // 血糖
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text("血糖");
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
-                        .Text($"{stats.AvgBloodSugar:F1} mg/dL");
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
-                        .Text($"{stats.HighBloodSugarDays}/{stats.TotalDays} 天");
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
-                        .Text($"{stats.HighBloodSugarPercentage:F1}%")
-                        .FontColor(stats.HighBloodSugarPercentage > 30 ? Colors.Red.Medium : Colors.Green.Medium);
+                    AddStatRow(table, "血糖",
+                        $"{stats.AvgBloodSugar:F1} mg/dL",
+                        $"{stats.HighBloodSugarDays}/{stats.TotalDays}",
+                        stats.HighBloodSugarPercentage);
 
                     // 飲水量
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text("飲水量");
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
-                        .Text($"{stats.AvgWaterIntake:F0} ml");
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
-                        .Text($"{stats.LowWaterDays}/{stats.TotalDays} 天");
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
-                        .Text($"{stats.LowWaterPercentage:F1}%")
-                        .FontColor(stats.LowWaterPercentage > 30 ? Colors.Red.Medium : Colors.Green.Medium);
+                    AddStatRow(table, "飲水量",
+                        $"{stats.AvgWaterIntake:F0} ml",
+                        $"{stats.LowWaterDays}/{stats.TotalDays}",
+                        stats.LowWaterPercentage);
 
                     // 運動時間
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text("運動時間");
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
-                        .Text($"{stats.AvgExerciseDuration:F1} 分鐘");
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
-                        .Text($"{stats.LowExerciseDays}/{stats.TotalDays} 天");
-                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
-                        .Text($"{stats.LowExercisePercentage:F1}%")
-                        .FontColor(stats.LowExercisePercentage > 30 ? Colors.Red.Medium : Colors.Green.Medium);
+                    AddStatRow(table, "運動時間",
+                        $"{stats.AvgExerciseDuration:F1} 分鐘",
+                        $"{stats.LowExerciseDays}/{stats.TotalDays}",
+                        stats.LowExercisePercentage);
+
+                    // 抽菸
+                    if (stats.AvgCigarettes > 0)
+                    {
+                        AddStatRow(table, "🚬 抽菸",
+                            $"{stats.AvgCigarettes:F1} 支/天 (總 {stats.TotalCigarettes:F0} 支)",
+                            "-",
+                            null);
+                    }
+
+                    // 檳榔
+                    if (stats.AvgBetelNut > 0)
+                    {
+                        AddStatRow(table, "🌿 檳榔",
+                            $"{stats.AvgBetelNut:F1} 次/天 (總 {stats.TotalBetelNut:F0} 次)",
+                            "-",
+                            null);
+                    }
+
+                    // 三餐統計
+                    if (stats.AvgVegetables > 0 || stats.AvgProtein > 0 || stats.AvgCarbs > 0)
+                    {
+                        AddStatRow(table, "🥬 蔬菜",
+                            $"{stats.AvgVegetables:F1} 份/天", "-", null);
+                        AddStatRow(table, "🥩 蛋白質",
+                            $"{stats.AvgProtein:F1} 份/天", "-", null);
+                        AddStatRow(table, "🍚 澱粉",
+                            $"{stats.AvgCarbs:F1} 份/天", "-", null);
+                    }
                 });
             });
         }
 
+        private void AddStatRow(TableDescriptor table, string label, string value, string abnormalDays, decimal? percentage)
+        {
+            table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(label);
+            table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(value);
+            table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(abnormalDays);
+
+            if (percentage.HasValue)
+            {
+                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
+                    .Text($"{percentage:F1}%")
+                    .FontColor(percentage > 30 ? Colors.Red.Medium : Colors.Green.Medium);
+            }
+            else
+            {
+                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text("-");
+            }
+        }
+
         // ========================================
-        // 📊 血壓圖表 (折線圖版本)
+        // 📊 血壓圖表
+        // ========================================
+        // ========================================
+        // 📊 血壓圖表 (使用 SVG)
         // ========================================
         private void ComposeBloodPressureChart(QuestPDF.Infrastructure.IContainer container, AnalysisViewModel analysis)
         {
@@ -213,127 +251,91 @@ namespace healthProject.Services
             {
                 column.Item().PaddingTop(10).Text("血壓趨勢").FontSize(14).Bold();
 
-                column.Item().Height(150).Canvas((canvasObj, size) =>
-                {
-                    // ✅ 明確轉型為 SKCanvas
-                    var canvas = (SKCanvas)canvasObj;
-
-                    var data = analysis.Charts.BloodPressureData;
-                    if (!data.Any()) return;
-
-                    var width = size.Width;
-                    var height = size.Height;
-                    var padding = 30f;
-
-                    // 計算比例
-                    var maxValue = Math.Max(
-                        data.Max(d => d.Value ?? 0),
-                        data.Max(d => d.Value2 ?? 0)
-                    );
-                    var minValue = Math.Min(
-                        data.Min(d => d.Value ?? 999),
-                        data.Min(d => d.Value2 ?? 999)
-                    );
-                    var valueRange = maxValue - minValue + 20;
-                    var valueRangeFloat = (float)valueRange;
-
-                    // 繪製座標軸
-                    canvas.DrawLine(
-                        new SKPoint(padding, padding),
-                        new SKPoint(padding, height - padding),
-                        new SKPaint { Color = SKColors.Black, StrokeWidth = 1, IsAntialias = true }
-                    );
-
-                    canvas.DrawLine(
-                        new SKPoint(padding, height - padding),
-                        new SKPoint(width - padding, height - padding),
-                        new SKPaint { Color = SKColors.Black, StrokeWidth = 1, IsAntialias = true }
-                    );
-
-                    // 繪製標準線 (120/80)
-                    if (minValue < 120 && maxValue > 80)
-                    {
-                        var y120 = height - padding - ((float)(120 - minValue) / valueRangeFloat * (height - 2 * padding));
-                        canvas.DrawLine(
-                            new SKPoint(padding, y120),
-                            new SKPoint(width - padding, y120),
-                            new SKPaint
-                            {
-                                Color = SKColors.Red,
-                                StrokeWidth = 1,
-                                PathEffect = SKPathEffect.CreateDash(new[] { 5f, 5f }, 0),
-                                IsAntialias = true
-                            }
-                        );
-                    }
-
-                    // 繪製折線
-                    if (data.Count > 1)
-                    {
-                        var stepX = (width - 2 * padding) / (data.Count - 1);
-
-                        for (int i = 0; i < data.Count - 1; i++)
-                        {
-                            var x1 = padding + i * stepX;
-                            var x2 = padding + (i + 1) * stepX;
-
-                            // 收縮壓 (藍色)
-                            if (data[i].Value.HasValue && data[i + 1].Value.HasValue)
-                            {
-                                var y1 = height - padding - ((float)(data[i].Value.Value - minValue) / valueRangeFloat * (height - 2 * padding));
-                                var y2 = height - padding - ((float)(data[i + 1].Value.Value - minValue) / valueRangeFloat * (height - 2 * padding));
-
-                                canvas.DrawLine(
-                                    new SKPoint(x1, y1),
-                                    new SKPoint(x2, y2),
-                                    new SKPaint { Color = SKColors.Blue, StrokeWidth = 2, IsAntialias = true }
-                                );
-
-                                // 繪製數據點
-                                canvas.DrawCircle(x1, y1, 3, new SKPaint { Color = SKColors.Blue, IsAntialias = true });
-                            }
-
-                            // 舒張壓 (綠色)
-                            if (data[i].Value2.HasValue && data[i + 1].Value2.HasValue)
-                            {
-                                var y1 = height - padding - ((float)(data[i].Value2.Value - minValue) / valueRangeFloat * (height - 2 * padding));
-                                var y2 = height - padding - ((float)(data[i + 1].Value2.Value - minValue) / valueRangeFloat * (height - 2 * padding));
-
-                                canvas.DrawLine(
-                                    new SKPoint(x1, y1),
-                                    new SKPoint(x2, y2),
-                                    new SKPaint { Color = SKColors.Green, StrokeWidth = 2, IsAntialias = true }
-                                );
-
-                                // 繪製數據點
-                                canvas.DrawCircle(x1, y1, 3, new SKPaint { Color = SKColors.Green, IsAntialias = true });
-                            }
-                        }
-
-                        // 繪製最後一個點
-                        if (data.Count > 0)
-                        {
-                            var lastIndex = data.Count - 1;
-                            var lastX = padding + lastIndex * stepX;
-
-                            if (data[lastIndex].Value.HasValue)
-                            {
-                                var lastY = height - padding - ((float)(data[lastIndex].Value.Value - minValue) / valueRangeFloat * (height - 2 * padding));
-                                canvas.DrawCircle(lastX, lastY, 3, new SKPaint { Color = SKColors.Blue, IsAntialias = true });
-                            }
-
-                            if (data[lastIndex].Value2.HasValue)
-                            {
-                                var lastY = height - padding - ((float)(data[lastIndex].Value2.Value - minValue) / valueRangeFloat * (height - 2 * padding));
-                                canvas.DrawCircle(lastX, lastY, 3, new SKPaint { Color = SKColors.Green, IsAntialias = true });
-                            }
-                        }
-                    }
-                });
+                column.Item().Height(150).Svg(GenerateBloodPressureSvg(analysis));
 
                 column.Item().PaddingTop(5).Text("🔵 收縮壓  🟢 舒張壓  🔴 標準線 120/80 mmHg")
                     .FontSize(9).Italic();
             });
+        }
+
+        private string GenerateBloodPressureSvg(AnalysisViewModel analysis)
+        {
+            var data = analysis.Charts.BloodPressureData;
+            if (!data.Any()) return "<svg></svg>";
+
+            var width = 500f;
+            var height = 150f;
+            var padding = 30f;
+
+            var maxValue = Math.Max(
+                data.Max(d => d.Value ?? 0),
+                data.Max(d => d.Value2 ?? 0)
+            );
+            var minValue = Math.Min(
+                data.Min(d => d.Value ?? 999),
+                data.Min(d => d.Value2 ?? 999)
+            );
+            var valueRange = maxValue - minValue + 20;
+            var valueRangeFloat = (float)valueRange;
+
+            var svg = new System.Text.StringBuilder();
+            svg.AppendLine($"<svg width=\"{width}\" height=\"{height}\" xmlns=\"http://www.w3.org/2000/svg\">");
+
+            // 繪製座標軸
+            svg.AppendLine($"<line x1=\"{padding}\" y1=\"{padding}\" x2=\"{padding}\" y2=\"{height - padding}\" stroke=\"black\" stroke-width=\"1\"/>");
+            svg.AppendLine($"<line x1=\"{padding}\" y1=\"{height - padding}\" x2=\"{width - padding}\" y2=\"{height - padding}\" stroke=\"black\" stroke-width=\"1\"/>");
+
+            // 繪製標準線 (120/80)
+            if (minValue < 120 && maxValue > 80)
+            {
+                var y120 = height - padding
+    - ((120f - (float)minValue) / valueRangeFloat * (height - 2f * padding));
+                svg.AppendLine($"<line x1=\"{padding}\" y1=\"{y120}\" x2=\"{width - padding}\" y2=\"{y120}\" stroke=\"red\" stroke-width=\"1\" stroke-dasharray=\"5,5\"/>");
+            }
+
+            // 繪製折線和資料點
+            if (data.Count > 1)
+            {
+                var stepX = (width - 2 * padding) / (data.Count - 1);
+
+                var systolicPoints = new List<string>();
+                var diastolicPoints = new List<string>();
+
+                for (int i = 0; i < data.Count; i++)
+                {
+                    var x = padding + i * stepX;
+
+                    // 收縮壓 (藍色)
+                    if (data[i].Value.HasValue)
+                    {
+                        var y = height - padding - ((float)(data[i].Value.Value - minValue) / valueRangeFloat * (height - 2 * padding));
+                        systolicPoints.Add($"{x},{y}");
+                        svg.AppendLine($"<circle cx=\"{x}\" cy=\"{y}\" r=\"3\" fill=\"blue\"/>");
+                    }
+
+                    // 舒張壓 (綠色)
+                    if (data[i].Value2.HasValue)
+                    {
+                        var y = height - padding - ((float)(data[i].Value2.Value - minValue) / valueRangeFloat * (height - 2 * padding));
+                        diastolicPoints.Add($"{x},{y}");
+                        svg.AppendLine($"<circle cx=\"{x}\" cy=\"{y}\" r=\"3\" fill=\"green\"/>");
+                    }
+                }
+
+                // 繪製折線
+                if (systolicPoints.Count > 1)
+                {
+                    svg.AppendLine($"<polyline points=\"{string.Join(" ", systolicPoints)}\" stroke=\"blue\" stroke-width=\"2\" fill=\"none\"/>");
+                }
+
+                if (diastolicPoints.Count > 1)
+                {
+                    svg.AppendLine($"<polyline points=\"{string.Join(" ", diastolicPoints)}\" stroke=\"green\" stroke-width=\"2\" fill=\"none\"/>");
+                }
+            }
+
+            svg.AppendLine("</svg>");
+            return svg.ToString();
         }
 
         // ========================================
@@ -442,6 +444,76 @@ namespace healthProject.Services
         }
 
         // ========================================
+        // 🆕 抽菸圖表
+        // ========================================
+        private void ComposeCigaretteChart(QuestPDF.Infrastructure.IContainer container, AnalysisViewModel analysis)
+        {
+            container.Column(column =>
+            {
+                column.Item().PaddingTop(10).Text("抽菸趨勢").FontSize(14).Bold();
+
+                column.Item().Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        foreach (var _ in analysis.Charts.CigarettesData)
+                        {
+                            columns.RelativeColumn();
+                        }
+                    });
+
+                    foreach (var point in analysis.Charts.CigarettesData)
+                    {
+                        var color = point.IsAbnormal ? Colors.Red.Lighten3 : Colors.Green.Lighten3;
+                        table.Cell().Background(color).Border(1).Padding(3).Column(col =>
+                        {
+                            col.Item().AlignCenter().Text(point.Date).FontSize(8);
+                            col.Item().AlignCenter().Text($"{point.Value:F0}支").FontSize(10).Bold();
+                        });
+                    }
+                });
+
+                column.Item().PaddingTop(5).Text("🚬 建議值: 0 支 (請戒菸)")
+                    .FontSize(9).Italic();
+            });
+        }
+
+        // ========================================
+        // 🆕 檳榔圖表
+        // ========================================
+        private void ComposeBetelNutChart(QuestPDF.Infrastructure.IContainer container, AnalysisViewModel analysis)
+        {
+            container.Column(column =>
+            {
+                column.Item().PaddingTop(10).Text("檳榔趨勢").FontSize(14).Bold();
+
+                column.Item().Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        foreach (var _ in analysis.Charts.BetelNutData)
+                        {
+                            columns.RelativeColumn();
+                        }
+                    });
+
+                    foreach (var point in analysis.Charts.BetelNutData)
+                    {
+                        var color = point.IsAbnormal ? Colors.Red.Lighten3 : Colors.Green.Lighten3;
+                        table.Cell().Background(color).Border(1).Padding(3).Column(col =>
+                        {
+                            col.Item().AlignCenter().Text(point.Date).FontSize(8);
+                            col.Item().AlignCenter().Text($"{point.Value:F0}次").FontSize(10).Bold();
+                        });
+                    }
+                });
+
+                column.Item().PaddingTop(5).Text("🌿 建議值: 0 次 (請戒除)")
+                    .FontSize(9).Italic();
+            });
+        }
+
+        // ========================================
         // 📋 飲料記錄表格
         // ========================================
         private void ComposeBeverageTable(QuestPDF.Infrastructure.IContainer container, AnalysisViewModel analysis)
@@ -458,14 +530,12 @@ namespace healthProject.Services
                         columns.RelativeColumn();
                     });
 
-                    // 表頭
                     table.Header(header =>
                     {
                         header.Cell().Background(Colors.Blue.Lighten3).Padding(5).Text("日期").Bold();
                         header.Cell().Background(Colors.Blue.Lighten3).Padding(5).Text("飲料").Bold();
                     });
 
-                    // 資料
                     foreach (var record in analysis.Charts.BeverageRecords)
                     {
                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(record.Date);
@@ -492,18 +562,16 @@ namespace healthProject.Services
                         columns.RelativeColumn();
                     });
 
-                    // 表頭
                     table.Header(header =>
                     {
                         header.Cell().Background(Colors.Green.Lighten3).Padding(5).Text("日期").Bold();
                         header.Cell().Background(Colors.Green.Lighten3).Padding(5).Text("三餐內容").Bold();
                     });
 
-                    // 資料
                     foreach (var record in analysis.Charts.MealRecords)
                     {
                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(record.Date);
-                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(record.Meals);
+                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(record.Meals ?? "無記錄");
                     }
                 });
             });
@@ -517,7 +585,6 @@ namespace healthProject.Services
             var stats = analysis.Statistics;
             var advices = new List<string>();
 
-            // 根據統計數據產生建議
             if (stats.HighBPPercentage > 30)
                 advices.Add("⚠️ 血壓異常比例較高,建議定期監測並諮詢醫師調整用藥。");
 
@@ -532,6 +599,12 @@ namespace healthProject.Services
 
             if (stats.AvgCigarettes > 5)
                 advices.Add("🚭 抽菸量偏高,建議尋求戒菸門診協助。");
+
+            if (stats.AvgBetelNut > 5)
+                advices.Add("🌿 檳榔使用量偏高,建議立即戒除並定期口腔檢查。");
+
+            if (stats.AvgVegetables < 3)
+                advices.Add("🥬 蔬菜攝取不足,建議每日至少攝取 3 份蔬菜。");
 
             if (!advices.Any())
                 advices.Add("✅ 各項指標控制良好,請繼續保持!");

@@ -7,6 +7,7 @@ using Npgsql;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text;
+using BCrypt.Net;
 
 namespace healthProject.Controllers
 {
@@ -238,6 +239,7 @@ namespace healthProject.Controllers
         }
 
         // POST: Account/ChangePassword 改密碼
+        // POST: Account/ChangePassword 改密碼
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -245,6 +247,13 @@ namespace healthProject.Controllers
         {
             if (!ModelState.IsValid)
             {
+                return View(model);
+            }
+
+            // ✅ 檢查新密碼是否與舊密碼相同
+            if (model.OldPassword == model.NewPassword)
+            {
+                ModelState.AddModelError("NewPassword", "您輸入的新密碼與舊密碼相同,請更改");
                 return View(model);
             }
 
@@ -588,12 +597,20 @@ namespace healthProject.Controllers
 
         private bool VerifyPassword(string password, string passwordHash)
         {
-            return password == passwordHash;
+            try
+            {
+                return BCrypt.Net.BCrypt.Verify(password, passwordHash);
+            }
+            catch
+            {
+                // 如果是舊的明文密碼(在你還沒改之前建立的)
+                return password == passwordHash;
+            }
         }
 
         private string HashPassword(string password)
         {
-            return password;
+            return BCrypt.Net.BCrypt.HashPassword(password);
         }
     }
 }

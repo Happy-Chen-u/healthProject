@@ -20,15 +20,11 @@ namespace healthProject.Services
             _reportService = reportService;
         }
 
-        // ========================================
-        // 📅 每週日晚上8點發送週報
-        // ========================================
         public async Task SendWeeklyReportsAsync()
         {
             try
             {
                 _logger.LogInformation("⏰ 開始發送每週報表...");
-
                 var users = await GetActiveUsersWithLineAsync();
 
                 if (!users.Any())
@@ -59,7 +55,7 @@ namespace healthProject.Services
                         _logger.LogError(ex, $"❌ 發送週報失敗: {user.FullName}");
                     }
 
-                    await Task.Delay(1000); // 避免 LINE API 過載
+                    await Task.Delay(1000);
                 }
 
                 _logger.LogInformation($"📊 週報發送完成: 成功 {successCount} / 失敗 {failCount}");
@@ -70,48 +66,366 @@ namespace healthProject.Services
             }
         }
 
-        private async Task SendWeeklyReportToUserAsync(
+        // ========================================
+        // 📤 發送週報給單一使用者
+        // ========================================
+        public async Task SendWeeklyReportToUserAsync(
             UserDBModel user,
             DateTime startDate,
             DateTime endDate)
         {
-            var analysis = await GenerateAnalysisAsync(
-                user.Id,
-                user.FullName,
-                user.IDNumber,
-                ReportType.Weekly,
-                startDate,
-                endDate);
+            try
+            {
+                _logger.LogInformation($"📄 開始為 {user.FullName} 產生週報");
 
-            var pdfBytes = _reportService.GeneratePdfReport(analysis);
-            var reportId = await SaveWeeklyReportAsync(user.Id, startDate, endDate, pdfBytes);
-            await SendLineWeeklyNotificationAsync(user, startDate, endDate, reportId);
+                // 1. 產生分析資料
+                var analysis = await GenerateAnalysisAsync(
+                    user.Id, user.FullName, user.IDNumber,
+                    ReportType.Weekly, startDate, endDate);
+
+                // 2. 產生 PDF
+                var pdfBytes = _reportService.GeneratePdfReport(analysis);
+                _logger.LogInformation($"✅ PDF 產生完成,大小: {pdfBytes.Length / 1024}KB");
+
+                // 3. 儲存到資料庫並取得下載連結
+                var reportId = await SaveWeeklyReportAsync(user.Id, startDate, endDate, pdfBytes);
+
+                // 4. 產生下載連結(使用你的網站域名)
+                var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://你的網域.com";
+                var downloadUrl = $"{baseUrl}/Analysis/DownloadWeeklyReport?reportId={reportId}";
+
+                // 5. 傳送 LINE 訊息
+                await SendLineNotificationAsync(user, startDate, endDate, downloadUrl);
+
+                _logger.LogInformation($"🎉 週報已成功傳送: {user.FullName}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"發送週報失敗: {user.FullName}");
+                throw;
+            }
         }
 
-        private async Task SendLineWeeklyNotificationAsync(
+
+        // ========================================
+        // 🔔 檢查並提醒兩天未填寫的個案
+        // ========================================
+        public async Task CheckAndRemindMissedRecordsAsync()
+        {
+            try
+            {
+                _logger.LogInformation("⏰ 開始檢查未填寫健康資訊的個案...");
+
+                var today = DateTime.Today;
+                var twoDaysAgo = today.AddDays(-2);
+
+                var missedUsers = await GetUsersWithMissedRecordsAsync(twoDaysAgo);
+
+                if (!missedUsers.Any())
+                {
+                    _logger.LogInformation("✅ 沒有個案需要提醒");
+                    return;
+                }
+
+                _logger.LogInformation($"📢 找到 {missedUsers.Count} 位個案需要提醒");
+
+                int successCount = 0, failCount = 0;
+
+                foreach (var user in missedUsers)
+                {
+                    try
+                    {
+                        await SendMissedRecordReminderAsync(user);
+
+                        // 更新最後提醒日期
+                        await UpdateLastReminderDateAsync(user.Id);
+
+                        successCount++;
+                        _logger.LogInformation($"✅ 已提醒 {user.FullName} (連續 {user.MissedDays} 天未填)");
+                    }
+                    catch (Exception ex)
+                    {
+                        failCount++;
+                        _logger.LogError(ex, $"❌ 提醒失敗: {user.FullName}");
+                    }
+
+                    await Task.Delay(1000); // 避免 LINE API 限流
+                }
+
+                _logger.LogInformation($"📊 提醒發送完成: 成功 {successCount} / 失敗 {failCount}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ 檢查未填寫任務失敗");
+            }
+        }
+
+        // ========================================
+        // 🔍 取得連續兩天以上未填寫的個案
+        // ========================================
+        private async Task<List<MissedUserInfo>> GetUsersWithMissedRecordsAsync(DateTime twoDaysAgo)
+        {
+            var users = new List<MissedUserInfo>();
+            var connStr = _configuration.GetConnectionString("DefaultConnection");
+
+            await using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+
+            var query = @"
+        WITH LastRecords AS (
+            SELECT 
+                ""UserId"",
+                MAX(""RecordDate"") as LastRecordDate
+            FROM ""Today""
+            GROUP BY ""UserId""
+        )
+        SELECT 
+            u.""Id"",
+            u.""FullName"",
+            u.""LineUserId"",
+            COALESCE(lr.""LastRecordDate"", DATE '1900-01-01') as LastRecordDate,
+            u.""LastReminderDate""
+        FROM ""Users"" u
+        LEFT JOIN LastRecords lr ON u.""Id"" = lr.""UserId""
+        WHERE u.""IsActive"" = true
+          AND u.""Role"" = 'Patient'
+          AND u.""LineUserId"" IS NOT NULL
+          AND u.""LineUserId"" != ''
+          AND (
+              lr.""LastRecordDate"" IS NULL 
+              OR lr.""LastRecordDate"" < @TwoDaysAgo
+          )
+          AND (
+              u.""LastReminderDate"" IS NULL 
+              OR u.""LastReminderDate"" < @Today
+          )";
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@TwoDaysAgo", twoDaysAgo);
+            cmd.Parameters.AddWithValue("@Today", DateTime.Today);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var lastRecordDate = reader.GetDateTime(3);
+                var missedDays = lastRecordDate.Year == 1900
+                    ? 999 // 從未填寫
+                    : (DateTime.Today - lastRecordDate).Days;
+
+                users.Add(new MissedUserInfo
+                {
+                    Id = reader.GetInt32(0),
+                    FullName = reader.GetString(1),
+                    LineUserId = reader.GetString(2),
+                    LastRecordDate = lastRecordDate.Year == 1900 ? null : lastRecordDate,
+                    MissedDays = missedDays
+                });
+            }
+
+            return users;
+        }
+
+        // ========================================
+        // 📤 發送 LINE 提醒訊息
+        // ========================================
+        private async Task SendMissedRecordReminderAsync(MissedUserInfo user)
+        {
+            var token = _configuration["Line:ChannelAccessToken"];
+            if (string.IsNullOrEmpty(token))
+                throw new Exception("LINE Channel Access Token 未設定");
+
+            // 建立 Quick Reply 按鈕
+            var quickReply = new
+            {
+                items = new[]
+                {
+            new
+            {
+                type = "action",
+                action = new
+                {
+                    type = "message",
+                    label = "🗓️ 工作行程太忙",
+                    text = "#Reason_Busy_Work"
+                }
+            },
+            new
+            {
+                type = "action",
+                action = new
+                {
+                    type = "message",
+                    label = "😷 身體有點不舒服",
+                    text = "#Reason_Health_Mild_Symptom"
+                }
+            },
+            new
+            {
+                type = "action",
+                action = new
+                {
+                    type = "message",
+                    label = "🔢 不確定要填寫什麼",
+                    text = "#Reason_Unsure_What_To_Fill"
+                }
+            },
+            new
+            {
+                type = "action",
+                action = new
+                {
+                    type = "message",
+                    label = "📱 手機不在身邊/沒電",
+                    text = "#Reason_Tech_Device_Issue"
+                }
+            },
+            new
+            {
+                type = "action",
+                action = new
+                {
+                    type = "message",
+                    label = "💬 其他原因",
+                    text = "#Reason_Other"
+                }
+            }
+        }
+            };
+
+            var message = user.LastRecordDate.HasValue
+                ? $@"⚠️ 【代謝症候群管理系統】
+
+{user.FullName} 您好,
+
+我們注意到您已經連續 {user.MissedDays} 天沒有填寫今日健康資訊了。
+
+上次填寫日期: {user.LastRecordDate.Value:yyyy/MM/dd}
+
+📋 定期記錄健康資訊對於疾病管理非常重要!
+
+請問是什麼原因讓您沒有填寫呢?
+請點選下方原因,或輸入其他原因:"
+                : $@"⚠️ 【代謝症候群管理系統】
+
+{user.FullName} 您好,
+
+我們注意到您還沒有填寫過今日健康資訊。
+
+📋 定期記錄健康資訊對於疾病管理非常重要!
+
+請問是什麼原因讓您沒有填寫呢?
+請點選下方原因,或輸入其他原因:";
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+
+            var payload = new
+            {
+                to = user.LineUserId,
+                messages = new[]
+                {
+            new
+            {
+                type = "text",
+                text = message,
+                quickReply = quickReply
+            }
+        }
+            };
+
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            var response = await httpClient.PostAsync("https://api.line.me/v2/bot/message/push", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"LINE API 錯誤: {response.StatusCode} - {error}");
+            }
+        }
+
+        // ========================================
+        // 💾 更新最後提醒日期
+        // ========================================
+        private async Task UpdateLastReminderDateAsync(int userId)
+        {
+            var connStr = _configuration.GetConnectionString("DefaultConnection");
+            await using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+
+            var query = @"
+        UPDATE ""Users""
+        SET ""LastReminderDate"" = @Now
+        WHERE ""Id"" = @UserId";
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@Now", DateTime.Now);
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        // ========================================
+        // 💾 儲存使用者未填寫原因
+        // ========================================
+        public async Task SaveMissedReasonAsync(string lineUserId, string reason)
+        {
+            var connStr = _configuration.GetConnectionString("DefaultConnection");
+            await using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+
+            var query = @"
+        UPDATE ""Users""
+        SET ""MissedReason"" = @Reason,
+            ""MissedReasonDate"" = @Now
+        WHERE ""LineUserId"" = @LineUserId";
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@Reason", reason);
+            cmd.Parameters.AddWithValue("@Now", DateTime.Now);
+            cmd.Parameters.AddWithValue("@LineUserId", lineUserId);
+            await cmd.ExecuteNonQueryAsync();
+
+            _logger.LogInformation($"✅ 已儲存未填寫原因: {lineUserId} - {reason}");
+        }
+
+        // 新增輔助類別
+        public class MissedUserInfo
+        {
+            public int Id { get; set; }
+            public string FullName { get; set; }
+            public string LineUserId { get; set; }
+            public DateTime? LastRecordDate { get; set; }
+            public int MissedDays { get; set; }
+        }
+
+        // ========================================
+        // 📤 傳送 LINE 通知
+        // ========================================
+        private async Task SendLineNotificationAsync(
             UserDBModel user,
             DateTime startDate,
             DateTime endDate,
-            string reportId)
+            string downloadUrl)
         {
             var token = _configuration["Line:ChannelAccessToken"];
-            if (string.IsNullOrEmpty(token)) throw new Exception("LINE Channel Access Token 未設定");
-
-            var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://your-domain.com";
-            var verifyUrl = $"{baseUrl}/Analysis/VerifyWeeklyReport?reportId={reportId}";
+            if (string.IsNullOrEmpty(token))
+                throw new Exception("LINE Channel Access Token 未設定");
 
             var message = $@"📊 【代謝症候群管理系統】
 
-您好 {user.FullName}，
+您好 {user.FullName},
 
-本週健康報表已產生完成！
+本週健康報表已產生完成!
 📅 期間: {startDate:MM/dd} ~ {endDate:MM/dd}
 
-🔒 為保護您的隱私，請點擊下方連結並輸入身分證字號驗證後查看報表。
-{verifyUrl}
+📥 請點擊下方連結下載報表:
+{downloadUrl}
 
-※ 驗證連結有效期限為 7 天
-※ 請勿將連結分享給他人";
+✅ 點擊後會自動下載 PDF 檔案
+📱 下載後請使用 PDF 閱讀器開啟
+
+※ 連結有效期限為 30 天
+※ 請妥善保存您的報表";
 
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
@@ -134,8 +448,13 @@ namespace healthProject.Services
                 var error = await response.Content.ReadAsStringAsync();
                 throw new Exception($"LINE API 錯誤: {response.StatusCode} - {error}");
             }
+
+            _logger.LogInformation($"✅ LINE 訊息已傳送: {user.LineUserId}");
         }
 
+        // ========================================
+        // 💾 儲存報表到資料庫
+        // ========================================
         private async Task<string> SaveWeeklyReportAsync(
             int userId, DateTime startDate, DateTime endDate, byte[] pdfBytes)
         {
@@ -170,9 +489,10 @@ namespace healthProject.Services
             cmd.Parameters.AddWithValue("@StartDate", startDate);
             cmd.Parameters.AddWithValue("@EndDate", endDate);
             cmd.Parameters.AddWithValue("@PdfData", pdfBytes);
-            cmd.Parameters.AddWithValue("@ExpiresAt", DateTime.Now.AddDays(7));
+            cmd.Parameters.AddWithValue("@ExpiresAt", DateTime.Now.AddDays(30));
             await cmd.ExecuteNonQueryAsync();
 
+            _logger.LogInformation($"✅ 報表已儲存到資料庫: {reportId}");
             return reportId;
         }
 
@@ -258,7 +578,6 @@ namespace healthProject.Services
             return records;
         }
 
-        // ✅ 已更新相容新版 HealthRecordViewModel
         private HealthRecordViewModel MapFromReader(NpgsqlDataReader reader)
         {
             var record = new HealthRecordViewModel
@@ -267,8 +586,6 @@ namespace healthProject.Services
                 UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
                 RecordDate = reader.GetDateTime(reader.GetOrdinal("RecordDate")),
                 RecordTime = reader.IsDBNull(reader.GetOrdinal("RecordTime")) ? null : reader.GetTimeSpan(reader.GetOrdinal("RecordTime")),
-
-                // 🩸 新版血壓欄位
                 BP_First_1_Systolic = reader.IsDBNull(reader.GetOrdinal("BP_First_1_Systolic")) ? null : reader.GetDecimal(reader.GetOrdinal("BP_First_1_Systolic")),
                 BP_First_1_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_First_1_Diastolic")) ? null : reader.GetDecimal(reader.GetOrdinal("BP_First_1_Diastolic")),
                 BP_First_2_Systolic = reader.IsDBNull(reader.GetOrdinal("BP_First_2_Systolic")) ? null : reader.GetDecimal(reader.GetOrdinal("BP_First_2_Systolic")),
@@ -277,7 +594,6 @@ namespace healthProject.Services
                 BP_Second_1_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_Second_1_Diastolic")) ? null : reader.GetDecimal(reader.GetOrdinal("BP_Second_1_Diastolic")),
                 BP_Second_2_Systolic = reader.IsDBNull(reader.GetOrdinal("BP_Second_2_Systolic")) ? null : reader.GetDecimal(reader.GetOrdinal("BP_Second_2_Systolic")),
                 BP_Second_2_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_Second_2_Diastolic")) ? null : reader.GetDecimal(reader.GetOrdinal("BP_Second_2_Diastolic")),
-
                 ExerciseType = reader.IsDBNull(reader.GetOrdinal("ExerciseType")) ? null : reader.GetString(reader.GetOrdinal("ExerciseType")),
                 ExerciseDuration = reader.IsDBNull(reader.GetOrdinal("ExerciseDuration")) ? null : reader.GetDecimal(reader.GetOrdinal("ExerciseDuration")),
                 WaterIntake = reader.IsDBNull(reader.GetOrdinal("WaterIntake")) ? null : reader.GetDecimal(reader.GetOrdinal("WaterIntake")),
@@ -287,7 +603,6 @@ namespace healthProject.Services
                 BloodSugar = reader.IsDBNull(reader.GetOrdinal("BloodSugar")) ? null : reader.GetDecimal(reader.GetOrdinal("BloodSugar"))
             };
 
-            // 🍱 三餐 JSON
             try
             {
                 if (!reader.IsDBNull(reader.GetOrdinal("Meals_Breakfast")))
@@ -297,10 +612,7 @@ namespace healthProject.Services
                 if (!reader.IsDBNull(reader.GetOrdinal("Meals_Dinner")))
                     record.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(reader.GetString(reader.GetOrdinal("Meals_Dinner")));
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"⚠️ 解析三餐 JSON 失敗: {ex.Message}");
-            }
+            catch { }
 
             return record;
         }
@@ -309,98 +621,100 @@ namespace healthProject.Services
         {
             if (!records.Any()) return new AnalysisStatistics { TotalDays = 0 };
 
+            decimal totalVeg = 0, totalProtein = 0, totalCarbs = 0;
+            int mealDays = 0;
+
+            foreach (var record in records)
+            {
+                bool hasMeal = false;
+                if (record.Meals_Breakfast != null)
+                {
+                    totalVeg += ParseMealValue(record.Meals_Breakfast.Vegetables);
+                    totalProtein += ParseMealValue(record.Meals_Breakfast.Protein);
+                    totalCarbs += ParseMealValue(record.Meals_Breakfast.Carbs);
+                    hasMeal = true;
+                }
+                if (record.Meals_Lunch != null)
+                {
+                    totalVeg += ParseMealValue(record.Meals_Lunch.Vegetables);
+                    totalProtein += ParseMealValue(record.Meals_Lunch.Protein);
+                    totalCarbs += ParseMealValue(record.Meals_Lunch.Carbs);
+                    hasMeal = true;
+                }
+                if (record.Meals_Dinner != null)
+                {
+                    totalVeg += ParseMealValue(record.Meals_Dinner.Vegetables);
+                    totalProtein += ParseMealValue(record.Meals_Dinner.Protein);
+                    totalCarbs += ParseMealValue(record.Meals_Dinner.Carbs);
+                    hasMeal = true;
+                }
+                if (hasMeal) mealDays++;
+            }
+
             return new AnalysisStatistics
             {
                 TotalDays = records.Count,
-                AvgSystolicBP = records.Where(r => r.AvgSystolicBP.HasValue).Average(r => r.AvgSystolicBP),
-                AvgDiastolicBP = records.Where(r => r.AvgDiastolicBP.HasValue).Average(r => r.AvgDiastolicBP),
-                AvgBloodSugar = records.Where(r => r.BloodSugar.HasValue).Average(r => r.BloodSugar),
-                AvgWaterIntake = records.Where(r => r.WaterIntake.HasValue).Average(r => r.WaterIntake),
-                AvgExerciseDuration = records.Where(r => r.ExerciseDuration.HasValue).Average(r => r.ExerciseDuration),
-                AvgCigarettes = records.Where(r => r.Cigarettes.HasValue).Average(r => r.Cigarettes),
+                AvgSystolicBP = records.Where(r => r.AvgSystolicBP.HasValue).Any() ? records.Where(r => r.AvgSystolicBP.HasValue).Average(r => r.AvgSystolicBP) : 0,
+                AvgDiastolicBP = records.Where(r => r.AvgDiastolicBP.HasValue).Any() ? records.Where(r => r.AvgDiastolicBP.HasValue).Average(r => r.AvgDiastolicBP) : 0,
+                AvgBloodSugar = records.Where(r => r.BloodSugar.HasValue).Any() ? records.Where(r => r.BloodSugar.HasValue).Average(r => r.BloodSugar) : 0,
+                AvgWaterIntake = records.Where(r => r.WaterIntake.HasValue).Any() ? records.Where(r => r.WaterIntake.HasValue).Average(r => r.WaterIntake) : 0,
+                AvgExerciseDuration = records.Where(r => r.ExerciseDuration.HasValue).Any() ? records.Where(r => r.ExerciseDuration.HasValue).Average(r => r.ExerciseDuration) : 0,
+                AvgCigarettes = records.Where(r => r.Cigarettes.HasValue).Any() ? records.Where(r => r.Cigarettes.HasValue).Average(r => r.Cigarettes) : 0,
+                TotalCigarettes = records.Where(r => r.Cigarettes.HasValue).Sum(r => r.Cigarettes) ?? 0,
+                AvgBetelNut = records.Where(r => r.BetelNut.HasValue).Any() ? records.Where(r => r.BetelNut.HasValue).Average(r => r.BetelNut) : 0,
+                TotalBetelNut = records.Where(r => r.BetelNut.HasValue).Sum(r => r.BetelNut) ?? 0,
                 HighBPDays = records.Count(r => (r.AvgSystolicBP ?? 0) > 120 || (r.AvgDiastolicBP ?? 0) > 80),
                 HighBloodSugarDays = records.Count(r => (r.BloodSugar ?? 0) > 99),
                 LowWaterDays = records.Count(r => (r.WaterIntake ?? 0) < 2000),
-                LowExerciseDays = records.Count(r => (r.ExerciseDuration ?? 0) < 150)
+                LowExerciseDays = records.Count(r => (r.ExerciseDuration ?? 0) < 150),
+                AvgVegetables = mealDays > 0 ? totalVeg / mealDays : 0,
+                AvgProtein = mealDays > 0 ? totalProtein / mealDays : 0,
+                AvgCarbs = mealDays > 0 ? totalCarbs / mealDays : 0
             };
         }
 
-        // ========================================
-        // 📊 產生圖表數據 (ScheduledJobService.cs)
-        // ========================================
+        private decimal ParseMealValue(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value) || value == "0") return 0;
+            decimal total = 0;
+            if (value.Contains('+'))
+            {
+                foreach (var part in value.Split('+'))
+                    if (decimal.TryParse(part.Trim(), out decimal num)) total += num;
+            }
+            else if (decimal.TryParse(value.Trim(), out decimal num)) total = num;
+            return total;
+        }
+
         private ChartData GenerateChartData(List<HealthRecordViewModel> records, ReportType reportType)
         {
-            var charts = new ChartData();
+            var charts = new ChartData
+            {
+                CigarettesData = new List<ChartPoint>(),
+                BetelNutData = new List<ChartPoint>(),
+                MealRecords = new List<MealRecord>(),
+                BeverageRecords = new List<BeverageRecord>()
+            };
 
             foreach (var record in records.OrderBy(r => r.RecordDate))
             {
                 var dateStr = record.RecordDate.ToString("MM/dd");
-
-                // 血壓數據
                 if (record.BP_First_1_Systolic.HasValue || record.BP_First_1_Diastolic.HasValue)
-                {
-                    charts.BloodPressureData.Add(new ChartPoint
-                    {
-                        Date = dateStr,
-                        Value = record.BP_First_1_Systolic,
-                        Value2 = record.BP_First_1_Diastolic,
-                        IsAbnormal = (record.BP_First_1_Systolic ?? 0) > 120 ||
-                                     (record.BP_First_1_Diastolic ?? 0) > 80
-                    });
-                }
-
-                // 血糖數據
+                    charts.BloodPressureData.Add(new ChartPoint { Date = dateStr, Value = record.BP_First_1_Systolic, Value2 = record.BP_First_1_Diastolic, IsAbnormal = (record.BP_First_1_Systolic ?? 0) > 120 || (record.BP_First_1_Diastolic ?? 0) > 80 });
                 if (record.BloodSugar.HasValue)
-                {
-                    charts.BloodSugarData.Add(new ChartPoint
-                    {
-                        Date = dateStr,
-                        Value = record.BloodSugar,
-                        IsAbnormal = record.BloodSugar.Value > 99
-                    });
-                }
-
-                // 飲水量數據
+                    charts.BloodSugarData.Add(new ChartPoint { Date = dateStr, Value = record.BloodSugar, IsAbnormal = record.BloodSugar.Value > 99 });
                 if (record.WaterIntake.HasValue)
-                {
-                    charts.WaterIntakeData.Add(new ChartPoint
-                    {
-                        Date = dateStr,
-                        Value = record.WaterIntake,
-                        IsAbnormal = record.WaterIntake.Value < 2000
-                    });
-                }
-
-                // 運動時間數據
+                    charts.WaterIntakeData.Add(new ChartPoint { Date = dateStr, Value = record.WaterIntake, IsAbnormal = record.WaterIntake.Value < 2000 });
                 if (record.ExerciseDuration.HasValue)
-                {
-                    charts.ExerciseDurationData.Add(new ChartPoint
-                    {
-                        Date = dateStr,
-                        Value = record.ExerciseDuration,
-                        IsAbnormal = record.ExerciseDuration.Value < 150
-                    });
-                }
-
-                // ✅ 三餐記錄 - 使用 MealsDisplay
+                    charts.ExerciseDurationData.Add(new ChartPoint { Date = dateStr, Value = record.ExerciseDuration, IsAbnormal = record.ExerciseDuration.Value < 150 });
+                if (record.Cigarettes.HasValue && record.Cigarettes.Value > 0)
+                    charts.CigarettesData.Add(new ChartPoint { Date = dateStr, Value = record.Cigarettes, IsAbnormal = true });
+                if (record.BetelNut.HasValue && record.BetelNut.Value > 0)
+                    charts.BetelNutData.Add(new ChartPoint { Date = dateStr, Value = record.BetelNut, IsAbnormal = true });
                 if (!string.IsNullOrEmpty(record.MealsDisplay) && record.MealsDisplay != "未記錄")
-                {
-                    charts.MealRecords.Add(new MealRecord
-                    {
-                        Date = dateStr,
-                        Meals = record.MealsDisplay
-                    });
-                }
-
-                // 飲料記錄
+                    charts.MealRecords.Add(new MealRecord { Date = dateStr, Meals = record.MealsDisplay });
                 if (!string.IsNullOrEmpty(record.Beverage))
-                {
-                    charts.BeverageRecords.Add(new BeverageRecord
-                    {
-                        Date = dateStr,
-                        Beverage = record.Beverage
-                    });
-                }
+                    charts.BeverageRecords.Add(new BeverageRecord { Date = dateStr, Beverage = record.Beverage });
             }
 
             return charts;

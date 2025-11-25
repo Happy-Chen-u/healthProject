@@ -25,9 +25,7 @@ namespace healthProject.Controllers
             _logger = logger;
         }
 
-        // ========================================
-        // ✅ 建立新個案帳號（Users）
-        // ========================================
+        
         // ========================================
         // ✅ 建立新個案帳號(Users)
         // ========================================
@@ -41,6 +39,7 @@ namespace healthProject.Controllers
         }
 
         // 處理表單提交 (POST)
+        // 處理表單提交 (POST)
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -52,6 +51,20 @@ namespace healthProject.Controllers
                 return View(viewModel);
             }
 
+            // ✅ 驗證身分證字號格式(第一碼為英文大寫,第二碼為1或2,總共10碼)
+            if (!System.Text.RegularExpressions.Regex.IsMatch(viewModel.IDNumber, @"^[A-Z][12]\d{8}$"))
+            {
+                ModelState.AddModelError("IDNumber", "身分證格式有誤:第一碼為英文大寫,第二碼為1或2,總共10碼");
+                return View(viewModel);
+            }
+
+            // ✅ 驗證電話號碼格式(必須是10碼數字)
+            if (!System.Text.RegularExpressions.Regex.IsMatch(viewModel.PhoneNumber, @"^\d{10}$"))
+            {
+                ModelState.AddModelError("PhoneNumber", "電話號碼格式有誤:請輸入10碼數字");
+                return View(viewModel);
+            }
+
             try
             {
                 // 組合密碼:特殊符號 + 身分證字號
@@ -59,10 +72,10 @@ namespace healthProject.Controllers
 
                 var model = new UserDBModel
                 {
-                    SpecialSymbol = viewModel.SpecialSymbol,  // 儲存特殊符號
+                    SpecialSymbol = viewModel.SpecialSymbol,
                     IDNumber = viewModel.IDNumber,
                     Username = viewModel.IDNumber,
-                    PasswordHash = defaultPassword, // 預設密碼 = 特殊符號 + 身分證號
+                    PasswordHash = defaultPassword,
                     Role = "Patient",
                     FullName = viewModel.FullName,
                     PhoneNumber = viewModel.PhoneNumber,
@@ -79,12 +92,12 @@ namespace healthProject.Controllers
                 {
                     conn.Open();
                     string sql = @"
-                INSERT INTO public.""Users"" 
-                (""SpecialSymbol"", ""IDNumber"", ""Username"", ""PasswordHash"", ""Role"", ""FullName"", 
-                 ""CreatedDate"", ""IsActive"", ""PhoneNumber"", ""IsFirstLogin"", ""LineUserId"")
-                VALUES 
-                (@specialsymbol, @idnumber, @username, @passwordhash, @role, @fullname, 
-                 @createddate, @isactive, @phonenumber, @isfirstlogin, @lineuserid);";
+        INSERT INTO public.""Users"" 
+        (""SpecialSymbol"", ""IDNumber"", ""Username"", ""PasswordHash"", ""Role"", ""FullName"", 
+         ""CreatedDate"", ""IsActive"", ""PhoneNumber"", ""IsFirstLogin"", ""LineUserId"")
+        VALUES 
+        (@specialsymbol, @idnumber, @username, @passwordhash, @role, @fullname, 
+         @createddate, @isactive, @phonenumber, @isfirstlogin, @lineuserid);";
 
                     using (var cmd = new NpgsqlCommand(sql, conn))
                     {
@@ -875,6 +888,154 @@ namespace healthProject.Controllers
             }
         }
 
+        // ========================================
+        // 📋 查看個案健康資訊填寫狀況
+        // ========================================
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public async Task<IActionResult> MissedRecordsStatus(string searchIdNumber = null)
+        {
+            try
+            {
+                var connStr = _configuration.GetConnectionString("DefaultConnection")
+                    + ";SSL Mode=Require;Trust Server Certificate=True;";
+
+                var allMissedRecords = new List<MissedRecordViewModel>();
+
+                using var conn = new NpgsqlConnection(connStr);
+                await conn.OpenAsync();
+
+                // 查詢所有使用者及其最後填寫日期
+                string sql = @"
+            SELECT 
+                u.""Id"" as UserId,
+                u.""IDNumber"",
+                u.""FullName"",
+                u.""PhoneNumber"",
+                MAX(t.""RecordDate"") as LastRecordDate
+            FROM public.""Users"" u
+            LEFT JOIN public.""Today"" t ON u.""Id"" = t.""UserId"" 
+                AND t.""IsReminderRecord"" = FALSE
+            WHERE u.""Role"" = 'Patient' 
+                AND u.""IsActive"" = TRUE
+                AND (@searchIdNumber IS NULL OR u.""IDNumber"" ILIKE '%' || @searchIdNumber || '%')
+            GROUP BY u.""Id"", u.""IDNumber"", u.""FullName"", u.""PhoneNumber""
+        ";
+
+                using (var cmd = new NpgsqlCommand(sql, conn))
+                {
+                    cmd.Parameters.Add("@searchIdNumber", NpgsqlTypes.NpgsqlDbType.Text).Value =
+                        (object)searchIdNumber ?? DBNull.Value;
+
+                    using var reader = await cmd.ExecuteReaderAsync();
+
+                    while (await reader.ReadAsync())
+                    {
+                        int userId = reader.GetInt32(0);
+                        string idNumber = reader.GetString(1);
+                        string fullName = reader.GetString(2);
+                        string phoneNumber = reader.IsDBNull(3) ? "" : reader.GetString(3);
+                        DateTime? lastRecordDate = reader.IsDBNull(4) ? null : reader.GetDateTime(4);
+
+                        // 計算未填寫天數
+                        int missedDays = 0;
+                        if (lastRecordDate.HasValue)
+                        {
+                            missedDays = (DateTime.Now.Date - lastRecordDate.Value.Date).Days;
+                        }
+                        else
+                        {
+                            // 如果從未填寫,查詢帳號建立日期
+                            missedDays = 999; // 設定一個大數字表示從未填寫
+                        }
+
+                        // 只顯示 2 天以上未填寫的
+                        if (missedDays >= 2)
+                        {
+                            // 從 CaseManagement 取得性別和生日
+                            string genderBirthdaySql = @"
+                        SELECT ""Gender"", ""BirthDate""
+                        FROM public.""CaseManagement""
+                        WHERE ""UserId"" = @userId
+                        ORDER BY ""Id"" DESC
+                        LIMIT 1
+                    ";
+
+                            string gender = "";
+                            DateTime birthDate = DateTime.MinValue;
+
+                            using (var conn2 = new NpgsqlConnection(connStr))
+                            {
+                                await conn2.OpenAsync();
+                                using var cmd2 = new NpgsqlCommand(genderBirthdaySql, conn2);
+                                cmd2.Parameters.AddWithValue("@userId", userId);
+
+                                using var reader2 = await cmd2.ExecuteReaderAsync();
+                                if (await reader2.ReadAsync())
+                                {
+                                    gender = reader2.IsDBNull(0) ? "" : reader2.GetString(0);
+                                    birthDate = reader2.IsDBNull(1) ? DateTime.MinValue : reader2.GetDateTime(1);
+                                }
+                            }
+
+                            // 如果沒有性別,從身分證判斷
+                            if (string.IsNullOrEmpty(gender) && idNumber.Length >= 2)
+                            {
+                                char secondChar = idNumber[1];
+                                gender = secondChar == '1' ? "男" : secondChar == '2' ? "女" : "";
+                            }
+
+                            // 取得最新的未填寫原因
+                            string reasonSql = @"
+                        SELECT ""MissedReason""
+                        FROM public.""Today""
+                        WHERE ""UserId"" = @userId 
+                            AND ""IsReminderRecord"" = TRUE
+                        ORDER BY ""RecordDate"" DESC
+                        LIMIT 1
+                    ";
+
+                            string missedReason = "";
+                            using (var conn3 = new NpgsqlConnection(connStr))
+                            {
+                                await conn3.OpenAsync();
+                                using var cmd3 = new NpgsqlCommand(reasonSql, conn3);
+                                cmd3.Parameters.AddWithValue("@userId", userId);
+
+                                var result = await cmd3.ExecuteScalarAsync();
+                                if (result != null && result != DBNull.Value)
+                                {
+                                    missedReason = result.ToString();
+                                }
+                            }
+
+                            allMissedRecords.Add(new MissedRecordViewModel
+                            {
+                                UserId = userId,
+                                IDNumber = idNumber,
+                                FullName = fullName,
+                                PhoneNumber = phoneNumber,
+                                Gender = gender,
+                                BirthDate = birthDate,
+                                LastRecordDate = lastRecordDate,
+                                MissedDays = missedDays,
+                                MissedReason = missedReason
+                            });
+                        }
+                    }
+                }
+
+                ViewBag.SearchIdNumber = searchIdNumber;
+                return View(allMissedRecords);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "查詢未填寫狀況失敗");
+                TempData["ErrorMessage"] = $"查詢失敗: {ex.Message}";
+                return View(new List<MissedRecordViewModel>());
+            }
+        }
 
 
         // ========================================

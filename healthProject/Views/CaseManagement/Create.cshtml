@@ -327,53 +327,102 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('caseForm');
-            const submitBtn = document.getElementById('submitBtn');
-            const confirmModal = document.getElementById('confirmModal');
-            const confirmMessage = document.getElementById('confirmMessage');
-            const confirmBtn = document.getElementById('confirmBtn');
-            const cancelBtn = document.getElementById('cancelBtn');
+   <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('caseForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
 
-            const symbolInput = document.getElementById('SpecialSymbol');
-            const nameInput = document.getElementById('FullName');
+        const symbolInput = document.getElementById('SpecialSymbol');
+        const nameInput = document.getElementById('FullName');
+        const idNumberInput = document.getElementById('IDNumber');
+        const phoneInput = document.getElementById('PhoneNumber');
 
-            // 點擊新增個案按鈕
-            submitBtn.addEventListener('click', function() {
-                // 檢查表單驗證
-                if (!form.checkValidity()) {
-                    form.reportValidity();
-                    return;
-                }
+        // 驗證身分證字號格式
+        function validateIDNumber(idNumber) {
+            const idPattern = /^[A-Z][12]\d{8}$/;
+            return idPattern.test(idNumber);
+        }
 
-                const symbol = symbolInput.value;
-                const name = nameInput.value;
+        // 驗證電話號碼格式
+        function validatePhoneNumber(phone) {
+            const phonePattern = /^\d{10}$/;
+            return phonePattern.test(phone);
+        }
 
-                // 顯示確認訊息
-                confirmMessage.innerHTML = `確認 <strong>${symbol}</strong> 特殊符號與給予個案 <strong>${name}</strong> 的特殊符號相同?`;
-                confirmModal.style.display = 'block';
-            });
+        // 點擊新增個案按鈕
+        submitBtn.addEventListener('click', function() {
+            // 檢查表單基本驗證
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
 
-            // 點擊確認按鈕
-            confirmBtn.addEventListener('click', function() {
-                confirmModal.style.display = 'none';
-                form.submit();
-            });
+            const idNumber = idNumberInput.value;
+            const phone = phoneInput.value;
 
-            // 點擊取消按鈕
-            cancelBtn.addEventListener('click', function() {
-                confirmModal.style.display = 'none';
-            });
+            // 驗證身分證字號
+            if (!validateIDNumber(idNumber)) {
+                alert('身分證格式有誤\n正確格式:第一碼為英文大寫,第二碼為1或2,總共10碼');
+                idNumberInput.focus();
+                return;
+            }
 
-            // 點擊對話框外部關閉
-            window.addEventListener('click', function(event) {
-                if (event.target === confirmModal) {
-                    confirmModal.style.display = 'none';
-                }
-            });
+            // 驗證電話號碼
+            if (!validatePhoneNumber(phone)) {
+                alert('電話號碼格式有誤\n請輸入10碼數字');
+                phoneInput.focus();
+                return;
+            }
+
+            const symbol = symbolInput.value;
+            const name = nameInput.value;
+
+            // 顯示確認訊息
+            confirmMessage.innerHTML = `確認 <strong>${symbol}</strong> 特殊符號與給予個案 <strong>${name}</strong> 的特殊符號相同?`;
+            confirmModal.style.display = 'block';
         });
-    </script>
+
+        // 點擊確認按鈕
+        confirmBtn.addEventListener('click', function() {
+            confirmModal.style.display = 'none';
+            form.submit();
+        });
+
+        // 點擊取消按鈕
+        cancelBtn.addEventListener('click', function() {
+            confirmModal.style.display = 'none';
+        });
+
+        // 點擊對話框外部關閉
+        window.addEventListener('click', function(event) {
+            if (event.target === confirmModal) {
+                confirmModal.style.display = 'none';
+            }
+        });
+
+        // 即時驗證身分證字號
+        idNumberInput.addEventListener('blur', function() {
+            if (this.value && !validateIDNumber(this.value)) {
+                this.style.borderColor = '#EF5350';
+            } else {
+                this.style.borderColor = '#FFB74D';
+            }
+        });
+
+        // 即時驗證電話號碼
+        phoneInput.addEventListener('blur', function() {
+            if (this.value && !validatePhoneNumber(this.value)) {
+                this.style.borderColor = '#EF5350';
+            } else {
+                this.style.borderColor = '#FFB74D';
+            }
+        });
+    });
+</script>
 
     @section Scripts {
         @{
