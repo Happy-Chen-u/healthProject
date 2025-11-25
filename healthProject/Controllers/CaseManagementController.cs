@@ -987,14 +987,19 @@ namespace healthProject.Controllers
                             }
 
                             // 取得最新的未填寫原因
+                            // 取得最新的未填寫原因
+                            // 在 MissedRecordsStatus Action 中
+                            // 取得最新的未填寫原因
                             string reasonSql = @"
-                        SELECT ""MissedReason""
-                        FROM public.""Today""
-                        WHERE ""UserId"" = @userId 
-                            AND ""IsReminderRecord"" = TRUE
-                        ORDER BY ""RecordDate"" DESC
-                        LIMIT 1
-                    ";
+    SELECT ""MissedReason""
+    FROM public.""Today""
+    WHERE ""UserId"" = @userId 
+        AND ""IsReminderRecord"" = TRUE
+        AND ""MissedReason"" IS NOT NULL
+        AND ""MissedReason"" != ''
+    ORDER BY ""RecordDate"" DESC
+    LIMIT 1
+";
 
                             string missedReason = "";
                             using (var conn3 = new NpgsqlConnection(connStr))

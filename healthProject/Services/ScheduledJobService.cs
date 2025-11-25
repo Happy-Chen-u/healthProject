@@ -161,7 +161,7 @@ namespace healthProject.Services
         }
 
         // ========================================
-        // 🔍 取得連續兩天以上未填寫的個案
+        // 🔍 取得連續兩天以上未填寫的個案（修正版）
         // ========================================
         private async Task<List<MissedUserInfo>> GetUsersWithMissedRecordsAsync(DateTime twoDaysAgo)
         {
@@ -171,34 +171,40 @@ namespace healthProject.Services
             await using var conn = new NpgsqlConnection(connStr);
             await conn.OpenAsync();
 
+            // 修正：使用小寫的欄位名稱
             var query = @"
         WITH LastRecords AS (
             SELECT 
                 ""UserId"",
-                MAX(""RecordDate"") as LastRecordDate
+                MAX(""RecordDate"") as lastrecorddate  -- 改用小寫
             FROM ""Today""
+            WHERE ""IsReminderRecord"" = FALSE
             GROUP BY ""UserId""
+        ),
+        TodayReminders AS (
+            SELECT DISTINCT ""UserId""
+            FROM ""Today""
+            WHERE ""IsReminderRecord"" = TRUE 
+              AND ""RecordDate"" = @Today
         )
         SELECT 
             u.""Id"",
             u.""FullName"",
             u.""LineUserId"",
-            COALESCE(lr.""LastRecordDate"", DATE '1900-01-01') as LastRecordDate,
-            u.""LastReminderDate""
+            COALESCE(lr.lastrecorddate, DATE '1900-01-01') as lastrecorddate  -- 改用小寫
         FROM ""Users"" u
         LEFT JOIN LastRecords lr ON u.""Id"" = lr.""UserId""
+        LEFT JOIN TodayReminders tr ON u.""Id"" = tr.""UserId""
         WHERE u.""IsActive"" = true
           AND u.""Role"" = 'Patient'
           AND u.""LineUserId"" IS NOT NULL
           AND u.""LineUserId"" != ''
           AND (
-              lr.""LastRecordDate"" IS NULL 
-              OR lr.""LastRecordDate"" < @TwoDaysAgo
+              lr.lastrecorddate IS NULL 
+              OR lr.lastrecorddate <= @TwoDaysAgo
           )
-          AND (
-              u.""LastReminderDate"" IS NULL 
-              OR u.""LastReminderDate"" < @Today
-          )";
+          AND tr.""UserId"" IS NULL
+    ";
 
             await using var cmd = new NpgsqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@TwoDaysAgo", twoDaysAgo);
@@ -212,14 +218,18 @@ namespace healthProject.Services
                     ? 999 // 從未填寫
                     : (DateTime.Today - lastRecordDate).Days;
 
-                users.Add(new MissedUserInfo
+                // 只加入連續兩天以上未填寫的
+                if (missedDays >= 2)
                 {
-                    Id = reader.GetInt32(0),
-                    FullName = reader.GetString(1),
-                    LineUserId = reader.GetString(2),
-                    LastRecordDate = lastRecordDate.Year == 1900 ? null : lastRecordDate,
-                    MissedDays = missedDays
-                });
+                    users.Add(new MissedUserInfo
+                    {
+                        Id = reader.GetInt32(0),
+                        FullName = reader.GetString(1),
+                        LineUserId = reader.GetString(2),
+                        LastRecordDate = lastRecordDate.Year == 1900 ? null : lastRecordDate,
+                        MissedDays = missedDays
+                    });
+                }
             }
 
             return users;
@@ -345,7 +355,7 @@ namespace healthProject.Services
         }
 
         // ========================================
-        // 💾 更新最後提醒日期
+        // 💾 更新最後提醒日期 (改為插入提醒記錄)
         // ========================================
         private async Task UpdateLastReminderDateAsync(int userId)
         {
@@ -353,39 +363,52 @@ namespace healthProject.Services
             await using var conn = new NpgsqlConnection(connStr);
             await conn.OpenAsync();
 
+            // 在 Today 表插入一筆提醒記錄
             var query = @"
-        UPDATE ""Users""
-        SET ""LastReminderDate"" = @Now
-        WHERE ""Id"" = @UserId";
+        INSERT INTO ""Today"" 
+        (""UserId"", ""RecordDate"", ""IsReminderRecord"")
+        VALUES (@UserId, @Today, TRUE)
+    ";
 
             await using var cmd = new NpgsqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@Now", DateTime.Now);
             cmd.Parameters.AddWithValue("@UserId", userId);
+            cmd.Parameters.AddWithValue("@Today", DateTime.Today);
             await cmd.ExecuteNonQueryAsync();
         }
 
         // ========================================
         // 💾 儲存使用者未填寫原因
         // ========================================
-        public async Task SaveMissedReasonAsync(string lineUserId, string reason)
+        public async Task SaveMissedReasonAsync(int userId, string reason)
         {
             var connStr = _configuration.GetConnectionString("DefaultConnection");
             await using var conn = new NpgsqlConnection(connStr);
             await conn.OpenAsync();
 
+            // 更新今天的提醒記錄,加入原因
             var query = @"
-        UPDATE ""Users""
-        SET ""MissedReason"" = @Reason,
-            ""MissedReasonDate"" = @Now
-        WHERE ""LineUserId"" = @LineUserId";
+        UPDATE ""Today""
+        SET ""MissedReason"" = @Reason
+        WHERE ""UserId"" = @UserId
+          AND ""RecordDate"" = @Today
+          AND ""IsReminderRecord"" = TRUE
+    ";
 
             await using var cmd = new NpgsqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@Reason", reason);
-            cmd.Parameters.AddWithValue("@Now", DateTime.Now);
-            cmd.Parameters.AddWithValue("@LineUserId", lineUserId);
-            await cmd.ExecuteNonQueryAsync();
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            cmd.Parameters.AddWithValue("@Today", DateTime.Today);
 
-            _logger.LogInformation($"✅ 已儲存未填寫原因: {lineUserId} - {reason}");
+            var rowsAffected = await cmd.ExecuteNonQueryAsync();
+
+            if (rowsAffected > 0)
+            {
+                _logger.LogInformation($"✅ 已儲存未填寫原因: UserId {userId} - {reason}");
+            }
+            else
+            {
+                _logger.LogWarning($"⚠️ 找不到今日的提醒記錄: UserId {userId}");
+            }
         }
 
         // 新增輔助類別
