@@ -84,7 +84,7 @@
         }
 
         .form-row {
-            display: grid;
+            display: flex;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
             margin-bottom: 1rem;
@@ -92,6 +92,7 @@
 
         .form-group {
             margin-bottom: 1rem;
+            flex:1;
         }
 
         .form-label {
@@ -350,7 +351,7 @@
                 const name = nameInput.value;
 
                 // 顯示確認訊息
-                confirmMessage.innerHTML = `確認 <strong>${symbol}</strong> 特殊符號與個案 <strong>${name}</strong> 相同?`;
+                confirmMessage.innerHTML = `確認 <strong>${symbol}</strong> 特殊符號與給予個案 <strong>${name}</strong> 的特殊符號相同?`;
                 confirmModal.style.display = 'block';
             });
 
