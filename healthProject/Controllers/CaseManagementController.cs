@@ -789,6 +789,7 @@ namespace healthProject.Controllers
             }
         }
         // 在 CaseManagementController.cs 加入
+        // 在 CaseManagementController.cs 的 GetLatestPatientData 方法中修改
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetLatestPatientData(string idNumber)
@@ -825,16 +826,23 @@ namespace healthProject.Controllers
                 if (userId == 0)
                     return Json(new { success = false, message = "查無此病患" });
 
-                // 查詢最新一筆紀錄的性別和生日
+                // 🆕 自動從身分證字號判斷性別
+                string gender = "";
+                if (!string.IsNullOrEmpty(idNumber) && idNumber.Length >= 2)
+                {
+                    char secondChar = idNumber[1];
+                    gender = secondChar == '1' ? "男" : secondChar == '2' ? "女" : "";
+                }
+
+                // 查詢最新一筆紀錄的生日
                 string sqlLatest = @"
-            SELECT ""Gender"", ""BirthDate""
+            SELECT ""BirthDate""
             FROM public.""CaseManagement""
             WHERE ""IDNumber"" = @idNumber
             ORDER BY ""Id"" DESC
             LIMIT 1;
         ";
 
-                string gender = "";
                 string birthDate = "";
 
                 using (var cmd = new NpgsqlCommand(sqlLatest, conn))
@@ -843,8 +851,7 @@ namespace healthProject.Controllers
                     using var reader = await cmd.ExecuteReaderAsync();
                     if (await reader.ReadAsync())
                     {
-                        gender = reader.IsDBNull(0) ? "" : reader.GetString(0);
-                        birthDate = reader.IsDBNull(1) ? "" : reader.GetDateTime(1).ToString("yyyy-MM-dd");
+                        birthDate = reader.IsDBNull(0) ? "" : reader.GetDateTime(0).ToString("yyyy-MM-dd");
                     }
                 }
 
@@ -867,6 +874,8 @@ namespace healthProject.Controllers
                 return Json(new { success = false, message = "系統錯誤" });
             }
         }
+
+
 
         // ========================================
         // 🧠 資料庫操作區

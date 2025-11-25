@@ -741,6 +741,7 @@
         }
 
         // 顯示表單
+        // 顯示表單
         function showRecordForm() {
             if (!currentPatientId || !currentPatientIdNumber) { alert('請先搜尋個案'); return; }
 
@@ -760,18 +761,31 @@
             const birthInput = document.getElementById('inputBirthDate');
             const birthText = document.getElementById('displayBirthText');
 
+            // 🆕 自動從身分證字號判斷性別
+            let autoGender = '';
+            if (currentPatientIdNumber && currentPatientIdNumber.length >= 2) {
+                const secondChar = currentPatientIdNumber.charAt(1);
+                if (secondChar === '1') {
+                    autoGender = '男';
+                } else if (secondChar === '2') {
+                    autoGender = '女';
+                }
+            }
+
             if (currentRecordCount === 0) {
-                // 首次收案評估 - 需要手動輸入
+                // 首次收案評估
                 dateLabel.innerText = '收案評估日期：';
                 badge.innerText = '收案評估';
                 badge.className = 'record-type-badge badge-first';
                 document.getElementById('hiddenAnnualAssessment').value = 'false';
 
-                // 顯示選單，隱藏文字
+                // 🆕 性別 - 自動填入但允許修改
                 genderSelect.style.display = 'inline-block';
                 genderText.style.display = 'none';
-                genderSelect.value = '';
+                genderSelect.value = autoGender; // 自動選擇性別
+                document.getElementById('hiddenGender').value = autoGender; // 同步更新 hidden 欄位
 
+                // 生日 - 需要手動輸入
                 birthInput.style.display = 'inline-block';
                 birthText.style.display = 'none';
                 birthInput.value = '';
@@ -783,12 +797,14 @@
                 document.getElementById('hiddenAnnualAssessment').value = 'true';
                 document.getElementById('hiddenAnnualAssessmentDate').value = today;
 
-                // 隱藏選單，顯示文字
+                // 性別 - 使用歷史資料或自動判斷
                 genderSelect.style.display = 'none';
                 genderText.style.display = 'inline';
-                genderText.innerText = previousGender || '--';
-                document.getElementById('hiddenGender').value = previousGender;
+                const displayGender = previousGender || autoGender || '--';
+                genderText.innerText = displayGender;
+                document.getElementById('hiddenGender').value = previousGender || autoGender;
 
+                // 生日 - 使用歷史資料
                 birthInput.style.display = 'none';
                 birthText.style.display = 'inline';
                 if (previousBirthDate) {
@@ -942,6 +958,8 @@
             document.getElementById('cardiovascularLow').value = (v === 'low');
             document.getElementById('cardiovascularNA').value = (v === 'na');
         }
+
+            
 
         // 點擊外部關閉下拉選單
         document.addEventListener('click', function (e) {
