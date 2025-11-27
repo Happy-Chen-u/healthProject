@@ -896,6 +896,9 @@ namespace healthProject.Controllers
         [HttpGet]
         public async Task<IActionResult> MissedRecordsStatus(string searchIdNumber = null)
         {
+            // ⭐ 一進此頁就清除未讀提醒（紅點變藍色）
+            HttpContext.Session.SetString("LastViewedMissedRecords", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+
             try
             {
                 var connStr = _configuration.GetConnectionString("DefaultConnection")
@@ -906,7 +909,6 @@ namespace healthProject.Controllers
                 using var conn = new NpgsqlConnection(connStr);
                 await conn.OpenAsync();
 
-                // 查詢所有使用者及其最後填寫日期
                 string sql = @"
             SELECT 
                 u.""Id"" as UserId,
@@ -938,7 +940,6 @@ namespace healthProject.Controllers
                         string phoneNumber = reader.IsDBNull(3) ? "" : reader.GetString(3);
                         DateTime? lastRecordDate = reader.IsDBNull(4) ? null : reader.GetDateTime(4);
 
-                        // 計算未填寫天數
                         int missedDays = 0;
                         if (lastRecordDate.HasValue)
                         {
@@ -946,14 +947,11 @@ namespace healthProject.Controllers
                         }
                         else
                         {
-                            // 如果從未填寫,查詢帳號建立日期
-                            missedDays = 999; // 設定一個大數字表示從未填寫
+                            missedDays = 999;
                         }
 
-                        // 只顯示 2 天以上未填寫的
                         if (missedDays >= 2)
                         {
-                            // 從 CaseManagement 取得性別和生日
                             string genderBirthdaySql = @"
                         SELECT ""Gender"", ""BirthDate""
                         FROM public.""CaseManagement""
@@ -979,27 +977,22 @@ namespace healthProject.Controllers
                                 }
                             }
 
-                            // 如果沒有性別,從身分證判斷
                             if (string.IsNullOrEmpty(gender) && idNumber.Length >= 2)
                             {
                                 char secondChar = idNumber[1];
                                 gender = secondChar == '1' ? "男" : secondChar == '2' ? "女" : "";
                             }
 
-                            // 取得最新的未填寫原因
-                            // 取得最新的未填寫原因
-                            // 在 MissedRecordsStatus Action 中
-                            // 取得最新的未填寫原因
                             string reasonSql = @"
-    SELECT ""MissedReason""
-    FROM public.""Today""
-    WHERE ""UserId"" = @userId 
-        AND ""IsReminderRecord"" = TRUE
-        AND ""MissedReason"" IS NOT NULL
-        AND ""MissedReason"" != ''
-    ORDER BY ""RecordDate"" DESC
-    LIMIT 1
-";
+                        SELECT ""MissedReason""
+                        FROM public.""Today""
+                        WHERE ""UserId"" = @userId 
+                            AND ""IsReminderRecord"" = TRUE
+                            AND ""MissedReason"" IS NOT NULL
+                            AND ""MissedReason"" != ''
+                        ORDER BY ""RecordDate"" DESC
+                        LIMIT 1
+                    ";
 
                             string missedReason = "";
                             using (var conn3 = new NpgsqlConnection(connStr))
@@ -1041,6 +1034,7 @@ namespace healthProject.Controllers
                 return View(new List<MissedRecordViewModel>());
             }
         }
+
 
 
         // ========================================

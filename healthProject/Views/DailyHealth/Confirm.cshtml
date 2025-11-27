@@ -520,14 +520,18 @@
         }
 
         <!-- 確認表單 -->
+        <!-- 確認表單 -->
         <form id="confirmForm" asp-controller="DailyHealth" asp-action="@(Model.Id > 0 ? "ConfirmUpdate" : "ConfirmSubmit")" method="post">
             @Html.AntiForgeryToken()
-            
+
             <!-- 基本資訊 -->
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="UserId" />
-            <input type="hidden" asp-for="RecordDate" />
-            
+
+            <!-- 🆕 修改這裡:使用完整的 DateTime 格式 -->
+            <input type="hidden" asp-for="RecordDate" value="@Model.RecordDate.ToString("yyyy-MM-ddTHH:mm:ss")" />
+            <input type="hidden" asp-for="RecordTime" value="@Model.RecordTime?.ToString()" />
+
             <!-- 血壓 - 8個隱藏欄位 -->
             <input type="hidden" asp-for="BP_First_1_Systolic" />
             <input type="hidden" asp-for="BP_First_1_Diastolic" />
@@ -537,7 +541,7 @@
             <input type="hidden" asp-for="BP_Second_1_Diastolic" />
             <input type="hidden" asp-for="BP_Second_2_Systolic" />
             <input type="hidden" asp-for="BP_Second_2_Diastolic" />
-            
+
             <!-- 三餐 JSON -->
             @if (Model.Meals_Breakfast != null)
             {
@@ -551,7 +555,7 @@
             {
                 <input type="hidden" name="Meals_Dinner" value="@System.Text.Json.JsonSerializer.Serialize(Model.Meals_Dinner)" />
             }
-            
+
             <!-- 其他欄位 -->
             <input type="hidden" asp-for="ExerciseType" />
             <input type="hidden" asp-for="ExerciseDuration" />

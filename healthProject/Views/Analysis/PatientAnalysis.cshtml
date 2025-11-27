@@ -330,6 +330,11 @@
                 </a>
             </div>
 
+            <!-- 🆕 測試週報按鈕 -->
+            <button class="btn btn-success" onclick="testWeeklyReport()" style="background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);">
+                📱 測試傳送週報到 LINE
+            </button>
+
             <!-- 報表類型選擇 -->
             <div class="selection-section">
                 <h2 class="section-title">📊 選擇報表類型</h2>
@@ -1599,6 +1604,46 @@ function drawCharts(chartData) {
             alert('下載 PDF 功能開發中...');
             // TODO: 實作 PDF 下載
         }
+        // 🆕 測試週報傳送
+        async function testWeeklyReport() {
+            if (!confirm('確定要傳送上週健康週報到您的 LINE 嗎?\n\n注意:需要先綁定 LINE 帳號才能接收週報。')) {
+                return;
+            }
+
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '📤 傳送中...';
+
+            try {
+                const response = await fetch('/Analysis/TestWeeklyReport', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ ' + result.message);
+                } else {
+                    alert('❌ ' + result.message);
+                }
+            } catch (error) {
+                console.error('傳送錯誤:', error);
+                alert('❌ 系統錯誤: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+        
     </script>
 </body>
 </html>

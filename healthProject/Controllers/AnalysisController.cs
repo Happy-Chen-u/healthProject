@@ -441,7 +441,146 @@ namespace healthProject.Controllers
             return parts.Any() ? string.Join(", ", parts) : "未記錄";
         }
 
-        
+        //下載報表
+        [HttpGet]
+        [AllowAnonymous] // 允許未登入使用者存取
+        public async Task<IActionResult> DownloadWeeklyReport(string reportId)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(reportId))
+                {
+                    return NotFound("報表 ID 不正確");
+                }
+
+                // 從資料庫取得 PDF
+                var connStr = _configuration.GetConnectionString("DefaultConnection");
+                await using var conn = new NpgsqlConnection(connStr);
+                await conn.OpenAsync();
+
+                var query = @"
+            SELECT ""PdfData"", ""StartDate"", ""EndDate"", ""ExpiresAt"", ""UserId""
+            FROM ""WeeklyReports""
+            WHERE ""Id"" = @ReportId";
+
+                await using var cmd = new NpgsqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@ReportId", reportId);
+                await using var reader = await cmd.ExecuteReaderAsync();
+
+                if (!await reader.ReadAsync())
+                {
+                    return NotFound("找不到報表或報表已過期");
+                }
+
+                // 檢查是否過期
+                var expiresAt = reader.GetDateTime(3);
+                if (DateTime.Now > expiresAt)
+                {
+                    return BadRequest("報表已過期");
+                }
+
+                var pdfData = (byte[])reader["PdfData"];
+                var startDate = reader.GetDateTime(1);
+                var endDate = reader.GetDateTime(2);
+
+                // 產生檔案名稱
+                var fileName = $"健康週報_{startDate:yyyyMMdd}-{endDate:yyyyMMdd}.pdf";
+
+                // 返回 PDF 檔案
+                return File(pdfData, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "下載週報失敗");
+                return StatusCode(500, "下載失敗,請稍後再試");
+            }
+        }
+
+        //有改的
+        [HttpPost]
+        public async Task<IActionResult> TestWeeklyReport()
+        {
+            try
+            {
+                // 1️⃣ 取得登入使用者 ID (修正)
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    return Json(new { success = false, message = "無法取得使用者資訊,請重新登入" });
+                }
+
+                var userId = int.Parse(userIdClaim);
+
+                // 2️⃣ 查出使用者資料
+                var user = await GetUserByIdAsync(userId);
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "找不到使用者資料" });
+                }
+
+                // 3️⃣ 檢查是否已綁定 LINE
+                if (string.IsNullOrEmpty(user.LineUserId))
+                {
+                    return Json(new { success = false, message = "您尚未綁定 LINE 帳號,無法傳送週報" });
+                }
+
+                // 4️⃣ 計算上週日期 (週一到週日)
+                var today = DateTime.Today;
+                var dayOfWeek = (int)today.DayOfWeek;
+
+                // 計算上週一
+                var lastMonday = today.AddDays(-(dayOfWeek == 0 ? 13 : dayOfWeek + 6));
+                // 上週日
+                var lastSunday = lastMonday.AddDays(6);
+
+                _logger.LogInformation($"準備產生週報: {user.FullName} ({lastMonday:yyyy-MM-dd} ~ {lastSunday:yyyy-MM-dd})");
+
+                // 5️⃣ 呼叫服務產生週報 PDF 並傳 LINE
+                var scheduledJobService = HttpContext.RequestServices.GetRequiredService<ScheduledJobService>();
+                await scheduledJobService.SendWeeklyReportToUserAsync(user, lastMonday, lastSunday);
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"週報已成功傳送!\n\n期間: {lastMonday:yyyy-MM-dd} ~ {lastSunday:yyyy-MM-dd}\n請檢查您的 LINE 訊息。"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "測試報表失敗");
+                return Json(new { success = false, message = $"傳送失敗: {ex.Message}" });
+            }
+        }
+        private async Task<UserDBModel> GetUserById(int userId)
+        {
+            var connStr = _configuration.GetConnectionString("DefaultConnection");
+            await using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+
+            var query = @"
+SELECT ""Id"", ""FullName"", ""IDNumber"", ""LineUserId""
+FROM ""Users""
+WHERE ""Id"" = @UserId";
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+            {
+                return new UserDBModel
+                {
+                    Id = reader.GetInt32(0),
+                    FullName = reader.GetString(1),
+                    IDNumber = reader.GetString(2),
+                    LineUserId = reader.IsDBNull(3) ? null : reader.GetString(3)
+                };
+            }
+
+            throw new Exception("找不到使用者");
+        }
+
+
         // ========================================
         // 📈 計算統計數據
         // ========================================

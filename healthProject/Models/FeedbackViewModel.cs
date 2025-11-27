@@ -12,5 +12,7 @@
         public string BloodPressureStatus { get; set; }
         public string BloodSugarMessage { get; set; }
         public string BloodSugarStatus { get; set; }
+        public DateTime RecordDate { get; set; }
+        public bool IsToday { get; set; }
     }
 }

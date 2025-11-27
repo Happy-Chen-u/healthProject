@@ -196,6 +196,9 @@ namespace healthProject.Controllers
         // ========================================
         // ✅ 確認上傳
         // ========================================
+        // ========================================
+        // ✅ 確認上傳
+        // ========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmSubmit(HealthRecordViewModel model,
@@ -223,26 +226,26 @@ namespace healthProject.Controllers
                 // 🆕 取得今日所有紀錄來計算總計
                 var todayRecords = await GetUserRecordsByDateAsync(userId, DateTime.Today);
 
-                // 產生建議訊息（使用今日總計）
-                var feedback = GenerateFeedbackWithDailyTotal(todayRecords);
+                // 產生建議訊息(新增時一定是今日,所以 isToday = true)
+                var feedback = GenerateFeedbackWithDailyTotal(todayRecords, DateTime.Today, isToday: true);
                 TempData["Feedback"] = JsonSerializer.Serialize(feedback);
 
-                // 🔔 發送 LINE 通知
-                await SendLineNotification(userId, feedback);
+                // 🔔 發送 LINE 通知(新增時一定是今日)
+                await SendLineNotification(userId, feedback, DateTime.Today, isToday: true);
 
                 return RedirectToAction("Success");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "儲存今日健康紀錄失敗");
-                ModelState.AddModelError("", "儲存失敗，請稍後再試");
+                ModelState.AddModelError("", "儲存失敗,請稍後再試");
                 return View("Confirm", model);
             }
         }
 
-            // ========================================
-            // 🎉 上傳成功頁面
-            // ========================================
+        // ========================================
+        // 🎉 上傳成功頁面
+        // ========================================
         public IActionResult Success()
         {
             if (TempData["Feedback"] != null)
@@ -327,21 +330,20 @@ namespace healthProject.Controllers
         // ========================================
         // ✅ 確認更新
         // ========================================
+        // ========================================
+        // ✅ 確認更新
+        // ========================================
+        // ========================================
+        // ✅ 確認更新
+        // ========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmUpdate(HealthRecordViewModel model,
-            string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
+    string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
         {
             try
             {
-                if (!string.IsNullOrEmpty(Meals_Breakfast))
-                    model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(Meals_Breakfast);
-                if (!string.IsNullOrEmpty(Meals_Lunch))
-                    model.Meals_Lunch = JsonSerializer.Deserialize<MealSelection>(Meals_Lunch);
-                if (!string.IsNullOrEmpty(Meals_Dinner))
-                    model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(Meals_Dinner);
-
-                ModelState.Clear();
+                // ... 前面的程式碼 ...
 
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 if (model.UserId != userId)
@@ -349,16 +351,34 @@ namespace healthProject.Controllers
                     return Forbid();
                 }
 
+                // 🆕 從資料庫讀取原始紀錄的日期
+                var originalRecord = await GetRecordByIdAsync(model.Id);
+                if (originalRecord == null)
+                {
+                    return NotFound();
+                }
+
+                // 使用原始紀錄的日期
+                DateTime recordDate = originalRecord.RecordDate;
+
+                _logger.LogInformation($"從資料庫讀取的原始日期: {recordDate:yyyy-MM-dd}");
+
                 await UpdateRecordAsync(model);
 
-                // 🆕 取得今日所有紀錄來計算總計
-                var todayRecords = await GetUserRecordsByDateAsync(userId, model.RecordDate);
+                // 判斷編輯的日期是否為今天
+                bool isToday = recordDate.Date == DateTime.Today;
 
-                // 產生建議訊息（使用今日總計）
-                var feedback = GenerateFeedbackWithDailyTotal(todayRecords);
+                _logger.LogInformation($"isToday: {isToday}");
+
+                // 取得該日期的所有紀錄來計算總計
+                var recordsOnDate = await GetUserRecordsByDateAsync(userId, recordDate);
+
+                // 產生建議訊息
+                var feedback = GenerateFeedbackWithDailyTotal(recordsOnDate, recordDate, isToday);
                 TempData["Feedback"] = JsonSerializer.Serialize(feedback);
 
-                await SendLineNotification(userId, feedback);
+                // 發送 LINE 通知
+                await SendLineNotification(userId, feedback, recordDate, isToday);
 
                 return RedirectToAction("Success");
             }
@@ -972,10 +992,11 @@ namespace healthProject.Controllers
             return feedback;
         }
 
+
         // ========================================
         // 📱 發送 LINE 通知
         // ========================================
-        private async Task SendLineNotification(int userId, FeedbackViewModel feedback)
+        private async Task SendLineNotification(int userId, FeedbackViewModel feedback, DateTime recordDate, bool isToday)
         {
             try
             {
@@ -994,12 +1015,23 @@ namespace healthProject.Controllers
                 }
 
                 var messages = new List<string>();
-                messages.Add("📊 【代謝症候群管理系統】");
-                messages.Add("今日健康資訊已記錄成功!");
+                messages.Add("📊 【代謝症候群追蹤與管理系統】");
+
+                // 🆕 根據是否為今日決定標題訊息
+                if (isToday)
+                {
+                    messages.Add("今日健康資訊已記錄成功!");
+                }
+                else
+                {
+                    messages.Add($"您在 {recordDate:MM/dd} 的資訊已更新成功");
+                }
+
                 messages.Add("═══════════════");
 
                 bool hasWarning = false;
 
+                // 血壓警示
                 if (!string.IsNullOrEmpty(feedback.BloodPressureMessage) &&
                     feedback.BloodPressureStatus == "danger")
                 {
@@ -1007,6 +1039,7 @@ namespace healthProject.Controllers
                     hasWarning = true;
                 }
 
+                // 血糖警示
                 if (!string.IsNullOrEmpty(feedback.BloodSugarMessage) &&
                     feedback.BloodSugarStatus == "danger")
                 {
@@ -1014,33 +1047,46 @@ namespace healthProject.Controllers
                     hasWarning = true;
                 }
 
-                if (!string.IsNullOrEmpty(feedback.WaterMessage) &&
-                    feedback.WaterStatus == "warning")
+                // 🆕 水分提醒（warning 也要顯示）
+                if (!string.IsNullOrEmpty(feedback.WaterMessage))
                 {
                     messages.Add(feedback.WaterMessage);
                 }
 
-                if (!string.IsNullOrEmpty(feedback.ExerciseMessage) &&
-                    feedback.ExerciseStatus == "warning")
+                // 🆕 運動提醒（warning 也要顯示）
+                if (!string.IsNullOrEmpty(feedback.ExerciseMessage))
                 {
                     messages.Add(feedback.ExerciseMessage);
                 }
 
+                // 🆕 抽菸提醒（所有狀態都要顯示）
                 if (!string.IsNullOrEmpty(feedback.CigaretteMessage))
                 {
                     messages.Add(feedback.CigaretteMessage);
                 }
 
+                // 🆕 結尾訊息
                 if (!hasWarning)
                 {
+                    // 沒有危險警示
+                    messages.Add("");
                     messages.Add("✅ 各項指標都在正常範圍內!");
                     messages.Add("請繼續保持良好的生活習慣 💪");
                 }
                 else
                 {
+                    // 有危險警示
                     messages.Add("");
-                    messages.Add("⚠️ 請注意上述異常項目");
-                    messages.Add("建議諮詢您的醫療團隊");
+                    if (isToday)
+                    {
+                        messages.Add("⚠️ 請注意上述異常項目");
+                        //messages.Add("建議諮詢您的醫療團隊");
+                    }
+                    else
+                    {
+                        messages.Add("⚠️ 請注意上述異常項目");
+                        messages.Add("加油!");
+                    }
                 }
 
                 var messageText = string.Join("\n", messages);
@@ -1053,8 +1099,8 @@ namespace healthProject.Controllers
                     to = lineUserId,
                     messages = new[]
                     {
-                        new { type = "text", text = messageText }
-                    }
+                new { type = "text", text = messageText }
+            }
                 };
 
                 var json = JsonSerializer.Serialize(payload);
@@ -1064,7 +1110,7 @@ namespace healthProject.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation($"✅ LINE 通知發送成功 - UserId: {userId}");
+                    _logger.LogInformation($"✅ LINE 通知發送成功 - UserId: {userId}, Date: {recordDate:yyyy-MM-dd}, IsToday: {isToday}");
                 }
                 else
                 {
@@ -1134,26 +1180,31 @@ namespace healthProject.Controllers
         }
 
         // 🆕 新增：使用當日總計產生 Feedback
-        private FeedbackViewModel GenerateFeedbackWithDailyTotal(List<HealthRecordViewModel> todayRecords)
+        // 🆕 新增:使用當日總計產生 Feedback(新增日期和是否為今日參數)
+        private FeedbackViewModel GenerateFeedbackWithDailyTotal(List<HealthRecordViewModel> records, DateTime recordDate, bool isToday)
         {
             var feedback = new FeedbackViewModel();
 
-            // 計算今日總計
-            var totalWater = todayRecords.Sum(r => r.WaterIntake ?? 0);
-            var totalExercise = todayRecords.Sum(r => r.ExerciseDuration ?? 0);
-            var totalCigarettes = todayRecords.Sum(r => r.Cigarettes ?? 0);
+            // 🆕 儲存日期資訊
+            feedback.RecordDate = recordDate;
+            feedback.IsToday = isToday;
+
+            // 計算總計
+            var totalWater = records.Sum(r => r.WaterIntake ?? 0);
+            var totalExercise = records.Sum(r => r.ExerciseDuration ?? 0);
+            var totalCigarettes = records.Sum(r => r.Cigarettes ?? 0);
 
             // 血壓平均
-            var allSystolic = todayRecords
+            var allSystolic = records
                 .SelectMany(r => new[] { r.BP_First_1_Systolic, r.BP_First_2_Systolic,
-                                 r.BP_Second_1_Systolic, r.BP_Second_2_Systolic })
+                         r.BP_Second_1_Systolic, r.BP_Second_2_Systolic })
                 .Where(v => v.HasValue)
                 .Select(v => v.Value)
                 .ToList();
 
-            var allDiastolic = todayRecords
+            var allDiastolic = records
                 .SelectMany(r => new[] { r.BP_First_1_Diastolic, r.BP_First_2_Diastolic,
-                                 r.BP_Second_1_Diastolic, r.BP_Second_2_Diastolic })
+                         r.BP_Second_1_Diastolic, r.BP_Second_2_Diastolic })
                 .Where(v => v.HasValue)
                 .Select(v => v.Value)
                 .ToList();
@@ -1162,87 +1213,90 @@ namespace healthProject.Controllers
             var avgDiastolic = allDiastolic.Any() ? allDiastolic.Average() : (decimal?)null;
 
             // 血糖平均
-            var bloodSugars = todayRecords.Where(r => r.BloodSugar.HasValue).Select(r => r.BloodSugar.Value).ToList();
+            var bloodSugars = records.Where(r => r.BloodSugar.HasValue).Select(r => r.BloodSugar.Value).ToList();
             var avgBloodSugar = bloodSugars.Any() ? bloodSugars.Average() : (decimal?)null;
 
-            // 💧 水分攝取（使用今日總計）
+            // 🆕 根據是否為今日設定訊息前綴
+            string prefix = isToday ? "今日" : "";
+
+            // 💧 水分攝取
             if (totalWater > 0)
             {
                 if (totalWater < HealthRecordViewModel.WATER_STANDARD)
                 {
                     var diff = HealthRecordViewModel.WATER_STANDARD - (int)totalWater;
-                    feedback.WaterMessage = $"💧 今日總水分攝取 {totalWater:0} ml，還差 {diff} ml 達到建議量！";
+                    feedback.WaterMessage = $"💧 {prefix}總水分攝取 {totalWater:0} ml，還差 {diff} ml 達到建議量！";
                     feedback.WaterStatus = "warning";
                 }
                 else
                 {
-                    feedback.WaterMessage = $"💧 太棒了！今日總水分攝取 {totalWater:0} ml，已達標準！";
+                    feedback.WaterMessage = $"💧 太棒了！{prefix}總水分攝取 {totalWater:0} ml，已達標準！";
                     feedback.WaterStatus = "success";
                 }
             }
 
-            // 🏃 運動時間（使用今日總計）
+            // 🏃 運動時間
             if (totalExercise > 0)
             {
                 if (totalExercise < HealthRecordViewModel.EXERCISE_STANDARD)
                 {
                     var diff = HealthRecordViewModel.EXERCISE_STANDARD - (int)totalExercise;
-                    feedback.ExerciseMessage = $"🏃 今日總運動時間 {totalExercise:0} 分鐘，可再增加 {diff} 分鐘達到建議量！";
+                    feedback.ExerciseMessage = $"🏃 {prefix}總運動時間 {totalExercise:0} 分鐘，可再增加 {diff} 分鐘達到建議量！";
                     feedback.ExerciseStatus = "warning";
                 }
                 else
                 {
-                    feedback.ExerciseMessage = $"🏃 很棒！今日總運動時間 {totalExercise:0} 分鐘，已達標準！";
+                    feedback.ExerciseMessage = $"🏃 很棒！{prefix}總運動時間 {totalExercise:0} 分鐘，已達標準！";
                     feedback.ExerciseStatus = "success";
                 }
             }
 
-            // 🚬 抽菸（使用今日總計）
+            // 🚬 抽菸
             if (totalCigarettes > 0)
             {
                 if (totalCigarettes < 3)
                 {
-                    feedback.CigaretteMessage = $"🚭 今日抽菸 {totalCigarettes:0} 支，量很少！繼續努力戒菸！";
+                    feedback.CigaretteMessage = $"🚭 {prefix}抽菸 {totalCigarettes:0} 支，量很少！繼續努力戒菸！";
                     feedback.CigaretteStatus = "success";
                 }
                 else if (totalCigarettes <= 7)
                 {
-                    feedback.CigaretteMessage = $"🚭 今日抽菸 {totalCigarettes:0} 支，加油！抽得越少身體越健康！";
+                    feedback.CigaretteMessage = $"🚭 {prefix}抽菸 {totalCigarettes:0} 支，加油！抽得越少身體越健康！";
                     feedback.CigaretteStatus = "info";
                 }
                 else
                 {
-                    feedback.CigaretteMessage = $"⚠️ 今日抽菸量 {totalCigarettes:0} 支較多，建議尋求戒菸協助！";
+                    feedback.CigaretteMessage = $"⚠️ {prefix}抽菸量 {totalCigarettes:0} 支較多，建議尋求戒菸協助！";
                     feedback.CigaretteStatus = "danger";
                 }
             }
 
-            // ❤️ 血壓 (使用今日平均)
+            // ❤️ 血壓
             if (avgSystolic.HasValue && avgSystolic.Value > 120)
             {
-                feedback.BloodPressureMessage = $"⚠️ 今日平均收縮壓 {avgSystolic.Value:0} mmHg 偏高（>120），建議注意飲食與作息！";
+                feedback.BloodPressureMessage = $"⚠️ {prefix}平均收縮壓 {avgSystolic.Value:0} mmHg 偏高（>120），建議注意飲食與作息！";
                 feedback.BloodPressureStatus = "danger";
             }
             else if (avgDiastolic.HasValue && avgDiastolic.Value > 80)
             {
-                feedback.BloodPressureMessage = $"⚠️ 今日平均舒張壓 {avgDiastolic.Value:0} mmHg 偏高（>80），建議注意飲食與作息！";
+                feedback.BloodPressureMessage = $"⚠️ {prefix}平均舒張壓 {avgDiastolic.Value:0} mmHg 偏高（>80），建議注意飲食與作息！";
                 feedback.BloodPressureStatus = "danger";
             }
             else if (avgSystolic.HasValue || avgDiastolic.HasValue)
             {
-                feedback.BloodPressureMessage = $"✅ 今日血壓 {avgSystolic:0}/{avgDiastolic:0} mmHg 正常，繼續保持！";
+                feedback.BloodPressureMessage = $"✅ {prefix}血壓 {avgSystolic:0}/{avgDiastolic:0} mmHg 正常，繼續保持！";
                 feedback.BloodPressureStatus = "success";
             }
 
-            // 🩸 血糖 (使用今日平均)
+            // 🩸 血糖
             if (avgBloodSugar.HasValue && avgBloodSugar.Value > 99)
             {
-                feedback.BloodSugarMessage = $"⚠️ 今日平均血糖 {avgBloodSugar.Value:0.0} mg/dL 偏高（>99），建議控制飲食！";
+                feedback.BloodSugarMessage = $"⚠️ {prefix}平均血糖 {avgBloodSugar.Value:0.0} mg/dL 偏高（>99），建議控制飲食！";
                 feedback.BloodSugarStatus = "danger";
             }
             else if (avgBloodSugar.HasValue)
             {
-                feedback.BloodSugarMessage = $"✅ 今日血糖 {avgBloodSugar.Value:0.0} mg/dL 正常，繼續維持！";
+                feedback.BloodSugarMessage = $"✅ {prefix}血糖 {avgBloodSugar.Value:0.0} mg/dL 正常，繼續維持！";
                 feedback.BloodSugarStatus = "success";
             }
 

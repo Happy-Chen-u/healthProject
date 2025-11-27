@@ -256,7 +256,7 @@ namespace healthProject.Services
                 {
                     type = "message",
                     label = "🗓️ 工作行程太忙",
-                    text = "#Reason_Busy_Work"
+                    text = "🗓️ 工作行程太忙"  // ✅ 改為顯示文字而非代碼
                 }
             },
             new
@@ -266,7 +266,7 @@ namespace healthProject.Services
                 {
                     type = "message",
                     label = "😷 身體有點不舒服",
-                    text = "#Reason_Health_Mild_Symptom"
+                    text = "😷 身體有點不舒服"  // ✅ 改為顯示文字
                 }
             },
             new
@@ -276,7 +276,7 @@ namespace healthProject.Services
                 {
                     type = "message",
                     label = "🔢 不確定要填寫什麼",
-                    text = "#Reason_Unsure_What_To_Fill"
+                    text = "🔢 不確定要填寫什麼"  // ✅ 改為顯示文字
                 }
             },
             new
@@ -286,7 +286,7 @@ namespace healthProject.Services
                 {
                     type = "message",
                     label = "📱 手機不在身邊/沒電",
-                    text = "#Reason_Tech_Device_Issue"
+                    text = "📱 手機不在身邊/沒電"  // ✅ 改為顯示文字
                 }
             },
             new
@@ -296,7 +296,7 @@ namespace healthProject.Services
                 {
                     type = "message",
                     label = "💬 其他原因",
-                    text = "#Reason_Other"
+                    text = "💬 其他原因"  // ✅ 改為顯示文字
                 }
             }
         }
