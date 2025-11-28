@@ -3,265 +3,521 @@
     ViewData["Title"] = "我的健康紀錄";
     Layout = null;
 }
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
 
-<style>
+    <style>
     .records-container {
-        max-width: 1200px;
-        margin: 2rem auto;
-        padding: 0 1rem;
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
     }
 
     body {
-        background-color: #e5eef5;
-        font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-        min-height: 100vh;
-        margin: 0;
-        padding: 0;
+    background-color: #e5eef5;
+    font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
     }
 
     .page-header {
-        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 15px;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
     }
 
     .page-header h1 {
-        margin: 0;
-        font-size: 1.8rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+    margin: 0;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     }
 
     .page-header p {
-        margin: 0.5rem 0 0 0;
-        opacity: 0.9;
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
     }
 
     .btn {
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: 10px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-block;
-        transition: all 0.3s ease;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
     }
 
     .btn-secondary {
-        background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
-        color: white;
-        box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
+    background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
     }
 
     .btn-secondary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
-        text-decoration: none;
-        color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
+    text-decoration: none;
+    color: white;
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
-        color: white;
-        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
     }
 
     .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-        text-decoration: none;
-        color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    text-decoration: none;
+    color: white;
     }
 
     /* 🆕 日期分組卡片 */
     .date-group {
-        background: white;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        margin-bottom: 2rem;
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
     }
 
     .date-header {
-        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-        padding: 1.5rem 2rem;
-        border-bottom: 3px solid #06b6d4;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    padding: 1.5rem 2rem;
+    border-bottom: 3px solid #06b6d4;
     }
 
     .date-title {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: #0891b2;
-        margin-bottom: 0.5rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #0891b2;
+    margin-bottom: 0.5rem;
     }
 
     .date-summary {
-        display: flex;
-        gap: 2rem;
-        flex-wrap: wrap;
-        font-size: 0.9rem;
-        color: #0e7490;
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: #0e7490;
     }
 
     .summary-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     }
 
     /* 記錄項目 */
     .record-items {
-        padding: 1.5rem;
+    padding: 1.5rem;
     }
 
     .record-item {
-        background: #f8fafc;
-        border-left: 4px solid #06b6d4;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
+    background: #f8fafc;
+    border-left: 4px solid #06b6d4;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
     }
 
     .record-item:last-child {
-        margin-bottom: 0;
+    margin-bottom: 0;
     }
 
     .record-time {
-        font-size: 0.95rem;
-        color: #64748b;
-        margin-bottom: 1rem;
-        font-weight: 600;
+    font-size: 0.95rem;
+    color: #64748b;
+    margin-bottom: 1rem;
+    font-weight: 600;
     }
 
     .data-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
     }
 
     .data-item {
-        padding: 0.75rem;
-        background: white;
-        border-radius: 6px;
-        border-left: 3px solid #0891b2;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 6px;
+    border-left: 3px solid #0891b2;
     }
 
     .data-label {
-        font-size: 0.85rem;
-        color: #64748b;
-        margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
     }
 
     .data-value {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #1e293b;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
     }
 
     /* 當日統計 */
     .daily-summary {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-top: 1rem;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1rem 0;
     }
 
     .daily-summary-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #92400e;
-        margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #92400e;
+    margin-bottom: 1rem;
     }
 
     .btn-icon {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
     }
 
     .btn-edit {
-        background: #fef3c7;
-        color: #92400e;
+    background: #fef3c7;
+    color: #92400e;
     }
 
     .btn-edit:hover {
-        background: #fde68a;
-        text-decoration: none;
-        color: #92400e;
+    background: #fde68a;
+    text-decoration: none;
+    color: #92400e;
     }
 
     .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
 
     .empty-icon {
-        font-size: 4rem;
-        margin-bottom: 1rem;
-        opacity: 0.5;
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
     }
 
     .empty-text {
-        color: #64748b;
-        font-size: 1.1rem;
-        margin-bottom: 1.5rem;
+    color: #64748b;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
     }
 
     /* 🆕 按鈕樣式 */
     .btn-toggle-details {
-        background: linear-gradient(135deg, #81af74 0%, #5a8a4a 100%);
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(129, 175, 116, 0.3);
-        width: 100%;
+    background: linear-gradient(135deg, #81af74 0%, #5a8a4a 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(129, 175, 116, 0.3);
+    width: 100%;
     }
 
-        .btn-toggle-details:hover {
-            background: linear-gradient(135deg, #5a8a4a 0%, #3d5f32 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(129, 175, 116, 0.4);
+    .btn-toggle-details:hover {
+    background: linear-gradient(135deg, #5a8a4a 0%, #3d5f32 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(129, 175, 116, 0.4);
+    }
+
+    .btn-toggle-details.active {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+        /* 🎨 搜尋區塊基礎樣式 */
+        .search-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .btn-toggle-details.active {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        .search-wrapper {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
         }
 
-    @@media (max-width: 768px) {
+        .search-input-group {
+            flex: 1 1 250px; /* 彈性伸縮,最小250px */
+            min-width: 0; /* 允許縮小 */
+        }
+
+        .search-label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .date-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box; /* 重要:包含 padding 在寬度內 */
+            max-width: 100%; /* 防止超出 */
+        }
+
+        .search-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0; /* 按鈕不縮小 */
+        }
+
+        .search-btn {
+            white-space: nowrap; /* 按鈕文字不換行 */
+            min-width: 100px; /* 按鈕最小寬度 */
+        }
+
+        .search-result {
+            margin-top: 0.5rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+
+    /* 🔥 手機：讓整頁完整響應式 */
+        @@media (max-width: 768px) {
+            /* 基礎字體放大 */
+            body
+
+        {
+            font-size: 18px;
+        }
+
+        /* 標題字體 */
+        .page-header h1 {
+            font-size: 1.8rem !important;
+        }
+
+        .page-header p {
+            font-size: 1.1rem !important;
+        }
+
+        .date-title {
+            font-size: 1.6rem !important;
+        }
+
+        .date-summary {
+            font-size: 1.1rem !important;
+        }
+
+        .daily-summary-title {
+            font-size: 1.4rem !important;
+        }
+
+        /* 記錄內容字體 */
+        .record-time {
+            font-size: 1.2rem !important;
+        }
+
+        .data-label {
+            font-size: 1.1rem !important;
+        }
+
+        .data-value {
+            font-size: 1.3rem !important;
+        }
+
+        /* 按鈕字體 */
+        .btn {
+            font-size: 1.2rem !important;
+            padding: 1rem 1.5rem !important;
+        }
+
+        .btn-toggle-details {
+            font-size: 1.2rem !important;
+            padding: 1rem 1.5rem !important;
+        }
+
+        .btn-icon.btn-edit {
+            font-size: 1.1rem !important;
+            padding: 0.8rem 1rem !important;
+        }
+
+        /* 搜尋欄位 */
+        input.date-input,
+        #searchDate {
+            font-size: 1.2rem !important;
+            padding: 1rem !important;
+        }
+
+        #searchResult {
+            font-size: 1.1rem !important;
+        }
+
+        /* 空白狀態 */
+        .empty-text {
+            font-size: 1.3rem !important;
+        }
+
+        /* 其他調整 */
+        .records-container {
+            padding: 0 0.5rem;
+        }
+
+        .page-header {
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+
+        .record-items {
+            padding: 1rem;
+        }
+
+        .record-item {
+            padding: 1rem;
+        }
+
+        .daily-summary {
+            padding: 1rem;
+        }
+
         .data-grid {
             grid-template-columns: 1fr;
         }
 
+        }
+
+        /* 🔥 小螢幕手機專用:max-width 480px */
+        @@media (max-width: 480px) {
+            /* 基礎字體 */
+            body
+
+        {
+            font-size: 16px;
+        }
+
+        /* 標題字體 */
+        .page-header h1 {
+            font-size: 1.5rem !important;
+        }
+
+        .page-header p {
+            font-size: 1rem !important;
+        }
+
+        .date-title {
+            font-size: 1.4rem !important;
+        }
+
         .date-summary {
-            flex-direction: column;
+            font-size: 1rem !important;
+        }
+
+        .daily-summary-title {
+            font-size: 1.2rem !important;
+        }
+
+        /* 記錄內容 */
+        .record-time {
+            font-size: 1.1rem !important;
+        }
+
+        .data-label {
+            font-size: 1rem !important;
+        }
+
+        .data-value {
+            font-size: 1.2rem !important;
+        }
+
+        /* 按鈕 */
+        .btn, .btn-toggle-details {
+            font-size: 1.1rem !important;
+            padding: 0.8rem 1.2rem !important;
+        }
+
+        .btn-icon.btn-edit {
+            font-size: 1rem !important;
+            padding: 0.6rem 0.8rem !important;
+        }
+
+        /* 搜尋 */
+        input.date-input,
+        #searchDate {
+            font-size: 1.1rem !important;
+            padding: 0.8rem !important;
+        }
+
+        #searchResult {
+            font-size: 1rem !important;
+        }
+
+        /* 間距調整 */
+        .records-container {
+            max-width: 100%;
+            padding: 0 0.5rem;
+            margin: 1rem auto;
+        }
+
+        .date-header {
+            padding: 1rem;
+        }
+
+        .record-items {
+            padding: 0.8rem;
+        }
+
+        .record-item {
+            padding: 0.8rem;
+        }
+
+        .data-grid {
+            grid-template-columns: 1fr;
             gap: 0.5rem;
         }
-    }
-</style>
 
+        .data-item {
+            padding: 0.5rem;
+        }
+
+        .daily-summary {
+            padding: 0.8rem;
+        }
+
+        }
+    
+    </style>
+</head>
+<body>
 <div class="records-container">
     <div class="page-header">
         <h1>
@@ -272,33 +528,32 @@
     </div>
 
     <div style="margin-bottom: 1.5rem;">
-        <a href="@Url.Action("Index", "DailyHealth")" class="btn btn-secondary">
+        <a href="@Url.Action("Index", "DailyHealth")" class="btn btn-secondary btn-back">
             ← 返回選單
         </a>
+
     </div>
 
     <!-- 🆕 日期搜尋欄位 -->
-    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 200px;">
-                <label style="display: block; font-weight: 600; color: #333; margin-bottom: 0.5rem;">
-                    🔍 搜尋日期
-                </label>
-                <input type="date" id="searchDate" class="date-input"
-                       style="width: 100%; padding: 0.75rem; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;"
-                       onchange="filterByDate()" />
+        <div class="search-section">
+            <div class="search-wrapper">
+                <div class="search-input-group">
+                    <label class="search-label">
+                        🔍 搜尋日期
+                    </label>
+                    <input type="date" id="searchDate" class="date-input" onchange="filterByDate()" />
+                </div>
+                <div class="search-buttons">
+                    <button onclick="filterByDate()" class="btn btn-primary search-btn">
+                        🔍 搜尋
+                    </button>
+                    <button onclick="clearSearch()" class="btn btn-secondary search-btn">
+                        🔄 顯示全部
+                    </button>
+                </div>
             </div>
-            <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
-                <button onclick="filterByDate()" class="btn btn-primary" style="white-space: nowrap;">
-                    🔍 搜尋
-                </button>
-                <button onclick="clearSearch()" class="btn btn-secondary" style="white-space: nowrap;">
-                    🔄 顯示全部
-                </button>
-            </div>
+            <div id="searchResult" class="search-result"></div>
         </div>
-        <div id="searchResult" style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;"></div>
-    </div>
 
     @if (Model != null && Model.Any())
     {
@@ -331,8 +586,8 @@
                     <!-- 🆕 按鈕區 (只有多筆記錄時顯示) -->
                     @if (group.Records.Count > 1)
                     {
-                        <div style="padding: 1rem 2rem; background: #f8f9fa; border-bottom: 1px solid #e2e8f0;">
-                            <button onclick="toggleDetails(this)" class="btn-toggle-details">
+                            <div style="padding: 1rem 2rem; background: #f8f9fa; border-bottom: 1px solid #e2e8f0; margin-bottom: 1rem;">
+                                <button onclick="toggleDetails(this)" class="btn-toggle-details">
                                 📋 顯示全部 @group.Records.Count 筆紀錄
                             </button>
                         </div>
@@ -345,7 +600,7 @@
                             <div class="record-item">
                                 <div class="record-time">
                                     ⏰ @(record.RecordTime?.ToString(@"hh\:mm") ?? "未記錄時間")
-                                    <a href="@Url.Action("Edit", "DailyHealth", new { id = record.Id })" class="btn-icon btn-edit" style="float: right;">
+                                    <a href="@Url.Action("Edit", "DailyHealth", new { id = record.Id })" class="btn-icon btn-edit">
                                         ✏️ 編輯
                                     </a>
                                 </div>
@@ -623,3 +878,5 @@
         });
     }
 </script>
+</body>
+</html>
