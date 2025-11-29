@@ -3,12 +3,19 @@
     ViewData["Title"] = "上傳成功";
     Layout = null;
 }
-
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>@ViewData["Title"]</title>
+</head>
+<body>
 <style>
     .success-container {
         max-width: 800px;
-        margin: 2rem auto;
-        padding: 0 1rem;
+        margin: 1rem auto;
+        padding: 0 0.75rem;
     }
 
     body {
@@ -22,7 +29,7 @@
     .success-header {
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: white;
-        padding: 3rem 2rem;
+        padding: 2rem 1.5rem;
         border-radius: 15px;
         text-align: center;
         margin-bottom: 2rem;
@@ -30,7 +37,7 @@
     }
 
     .success-icon {
-        font-size: 4rem;
+        font-size: 3.5rem;
         margin-bottom: 1rem;
         animation: bounce 1s ease;
     }
@@ -42,7 +49,7 @@
 
     .success-header h1 {
         margin: 0;
-        font-size: 2rem;
+        font-size: 1.8rem;
     }
 
     .feedback-section {
@@ -54,7 +61,7 @@
     .feedback-card {
         background: white;
         border-radius: 15px;
-        padding: 1.5rem;
+        padding: 1.25rem;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         display: flex;
         align-items: flex-start;
@@ -117,6 +124,7 @@
         align-items: center;
         gap: 0.5rem;
         color: white;
+        box-sizing: border-box;
     }
 
     .btn-primary {
@@ -144,12 +152,47 @@
     }
 
     @@media (max-width: 768px) {
-        .action-buttons {
-            flex-direction: column;
+        body {
+            font-size: 16px;
         }
 
+        .success-header {
+            padding: 1.5rem 1rem;
+        }
+
+        .success-icon {
+            font-size: 3rem;
+        }
+
+        .success-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .success-header p {
+            font-size: 0.95rem;
+        }
+
+        .feedback-card {
+            padding: 1rem;
+            flex-direction: row;
+            gap: 0.75rem;
+        }
+
+        .feedback-icon {
+            font-size: 1.75rem;
+        }
+
+        .feedback-message {
+            font-size: 1rem;
+        }
+        .action-buttons {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
         .btn {
             width: 100%;
+            font-size: 1.05rem;
+            padding: 0.9rem 1.5rem;
         }
     }
 </style>
@@ -222,3 +265,5 @@
         </a>
     </div>
 </div>
+</body>
+</html>
