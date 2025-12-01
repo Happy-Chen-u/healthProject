@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
+ï»¿using Microsoft.AspNetCore.Authentication.Cookies;
 using Hangfire;
 using Hangfire.PostgreSql;
 using healthProject.Services;
@@ -10,19 +10,19 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// ¥[¤J°O¾ĞÅé§Ö¨ú (Session »İ­n)
+// âœ… åŠ å…¥è¨˜æ†¶é«”å¿«å– (Session éœ€è¦)
 builder.Services.AddDistributedMemoryCache();
 
-// ¥[¤J Session ¤ä´©
+// âœ… åŠ å…¥ Session æ”¯æ´ (åªä¿ç•™ä¸€å€‹,åˆªé™¤é‡è¤‡çš„)
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.IdleTimeout = TimeSpan.FromHours(24); // Session æœ‰æ•ˆæœŸ 24 å°æ™‚
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
-// ¥[¤JÅçÃÒªA°È
+// åŠ å…¥é©—è­‰æœå‹™
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -35,22 +35,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     });
 
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromHours(24); // Session ¦³®Ä´Á 24 ¤p®É
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
-
 // ========================================
-// ?? µù¥U°·±d¤ÀªR¬ÛÃöªA°È
+// è¨»å†Šå¥åº·åˆ†æç›¸é—œæœå‹™
 // ========================================
 builder.Services.AddScoped<ReportService>();
 builder.Services.AddScoped<ScheduledJobService>();
 builder.Services.AddHostedService<BackgroundJobService>();
 
 // ========================================
-// ?? ¥[¤J Hangfire (¶g³ø±Æµ{)
+// åŠ å…¥ Hangfire (é€±å ±æ’ç¨‹)
 // ========================================
 builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
@@ -58,9 +51,9 @@ builder.Services.AddHangfire(configuration => configuration
     .UseRecommendedSerializerSettings()
     .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(
         builder.Configuration.GetConnectionString("DefaultConnection")
-    )));
+   )));
 
-// ¥[¤J Hangfire ­I´º¤u§@ªA°È
+// åŠ å…¥ Hangfire èƒŒæ™¯å·¥ä½œæœå‹™
 builder.Services.AddHangfireServer();
 
 var app = builder.Build();
@@ -74,32 +67,29 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseSession();
+
+// âœ… æ­£ç¢ºçš„é †åº
 app.UseRouting();
-
-// ­«­n: Session ­n¦b Routing ¤§«á, Authentication ¤§«e
-app.UseSession();
-
-// ¨Ï¥ÎÅçÃÒ©M±ÂÅv
+app.UseSession();           // Session è¦åœ¨ Routing ä¹‹å¾Œ, Authentication ä¹‹å‰
 app.UseAuthentication();
 app.UseAuthorization();
 
 // ========================================
-// ±Ò¥Î Hangfire Dashboard (¶ÈºŞ²z­û¥i¬d¬İ)
+// å•Ÿç”¨ Hangfire Dashboard (åƒ…ç®¡ç†å“¡å¯æŸ¥çœ‹)
 // ========================================
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
     Authorization = new[] { new HangfireAuthorizationFilter() },
-    DashboardTitle = "¥NÁÂ¯g­Ô¸sºŞ²z¨t²Î - ±Æµ{ºÊ±±"
+    DashboardTitle = "ä»£è¬ç—‡å€™ç¾¤ç®¡ç†ç³»çµ± - æ’ç¨‹ç›£æ§"
 });
 
 // ========================================
-// ³]©w¨C¶g¤é±ß¤W 8 ÂIµo°e¶g³ø
+// è¨­å®šæ¯é€±æ—¥æ™šä¸Š 8 é»ç™¼é€é€±å ±
 // ========================================
 RecurringJob.AddOrUpdate<ScheduledJobService>(
     "send-weekly-reports",
     service => service.SendWeeklyReportsAsync(),
-    "0 20 * * 0", // Cron ªí¹F¦¡: ¨C¶g¤é 20:00
+    "0 20 * * 0", // Cron è¡¨é”å¼: æ¯é€±æ—¥ 20:00
     TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time")
 );
 
@@ -107,11 +97,10 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-
 app.Run();
 
 // ========================================
-// ?? Hangfire ±ÂÅv¹LÂo¾¹ (¶ÈºŞ²z­û¥i¬d¬İ Dashboard)
+// Hangfire æˆæ¬Šéæ¿¾å™¨ (åƒ…ç®¡ç†å“¡å¯æŸ¥çœ‹ Dashboard)
 // ========================================
 public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter
 {
@@ -119,13 +108,13 @@ public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter
     {
         var httpContext = context.GetHttpContext();
 
-        // ¤¹³\¥»¦a¶}µoÀô¹Ò³X°İ
+        // å…è¨±æœ¬åœ°é–‹ç™¼ç’°å¢ƒè¨ªå•
         if (httpContext.Request.Host.Host == "localhost")
         {
             return true;
         }
 
-        // ¥Í²£Àô¹Ò»İ­nºŞ²z­ûÅv­­
+        // ç”Ÿç”¢ç’°å¢ƒéœ€è¦ç®¡ç†å“¡æ¬Šé™
         return httpContext.User.Identity?.IsAuthenticated == true &&
                httpContext.User.IsInRole("Admin");
     }

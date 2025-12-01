@@ -354,10 +354,9 @@
 
                 @if (User.IsInRole("Admin"))
                 {
-                    <!-- 🆕 根據 ViewBag.HasMissedRecords 決定是否顯示紅色 -->
-                    <a href="@Url.Action("MissedRecordsStatus", "CaseManagement")" 
-                       class="page-card @(ViewBag.HasMissedRecords == true ? "page-card-alert" : "")"
-                       onclick="clearMissedRecordsAlert()">
+                    <!-- ✅ 移除 onclick 事件 -->
+                    <a href="@Url.Action("MissedRecordsStatus", "CaseManagement")"
+                       class="page-card @(ViewBag.HasMissedRecords == true ? "page-card-alert" : "")">
                         @if (ViewBag.HasMissedRecords == true)
                         {
                             <span class="alert-badge">NEW</span>
@@ -403,23 +402,15 @@
             document.getElementById('logoutModal').style.display = 'none';
         }
 
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             const modal = document.getElementById('logoutModal');
             if (event.target === modal) {
                 modal.style.display = 'none';
             }
         }
 
-        // 🆕 清除未讀提醒
-        function clearMissedRecordsAlert() {
-            // 發送請求清除提醒狀態
-            fetch('@Url.Action("ClearMissedRecordsAlert", "Home")', {
-                method: 'POST',
-                headers: {
-                    'RequestVerificationToken': '@Html.AntiForgeryToken()'
-                }
-            });
-        }
+        
+        
     </script>
 </body>
 </html>

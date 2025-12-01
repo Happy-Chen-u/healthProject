@@ -742,5 +742,666 @@ namespace healthProject.Services
 
             return charts;
         }
+        // ========================================
+        // 🆕 中午 12:00 - 檢查上午血壓
+        // ========================================
+        public async Task CheckMorningBloodPressureAsync()
+        {
+            try
+            {
+                _logger.LogInformation("⏰ [12:00] 檢查上午血壓填寫狀況");
+
+                var users = await GetUsersNeedMorningBPReminderAsync();
+
+                if (!users.Any())
+                {
+                    _logger.LogInformation("✅ 所有個案都已填寫上午血壓");
+                    return;
+                }
+
+                _logger.LogInformation($"📢 找到 {users.Count} 位個案尚未填寫上午血壓");
+
+                int successCount = 0, failCount = 0;
+
+                foreach (var user in users)
+                {
+                    try
+                    {
+                        await SendLineReminderAsync(user.LineUserId,
+                            "🔔 午安！健康小提醒 🔔\n\n" +
+"您的 今日上午血壓 記錄尚未完成喔！\n\n" +
+"-----------------------------------\n" +
+"數據追蹤很重要：\n" +
+"📌 若您已量測，請儘快至 [今日健康資訊] 填寫。\n" +
+"📌 若尚未量測，也請抽空量測並記錄下來喔。\n\n" +
+"感謝您的配合！");
+
+                        successCount++;
+                        _logger.LogInformation($"✅ 已提醒 {user.FullName} 填寫上午血壓");
+                    }
+                    catch (Exception ex)
+                    {
+                        failCount++;
+                        _logger.LogError(ex, $"❌ 提醒失敗: {user.FullName}");
+                    }
+
+                    await Task.Delay(1000);
+                }
+
+                _logger.LogInformation($"📊 [12:00] 上午血壓提醒完成: 成功 {successCount} / 失敗 {failCount}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ 檢查上午血壓失敗");
+            }
+        }
+
+        // ========================================
+        // 🆕 晚上 22:00 - 檢查睡前血壓
+        // ========================================
+        public async Task CheckEveningBloodPressureAsync()
+        {
+            try
+            {
+                _logger.LogInformation("⏰ [22:00] 檢查睡前血壓填寫狀況");
+
+                var users = await GetUsersNeedEveningBPReminderAsync();
+
+                if (!users.Any())
+                {
+                    _logger.LogInformation("✅ 所有個案都已填寫睡前血壓");
+                    return;
+                }
+
+                _logger.LogInformation($"📢 找到 {users.Count} 位個案尚未填寫睡前血壓");
+
+                int successCount = 0, failCount = 0;
+
+                foreach (var user in users)
+                {
+                    try
+                    {
+                        await SendLineReminderAsync(user.LineUserId,
+                            "🌙 晚安！睡前健康提醒 🌙\n\n" +
+"您的 今日睡前血壓 記錄尚未完成喔！\n\n" +
+"📢 為何重要？\n" +
+"睡前血壓對於「醫師判讀您的夜間狀況」非常關鍵，不要遺漏了！\n\n" +
+"✅ 行動建議：\n" +
+"請您在準備休息前量測，並儘快至 [今日健康資訊] 完成記錄。\n\n" +
+"祝您有個好眠！😴");
+
+                        successCount++;
+                        _logger.LogInformation($"✅ 已提醒 {user.FullName} 填寫睡前血壓");
+                    }
+                    catch (Exception ex)
+                    {
+                        failCount++;
+                        _logger.LogError(ex, $"❌ 提醒失敗: {user.FullName}");
+                    }
+
+                    await Task.Delay(1000);
+                }
+
+                _logger.LogInformation($"📊 [22:00] 睡前血壓提醒完成: 成功 {successCount} / 失敗 {failCount}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ 檢查睡前血壓失敗");
+            }
+        }
+
+        // ========================================
+        // 🆕 晚上 22:00 - 檢查全日血壓
+        // ========================================
+        public async Task CheckAllDayBloodPressureAsync()
+        {
+            try
+            {
+                _logger.LogInformation("⏰ [22:00] 檢查全日血壓填寫狀況");
+
+                var users = await GetUsersNeedAllDayBPReminderAsync();
+
+                if (!users.Any())
+                {
+                    _logger.LogInformation("✅ 沒有個案需要全日血壓提醒");
+                    return;
+                }
+
+                _logger.LogInformation($"📢 找到 {users.Count} 位個案今日血壓都未填寫");
+
+                int successCount = 0, failCount = 0;
+
+                foreach (var user in users)
+                {
+                    try
+                    {
+                        await SendLineReminderAsync(user.LineUserId,
+                            "🚨 晚安！今日【血壓數據緊急提醒】\n\n" +
+"我們發現您今日的 血壓記錄 (包含上午與睡前) 都尚未完成！\n\n" +
+"-----------------------------------\n" +
+"💡 數據價值：\n" +
+"完整的血壓數據對於醫療團隊掌握病情至關重要，並會直接影響您的個人化建議。\n\n" +
+"📢 行動呼籲：\n" +
+"請您立即點擊 [今日健康資訊]，儘快填寫記錄。\n\n" +
+"感謝您為自己的健康管理付出的努力！");
+
+                        successCount++;
+                        _logger.LogInformation($"✅ 已提醒 {user.FullName} 填寫全日血壓");
+                    }
+                    catch (Exception ex)
+                    {
+                        failCount++;
+                        _logger.LogError(ex, $"❌ 提醒失敗: {user.FullName}");
+                    }
+
+                    await Task.Delay(1000);
+                }
+
+                _logger.LogInformation($"📊 [22:00] 全日血壓提醒完成: 成功 {successCount} / 失敗 {failCount}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ 檢查全日血壓失敗");
+            }
+        }
+
+        // ========================================
+        // 🆕 晚上 22:00 - 檢查三餐記錄
+        // ========================================
+        public async Task CheckMealsRecordAsync()
+        {
+            try
+            {
+                _logger.LogInformation("⏰ [22:00] 檢查三餐記錄填寫狀況");
+
+                var users = await GetUsersWithMissedMealsAsync();
+
+                if (!users.Any())
+                {
+                    _logger.LogInformation("✅ 所有個案都已填寫三餐記錄");
+                    return;
+                }
+
+                _logger.LogInformation($"📢 找到 {users.Count} 位個案有餐食未填寫");
+
+                int successCount = 0, failCount = 0;
+
+                foreach (var user in users)
+                {
+                    try
+                    {
+                        var missedMeals = user.MissedMeals;
+                        var missedMealsText = string.Join("、", missedMeals);
+
+                        await SendLineReminderAsync(user.LineUserId,
+                            $@"🍽️ 晚安！今日飲食記錄提醒
+
+您的 [{missedMealsText}] 記錄尚未完成喔！
+
+-----------------------------------
+⚠️ 若您沒有用餐：
+我們理解您的辛苦！無須補填，但請您務必留意保持三餐均衡，這是維持代謝穩謝的重要基礎！
+
+📝 若您只是忘記記錄：
+完整的飲食記錄有助於追蹤代謝狀況，請您撥冗至 [今日健康資訊] 填寫。
+
+謝謝您的配合！");
+
+                        successCount++;
+                        _logger.LogInformation($"✅ 已提醒 {user.FullName} 填寫餐食({missedMealsText})");
+                    }
+                    catch (Exception ex)
+                    {
+                        failCount++;
+                        _logger.LogError(ex, $"❌ 提醒失敗: {user.FullName}");
+                    }
+
+                    await Task.Delay(1000);
+                }
+
+                _logger.LogInformation($"📊 [22:00] 餐食提醒完成: 成功 {successCount} / 失敗 {failCount}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ 檢查餐食記錄失敗");
+            }
+        }
+
+        // ========================================
+        // 🆕 晚上 22:00 - 發送完成感謝訊息
+        // ========================================
+        public async Task SendCompletionThankYouAsync()
+        {
+            try
+            {
+                _logger.LogInformation("⏰ [22:00] 檢查並發送完成感謝訊息");
+
+                var users = await GetUsersCompletedTodayRecordsAsync();
+
+                if (!users.Any())
+                {
+                    _logger.LogInformation("✅ 沒有完成所有記錄的個案");
+                    return;
+                }
+
+                _logger.LogInformation($"🎉 找到 {users.Count} 位個案完成今日所有記錄");
+
+                int successCount = 0, failCount = 0;
+
+                foreach (var user in users)
+                {
+                    try
+                    {
+                        await SendLineReminderAsync(user.LineUserId,
+                            "🥳 【今日記錄大成功！】🥳\n\n" +
+"✨ 謝謝您今天將所有健康資訊完整填寫！\n\n" +
+"您的這份「堅持」是對自己健康最大的承諾！\n\n" +
+"-----------------------------------\n" +
+"🌟 數據價值：\n" +
+"這些完整的數據，能讓您的醫療團隊更精準地掌握狀況，並提供最個人化、最適合您的健康建議。\n\n" +
+"請保持這個好習慣！我們已將您的數據納入分析。\n\n" +
+"祝您晚安，好夢！😊");
+
+                        successCount++;
+                        _logger.LogInformation($"✅ 已發送感謝訊息給 {user.FullName}");
+                    }
+                    catch (Exception ex)
+                    {
+                        failCount++;
+                        _logger.LogError(ex, $"❌ 發送失敗: {user.FullName}");
+                    }
+
+                    await Task.Delay(1000);
+                }
+
+                _logger.LogInformation($"📊 [22:00] 感謝訊息發送完成: 成功 {successCount} / 失敗 {failCount}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ 發送感謝訊息失敗");
+            }
+        }
+
+        // ========================================
+        // 🔍 資料庫查詢 - 上午血壓未填寫
+        // ========================================
+        private async Task<List<UserBasicInfo>> GetUsersNeedMorningBPReminderAsync()
+        {
+            var users = new List<UserBasicInfo>();
+            var connStr = _configuration.GetConnectionString("DefaultConnection");
+
+            await using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+
+            var query = @"
+        SELECT u.""Id"", u.""FullName"", u.""LineUserId""
+        FROM ""Users"" u
+        WHERE u.""IsActive"" = true
+          AND u.""Role"" = 'Patient'
+          AND u.""LineUserId"" IS NOT NULL
+          AND u.""LineUserId"" != ''
+          AND NOT EXISTS (
+              SELECT 1 FROM ""Today"" t
+              WHERE t.""UserId"" = u.""Id""
+                AND t.""RecordDate"" = @Today
+                AND (t.""BP_First_1_Systolic"" IS NOT NULL 
+                     AND t.""BP_First_1_Diastolic"" IS NOT NULL
+                     AND t.""BP_First_2_Systolic"" IS NOT NULL 
+                     AND t.""BP_First_2_Diastolic"" IS NOT NULL)
+          )";
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@Today", DateTime.Today);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                users.Add(new UserBasicInfo
+                {
+                    Id = reader.GetInt32(0),
+                    FullName = reader.GetString(1),
+                    LineUserId = reader.GetString(2)
+                });
+            }
+
+            return users;
+        }
+
+        // ========================================
+        // 🔍 資料庫查詢 - 睡前血壓未填寫(但上午有填)
+        // ========================================
+        private async Task<List<UserBasicInfo>> GetUsersNeedEveningBPReminderAsync()
+        {
+            var users = new List<UserBasicInfo>();
+            var connStr = _configuration.GetConnectionString("DefaultConnection");
+
+            await using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+
+            // 有填上午血壓但沒填睡前血壓的個案
+            var query = @"
+        SELECT u.""Id"", u.""FullName"", u.""LineUserId""
+        FROM ""Users"" u
+        WHERE u.""IsActive"" = true
+          AND u.""Role"" = 'Patient'
+          AND u.""LineUserId"" IS NOT NULL
+          AND u.""LineUserId"" != ''
+          AND EXISTS (
+              -- 有填上午血壓
+              SELECT 1 FROM ""Today"" t
+              WHERE t.""UserId"" = u.""Id""
+                AND t.""RecordDate"" = @Today
+                AND (t.""BP_First_1_Systolic"" IS NOT NULL 
+                     OR t.""BP_First_1_Diastolic"" IS NOT NULL)
+          )
+          AND NOT EXISTS (
+              -- 沒填睡前血壓
+              SELECT 1 FROM ""Today"" t
+              WHERE t.""UserId"" = u.""Id""
+                AND t.""RecordDate"" = @Today
+                AND (t.""BP_Second_1_Systolic"" IS NOT NULL 
+                     AND t.""BP_Second_1_Diastolic"" IS NOT NULL
+                     AND t.""BP_Second_2_Systolic"" IS NOT NULL 
+                     AND t.""BP_Second_2_Diastolic"" IS NOT NULL)
+          )";
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@Today", DateTime.Today);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                users.Add(new UserBasicInfo
+                {
+                    Id = reader.GetInt32(0),
+                    FullName = reader.GetString(1),
+                    LineUserId = reader.GetString(2)
+                });
+            }
+
+            return users;
+        }
+
+        // ========================================
+        // 🔍 資料庫查詢 - 全日血壓都未填寫
+        // ========================================
+        private async Task<List<UserBasicInfo>> GetUsersNeedAllDayBPReminderAsync()
+        {
+            var users = new List<UserBasicInfo>();
+            var connStr = _configuration.GetConnectionString("DefaultConnection");
+
+            await using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+
+            var query = @"
+        SELECT u.""Id"", u.""FullName"", u.""LineUserId""
+        FROM ""Users"" u
+        WHERE u.""IsActive"" = true
+          AND u.""Role"" = 'Patient'
+          AND u.""LineUserId"" IS NOT NULL
+          AND u.""LineUserId"" != ''
+          AND NOT EXISTS (
+              SELECT 1 FROM ""Today"" t
+              WHERE t.""UserId"" = u.""Id""
+                AND t.""RecordDate"" = @Today
+                AND (t.""BP_First_1_Systolic"" IS NOT NULL 
+                     OR t.""BP_First_1_Diastolic"" IS NOT NULL
+                     OR t.""BP_First_2_Systolic"" IS NOT NULL 
+                     OR t.""BP_First_2_Diastolic"" IS NOT NULL
+                     OR t.""BP_Second_1_Systolic"" IS NOT NULL 
+                     OR t.""BP_Second_1_Diastolic"" IS NOT NULL
+                     OR t.""BP_Second_2_Systolic"" IS NOT NULL 
+                     OR t.""BP_Second_2_Diastolic"" IS NOT NULL)
+          )";
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@Today", DateTime.Today);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                users.Add(new UserBasicInfo
+                {
+                    Id = reader.GetInt32(0),
+                    FullName = reader.GetString(1),
+                    LineUserId = reader.GetString(2)
+                });
+            }
+
+            return users;
+        }
+
+        // ========================================
+        // 🔍 資料庫查詢 - 有餐食未填寫的個案
+        // ========================================
+        private async Task<List<UserWithMissedMeals>> GetUsersWithMissedMealsAsync()
+        {
+            var users = new List<UserWithMissedMeals>();
+            var connStr = _configuration.GetConnectionString("DefaultConnection");
+
+            await using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+
+            // 取得所有活躍個案
+            var query = @"
+        SELECT u.""Id"", u.""FullName"", u.""LineUserId"",
+               COALESCE(
+                   string_agg(t.""Meals_Breakfast""::text, '|'),
+                   ''
+               ) as breakfasts,
+               COALESCE(
+                   string_agg(t.""Meals_Lunch""::text, '|'),
+                   ''
+               ) as lunches,
+               COALESCE(
+                   string_agg(t.""Meals_Dinner""::text, '|'),
+                   ''
+               ) as dinners
+        FROM ""Users"" u
+        LEFT JOIN ""Today"" t ON u.""Id"" = t.""UserId"" 
+                              AND t.""RecordDate"" = @Today
+        WHERE u.""IsActive"" = true
+          AND u.""Role"" = 'Patient'
+          AND u.""LineUserId"" IS NOT NULL
+          AND u.""LineUserId"" != ''
+        GROUP BY u.""Id"", u.""FullName"", u.""LineUserId""";
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@Today", DateTime.Today);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var breakfasts = reader.GetString(3);
+                var lunches = reader.GetString(4);
+                var dinners = reader.GetString(5);
+
+                var missedMeals = new List<string>();
+
+                // 檢查早餐(至少要有澱粉、蔬菜、蛋白質其中一個)
+                if (!HasAnyMealContent(breakfasts))
+                    missedMeals.Add("早餐");
+
+                // 檢查午餐
+                if (!HasAnyMealContent(lunches))
+                    missedMeals.Add("午餐");
+
+                // 檢查晚餐
+                if (!HasAnyMealContent(dinners))
+                    missedMeals.Add("晚餐");
+
+                // 如果有任何餐食未填,加入列表
+                if (missedMeals.Any())
+                {
+                    users.Add(new UserWithMissedMeals
+                    {
+                        Id = reader.GetInt32(0),
+                        FullName = reader.GetString(1),
+                        LineUserId = reader.GetString(2),
+                        MissedMeals = missedMeals
+                    });
+                }
+            }
+
+            return users;
+        }
+
+        // 🆕 輔助方法:檢查是否有填寫任何餐食內容
+        private bool HasAnyMealContent(string mealsJson)
+        {
+            if (string.IsNullOrEmpty(mealsJson) || mealsJson == "null")
+                return false;
+
+            try
+            {
+                // 移除可能的 | 分隔符號,只看第一筆
+                var firstMeal = mealsJson.Split('|')[0];
+                if (string.IsNullOrEmpty(firstMeal) || firstMeal == "null")
+                    return false;
+
+                var meal = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(firstMeal);
+                if (meal == null)
+                    return false;
+
+                // 檢查是否有 Carbs、Vegetables、Protein 任一欄位有值
+                foreach (var key in new[] { "Carbs", "Vegetables", "Protein" })
+                {
+                    if (meal.ContainsKey(key) && meal[key] != null)
+                    {
+                        var value = meal[key].ToString();
+                        if (!string.IsNullOrWhiteSpace(value) && value != "0" && value != "null")
+                            return true;
+                    }
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // ========================================
+        // 🔍 資料庫查詢 - 完成所有記錄的個案
+        // ========================================
+        // ========================================
+        // 🔍 資料庫查詢 - 完成所有記錄的個案
+        // ========================================
+        private async Task<List<UserBasicInfo>> GetUsersCompletedTodayRecordsAsync()
+        {
+            var users = new List<UserBasicInfo>();
+            var connStr = _configuration.GetConnectionString("DefaultConnection");
+
+            await using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+
+            // 🆕 檢查: 上午血壓 + 睡前血壓 + 三餐全部完成 + 水分 (已優化，可處理分次填寫)
+            var query = @"
+WITH TodayRecords AS (
+    SELECT 
+        t.""UserId"",
+        
+        -- ✅ 檢查上午血壓：使用 BOOL_OR 聚合，只要當天有任一行記錄完整了上午的四個血壓欄位，即為 True
+        BOOL_OR(
+            t.""BP_First_1_Systolic"" IS NOT NULL AND t.""BP_First_1_Diastolic"" IS NOT NULL AND
+            t.""BP_First_2_Systolic"" IS NOT NULL AND t.""BP_First_2_Diastolic"" IS NOT NULL
+        ) as has_morning_bp,
+        
+        -- ✅ 檢查睡前血壓：使用 BOOL_OR 聚合，只要當天有任一行記錄完整了睡前的四個血壓欄位，即為 True
+        BOOL_OR(
+            t.""BP_Second_1_Systolic"" IS NOT NULL AND t.""BP_Second_1_Diastolic"" IS NOT NULL AND
+            t.""BP_Second_2_Systolic"" IS NOT NULL AND t.""BP_Second_2_Diastolic"" IS NOT NULL
+        ) as has_evening_bp,
+        
+        -- 🔴 修正檢查：使用 BOOL_OR 分別檢查三餐是否在當天任一記錄中被填過
+        BOOL_OR(t.""Meals_Breakfast"" IS NOT NULL) as has_breakfast,
+        BOOL_OR(t.""Meals_Lunch"" IS NOT NULL) as has_lunch,
+        BOOL_OR(t.""Meals_Dinner"" IS NOT NULL) as has_dinner,
+        
+        -- ✅ 檢查是否有水分記錄 (SUM 邏輯不變，因為是累加)
+        SUM(COALESCE(t.""WaterIntake"", 0)) as total_water
+    FROM ""Today"" t
+    WHERE t.""RecordDate"" = @Today
+    GROUP BY t.""UserId""
+)
+SELECT u.""Id"", u.""FullName"", u.""LineUserId""
+FROM ""Users"" u
+INNER JOIN TodayRecords tr ON u.""Id"" = tr.""UserId""
+WHERE u.""IsActive"" = true
+  AND u.""Role"" = 'Patient'
+  AND u.""LineUserId"" IS NOT NULL
+  AND u.""LineUserId"" != ''
+  AND tr.has_morning_bp = true      -- 有上午血壓
+  AND tr.has_evening_bp = true      -- 有睡前血壓
+  -- 🔴 新增三個 AND 條件，確保三餐都被填過
+  AND tr.has_breakfast = true 
+  AND tr.has_lunch = true
+  AND tr.has_dinner = true
+  AND tr.total_water > 0            -- 有填水分";
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@Today", DateTime.Today);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                users.Add(new UserBasicInfo
+                {
+                    Id = reader.GetInt32(0),
+                    FullName = reader.GetString(1),
+                    LineUserId = reader.GetString(2)
+                });
+            }
+
+            return users;
+        }
+
+        // ========================================
+        // 📤 發送 LINE 提醒訊息(通用方法)
+        // ========================================
+        private async Task SendLineReminderAsync(string lineUserId, string message)
+        {
+            var token = _configuration["Line:ChannelAccessToken"];
+            if (string.IsNullOrEmpty(token))
+                throw new Exception("LINE Channel Access Token 未設定");
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+
+            var payload = new
+            {
+                to = lineUserId,
+                messages = new[]
+                {
+            new { type = "text", text = message }
+        }
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            var response = await httpClient.PostAsync("https://api.line.me/v2/bot/message/push", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"LINE API 錯誤: {response.StatusCode} - {error}");
+            }
+        }
+
+        // ========================================
+        // 🆕 輔助類別
+        // ========================================
+        public class UserBasicInfo
+        {
+            public int Id { get; set; }
+            public string FullName { get; set; }
+            public string LineUserId { get; set; }
+        }
+        public class UserWithMissedMeals : UserBasicInfo
+        {
+            public List<string> MissedMeals { get; set; } = new List<string>();
+        }
+
     }
 }

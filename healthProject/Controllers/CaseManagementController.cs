@@ -899,6 +899,18 @@ namespace healthProject.Controllers
             // ⭐ 一進此頁就清除未讀提醒（紅點變藍色）
             HttpContext.Session.SetString("LastViewedMissedRecords", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 
+            // ⭐ 清除未讀提醒
+            var currentTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            HttpContext.Session.SetString("LastViewedMissedRecords", currentTime);
+
+            // ✅ 加入 log 確認有寫入
+            _logger.LogInformation($"✅ 已設定 LastViewedMissedRecords = {currentTime}");
+
+            // 立即讀取確認
+            var readBack = HttpContext.Session.GetString("LastViewedMissedRecords");
+            _logger.LogInformation($"✅ 立即讀取 LastViewedMissedRecords = {readBack}");
+
+
             try
             {
                 var connStr = _configuration.GetConnectionString("DefaultConnection")
