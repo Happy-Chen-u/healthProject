@@ -85,14 +85,13 @@
 
         .form-row {
             display: flex;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
-            margin-bottom: 1rem;
+            flex-wrap: wrap; 
         }
 
         .form-group {
-            margin-bottom: 1rem;
-            flex:1;
+            flex: 1 1 200px;
+            min-width: 200px;
         }
 
         .form-label {
@@ -137,6 +136,7 @@
             transition: all 0.3s ease;
             text-decoration: none;
             display: inline-block;
+            text-align: center;
         }
 
         .btn-primary {
@@ -252,6 +252,15 @@
             .modal-content {
                 margin: 50% auto;
             }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .form-group {
+                flex: 1 1 100%; 
+                min-width: 0;
+            }
         }
     </style>
 </head>
@@ -308,7 +317,7 @@
                 <div class="button-group">
                     <button type="button" id="submitBtn" class="btn btn-primary">新增個案</button>
                     <a href="@Url.Action("Index", "CaseManagement")" class="btn btn-secondary">
-                        返回上一頁
+                        ← 返回上一頁
                     </a>
                 </div>
             </form>

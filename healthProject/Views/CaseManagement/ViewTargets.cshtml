@@ -123,12 +123,14 @@
 
         table {
             width: 100%;
+            max-width: 100%; 
+            margin-top: 1rem;
             border-collapse: collapse;
             background: white;
             border-radius: 10px;
             overflow: hidden;
-            margin-top: 1rem;
         }
+
 
         th {
             background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
@@ -177,6 +179,10 @@
 
         /* 手機版調整 */
         @@media (max-width: 768px) {
+            .content {
+                padding: 1rem; 
+            }
+
             .search-form {
                 flex-direction: column;
             }
@@ -185,8 +191,15 @@
                 width: 100%;
             }
 
-            table, th, td {
-                font-size: 0.9rem;
+            table {
+                width: 100%;
+                display: block;
+                overflow-x: auto;
+            }
+
+            th, td {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.85rem;
             }
 
             .top-left-btn {
