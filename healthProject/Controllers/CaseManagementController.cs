@@ -726,6 +726,7 @@ namespace healthProject.Controllers
         // ========================================
         // 📋 PatientHistory - 顯示個案所有歷史記錄 + 日期篩選
         // ========================================
+
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> PatientHistory(string idNumber, int? year = null, int? month = null)
         {
@@ -739,14 +740,40 @@ namespace healthProject.Controllers
             {
                 var records = await GetPatientHistoryAsync(idNumber, year, month);
 
+                // 🔧 無論有沒有記錄,都先取得病患基本資訊
+                ViewBag.PatientIdNumber = idNumber;
+
                 if (!records.Any())
                 {
-                    TempData["ErrorMessage"] = "查無此個案的評估記錄";
-                    return RedirectToAction("ViewAllRecords");
+                    // 檢查這個病患是否存在(查詢所有記錄,不帶日期篩選)
+                    var allRecords = await GetPatientHistoryAsync(idNumber, null, null);
+
+                    if (!allRecords.Any())
+                    {
+                        // 如果完全沒有記錄,才重定向
+                        TempData["ErrorMessage"] = "查無此個案的評估記錄";
+                        return RedirectToAction("ViewAllRecords");
+                    }
+
+                    // 🆕 從所有記錄中取得病患基本資訊
+                    var firstRecord = allRecords.FirstOrDefault();
+                    if (firstRecord != null)
+                    {
+                        ViewBag.PatientName = firstRecord.Name;
+                        ViewBag.PatientGender = firstRecord.Gender;
+                        ViewBag.PatientBirthDate = firstRecord.BirthDate;
+                    }
+
+                    ViewBag.SelectedYear = year;
+                    ViewBag.SelectedMonth = month;
+                    ViewBag.HasFilterApplied = (year != null || month != null);
+
+                    return View(new List<CaseManagementViewModel>());
                 }
 
                 ViewBag.SelectedYear = year;
                 ViewBag.SelectedMonth = month;
+                ViewBag.HasFilterApplied = (year != null || month != null);
 
                 return View(records);
             }

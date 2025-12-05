@@ -2,10 +2,11 @@
 @{
     ViewData["Title"] = "個案完整歷史記錄";
     Layout = null;
-    var patientName = Model.FirstOrDefault()?.Name ?? "未知";
-    var patientId = Model.FirstOrDefault()?.IDNumber ?? "未知";
-    var patientGender = Model.FirstOrDefault()?.Gender ?? "未知";
-    var patientBirthDate = Model.FirstOrDefault()?.BirthDate ?? DateTime.MinValue;
+    // 🔧 優先使用 ViewBag 傳遞的資訊,如果沒有才從 Model 取得
+    var patientId = ViewBag.PatientIdNumber as string ?? Model.FirstOrDefault()?.IDNumber ?? "未知";
+    var patientName = ViewBag.PatientName as string ?? Model.FirstOrDefault()?.Name ?? "未知";
+    var patientGender = ViewBag.PatientGender as string ?? Model.FirstOrDefault()?.Gender ?? "未知";
+    var patientBirthDate = ViewBag.PatientBirthDate as DateTime? ?? Model.FirstOrDefault()?.BirthDate ?? DateTime.MinValue;
 
     // 輔助函數
     string GetExerciseStatus(CaseManagementViewModel m)
@@ -443,7 +444,7 @@
         <form method="get" asp-action="PatientHistory" class="filter-form">
             <input type="hidden" name="idNumber" value="@patientId" />
             <span class="filter-label">📅 篩選評估日期:</span>
-            
+
             <select name="year" class="filter-select">
                 <option value="">全部年份</option>
                 @for (int y = DateTime.Now.Year; y >= DateTime.Now.Year - 10; y--)
@@ -464,8 +465,8 @@
 
             @if (ViewBag.SelectedYear != null || ViewBag.SelectedMonth != null)
             {
-                <a href="@Url.Action("PatientHistory", "CaseManagement", new { idNumber = patientId })" 
-                   class="btn-filter" style="background:#78909C;">
+                <a href="@Url.Action("PatientHistory", "CaseManagement", new { idNumber = patientId })"
+                   class="btn-filter" style="background:#78909C; text-decoration:none;">
                     清除篩選
                 </a>
             }
@@ -475,6 +476,7 @@
             </span>
         </form>
     </div>
+
 
     @if (Model != null && Model.Any())
     {
@@ -677,10 +679,16 @@
     else
     {
         <div class="empty-message">
-            📭 
             @if (ViewBag.SelectedYear != null || ViewBag.SelectedMonth != null)
             {
-                <text>此時段沒有評估記錄</text>
+                <text>🔍 在所選時間範圍內沒有找到評估記錄</text>
+                <br />
+
+                <br />
+                <a href="@Url.Action("PatientHistory", "CaseManagement", new { idNumber = patientId })"
+                   class="btn btn-back" style="display:inline-block;">
+                    查看所有記錄
+                </a>
             }
             else
             {
