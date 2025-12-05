@@ -97,10 +97,15 @@ namespace healthProject.Controllers
         // ========================================
         // ➕ 新增今日紀錄 - POST (提交表單)
         // ========================================
+        // healthProject.Controllers.DailyHealthController.cs
+
+        // ========================================
+        // ➕ 新增今日紀錄 - POST (提交表單)
+        // ========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(HealthRecordViewModel model,
-    string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
+            string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
         {
             // ✅ 驗證血壓完整性
             var bpWarnings = model.ValidateBloodPressure();
@@ -109,34 +114,64 @@ namespace healthProject.Controllers
                 TempData["BPWarnings"] = string.Join("\n", bpWarnings);
             }
 
-            // 🆕 檢查今日血壓是否已全部填寫
+            // --- 🚨 核心邏輯修正開始 🚨 ---
+
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var todayRecords = await GetUserRecordsByDateAsync(userId, DateTime.Today);
 
-            bool todayHasAllBP = todayRecords.Any(r =>
-                r.BP_First_1_Systolic.HasValue && r.BP_First_1_Diastolic.HasValue &&
-                r.BP_First_2_Systolic.HasValue && r.BP_First_2_Diastolic.HasValue &&
-                r.BP_Second_1_Systolic.HasValue && r.BP_Second_1_Diastolic.HasValue &&
-                r.BP_Second_2_Systolic.HasValue && r.BP_Second_2_Diastolic.HasValue
+            // 1. 檢查今日紀錄是否已存在「第一次量測」的數據
+            // 只要任一筆紀錄中，BP_First_1 或 BP_First_2 有值，即視為已記錄
+            bool todayHasFirstBP = todayRecords.Any(r =>
+                r.BP_First_1_Systolic.HasValue || r.BP_First_1_Diastolic.HasValue ||
+                r.BP_First_2_Systolic.HasValue || r.BP_First_2_Diastolic.HasValue
             );
 
-            // 檢查當前表單是否有填血壓
-            bool currentHasBP = model.BP_First_1_Systolic.HasValue || model.BP_First_1_Diastolic.HasValue ||
-                               model.BP_First_2_Systolic.HasValue || model.BP_First_2_Diastolic.HasValue ||
-                               model.BP_Second_1_Systolic.HasValue || model.BP_Second_1_Diastolic.HasValue ||
-                               model.BP_Second_2_Systolic.HasValue || model.BP_Second_2_Diastolic.HasValue;
+            // 2. 檢查今日紀錄是否已存在「第二次量測」的數據
+            // 只要任一筆紀錄中，BP_Second_1 或 BP_Second_2 有值，即視為已記錄
+            bool todayHasSecondBP = todayRecords.Any(r =>
+                r.BP_Second_1_Systolic.HasValue || r.BP_Second_1_Diastolic.HasValue ||
+                r.BP_Second_2_Systolic.HasValue || r.BP_Second_2_Diastolic.HasValue
+            );
 
-            // 檢查是否有填其他資訊
+            // 3. 檢查當前表單是否有填寫「第一次量測」的血壓
+            bool currentHasFirstBP = model.BP_First_1_Systolic.HasValue || model.BP_First_1_Diastolic.HasValue ||
+                                     model.BP_First_2_Systolic.HasValue || model.BP_First_2_Diastolic.HasValue;
+
+            // 4. 檢查當前表單是否有填寫「第二次量測」的血壓
+            bool currentHasSecondBP = model.BP_Second_1_Systolic.HasValue || model.BP_Second_1_Diastolic.HasValue ||
+                                      model.BP_Second_2_Systolic.HasValue || model.BP_Second_2_Diastolic.HasValue;
+
+            // 檢查是否有填寫其他資訊 (用於 BPWarning 頁面判斷是否可以儲存其他資訊)
             bool hasOtherData = !string.IsNullOrEmpty(Meals_Breakfast) || !string.IsNullOrEmpty(Meals_Lunch) ||
-                               !string.IsNullOrEmpty(Meals_Dinner) || !string.IsNullOrEmpty(model.ExerciseType) ||
-                               model.ExerciseDuration.HasValue || model.WaterIntake.HasValue ||
-                               !string.IsNullOrEmpty(model.Beverage) || model.Cigarettes.HasValue ||
-                               model.BetelNut.HasValue || model.BloodSugar.HasValue;
+                                !string.IsNullOrEmpty(Meals_Dinner) || !string.IsNullOrEmpty(model.ExerciseType) ||
+                                model.ExerciseDuration.HasValue || model.WaterIntake.HasValue ||
+                                !string.IsNullOrEmpty(model.Beverage) || model.Cigarettes.HasValue ||
+                                model.BetelNut.HasValue || model.BloodSugar.HasValue;
 
-            // 🆕 如果今日血壓已全部填寫，且本次又填了血壓，顯示警告
-            if (todayHasAllBP && currentHasBP)
+            bool hasDuplicatedBP = false;
+            string warningMessage = "";
+            string bpSection = "";
+
+            if (currentHasFirstBP && todayHasFirstBP)
             {
+                hasDuplicatedBP = true;
+                bpSection = "第一次";
+            }
+            else if (currentHasSecondBP && todayHasSecondBP)
+            {
+                hasDuplicatedBP = true;
+                bpSection = "第二次";
+            }
+
+            // 如果發現重複提交同一時段的血壓，則導向警告頁面
+            if (hasDuplicatedBP)
+            {
+                warningMessage = $"⚠️ 您今天已記錄過【{bpSection}】的血壓數據。若要修改請使用『編輯』功能，請勿重複新增。";
+
+                ViewBag.BPWarningMessage = warningMessage; // 傳遞詳細警告訊息到 View
                 ViewBag.HasOtherData = hasOtherData;
+
+                // 傳遞所有表單資料到 View
                 ViewBag.FormData = new
                 {
                     model.BP_First_1_Systolic,
@@ -161,8 +196,10 @@ namespace healthProject.Controllers
 
                 return View("BPWarning", model);
             }
+            // --- 核心邏輯修正結束 ---
 
-            // 🆕 手動處理三餐 JSON
+
+            // 🆕 手動處理三餐 JSON (保持不變)
             if (!string.IsNullOrEmpty(Meals_Breakfast))
                 model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(Meals_Breakfast);
             if (!string.IsNullOrEmpty(Meals_Lunch))
@@ -170,7 +207,7 @@ namespace healthProject.Controllers
             if (!string.IsNullOrEmpty(Meals_Dinner))
                 model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(Meals_Dinner);
 
-            // 移除不需要驗證的欄位
+            // 移除不需要驗證的欄位 (保持不變)
             ModelState.Remove("Meals_Breakfast");
             ModelState.Remove("Meals_Lunch");
             ModelState.Remove("Meals_Dinner");
@@ -188,7 +225,7 @@ namespace healthProject.Controllers
             model.RecordDate = DateTime.Today;
             model.RecordTime = DateTime.Now.TimeOfDay;
 
-            // 顯示確認頁面
+            // 顯示確認頁面 (保持不變)
             return View("Confirm", model);
         }
 
@@ -327,12 +364,7 @@ namespace healthProject.Controllers
             return View("Confirm", model);
         }
 
-        // ========================================
-        // ✅ 確認更新
-        // ========================================
-        // ========================================
-        // ✅ 確認更新
-        // ========================================
+
         // ========================================
         // ✅ 確認更新
         // ========================================
@@ -343,7 +375,14 @@ namespace healthProject.Controllers
         {
             try
             {
-                // ... 前面的程式碼 ...
+                if (!string.IsNullOrEmpty(Meals_Breakfast))
+                    model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(Meals_Breakfast);
+                if (!string.IsNullOrEmpty(Meals_Lunch))
+                    model.Meals_Lunch = JsonSerializer.Deserialize<MealSelection>(Meals_Lunch);
+                if (!string.IsNullOrEmpty(Meals_Dinner))
+                    model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(Meals_Dinner);
+
+                ModelState.Clear();
 
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 if (model.UserId != userId)
@@ -527,8 +566,8 @@ namespace healthProject.Controllers
             }
         }
 
-        // 🆕 修改 SearchRequest 類別
-        
+
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -901,10 +940,10 @@ namespace healthProject.Controllers
             };
         }
 
-            // ========================================
-            // 💬 產生回饋訊息
-            // ========================================
-            private FeedbackViewModel GenerateFeedback(HealthRecordViewModel model)
+        // ========================================
+        // 💬 產生回饋訊息
+        // ========================================
+        private FeedbackViewModel GenerateFeedback(HealthRecordViewModel model)
         {
             var feedback = new FeedbackViewModel();
 
