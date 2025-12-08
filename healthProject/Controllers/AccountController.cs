@@ -11,6 +11,7 @@ using BCrypt.Net;
 
 namespace healthProject.Controllers
 {
+    //宣告類別
     public class AccountController : Controller
     {
         private readonly IConfiguration _configuration;
@@ -22,7 +23,7 @@ namespace healthProject.Controllers
             _logger = logger;
         }
 
-        // GET: Account/Login
+        // 登入頁面
         [HttpGet]
         public IActionResult Login(string returnUrl = null)
         {
@@ -35,7 +36,7 @@ namespace healthProject.Controllers
             return View();
         }
 
-        // POST: Account/Login 登入
+        // 登入處理
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string returnUrl = null)
@@ -117,15 +118,14 @@ namespace healthProject.Controllers
             }
         }
 
-        // 新增: GET VerifyOtp
+        // OTP 驗證頁面
         [HttpGet]
         public IActionResult VerifyOtp()
         {
-            // 不需要 Authorize，因為還沒 SignIn
             return View();
         }
 
-        // POST: VerifyOtp (修正版)
+        // OTP 驗證處理
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> VerifyOtp(string otp)
@@ -152,6 +152,7 @@ namespace healthProject.Controllers
                 return View();
             }
 
+            //比對個案輸入的 OTP 是否正確
             if (otp != storedOtp)
             {
                 ModelState.AddModelError("", "OTP 錯誤，請重新輸入");
@@ -164,7 +165,7 @@ namespace healthProject.Controllers
                 // 更新資料庫：設定為非第一次登入
                 await UpdateFirstLoginAsync(userId.Value);
 
-                // 取得使用者資料 (不需要密碼)
+                // 取得使用者資料 
                 var user = await GetUserByIdAsync(userId.Value);
 
                 if (user == null)
@@ -180,12 +181,12 @@ namespace healthProject.Controllers
 
                 // 執行登入
                 var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim("FullName", user.FullName ?? user.Username),
-            new Claim(ClaimTypes.Role, user.Role)
-        };
+                {
+                    new Claim(ClaimTypes.Name, user.Username),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim("FullName", user.FullName ?? user.Username),
+                    new Claim(ClaimTypes.Role, user.Role)
+                };
 
                 if (!string.IsNullOrEmpty(user.IDNumber))
                 {
@@ -219,7 +220,7 @@ namespace healthProject.Controllers
             }
         }
 
-        // POST: Account/Logout 登出
+        // 登出處理
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -230,7 +231,7 @@ namespace healthProject.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // GET: Account/ChangePassword 改密碼
+        // 變更密碼頁面
         [HttpGet]
         [Authorize]
         public IActionResult ChangePassword()
@@ -238,8 +239,8 @@ namespace healthProject.Controllers
             return View();
         }
 
-        // POST: Account/ChangePassword 改密碼
-        // POST: Account/ChangePassword 改密碼
+        
+        // 變更密碼處理
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
@@ -250,7 +251,7 @@ namespace healthProject.Controllers
                 return View(model);
             }
 
-            // ✅ 檢查新密碼是否與舊密碼相同
+            // 檢查新密碼是否與舊密碼相同
             if (model.OldPassword == model.NewPassword)
             {
                 ModelState.AddModelError("NewPassword", "您輸入的新密碼與舊密碼相同,請更改");
@@ -287,13 +288,14 @@ namespace healthProject.Controllers
             }
         }
 
-        // GET: Account/ForgotPassword 忘記密碼
+        // 忘記密碼頁面
         [HttpGet]
         public IActionResult ForgotPassword()
         {
             return View();
         }
 
+        // 忘記密碼處理
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
@@ -344,6 +346,7 @@ namespace healthProject.Controllers
             }
         }
 
+        // 重設密碼頁面
         [HttpGet]
         public IActionResult ResetPassword()
         {
@@ -364,6 +367,7 @@ namespace healthProject.Controllers
             return View(model);
         }
 
+        //重設密碼處理
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
@@ -405,9 +409,9 @@ namespace healthProject.Controllers
         }
 
 
-        // =========================
+        
         // 資料庫操作
-        // =========================
+       
         private async Task<UserDBModel> ValidateUserAsync(string username, string password)
         {
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
@@ -461,7 +465,7 @@ namespace healthProject.Controllers
         }
 
 
-        // 新增: 直接透過 ID 取得使用者資料
+        // 透過 ID 取得使用者資料
         private async Task<UserDBModel> GetUserByIdAsync(int userId)
         {
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
@@ -603,7 +607,6 @@ namespace healthProject.Controllers
             }
             catch
             {
-                // 如果是舊的明文密碼(在你還沒改之前建立的)
                 return password == passwordHash;
             }
         }

@@ -543,6 +543,7 @@
                                 <th>三酸甘油脂(mg/dL)</th>
                                 <th>高密度脂蛋白膽固醇(mg/dL)</th>
                                 <th>低密度脂蛋白膽固醇(mg/dL)</th>
+                                <th>醣化血紅素(mg/dL)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -560,6 +561,7 @@
                                 <td>@(record.Triglycerides_Value?.ToString() ?? "--")</td>
                                 <td>@(record.HDL_Value?.ToString() ?? "--")</td>
                                 <td>@(record.LDL_Value?.ToString() ?? "--")</td>
+                                <td>@(record.HbA1c_Value?.ToString("F1") ?? "--")</td>
                             </tr>
                         </tbody>
                     </table>

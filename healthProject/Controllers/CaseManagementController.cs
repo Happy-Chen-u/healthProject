@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace healthProject.Controllers
 {
-    [Authorize]
+    [Authorize] //需要登入才能存取
     public class CaseManagementController : Controller
     {
         private readonly IConfiguration _configuration;
@@ -26,11 +26,9 @@ namespace healthProject.Controllers
         }
 
         
-        // ========================================
-        // ✅ 建立新個案帳號(Users)
-        // ========================================
+        
 
-        // 🆕 顯示表單頁面 (GET)
+        // 新增個案頁面 (管理者)
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public IActionResult Create()
@@ -38,8 +36,8 @@ namespace healthProject.Controllers
             return View();
         }
 
-        // 處理表單提交 (POST)
-        // 處理表單提交 (POST)
+        
+        // 處理提交
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]

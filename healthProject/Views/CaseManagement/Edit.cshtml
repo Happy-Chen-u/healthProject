@@ -494,6 +494,7 @@
                             <th>三酸甘油脂(mg/dL)</th>
                             <th>高密度脂蛋白膽固醇(mg/dL)</th>
                             <th>低密度脂蛋白膽固醇(mg/dL)</th>
+                            <th>醣化血紅素(mg/dL)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -567,6 +568,10 @@
                             <td>
                                 <input asp-for="LDL_Value" type="number" />
                                 <input type="hidden" asp-for="LDL" value="true" />
+                            </td>
+                            <td>
+                                <input asp-for="HbA1c_Value" type="number" step="0.1" />
+                                <input type="hidden" asp-for="HbA1c" value="true" />
                             </td>
                         </tr>
                     </tbody>
