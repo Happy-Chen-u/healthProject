@@ -164,8 +164,10 @@
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
-            display: inline-flex;
+            justify-content: center;
+            display: flex;
             align-items: center;
+            text-align: center;
             gap: 0.5rem;
         }
 
@@ -198,6 +200,8 @@
 
             .btn {
                 width: 100%;
+                justify-content: center; 
+                text-align: center;
             }
 
             .bp-detail {
@@ -519,7 +523,6 @@
             </div>
         }
 
-        <!-- 確認表單 -->
         <!-- 確認表單 -->
         <form id="confirmForm" asp-controller="DailyHealth" asp-action="@(Model.Id > 0 ? "ConfirmUpdate" : "ConfirmSubmit")" method="post">
             @Html.AntiForgeryToken()
