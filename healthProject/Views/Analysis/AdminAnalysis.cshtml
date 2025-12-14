@@ -9,182 +9,92 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
-            min-height: 100vh;
-            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-            padding: 2rem 1rem;
+            background: #f0f4f8;
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
         }
 
-        .container {
+        .main-container {
             max-width: 1400px;
-            margin: 0 auto;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .page-header {
             background: white;
-            border-radius: 25px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #EF5350 0%, #E53935 100%);
-            color: white;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .header-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .header-subtitle {
-            font-size: 1.1rem;
-            opacity: 0.95;
-        }
-
-        .content {
-            padding: 2rem;
-        }
-
-        .button-group {
-            margin-bottom: 2rem;
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
+            padding: 1.5rem;
             border-radius: 10px;
-            font-size: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            color: #2c3e50;
+            font-size: 1.8rem;
             font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s ease;
+            margin: 0;
         }
 
-        .btn-secondary {
-            background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+        .btn-back {
+            background: #6b8e8e;
             color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
+            .btn-back:hover {
+                background: #5a7d7d;
+                color: white;
+            }
 
         .search-section {
-            background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
-            border: 3px solid #EF5350;
-            padding: 2rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #C62828;
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        .report-types {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .report-type-card {
             background: white;
-            border: 3px solid #FFCDD2;
-            border-radius: 15px;
             padding: 1.5rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .report-type-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-            border-color: #EF5350;
-        }
-
-        .report-type-card.active {
-            background: linear-gradient(135deg, #EF5350 0%, #E53935 100%);
-            color: white;
-            border-color: #E53935;
-        }
-
-        .report-type-icon {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .report-type-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .input-group {
-            background: white;
-            border: 2px solid #FFCDD2;
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
-        }
-
-        .form-row label {
-            font-weight: 600;
-            color: #C62828;
-            min-width: 120px;
-        }
-
-        .form-input {
-            flex: 1;
-            padding: 0.75rem;
-            border: 2px solid #EF5350;
             border-radius: 10px;
-            font-size: 1rem;
-            min-width: 180px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
         }
 
-        .date-hint {
-            color: #D32F2F;
-            font-weight: 500;
-            font-size: 0.9rem;
+        .patient-info-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            display: none;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #EF5350 0%, #E53935 100%);
-            color: white;
-            padding: 1rem 3rem;
-            font-size: 1.1rem;
+        .nav-tabs {
+            border-bottom: 2px solid #5a9;
         }
 
-        .btn-success {
-            background: linear-gradient(135deg, #42A5F5 0%, #1E88E5 100%);
-            color: white;
+            .nav-tabs .nav-link {
+                color: #666;
+                font-weight: 500;
+                border: none;
+                padding: 0.75rem 1.5rem;
+            }
+
+                .nav-tabs .nav-link.active {
+                    background: #ffc107;
+                    color: #333;
+                    border-radius: 8px 8px 0 0;
+                    font-weight: 600;
+                }
+
+        .table-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 1.5rem;
         }
 
         .loading {
@@ -193,354 +103,293 @@
             padding: 3rem;
         }
 
-        .spinner {
-            border: 4px solid #FFCDD2;
-            border-top: 4px solid #EF5350;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
         }
 
-        @@keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .patient-info {
-            display: none;
-            background: #E3F2FD;
-            border: 2px solid #42A5F5;
-            border-radius: 15px;
-            padding: 1.5rem;
+        .summary-table {
             margin-bottom: 2rem;
         }
 
-        .report-content {
-            display: none;
+            .summary-table th {
+                background: #ffc107;
+                color: #333;
+                font-weight: 600;
+                text-align: center;
+            }
+
+            .summary-table td {
+                font-size: 1.5rem;
+                font-weight: 700;
+                text-align: center;
+            }
+
+        .abnormal {
+            color: #dc3545;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
-            border: 2px solid #EF5350;
-            border-radius: 15px;
-            padding: 1.5rem;
-            text-align: center;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            color: #C62828;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #B71C1C;
-        }
-
-        .stat-detail {
-            font-size: 0.85rem;
-            color: #C62828;
-            margin-top: 0.5rem;
-        }
-
-        .chart-section {
-            background: white;
-            border: 2px solid #FFCDD2;
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .chart-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #C62828;
-            margin-bottom: 1rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-
-        th {
-            background: linear-gradient(135deg, #EF5350 0%, #E53935 100%);
-            color: white;
-            padding: 0.75rem;
-            text-align: left;
-            font-weight: 700;
-        }
-
-        td {
-            padding: 0.75rem;
-            border-bottom: 1px solid #FFCDD2;
-        }
-
-        tr:hover {
-            background: #FFEBEE;
+        .warning {
+            color: #fd7e14;
         }
 
         .badge {
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .badge-success {
-            background: #C8E6C9;
-            color: #2E7D32;
-        }
-
-        .badge-danger {
-            background: #FFCDD2;
-            color: #C62828;
-        }
-
-        .badge-warning {
-            background: #FFE0B2;
-            color: #E65100;
-        }
-
-        @@media (max-width: 768px) {
-            .report-types {
-                grid-template-columns: 1fr;
-            }
-
-            .form-row {
-                flex-direction: column;
-                align-items: stretch;
-            }
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 class="header-title">📊 健康分析 - 管理員</h1>
-            <p class="header-subtitle">查看病患健康趨勢與統計報表</p>
+    <div class="main-container">
+        <!-- 頁首 -->
+        <div class="page-header">
+            <h1 class="page-title"><i class="bi bi-graph-up"></i> 健康分析</h1>
+            <a href="@Url.Action("Index", "Home")" class="btn-back">
+                <i class="bi bi-arrow-left"></i> 返回主選單
+            </a>
         </div>
 
-        <div class="content">
-            <div class="button-group">
-                <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
-                    ← 返回主選單
-                </a>
+        <!-- 搜尋區塊 -->
+        <div class="search-section">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label fw-bold">輸入病患身分證字號</label>
+                    <input type="text" class="form-control" id="idNumber" placeholder="例如: A123456789" maxlength="10">
+                </div>
             </div>
+        </div>
 
-            <!-- 搜尋區域 -->
-            <div class="search-section">
-                <h2 class="section-title">🔍 搜尋病患報表</h2>
+        <!-- 分頁標籤 -->
+        <ul class="nav nav-tabs mb-3" id="reportTypeTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="daily-tab" data-bs-toggle="tab"
+                        data-bs-target="#daily" type="button" role="tab" onclick="selectReportType(0)">
+                    每日
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="weekly-tab" data-bs-toggle="tab"
+                        data-bs-target="#weekly" type="button" role="tab" onclick="selectReportType(1)">
+                    每週
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="monthly-tab" data-bs-toggle="tab"
+                        data-bs-target="#monthly" type="button" role="tab" onclick="selectReportType(2)">
+                    每月
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="yearly-tab" data-bs-toggle="tab"
+                        data-bs-target="#yearly" type="button" role="tab" onclick="selectReportType(3)">
+                    每年
+                </button>
+            </li>
+        </ul>
 
-                <!-- 病患身分證 -->
-                <div class="input-group">
-                    <div class="form-row">
-                        <label>病患身分證:</label>
-                        <input type="text" id="idNumber" class="form-input"
-                               placeholder="例如: A123456789" maxlength="10" />
+        <!-- 分頁內容 -->
+        <div class="tab-content table-card" id="reportTypeTabContent">
+            <!-- 每日 -->
+            <div class="tab-pane fade" id="daily" role="tabpanel">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">選擇日期</label>
+                        <input type="date" class="form-control" id="dailyDate">
+                        <small class="text-muted">年/月/日</small>
                     </div>
                 </div>
-
-                <!-- 報表類型選擇 -->
-                <div style="margin-bottom: 1.5rem;">
-                    <h3 style="color: #C62828; margin-bottom: 1rem;">📋 報表類型</h3>
-                    <div class="report-types">
-                        <div class="report-type-card" data-type="0" onclick="selectReportType(0)">
-                            <div class="report-type-icon">📅</div>
-                            <div class="report-type-name">每日報表</div>
-                        </div>
-                        <div class="report-type-card active" data-type="1" onclick="selectReportType(1)">
-                            <div class="report-type-icon">📆</div>
-                            <div class="report-type-name">每週報表</div>
-                        </div>
-                        <div class="report-type-card" data-type="2" onclick="selectReportType(2)">
-                            <div class="report-type-icon">📋</div>
-                            <div class="report-type-name">每月報表</div>
-                        </div>
-                        <div class="report-type-card" data-type="3" onclick="selectReportType(3)">
-                            <div class="report-type-icon">📑</div>
-                            <div class="report-type-name">每年報表</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 日期選擇 -->
-                <div class="input-group">
-                    <!-- 每日 -->
-                    <div id="dailyDateSelection" style="display:none;">
-                        <div class="form-row">
-                            <label>選擇日期:</label>
-                            <input type="date" id="dailyDate" class="form-input" />
-                            <span class="date-hint">選擇單一日期</span>
-                        </div>
-                    </div>
-
-                    <!-- 每週 -->
-                    <div id="weeklyDateSelection">
-                        <div class="form-row">
-                            <label>週開始日期:</label>
-                            <input type="date" id="weeklyStartDate" class="form-input" />
-                            <span class="date-hint">系統將自動計算至該週結束日期 (+6天)</span>
-                        </div>
-                    </div>
-
-                    <!-- 每月 -->
-                    <div id="monthlyDateSelection" style="display:none;">
-                        <div class="form-row">
-                            <label>選擇年月:</label>
-                            <input type="month" id="monthlyDate" class="form-input" />
-                            <span class="date-hint">選擇年份和月份</span>
-                        </div>
-                    </div>
-
-                    <!-- 每年 -->
-                    <div id="yearlyDateSelection" style="display:none;">
-                        <div class="form-row">
-                            <label>選擇年份:</label>
-                            <select id="yearlyDate" class="form-input"></select>
-                            <span class="date-hint">選擇完整年份</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="text-align: center;">
+                <div class="d-flex gap-2">
                     <button class="btn btn-primary" onclick="searchPatient()">
-                        🔍 查詢報表
+                        <i class="bi bi-search"></i> 搜尋
                     </button>
-                    <button class="btn btn-success" onclick="downloadPdf()" id="downloadBtn" style="display:none;">
-                        📥 下載 PDF
+                    <button class="btn btn-secondary" onclick="clearResults()">
+                        <i class="bi bi-arrow-counterclockwise"></i> 清除
                     </button>
                 </div>
             </div>
 
-            <!-- 載入中 -->
-            <div id="loadingDiv" class="loading">
-                <div class="spinner"></div>
-                <p style="color: #EF5350; font-size: 1.2rem; font-weight: 600;">正在產生報表...</p>
+            <!-- 每週 -->
+            <div class="tab-pane fade show active" id="weekly" role="tabpanel">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">週開始日期</label>
+                        <input type="date" class="form-control" id="weeklyStartDate">
+                        <small class="text-muted">年/月/日</small>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" onclick="searchPatient()">
+                        <i class="bi bi-search"></i> 搜尋
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearResults()">
+                        <i class="bi bi-arrow-counterclockwise"></i> 清除
+                    </button>
+                </div>
             </div>
 
-            <!-- 病患資訊 -->
-            <div id="patientInfo" class="patient-info">
-                <h3 style="margin-bottom: 1rem;">👤 病患資訊</h3>
-                <p style="margin: 0.5rem 0;">
-                    <strong>姓名:</strong> <span id="patientName"></span>
-                </p>
-                <p style="margin: 0.5rem 0;">
-                    <strong>身分證:</strong> <span id="patientId"></span>
-                </p>
+            <!-- 每月 -->
+            <div class="tab-pane fade" id="monthly" role="tabpanel">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">選擇年月</label>
+                        <input type="month" class="form-control" id="monthlyDate">
+                        <small class="text-muted">年/月</small>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" onclick="searchPatient()">
+                        <i class="bi bi-search"></i> 搜尋
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearResults()">
+                        <i class="bi bi-arrow-counterclockwise"></i> 清除
+                    </button>
+                </div>
             </div>
 
-            <!-- 報表內容 -->
-            <div id="reportContent" class="report-content">
-                <!-- 🆕 每日報表 - 表格顯示 -->
-                <div id="dailyTable" style="display:none;">
-                    <div class="chart-section">
-                        <h3 class="chart-title">📊 當日健康數據</h3>
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="background: #f3f4f6;">
-                                    <th style="padding: 1rem; text-align: left; border: 1px solid #e5e7eb; font-weight: 600;">項目</th>
-                                    <th style="padding: 1rem; text-align: center; border: 1px solid #e5e7eb; font-weight: 600;">測量值</th>
-                                    <th style="padding: 1rem; text-align: center; border: 1px solid #e5e7eb; font-weight: 600;">標準值</th>
-                                    <th style="padding: 1rem; text-align: center; border: 1px solid #e5e7eb; font-weight: 600;">狀態</th>
+            <!-- 每年 -->
+            <div class="tab-pane fade" id="yearly" role="tabpanel">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">選擇年份</label>
+                        <select class="form-select" id="yearlyDate"></select>
+                        <small class="text-muted">年</small>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" onclick="searchPatient()">
+                        <i class="bi bi-search"></i> 搜尋
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearResults()">
+                        <i class="bi bi-arrow-counterclockwise"></i> 清除
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 載入中 -->
+        <div id="loadingDiv" class="loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">載入中...</span>
+            </div>
+            <p class="mt-3 text-primary fw-bold">正在產生報表...</p>
+        </div>
+
+        <!-- 病患資訊 -->
+        <div id="patientInfo" class="patient-info-section">
+            <h5 class="mb-3"><i class="bi bi-person-circle"></i> 病患資訊</h5>
+            <p class="mb-2"><strong>姓名:</strong> <span id="patientName"></span></p>
+            <p class="mb-2"><strong>身分證:</strong> <span id="patientId"></span></p>
+            <p class="mb-2"><strong>性別:</strong> <span id="patientGender">X</span></p>
+            <p class="mb-0"><strong>生日:</strong> <span id="patientBirth">XXXX/XX/XX</span></p>
+        </div>
+
+        <!-- 報表內容 -->
+        <div id="reportContent" style="display: none;">
+            <!-- 每日報表表格 -->
+            <div id="dailyTable" style="display: none;">
+                <div class="table-card">
+                    <h5 class="mb-3"><i class="bi bi-calendar-day"></i> 當日健康數據</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>項目</th>
+                                    <th class="text-center">測量值</th>
+                                    <th class="text-center">標準值</th>
+                                    <th class="text-center">狀態</th>
                                 </tr>
                             </thead>
-                            <tbody id="dailyTableBody">
-                            </tbody>
+                            <tbody id="dailyTableBody"></tbody>
                         </table>
                     </div>
                 </div>
+            </div>
 
-                <!-- 統計摘要 (週/月/年報表用) -->
-                <div id="summarySection" class="chart-section">
-                    <h3 class="chart-title">📊 統計摘要</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-label">總天數</div>
-                            <div class="stat-value" id="totalDays">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">血壓異常</div>
-                            <div class="stat-value" id="highBPDays" style="color: #C62828;">0</div>
-                            <div class="stat-detail" id="highBPPercentage"></div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">血糖異常</div>
-                            <div class="stat-value" id="highBSDays" style="color: #C62828;">0</div>
-                            <div class="stat-detail" id="highBSPercentage"></div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">飲水不足</div>
-                            <div class="stat-value" id="lowWaterDays" style="color: #EF6C00;">0</div>
-                            <div class="stat-detail" id="lowWaterPercentage"></div>
-                        </div>
+            <!-- 統計摘要 (週/月/年) -->
+            <div id="summarySection" style="display: none;">
+                <div class="table-card mb-3">
+                    <h5 class="mb-3"><i class="bi bi-bar-chart"></i> 統計摘要</h5>
+                    <div class="table-responsive">
+                        <table class="table summary-table">
+                            <thead>
+                                <tr>
+                                    <th>總天數</th>
+                                    <th>血壓異常天數</th>
+                                    <th>血糖異常天數</th>
+                                    <th>水分不足天數</th>
+                                    <th>運動時間不足天數</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td id="totalDays">0</td>
+                                    <td id="highBPDays" class="abnormal">0</td>
+                                    <td id="highBSDays" class="abnormal">0</td>
+                                    <td id="lowWaterDays" class="warning">0</td>
+                                    <td id="lowExerciseDays" class="warning">0</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>項目</th>
-                                <th>平均值</th>
-                                <th>標準值</th>
-                                <th>狀態</th>
-                            </tr>
-                        </thead>
-                        <tbody id="avgTable"></tbody>
-                    </table>
+                    <div class="table-responsive mt-4">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>項目</th>
+                                    <th class="text-center">平均值</th>
+                                    <th class="text-center">標準值</th>
+                                    <th class="text-center">狀態</th>
+                                </tr>
+                            </thead>
+                            <tbody id="avgTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 圖表區域 -->
+            <div id="chartsSection" style="display: none;">
+                <div class="table-card mb-3">
+                    <h5 class="mb-3"><i class="bi bi-heart-pulse"></i> 血壓趨勢</h5>
+                    <canvas id="bpChart" style="max-height: 300px;"></canvas>
                 </div>
 
-                <!-- 圖表區域 (週/月/年報表用) -->
-                <div id="chartsSection">
-                    <div class="chart-section">
-                        <h3 class="chart-title">📈 血壓趨勢</h3>
-                        <canvas id="bpChart" style="max-height: 300px;"></canvas>
-                    </div>
+                <div class="table-card mb-3">
+                    <h5 class="mb-3"><i class="bi bi-droplet"></i> 血糖趨勢</h5>
+                    <canvas id="bsChart" style="max-height: 300px;"></canvas>
+                </div>
 
-                    <div class="chart-section">
-                        <h3 class="chart-title">🩸 血糖趨勢</h3>
-                        <canvas id="bsChart" style="max-height: 300px;"></canvas>
-                    </div>
+                <div class="table-card mb-3">
+                    <h5 class="mb-3"><i class="bi bi-cup-straw"></i> 飲水量趨勢</h5>
+                    <canvas id="waterChart" style="max-height: 300px;"></canvas>
+                </div>
 
-                    <div class="chart-section">
-                        <h3 class="chart-title">💧 飲水量趨勢</h3>
-                        <canvas id="waterChart" style="max-height: 300px;"></canvas>
-                    </div>
+                <div class="table-card mb-3">
+                    <h5 class="mb-3"><i class="bi bi-person-walking"></i> 運動時間趨勢</h5>
+                    <canvas id="exerciseChart" style="max-height: 300px;"></canvas>
+                </div>
 
-                    <div class="chart-section">
-                        <h3 class="chart-title">🏃 運動時間趨勢</h3>
-                        <canvas id="exerciseChart" style="max-height: 300px;"></canvas>
-                    </div>
+                <div class="table-card mb-3">
+                    <h5 class="mb-3"><i class="bi bi-x-circle"></i> 抽菸趨勢</h5>
+                    <canvas id="cigaretteChart" style="max-height: 300px;"></canvas>
+                </div>
 
-                    <!-- 🆕 抽菸和檳榔圖表 -->
-                    <div style="background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                        <canvas id="cigaretteChart" style="height: 300px;"></canvas>
-                    </div>
+                <div class="table-card mb-3">
+                    <h5 class="mb-3"><i class="bi bi-flower1"></i> 檳榔趨勢</h5>
+                    <canvas id="betelNutChart" style="max-height: 300px;"></canvas>
+                </div>
 
-                    <div style="background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                        <canvas id="betelNutChart" style="height: 300px;"></canvas>
-                    </div>
-
-                    <!-- 飲料 & 三餐記錄 -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
-                        <div class="chart-section">
-                            <h3 class="chart-title">🥤 飲料記錄</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="table-card mb-3">
+                            <h5 class="mb-3"><i class="bi bi-cup-hot"></i> 飲料記錄</h5>
                             <div id="beverageTable"></div>
                         </div>
-
-                        <div class="chart-section">
-                            <h3 class="chart-title">🍽️ 三餐記錄</h3>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="table-card mb-3">
+                            <h5 class="mb-3"><i class="bi bi-egg-fried"></i> 三餐記錄</h5>
                             <div id="mealTable"></div>
                         </div>
                     </div>
@@ -549,6 +398,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         let currentReportType = 1;
@@ -556,7 +406,6 @@
         let charts = {};
 
         document.addEventListener('DOMContentLoaded', function () {
-            console.log('✅ 管理員頁面載入完成');
             initializeYearSelect();
             setDefaultDates();
         });
@@ -584,22 +433,16 @@
         }
 
         function selectReportType(type) {
-            console.log('選擇報表類型:', type);
             currentReportType = type;
+        }
 
-            document.querySelectorAll('.report-type-card').forEach(card => {
-                card.classList.remove('active');
-            });
-            document.querySelector(`.report-type-card[data-type="${type}"]`).classList.add('active');
-
-            document.getElementById('dailyDateSelection').style.display = type === 0 ? 'block' : 'none';
-            document.getElementById('weeklyDateSelection').style.display = type === 1 ? 'block' : 'none';
-            document.getElementById('monthlyDateSelection').style.display = type === 2 ? 'block' : 'none';
-            document.getElementById('yearlyDateSelection').style.display = type === 3 ? 'block' : 'none';
-
+        function clearResults() {
             document.getElementById('patientInfo').style.display = 'none';
             document.getElementById('reportContent').style.display = 'none';
-            document.getElementById('downloadBtn').style.display = 'none';
+            document.getElementById('loadingDiv').style.display = 'none';
+            document.getElementById('idNumber').value = '';
+            setDefaultDates();
+            currentReport = null;
         }
 
         async function searchPatient() {
@@ -612,7 +455,7 @@
 
             const idPattern = /^[A-Z][12]\d{8}$/;
             if (!idPattern.test(idNumber)) {
-                alert('身分證格式錯誤\n正確格式: A123456789');
+                alert('身分證格式錯誤\\n正確格式: A123456789');
                 return;
             }
 
@@ -663,7 +506,6 @@
             document.getElementById('loadingDiv').style.display = 'block';
             document.getElementById('patientInfo').style.display = 'none';
             document.getElementById('reportContent').style.display = 'none';
-            document.getElementById('downloadBtn').style.display = 'none';
 
             try {
                 const response = await fetch('/Analysis/GetAdminReport', {
@@ -683,13 +525,12 @@
                     currentReport = result.data;
                     displayPatientInfo(result.data);
                     displayReport(result.data);
-                    document.getElementById('downloadBtn').style.display = 'inline-block';
                 } else {
                     alert(result.message || '查詢失敗');
                 }
             } catch (error) {
-                console.error('❌ 查詢錯誤:', error);
-                alert('系統錯誤，請稍後再試');
+                console.error('查詢錯誤:', error);
+                alert('系統錯誤,請稍後再試');
             } finally {
                 document.getElementById('loadingDiv').style.display = 'none';
             }
@@ -707,7 +548,6 @@
         }
 
         function displayReport(data) {
-            console.log('📈 顯示報表數據:', data);
             document.getElementById('reportContent').style.display = 'block';
 
             if (currentReportType === 0) {
@@ -736,11 +576,10 @@
             if (stats.avgSystolicBP !== null && stats.avgDiastolicBP !== null) {
                 const isAbnormal = stats.avgSystolicBP > 120 || stats.avgDiastolicBP > 80;
                 rows.push({
-                    icon: '❤️',
-                    name: '血壓',
+                    name: '❤️ 血壓',
                     value: `${stats.avgSystolicBP.toFixed(0)} / ${stats.avgDiastolicBP.toFixed(0)} mmHg`,
                     standard: '≤ 120/80 mmHg',
-                    status: isAbnormal ? '<span style="color: #dc2626; font-weight: 700;">⚠️ 偏高</span>' : '<span style="color: #16a34a;">✓ 正常</span>',
+                    status: isAbnormal ? '<span class="badge bg-danger">⚠️ 偏高</span>' : '<span class="badge bg-success">✓ 正常</span>',
                     isAbnormal: isAbnormal
                 });
             }
@@ -748,184 +587,29 @@
             if (stats.avgBloodSugar !== null) {
                 const isAbnormal = stats.avgBloodSugar > 99;
                 rows.push({
-                    icon: '🩸',
-                    name: '血糖',
+                    name: '🩸 血糖',
                     value: `${stats.avgBloodSugar.toFixed(1)} mg/dL`,
                     standard: '≤ 99 mg/dL',
-                    status: isAbnormal ? '<span style="color: #dc2626; font-weight: 700;">⚠️ 偏高</span>' : '<span style="color: #16a34a;">✓ 正常</span>',
+                    status: isAbnormal ? '<span class="badge bg-danger">⚠️ 偏高</span>' : '<span class="badge bg-success">✓ 正常</span>',
                     isAbnormal: isAbnormal
-                });
-            }
-
-            if (stats.avgWaterIntake !== null) {
-                const isAbnormal = stats.avgWaterIntake < 2000;
-                rows.push({
-                    icon: '💧',
-                    name: '飲水量',
-                    value: `${stats.avgWaterIntake.toFixed(0)} ml`,
-                    standard: '≥ 2000 ml',
-                    status: isAbnormal ? '<span style="color: #dc2626; font-weight: 700;">⚠️ 不足</span>' : '<span style="color: #16a34a;">✓ 充足</span>',
-                    isAbnormal: isAbnormal
-                });
-            }
-
-            if (stats.avgExerciseDuration !== null) {
-                const isAbnormal = stats.avgExerciseDuration < 30;
-                rows.push({
-                    icon: '🏃',
-                    name: '運動時間',
-                    value: `${stats.avgExerciseDuration.toFixed(1)} 分鐘`,
-                    standard: '≥ 30 分鐘',
-                    status: isAbnormal ? '<span style="color: #dc2626; font-weight: 700;">⚠️ 不足</span>' : '<span style="color: #16a34a;">✓ 充足</span>',
-                    isAbnormal: isAbnormal
-                });
-            }
-
-            if (stats.avgCigarettes !== null && stats.avgCigarettes > 0) {
-                rows.push({
-                    icon: '🚬',
-                    name: '抽菸',
-                    value: `${stats.avgCigarettes.toFixed(0)} 支`,
-                    standard: '0 支',
-                    status: '<span style="color: #dc2626; font-weight: 700;">⚠️ 建議戒菸</span>',
-                    isAbnormal: true
-                });
-            }
-
-            if (stats.avgBetelNut !== null && stats.avgBetelNut > 0) {
-                rows.push({
-                    icon: '🌿',
-                    name: '嚼檳榔',
-                    value: `${stats.avgBetelNut.toFixed(0)} 次`,
-                    standard: '0 次',
-                    status: '<span style="color: #dc2626; font-weight: 700;">⚠️ 建議戒除</span>',
-                    isAbnormal: true
                 });
             }
 
             rows.forEach(row => {
                 const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid #e5e7eb';
-                if (row.isAbnormal) {
-                    tr.style.background = '#fef2f2';
-                }
+                if (row.isAbnormal) tr.classList.add('table-danger');
 
                 tr.innerHTML = `
-                            <td style="padding: 1rem; border: 1px solid #e5e7eb;">
-                                <span style="font-size: 1.2rem; margin-right: 0.5rem;">${row.icon}</span>
-                                <strong>${row.name}</strong>
-                            </td>
-                            <td style="padding: 1rem; text-align: center; border: 1px solid #e5e7eb; font-size: 1.1rem; font-weight: 600; ${row.isAbnormal ? 'color: #dc2626;' : ''}">${row.value}</td>
-                            <td style="padding: 1rem; text-align: center; border: 1px solid #e5e7eb; color: #6b7280;">${row.standard}</td>
-                            <td style="padding: 1rem; text-align: center; border: 1px solid #e5e7eb;">${row.status}</td>
+                            <td><strong>${row.name}</strong></td>
+                            <td class="text-center"><strong>${row.value}</strong></td>
+                            <td class="text-center">${row.standard}</td>
+                            <td class="text-center">${row.status}</td>
                         `;
                 tbody.appendChild(tr);
             });
 
-            // 三餐記錄
-            if (record && (record.meals_Breakfast || record.meals_Lunch || record.meals_Dinner)) {
-                const mealTr = document.createElement('tr');
-                mealTr.style.borderBottom = '1px solid #e5e7eb';
-                mealTr.style.background = '#f9fafb';
-
-                const calculateMealTotal = (items) => {
-                    let total = 0;
-                    let others = [];
-
-                    items.forEach(item => {
-                        if (!item || item === '0') return;
-
-                        if (item.includes('+')) {
-                            const parts = item.split('+');
-                            parts.forEach(part => {
-                                const num = parseFloat(part.trim());
-                                if (!isNaN(num)) {
-                                    total += num;
-                                } else {
-                                    others.push(part.trim());
-                                }
-                            });
-                        } else {
-                            const num = parseFloat(item);
-                            if (!isNaN(num)) {
-                                total += num;
-                            } else {
-                                others.push(item);
-                            }
-                        }
-                    });
-
-                    const result = [];
-                    if (total > 0) {
-                        result.push(total % 1 === 0 ? total.toString() : total.toFixed(1));
-                    }
-                    result.push(...others);
-
-                    return result.length > 0 ? result.join(' + ') : null;
-                };
-
-                let totalVeg = [];
-                let totalProtein = [];
-                let totalCarbs = [];
-
-                [record.meals_Breakfast, record.meals_Lunch, record.meals_Dinner].forEach(meal => {
-                    if (meal) {
-                        if (meal.vegetables && meal.vegetables !== '0') totalVeg.push(meal.vegetables);
-                        if (meal.protein && meal.protein !== '0') totalProtein.push(meal.protein);
-                        if (meal.carbs && meal.carbs !== '0') totalCarbs.push(meal.carbs);
-                    }
-                });
-
-                const vegTotal = calculateMealTotal(totalVeg);
-                const proteinTotal = calculateMealTotal(totalProtein);
-                const carbsTotal = calculateMealTotal(totalCarbs);
-
-                let mealContent = '<div style="line-height: 1.8;">';
-
-                if (vegTotal) {
-                    mealContent += `<div>🥬 <strong>蔬菜:</strong> ${vegTotal}</div>`;
-                }
-                if (proteinTotal) {
-                    mealContent += `<div>🥩 <strong>蛋白質:</strong> ${proteinTotal}</div>`;
-                }
-                if (carbsTotal) {
-                    mealContent += `<div>🍚 <strong>澱粉:</strong> ${carbsTotal}</div>`;
-                }
-
-                mealContent += '</div>';
-
-                mealTr.innerHTML = `
-                            <td style="padding: 1rem; border: 1px solid #e5e7eb;">
-                                <span style="font-size: 1.2rem; margin-right: 0.5rem;">🍽️</span>
-                                <strong>今日三餐總計</strong>
-                            </td>
-                            <td colspan="3" style="padding: 1rem; border: 1px solid #e5e7eb; text-align: left;">
-                                ${mealContent}
-                            </td>
-                        `;
-                tbody.appendChild(mealTr);
-            }
-
-            // 飲料記錄
-            if (record && record.beverage) {
-                const bevTr = document.createElement('tr');
-                bevTr.style.borderBottom = '1px solid #e5e7eb';
-                bevTr.style.background = '#f9fafb';
-
-                bevTr.innerHTML = `
-                            <td style="padding: 1rem; border: 1px solid #e5e7eb;">
-                                <span style="font-size: 1.2rem; margin-right: 0.5rem;">🥤</span>
-                                <strong>其他飲料</strong>
-                            </td>
-                            <td colspan="3" style="padding: 1rem; border: 1px solid #e5e7eb; text-align: left; font-size: 1.05rem;">
-                                ${record.beverage}
-                            </td>
-                        `;
-                tbody.appendChild(bevTr);
-            }
-
-            if (rows.length === 0 && (!record || (!record.meals_Breakfast && !record.meals_Lunch && !record.meals_Dinner && !record.beverage))) {
-                tbody.innerHTML = '<tr><td colspan="4" style="padding: 2rem; text-align: center; color: #999;">該日期無健康數據</td></tr>';
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">該日期無健康數據</td></tr>';
             }
         }
 
@@ -934,419 +618,27 @@
 
             document.getElementById('totalDays').textContent = stats.totalDays;
             document.getElementById('highBPDays').textContent = stats.highBPDays;
-            document.getElementById('highBPPercentage').textContent = `(${stats.highBPPercentage.toFixed(1)}%)`;
             document.getElementById('highBSDays').textContent = stats.highBloodSugarDays;
-            document.getElementById('highBSPercentage').textContent = `(${stats.highBloodSugarPercentage.toFixed(1)}%)`;
             document.getElementById('lowWaterDays').textContent = stats.lowWaterDays;
-            document.getElementById('lowWaterPercentage').textContent = `(${stats.lowWaterPercentage.toFixed(1)}%)`;
+            document.getElementById('lowExerciseDays').textContent = stats.lowExerciseDays;
 
             const avgTableHtml = `
                         <tr>
                             <td>血壓</td>
-                            <td>${stats.avgSystolicBP?.toFixed(1) || 'N/A'} / ${stats.avgDiastolicBP?.toFixed(1) || 'N/A'} mmHg</td>
-                            <td>≤ 120/80 mmHg</td>
-                            <td>${(stats.avgSystolicBP > 120 || stats.avgDiastolicBP > 80) ? '<span class="badge badge-danger">偏高</span>' : '<span class="badge badge-success">正常</span>'}</td>
+                            <td class="text-center">${stats.avgSystolicBP?.toFixed(1) || 'N/A'} / ${stats.avgDiastolicBP?.toFixed(1) || 'N/A'} mmHg</td>
+                            <td class="text-center">≤ 120/80 mmHg</td>
+                            <td class="text-center">${(stats.avgSystolicBP > 120 || stats.avgDiastolicBP > 80) ? '<span class="badge bg-danger">偏高</span>' : '<span class="badge bg-success">正常</span>'}</td>
                         </tr>
                         <tr>
                             <td>血糖</td>
-                            <td>${stats.avgBloodSugar?.toFixed(1) || 'N/A'} mg/dL</td>
-                            <td>≤ 99 mg/dL</td>
-                            <td>${stats.avgBloodSugar > 99 ? '<span class="badge badge-danger">偏高</span>' : '<span class="badge badge-success">正常</span>'}</td>
-                        </tr>
-                        <tr>
-                            <td>飲水量</td>
-                            <td>${stats.avgWaterIntake?.toFixed(0) || 'N/A'} ml</td>
-                            <td>≥ 2000 ml</td>
-                            <td>${stats.avgWaterIntake < 2000 ? '<span class="badge badge-warning">不足</span>' : '<span class="badge badge-success">充足</span>'}</td>
-                        </tr>
-                        <tr>
-                            <td>運動時間</td>
-                            <td>${stats.avgExerciseDuration?.toFixed(1) || 'N/A'} 分鐘</td>
-                            <td>≥ 150 分鐘/週</td>
-                            <td>${stats.avgExerciseDuration < 150 ? '<span class="badge badge-warning">不足</span>' : '<span class="badge badge-success">充足</span>'}</td>
-                        </tr>
-                        <tr>
-                            <td>🚬 抽菸 (每日平均)</td>
-                            <td>${stats.avgCigarettes?.toFixed(1) || '0'} 支 (總計 ${stats.totalCigarettes?.toFixed(0) || '0'} 支)</td>
-                            <td>≤ 10 支</td>
-                            <td>${stats.avgCigarettes > 10 ? '<span class="badge badge-danger">偏多</span>' : stats.avgCigarettes > 0 ? '<span class="badge badge-warning">建議戒菸</span>' : '<span class="badge badge-success">良好</span>'}</td>
-                        </tr>
-                        <tr>
-                            <td>🌿 檳榔 (每日平均)</td>
-                            <td>${stats.avgBetelNut?.toFixed(1) || '0'} 次 (總計 ${stats.totalBetelNut?.toFixed(0) || '0'} 次)</td>
-                            <td>≤ 10 次</td>
-                            <td>${stats.avgBetelNut > 10 ? '<span class="badge badge-danger">偏多</span>' : stats.avgBetelNut > 0 ? '<span class="badge badge-warning">建議戒除</span>' : '<span class="badge badge-success">良好</span>'}</td>
-                        </tr>
-                        <tr>
-                            <td>🥬 蔬菜 (每日平均)</td>
-                            <td>${stats.avgVegetables?.toFixed(1) || 'N/A'} 份</td>
-                            <td>建議 3-5 份</td>
-                            <td>${stats.avgVegetables >= 3 ? '<span class="badge badge-success">充足</span>' : '<span class="badge badge-warning">可增加</span>'}</td>
-                        </tr>
-                        <tr>
-                            <td>🥩 蛋白質 (每日平均)</td>
-                            <td>${stats.avgProtein?.toFixed(1) || 'N/A'} 份</td>
-                            <td>建議 3-5 份</td>
-                            <td>${stats.avgProtein >= 3 ? '<span class="badge badge-success">充足</span>' : '<span class="badge badge-warning">可增加</span>'}</td>
-                        </tr>
-                        <tr>
-                            <td>🍚 澱粉 (每日平均)</td>
-                            <td>${stats.avgCarbs?.toFixed(1) || 'N/A'} 份</td>
-                            <td>建議 2-4 份</td>
-                            <td>${stats.avgCarbs >= 2 && stats.avgCarbs <= 4 ? '<span class="badge badge-success">適中</span>' : '<span class="badge badge-warning">需調整</span>'}</td>
+                            <td class="text-center">${stats.avgBloodSugar?.toFixed(1) || 'N/A'} mg/dL</td>
+                            <td class="text-center">≤ 99 mg/dL</td>
+                            <td class="text-center">${stats.avgBloodSugar > 99 ? '<span class="badge bg-danger">偏高</span>' : '<span class="badge bg-success">正常</span>'}</td>
                         </tr>
                     `;
             document.getElementById('avgTable').innerHTML = avgTableHtml;
 
             drawCharts(data.charts);
-            displayMealRecords(data, currentReportType);
-            displayBeverageRecords(data, currentReportType);
-        }
-
-        function displayMealRecords(data, reportType) {
-            const mealDiv = document.getElementById('mealTable');
-
-            if (reportType === 1) {
-                const summary = data.charts.weeklyMealSummary;
-                let html = `
-                            <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
-                                <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">📊 當週總量</h4>
-                                <div style="line-height: 1.8;">
-                                    <div>🥬 蔬菜: ${summary?.totalVegetables?.toFixed(1) || 0} 份 (平均 ${summary?.avgVegetables?.toFixed(1) || 0} 份/天)</div>
-                                    <div>🥩 蛋白質: ${summary?.totalProtein?.toFixed(1) || 0} 份 (平均 ${summary?.avgProtein?.toFixed(1) || 0} 份/天)</div>
-                                    <div>🍚 澱粉: ${summary?.totalCarbs?.toFixed(1) || 0} 份 (平均 ${summary?.avgCarbs?.toFixed(1) || 0} 份/天)</div>
-                                </div>
-                            </div>
-                            <table><thead><tr><th>日期</th><th>三餐總計</th></tr></thead><tbody>`;
-
-                data.charts.mealRecords.forEach(r => {
-                    html += generateMealRow(r);
-                });
-
-                html += '</tbody></table>';
-                mealDiv.innerHTML = html;
-
-            } else if (reportType === 2) {
-                const summary = data.charts.monthlyMealSummary;
-                let html = `
-                            <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
-                                <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">📊 當月總量</h4>
-                                <div style="line-height: 1.8;">
-                                    <div>🥬 蔬菜: ${summary?.totalVegetables?.toFixed(1) || 0} 份 (平均 ${summary?.avgVegetables?.toFixed(1) || 0} 份/天)</div>
-                                    <div>🥩 蛋白質: ${summary?.totalProtein?.toFixed(1) || 0} 份 (平均 ${summary?.avgProtein?.toFixed(1) || 0} 份/天)</div>
-                                    <div>🍚 澱粉: ${summary?.totalCarbs?.toFixed(1) || 0} 份 (平均 ${summary?.avgCarbs?.toFixed(1) || 0} 份/天)</div>
-                                </div>
-                            </div>
-                            <div id="monthlyMealWeeks"></div>`;
-
-                mealDiv.innerHTML = html;
-                generateMonthlyWeeks(data.charts.mealRecords, 'meal');
-
-            } else if (reportType === 3) {
-                const summary = data.charts.yearlyMealSummary;
-                mealDiv.innerHTML = `
-                            <div style="background: #fef3c7; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                                <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">📊 全年總量</h4>
-                                <div style="line-height: 2; font-size: 1.05rem;">
-                                    <div>🥬 蔬菜: ${summary?.totalVegetables?.toFixed(1) || 0} 份 (平均 ${summary?.avgVegetables?.toFixed(1) || 0} 份/天)</div>
-                                    <div>🥩 蛋白質: ${summary?.totalProtein?.toFixed(1) || 0} 份 (平均 ${summary?.avgProtein?.toFixed(1) || 0} 份/天)</div>
-                                    <div>🍚 澱粉: ${summary?.totalCarbs?.toFixed(1) || 0} 份 (平均 ${summary?.avgCarbs?.toFixed(1) || 0} 份/天)</div>
-                                </div>
-                            </div>`;
-            }
-        }
-
-        function displayBeverageRecords(data, reportType) {
-            const bevDiv = document.getElementById('beverageTable');
-
-            if (reportType === 1) {
-                if (data.charts.beverageRecords && data.charts.beverageRecords.length > 0) {
-                    let html = '<table><thead><tr><th>日期</th><th>飲料</th></tr></thead><tbody>';
-                    data.charts.beverageRecords.forEach(r => {
-                        html += `<tr><td>${r.date}</td><td>${r.beverage}</td></tr>`;
-                    });
-                    html += '</tbody></table>';
-                    bevDiv.innerHTML = html;
-                } else {
-                    bevDiv.innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
-                }
-
-            } else if (reportType === 2) {
-                if (data.charts.beverageRecords && data.charts.beverageRecords.length > 0) {
-                    bevDiv.innerHTML = '<div id="monthlyBevWeeks"></div>';
-                    generateMonthlyWeeks(data.charts.beverageRecords, 'beverage');
-                } else {
-                    bevDiv.innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
-                }
-
-            } else if (reportType === 3) {
-                if (data.charts.beverageRecords && data.charts.beverageRecords.length > 0) {
-                    bevDiv.innerHTML = '<div id="yearlyBevMonths"></div>';
-                    generateYearlyMonths(data.charts.beverageRecords);
-                } else {
-                    bevDiv.innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
-                }
-            }
-        }
-
-        function generateMealRow(r) {
-            let mealContent = '<div style="line-height: 1.8; text-align: left;">';
-
-            if (r.mealData) {
-                const { vegetables, protein, carbs } = r.mealData;
-
-                const getTotal = (arr) => {
-                    if (!arr || arr.length === 0) return null;
-                    if (arr.length === 1) {
-                        const val = parseFloat(arr[0]);
-                        return isNaN(val) ? arr[0] : (val % 1 === 0 ? val.toFixed(0) : val.toFixed(1));
-                    }
-                    let total = 0;
-                    arr.forEach(item => {
-                        const num = parseFloat(item);
-                        if (!isNaN(num)) total += num;
-                    });
-                    return total % 1 === 0 ? total.toFixed(0) : total.toFixed(1);
-                };
-
-                const vegTotal = getTotal(vegetables);
-                const protTotal = getTotal(protein);
-                const carbTotal = getTotal(carbs);
-
-                if (vegTotal) {
-                    mealContent += `<div>🥬 蔬菜: ${vegTotal}</div>`;
-                }
-                if (protTotal) {
-                    mealContent += `<div>🥩 蛋白質: ${protTotal}</div>`;
-                }
-                if (carbTotal) {
-                    mealContent += `<div>🍚 澱粉: ${carbTotal}</div>`;
-                }
-
-                if (!vegTotal && !protTotal && !carbTotal) {
-                    mealContent += '<div style="color: #999;">無記錄</div>';
-                }
-            } else {
-                mealContent += `<div>${r.meals || '無記錄'}</div>`;
-            }
-
-            mealContent += '</div>';
-
-            return `<tr><td style="white-space: nowrap;">${r.date}</td><td>${mealContent}</td></tr>`;
-        }
-
-        function generateMonthlyWeeks(records, type) {
-            const targetDiv = type === 'meal' ? 'monthlyMealWeeks' : 'monthlyBevWeeks';
-            const container = document.getElementById(targetDiv);
-
-            if (!records || records.length === 0) {
-                container.innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
-                return;
-            }
-
-            const firstRecord = records[0];
-            const date = new Date(firstRecord.date);
-            const year = date.getFullYear();
-            const month = date.getMonth();
-
-            const monthFirstDay = new Date(year, month, 1);
-            const monthLastDay = new Date(year, month + 1, 0);
-
-            const weeks = [];
-            let currentStart = new Date(monthFirstDay);
-
-            while (currentStart <= monthLastDay) {
-                const weekEnd = new Date(currentStart);
-                weekEnd.setDate(weekEnd.getDate() + 6);
-
-                const actualEnd = weekEnd > monthLastDay ? monthLastDay : weekEnd;
-
-                weeks.push({
-                    start: new Date(currentStart),
-                    end: actualEnd,
-                    records: []
-                });
-
-                currentStart.setDate(currentStart.getDate() + 7);
-            }
-
-            records.forEach(r => {
-                const recordDate = new Date(r.date);
-                const week = weeks.find(w => recordDate >= w.start && recordDate <= w.end);
-                if (week) {
-                    week.records.push(r);
-                }
-            });
-
-            let html = '';
-            weeks.forEach((week, idx) => {
-                const weekStartStr = `${String(week.start.getMonth() + 1).padStart(2, '0')}/${String(week.start.getDate()).padStart(2, '0')}`;
-                const weekEndStr = `${String(week.end.getMonth() + 1).padStart(2, '0')}/${String(week.end.getDate()).padStart(2, '0')}`;
-
-                html += `
-                            <div class="collapsible-section" style="margin-bottom: 0.5rem;">
-                                <div class="collapsible-header" onclick="toggleSection('week${type}${idx}')" style="cursor: pointer; padding: 0.75rem; background: #f3f4f6; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-weight: 600;">📅 ${weekStartStr} ~ ${weekEndStr}</span>
-                                    <span id="icon-week${type}${idx}">▼</span>
-                                </div>
-                                <div id="week${type}${idx}" class="collapsible-content" style="display: none; padding: 1rem; background: #fafafa; border-radius: 0 0 6px 6px;">`;
-
-                if (week.records.length > 0) {
-                    html += `
-                                    <table style="width: 100%; border-collapse: collapse;">
-                                        <thead>
-                                            <tr>
-                                                <th style="border: 1px solid #e5e7eb; padding: 0.5rem; background: #f9fafb;">日期</th>
-                                                <th style="border: 1px solid #e5e7eb; padding: 0.5rem; background: #f9fafb;">${type === 'meal' ? '三餐' : '飲料'}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>`;
-
-                    week.records.forEach(r => {
-                        const displayDate = new Date(r.date);
-                        const dateStr = `${String(displayDate.getMonth() + 1).padStart(2, '0')}/${String(displayDate.getDate()).padStart(2, '0')}`;
-
-                        if (type === 'meal') {
-                            html += generateMealRow({ ...r, date: dateStr });
-                        } else {
-                            html += `<tr>
-                                        <td style="border: 1px solid #e5e7eb; padding: 0.5rem;">${dateStr}</td>
-                                        <td style="border: 1px solid #e5e7eb; padding: 0.5rem;">${r.beverage || '無記錄'}</td>
-                                    </tr>`;
-                        }
-                    });
-
-                    html += `</tbody></table>`;
-                } else {
-                    html += `<p style="text-align:center; padding: 1rem; color: #999;">此週無記錄</p>`;
-                }
-
-                html += `</div></div>`;
-            });
-
-            container.innerHTML = html;
-        }
-
-        function generateYearlyMonths(records) {
-            const container = document.getElementById('yearlyBevMonths');
-
-            if (!records || records.length === 0) {
-                container.innerHTML = '<p style="text-align:center; padding: 2rem; color: #999;">無記錄</p>';
-                return;
-            }
-
-            const months = {};
-            records.forEach(r => {
-                const date = new Date(r.date);
-                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-
-                if (!months[monthKey]) {
-                    months[monthKey] = [];
-                }
-                months[monthKey].push(r);
-            });
-
-            let html = '';
-            Object.keys(months).sort().forEach((monthKey, midx) => {
-                const monthData = months[monthKey];
-                const [year, month] = monthKey.split('-');
-                const monthName = `${year}年${month}月`;
-
-                html += `
-                            <div class="collapsible-section" style="margin-bottom: 0.5rem;">
-                                <div class="collapsible-header" onclick="toggleSection('month${midx}')" style="cursor: pointer; padding: 0.75rem; background: #dbeafe; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-weight: 700;">📅 ${monthName}</span>
-                                    <span id="icon-month${midx}">▼</span>
-                                </div>
-                                <div id="month${midx}" class="collapsible-content" style="display: none; padding: 1rem; background: #f0f9ff; border-radius: 0 0 6px 6px;">`;
-
-                const monthFirstDay = new Date(parseInt(year), parseInt(month) - 1, 1);
-                const monthLastDay = new Date(parseInt(year), parseInt(month), 0);
-
-                const weeks = [];
-                let currentStart = new Date(monthFirstDay);
-
-                while (currentStart <= monthLastDay) {
-                    const weekEnd = new Date(currentStart);
-                    weekEnd.setDate(weekEnd.getDate() + 6);
-
-                    const actualEnd = weekEnd > monthLastDay ? monthLastDay : weekEnd;
-
-                    weeks.push({
-                        start: new Date(currentStart),
-                        end: actualEnd,
-                        records: []
-                    });
-
-                    currentStart.setDate(currentStart.getDate() + 7);
-                }
-
-                monthData.forEach(r => {
-                    const recordDate = new Date(r.date);
-                    const week = weeks.find(w => recordDate >= w.start && recordDate <= w.end);
-                    if (week) {
-                        week.records.push(r);
-                    }
-                });
-
-                weeks.forEach((week, widx) => {
-                    const weekStartStr = `${String(week.start.getMonth() + 1).padStart(2, '0')}/${String(week.start.getDate()).padStart(2, '0')}`;
-                    const weekEndStr = `${String(week.end.getMonth() + 1).padStart(2, '0')}/${String(week.end.getDate()).padStart(2, '0')}`;
-
-                    html += `
-                                <div class="collapsible-section" style="margin-bottom: 0.5rem;">
-                                    <div class="collapsible-header" onclick="toggleSection('week${midx}${widx}')" style="cursor: pointer; padding: 0.5rem; background: #f3f4f6; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
-                                        <span style="font-weight: 600; font-size: 0.95rem;">📅 ${weekStartStr} ~ ${weekEndStr}</span>
-                                        <span id="icon-week${midx}${widx}">▼</span>
-                                    </div>
-                                    <div id="week${midx}${widx}" class="collapsible-content" style="display: none; padding: 0.75rem; background: #fafafa; border-radius: 0 0 4px 4px;">`;
-
-                    if (week.records.length > 0) {
-                        html += `
-                                        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-                                            <thead>
-                                                <tr>
-                                                    <th style="border: 1px solid #e5e7eb; padding: 0.4rem; background: #f9fafb;">日期</th>
-                                                    <th style="border: 1px solid #e5e7eb; padding: 0.4rem; background: #f9fafb;">飲料</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>`;
-
-                        week.records.forEach(r => {
-                            const displayDate = new Date(r.date);
-                            const dateStr = `${String(displayDate.getMonth() + 1).padStart(2, '0')}/${String(displayDate.getDate()).padStart(2, '0')}`;
-
-                            html += `<tr>
-                                        <td style="border: 1px solid #e5e7eb; padding: 0.4rem;">${dateStr}</td>
-                                        <td style="border: 1px solid #e5e7eb; padding: 0.4rem;">${r.beverage || '無記錄'}</td>
-                                    </tr>`;
-                        });
-
-                        html += `</tbody></table>`;
-                    } else {
-                        html += `<p style="text-align:center; padding: 1rem; color: #999; font-size: 0.9rem;">此週無記錄</p>`;
-                    }
-
-                    html += `</div></div>`;
-                });
-
-                html += `</div></div>`;
-            });
-
-            container.innerHTML = html;
-        }
-
-        function toggleSection(id) {
-            const content = document.getElementById(id);
-            const icon = document.getElementById('icon-' + id);
-
-            if (content.style.display === 'none') {
-                content.style.display = 'block';
-                icon.textContent = '▲';
-            } else {
-                content.style.display = 'none';
-                icon.textContent = '▼';
-            }
         }
 
         function drawCharts(chartData) {

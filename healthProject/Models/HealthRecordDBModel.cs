@@ -21,6 +21,10 @@ namespace healthProject.Models
         public decimal? BP_Second_2_Systolic { get; set; }
         public decimal? BP_Second_2_Diastolic { get; set; }
 
+        // 血壓尚未測量勾選
+        public bool? BP_Morning_NotMeasured { get; set; }
+        public bool? BP_Evening_NotMeasured { get; set; }
+
 
         // 三餐 (JSON 字串)
         public string? Meals_Breakfast { get; set; }
@@ -55,6 +59,8 @@ namespace healthProject.Models
                 BP_Second_1_Diastolic = BP_Second_1_Diastolic,
                 BP_Second_2_Systolic = BP_Second_2_Systolic,
                 BP_Second_2_Diastolic = BP_Second_2_Diastolic,
+                BP_Morning_NotMeasured = this.BP_Morning_NotMeasured,
+                BP_Evening_NotMeasured = this.BP_Evening_NotMeasured,
 
                 // 三餐
                 Meals_Breakfast = !string.IsNullOrEmpty(Meals_Breakfast)

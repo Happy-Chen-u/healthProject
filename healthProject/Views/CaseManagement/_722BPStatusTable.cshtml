@@ -1,0 +1,70 @@
+﻿@model List<healthProject.Models.MissedRecordViewModel>
+@using System
+
+<div class="table-responsive">
+    <table class="table table-hover table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th style="width:10%">姓名</th>
+                <th style="width:12%">身分證字號</th>
+                <th style="width:12%">生日</th>
+                <th style="width:6%">性別</th>
+                <th style="width:10%">電話</th>
+                <th style="width:10%">上次填寫</th>
+                <th style="width:25%">今日血壓回報狀態 (@DateTime.Today.ToString("MM/dd"))</th>
+                <th style="width:15%">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="8" class="text-center text-muted">目前沒有正在追蹤 722 血壓的個案</td>
+                </tr>
+            }
+            @foreach (var record in Model.OrderByDescending(r => r.IsBothMissing))
+            {
+                // 決定狀態顏色
+                string statusBadgeClass = "bg-success";
+                string statusText = "已完成";
+
+                if (record.IsBothMissing)
+                {
+                    statusBadgeClass = "bg-danger";
+                    statusText = "上午及睡前均未測";
+                }
+                else if (record.IsMorningMissing || record.IsEveningMissing)
+                {
+                    statusBadgeClass = "bg-warning text-dark";
+                    statusText = (record.IsMorningMissing ? "上午未測" : "") +
+                    (record.IsMorningMissing && record.IsEveningMissing ? " & " : "") +
+                    (record.IsEveningMissing ? "睡前未測" : "");
+                }
+                else if (record.Is722Tracking)
+                {
+                    statusText = "已完成";
+                }
+
+                <tr>
+                    <td><strong>@record.FullName</strong></td>
+                    <td>@record.IDNumber</td>
+                    <td>@(record.BirthDate == DateTime.MinValue ? "--" : record.BirthDate.ToString("yyyy-MM-dd"))</td>
+                    <td>@record.Gender</td>
+                    <td>@record.PhoneNumber</td>
+                    <td>@(record.LastRecordDate?.ToString("yyyy-MM-dd") ?? "從未填寫")</td>
+                    <td>
+                        <span class="badge @statusBadgeClass fs-6">
+                            @statusText
+                        </span>
+                    </td>
+                    <td>
+                        <a href="@Url.Action("GetPatientRecords", "DailyHealth", new { idNumber = record.IDNumber })"
+                           class="btn btn-sm btn-primary me-1" title="查看健康紀錄">
+                            <i class="bi bi-file-medical"></i> 健康紀錄
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

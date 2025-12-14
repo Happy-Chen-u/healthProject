@@ -39,12 +39,13 @@ namespace healthProject.Controllers
         // ➕ 新增今日紀錄 - GET (顯示表單)
         // ========================================
         [HttpGet]
-        public IActionResult Create(
+        public async Task<IActionResult> Create(
             int? Id,
             decimal? BP_First_1_Systolic, decimal? BP_First_1_Diastolic,
             decimal? BP_First_2_Systolic, decimal? BP_First_2_Diastolic,
             decimal? BP_Second_1_Systolic, decimal? BP_Second_1_Diastolic,
             decimal? BP_Second_2_Systolic, decimal? BP_Second_2_Diastolic,
+            bool? BP_Morning_NotMeasured, bool? BP_Evening_NotMeasured, // 🆕 新增
             string? Meals_Breakfast, string? Meals_Lunch, string? Meals_Dinner,
             string? ExerciseType, decimal? ExerciseDuration,
             decimal? WaterIntake, string? Beverage,
@@ -55,14 +56,29 @@ namespace healthProject.Controllers
                 return RedirectToAction("Index");
             }
 
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var todayRecords = await GetUserRecordsByDateAsync(userId, DateTime.Today);
+
+            // 🎯 修正點 (邏輯 1: 檢查當日是否已完成該時段的完整紀錄)
+            bool isMorningCompleted = todayRecords.Any(r =>
+                r.BP_First_1_Systolic.HasValue && r.BP_First_1_Diastolic.HasValue &&
+                r.BP_First_2_Systolic.HasValue && r.BP_First_2_Diastolic.HasValue);
+
+            bool isEveningCompleted = todayRecords.Any(r =>
+                r.BP_Second_1_Systolic.HasValue && r.BP_Second_1_Diastolic.HasValue &&
+                r.BP_Second_2_Systolic.HasValue && r.BP_Second_2_Diastolic.HasValue);
+
             var model = new HealthRecordViewModel
             {
                 RecordDate = DateTime.Today,
-                RecordTime = DateTime.Now.TimeOfDay
+                RecordTime = DateTime.Now.TimeOfDay,
+                // 傳遞完成狀態給 ViewModel 的驗證邏輯
+                IsMorningCompletedToday = isMorningCompleted,
+                IsEveningCompletedToday = isEveningCompleted,
             };
 
             // 🆕 如果有帶參數(從 Confirm 返回),填入資料
-            if (BP_First_1_Systolic.HasValue || BloodSugar.HasValue || WaterIntake.HasValue)
+            if (BP_First_1_Systolic.HasValue || BloodSugar.HasValue || WaterIntake.HasValue || BP_Morning_NotMeasured.HasValue)
             {
                 model.Id = Id ?? 0;
                 model.BP_First_1_Systolic = BP_First_1_Systolic;
@@ -73,8 +89,11 @@ namespace healthProject.Controllers
                 model.BP_Second_1_Diastolic = BP_Second_1_Diastolic;
                 model.BP_Second_2_Systolic = BP_Second_2_Systolic;
                 model.BP_Second_2_Diastolic = BP_Second_2_Diastolic;
+                // 🆕 恢復血壓狀態
+                model.BP_Morning_NotMeasured = BP_Morning_NotMeasured;
+                model.BP_Evening_NotMeasured = BP_Evening_NotMeasured;
 
-                // 🆕 三餐 JSON 反序列化
+                // 🆕 三餐 JSON 反序列化 (省略不變)
                 if (!string.IsNullOrEmpty(Meals_Breakfast))
                     model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(Meals_Breakfast);
                 if (!string.IsNullOrEmpty(Meals_Lunch))
@@ -94,54 +113,85 @@ namespace healthProject.Controllers
             return View(model);
         }
 
-        // ========================================
-        // ➕ 新增今日紀錄 - POST (提交表單)
-        // ========================================
-        // healthProject.Controllers.DailyHealthController.cs
+
 
         // ========================================
         // ➕ 新增今日紀錄 - POST (提交表單)
         // ========================================
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(HealthRecordViewModel model,
             string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
         {
-            // ✅ 驗證血壓完整性
-            var bpWarnings = model.ValidateBloodPressure();
-            if (bpWarnings.Any())
-            {
-                TempData["BPWarnings"] = string.Join("\n", bpWarnings);
-            }
+            // 🎯 修正點 (三餐必填錯誤): 在所有驗證邏輯和 ModelState.IsValid 檢查之前，先移除三餐欄位的錯誤。
+            // 這是解決 "Meals_Breakfast field is required" 錯誤的關鍵步驟。
+            ModelState.Remove("Meals_Breakfast");
+            ModelState.Remove("Meals_Lunch");
+            ModelState.Remove("Meals_Dinner");
 
-            // --- 🚨 核心邏輯修正開始 🚨 ---
+            // 🎯 修正點 (三餐): 儘早將 JSON 字串反序列化成物件，供後續邏輯使用
+            if (!string.IsNullOrEmpty(Meals_Breakfast))
+                model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(Meals_Breakfast);
+            if (!string.IsNullOrEmpty(Meals_Lunch))
+                model.Meals_Lunch = JsonSerializer.Deserialize<MealSelection>(Meals_Lunch);
+            if (!string.IsNullOrEmpty(Meals_Dinner))
+                model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(Meals_Dinner);
+
 
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var todayRecords = await GetUserRecordsByDateAsync(userId, DateTime.Today);
 
-            // 1. 檢查今日紀錄是否已存在「第一次量測」的數據
-            // 只要任一筆紀錄中，BP_First_1 或 BP_First_2 有值，即視為已記錄
+            // 🎯 修正點 (邏輯 1: 傳遞當日完成狀態給 ViewModel 進行必填豁免判斷)
+            model.IsMorningCompletedToday = todayRecords.Any(r =>
+                r.BP_First_1_Systolic.HasValue && r.BP_First_1_Diastolic.HasValue &&
+                r.BP_First_2_Systolic.HasValue && r.BP_First_2_Diastolic.HasValue);
+
+            model.IsEveningCompletedToday = todayRecords.Any(r =>
+                r.BP_Second_1_Systolic.HasValue && r.BP_Second_1_Diastolic.HasValue &&
+                r.BP_Second_2_Systolic.HasValue && r.BP_Second_2_Diastolic.HasValue);
+
+
+            // 🎯 修正點 (執行 ViewModel 內的強制限值和配對檢查)
+            var bpWarnings = model.ValidateBloodPressure();
+            if (bpWarnings.Any())
+            {
+                // 檢查是否有硬性錯誤 (必填錯誤、兩遍配對錯誤、收縮/舒張配對錯誤)
+                if (bpWarnings.Any(w => w.StartsWith("🔴")))
+                {
+                    TempData["BPWarnings"] = string.Join("\n", bpWarnings);
+                    // 返回 View，顯示錯誤
+                    return View(model);
+                }
+                // 其他是警告 (數值過低)，暫存起來
+                TempData["BPWarnings"] = string.Join("\n", bpWarnings);
+            }
+
+            // --- 重複提交檢查邏輯 (保持不變) ---
+
+            // 1. 檢查今日紀錄是否已存在「第一次量測」的數據 (任一欄位有值即算)
             bool todayHasFirstBP = todayRecords.Any(r =>
                 r.BP_First_1_Systolic.HasValue || r.BP_First_1_Diastolic.HasValue ||
                 r.BP_First_2_Systolic.HasValue || r.BP_First_2_Diastolic.HasValue
             );
 
-            // 2. 檢查今日紀錄是否已存在「第二次量測」的數據
-            // 只要任一筆紀錄中，BP_Second_1 或 BP_Second_2 有值，即視為已記錄
+            // 2. 檢查今日紀錄是否已存在「第二次量測」的數據 (任一欄位有值即算)
             bool todayHasSecondBP = todayRecords.Any(r =>
                 r.BP_Second_1_Systolic.HasValue || r.BP_Second_1_Diastolic.HasValue ||
                 r.BP_Second_2_Systolic.HasValue || r.BP_Second_2_Diastolic.HasValue
             );
 
-            // 3. 檢查當前表單是否有填寫「第一次量測」的血壓
-            bool currentHasFirstBP = model.BP_First_1_Systolic.HasValue || model.BP_First_1_Diastolic.HasValue ||
-                                     model.BP_First_2_Systolic.HasValue || model.BP_First_2_Diastolic.HasValue;
+            // 3. 檢查當前表單是否有填寫「第一次量測」的血壓 (排除勾選尚未測量)
+            bool currentHasFirstBP = (model.BP_Morning_NotMeasured != true) &&
+                                     (model.BP_First_1_Systolic.HasValue || model.BP_First_1_Diastolic.HasValue ||
+                                      model.BP_First_2_Systolic.HasValue || model.BP_First_2_Diastolic.HasValue);
 
-            // 4. 檢查當前表單是否有填寫「第二次量測」的血壓
-            bool currentHasSecondBP = model.BP_Second_1_Systolic.HasValue || model.BP_Second_1_Diastolic.HasValue ||
-                                      model.BP_Second_2_Systolic.HasValue || model.BP_Second_2_Diastolic.HasValue;
+            // 4. 檢查當前表單是否有填寫「第二次量測」的血壓 (排除勾選尚未測量)
+            bool currentHasSecondBP = (model.BP_Evening_NotMeasured != true) &&
+                                      (model.BP_Second_1_Systolic.HasValue || model.BP_Second_1_Diastolic.HasValue ||
+                                       model.BP_Second_2_Systolic.HasValue || model.BP_Second_2_Diastolic.HasValue);
 
-            // 檢查是否有填寫其他資訊 (用於 BPWarning 頁面判斷是否可以儲存其他資訊)
+            // 檢查是否有填寫其他資訊 (不變)
             bool hasOtherData = !string.IsNullOrEmpty(Meals_Breakfast) || !string.IsNullOrEmpty(Meals_Lunch) ||
                                 !string.IsNullOrEmpty(Meals_Dinner) || !string.IsNullOrEmpty(model.ExerciseType) ||
                                 model.ExerciseDuration.HasValue || model.WaterIntake.HasValue ||
@@ -155,20 +205,20 @@ namespace healthProject.Controllers
             if (currentHasFirstBP && todayHasFirstBP)
             {
                 hasDuplicatedBP = true;
-                bpSection = "第一次";
+                bpSection = "第一次 (上午)";
             }
             else if (currentHasSecondBP && todayHasSecondBP)
             {
                 hasDuplicatedBP = true;
-                bpSection = "第二次";
+                bpSection = "第二次 (睡前)";
             }
 
-            // 如果發現重複提交同一時段的血壓，則導向警告頁面
+            // 如果發現重複提交同一時段的血壓，則導向警告頁面 (不變)
             if (hasDuplicatedBP)
             {
                 warningMessage = $"⚠️ 您今天已記錄過【{bpSection}】的血壓數據。若要修改請使用『編輯』功能，請勿重複新增。";
 
-                ViewBag.BPWarningMessage = warningMessage; // 傳遞詳細警告訊息到 View
+                ViewBag.BPWarningMessage = warningMessage;
                 ViewBag.HasOtherData = hasOtherData;
 
                 // 傳遞所有表單資料到 View
@@ -182,6 +232,8 @@ namespace healthProject.Controllers
                     model.BP_Second_1_Diastolic,
                     model.BP_Second_2_Systolic,
                     model.BP_Second_2_Diastolic,
+                    BP_Morning_NotMeasured = model.BP_Morning_NotMeasured ?? false,
+                    BP_Evening_NotMeasured = model.BP_Evening_NotMeasured ?? false,
                     Meals_Breakfast,
                     Meals_Lunch,
                     Meals_Dinner,
@@ -196,25 +248,12 @@ namespace healthProject.Controllers
 
                 return View("BPWarning", model);
             }
-            // --- 核心邏輯修正結束 ---
+            // --- 重複提交檢查邏輯結束 ---
 
-
-            // 🆕 手動處理三餐 JSON (保持不變)
-            if (!string.IsNullOrEmpty(Meals_Breakfast))
-                model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(Meals_Breakfast);
-            if (!string.IsNullOrEmpty(Meals_Lunch))
-                model.Meals_Lunch = JsonSerializer.Deserialize<MealSelection>(Meals_Lunch);
-            if (!string.IsNullOrEmpty(Meals_Dinner))
-                model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(Meals_Dinner);
-
-            // 移除不需要驗證的欄位 (保持不變)
-            ModelState.Remove("Meals_Breakfast");
-            ModelState.Remove("Meals_Lunch");
-            ModelState.Remove("Meals_Dinner");
-            ModelState.Remove("BP_First_1_Input");
-            ModelState.Remove("BP_First_2_Input");
-            ModelState.Remove("BP_Second_1_Input");
-            ModelState.Remove("BP_Second_2_Input");
+            // 移除不必要的 ModelState.Remove (因為已經在開頭移除了三餐)
+            // ModelState.Remove("Meals_Breakfast"); // 移除
+            // ModelState.Remove("Meals_Lunch"); // 移除
+            // ModelState.Remove("Meals_Dinner"); // 移除
 
             if (!ModelState.IsValid)
             {
@@ -225,14 +264,11 @@ namespace healthProject.Controllers
             model.RecordDate = DateTime.Today;
             model.RecordTime = DateTime.Now.TimeOfDay;
 
-            // 顯示確認頁面 (保持不變)
+            // 顯示確認頁面
             return View("Confirm", model);
         }
 
 
-        // ========================================
-        // ✅ 確認上傳
-        // ========================================
         // ========================================
         // ✅ 確認上傳
         // ========================================
@@ -591,10 +627,13 @@ namespace healthProject.Controllers
                     BP_Second_1_Systolic = null,
                     BP_Second_1_Diastolic = null,
                     BP_Second_2_Systolic = null,
-                    BP_Second_2_Diastolic = null
+                    BP_Second_2_Diastolic = null,
+                    // 🎯 修正點 (傳遞血壓狀態，讓資料庫知道這次是特意不填)
+                    BP_Morning_NotMeasured = formData.ContainsKey("BP_Morning_NotMeasured") && formData["BP_Morning_NotMeasured"].ValueKind == JsonValueKind.True,
+                    BP_Evening_NotMeasured = formData.ContainsKey("BP_Evening_NotMeasured") && formData["BP_Evening_NotMeasured"].ValueKind == JsonValueKind.True
                 };
 
-                // 恢復其他資料
+                // ... (恢復其他資料邏輯保持不變)
                 if (formData.ContainsKey("Meals_Breakfast") && formData["Meals_Breakfast"].ValueKind == System.Text.Json.JsonValueKind.String && !string.IsNullOrEmpty(formData["Meals_Breakfast"].GetString()))
                     model.Meals_Breakfast = JsonSerializer.Deserialize<MealSelection>(formData["Meals_Breakfast"].GetString());
                 if (formData.ContainsKey("Meals_Lunch") && formData["Meals_Lunch"].ValueKind == System.Text.Json.JsonValueKind.String && !string.IsNullOrEmpty(formData["Meals_Lunch"].GetString()))
@@ -662,6 +701,7 @@ namespace healthProject.Controllers
          ""BP_First_2_Systolic"", ""BP_First_2_Diastolic"",
          ""BP_Second_1_Systolic"", ""BP_Second_1_Diastolic"",
          ""BP_Second_2_Systolic"", ""BP_Second_2_Diastolic"",
+         ""BP_Morning_NotMeasured"", ""BP_Evening_NotMeasured"",  -- 🆕 新增欄位
          ""Meals_Breakfast"", ""Meals_Lunch"", ""Meals_Dinner"",
          ""ExerciseType"", ""ExerciseDuration"", 
          ""WaterIntake"", ""Beverage"", ""Cigarettes"", 
@@ -672,6 +712,7 @@ namespace healthProject.Controllers
          @BP_First_2_Systolic, @BP_First_2_Diastolic,
          @BP_Second_1_Systolic, @BP_Second_1_Diastolic,
          @BP_Second_2_Systolic, @BP_Second_2_Diastolic,
+         @BP_Morning_NotMeasured, @BP_Evening_NotMeasured,     -- 🆕 新增參數
          @Meals_Breakfast::jsonb, @Meals_Lunch::jsonb, @Meals_Dinner::jsonb,
          @ExerciseType, @ExerciseDuration,
          @WaterIntake, @Beverage, @Cigarettes,
@@ -682,7 +723,7 @@ namespace healthProject.Controllers
             cmd.Parameters.AddWithValue("@RecordDate", model.RecordDate);
             cmd.Parameters.AddWithValue("@RecordTime", model.RecordTime ?? (object)DBNull.Value);
 
-            // 血壓 - 8個欄位
+            // 血壓 - 8個欄位 (不變)
             cmd.Parameters.AddWithValue("@BP_First_1_Systolic", model.BP_First_1_Systolic ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@BP_First_1_Diastolic", model.BP_First_1_Diastolic ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@BP_First_2_Systolic", model.BP_First_2_Systolic ?? (object)DBNull.Value);
@@ -692,7 +733,11 @@ namespace healthProject.Controllers
             cmd.Parameters.AddWithValue("@BP_Second_2_Systolic", model.BP_Second_2_Systolic ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@BP_Second_2_Diastolic", model.BP_Second_2_Diastolic ?? (object)DBNull.Value);
 
-            // ⚠️ 三餐 JSON - 加入 ::jsonb 轉換
+            // 🎯 修正點：新增血壓狀態參數
+            cmd.Parameters.AddWithValue("@BP_Morning_NotMeasured", model.BP_Morning_NotMeasured ?? (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@BP_Evening_NotMeasured", model.BP_Evening_NotMeasured ?? (object)DBNull.Value);
+
+            // ⚠️ 三餐 JSON (不變)
             cmd.Parameters.AddWithValue("@Meals_Breakfast",
                 model.Meals_Breakfast != null ? JsonSerializer.Serialize(model.Meals_Breakfast) : (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@Meals_Lunch",
@@ -700,7 +745,7 @@ namespace healthProject.Controllers
             cmd.Parameters.AddWithValue("@Meals_Dinner",
                 model.Meals_Dinner != null ? JsonSerializer.Serialize(model.Meals_Dinner) : (object)DBNull.Value);
 
-            // 其他
+            // 其他 (不變)
             cmd.Parameters.AddWithValue("@ExerciseType", model.ExerciseType ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@ExerciseDuration", model.ExerciseDuration ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@WaterIntake", model.WaterIntake ?? (object)DBNull.Value);
@@ -881,7 +926,7 @@ namespace healthProject.Controllers
         }
 
         // ========================================
-        // 🧠 資料庫讀取 - MapFromReader (🆕 修正版)
+        // 🧠 資料庫讀取 - MapFromReader 
         // ========================================
         private HealthRecordDBModel MapFromReader(NpgsqlDataReader reader)
         {
@@ -910,6 +955,10 @@ namespace healthProject.Controllers
                     ? null : reader.GetDecimal(reader.GetOrdinal("BP_Second_2_Systolic")),
                 BP_Second_2_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_Second_2_Diastolic"))
                     ? null : reader.GetDecimal(reader.GetOrdinal("BP_Second_2_Diastolic")),
+                BP_Morning_NotMeasured = reader.IsDBNull(reader.GetOrdinal("BP_Morning_NotMeasured"))
+                    ? null : reader.GetBoolean(reader.GetOrdinal("BP_Morning_NotMeasured")),
+                BP_Evening_NotMeasured = reader.IsDBNull(reader.GetOrdinal("BP_Evening_NotMeasured"))
+                    ? null : reader.GetBoolean(reader.GetOrdinal("BP_Evening_NotMeasured")),
 
                 // 三餐
                 Meals_Breakfast = reader.IsDBNull(reader.GetOrdinal("Meals_Breakfast"))
@@ -1251,6 +1300,10 @@ namespace healthProject.Controllers
             // 血糖平均
             var bloodSugars = records.Where(r => r.BloodSugar.HasValue).Select(r => r.BloodSugar.Value).ToList();
             var avgBloodSugar = bloodSugars.Any() ? bloodSugars.Average() : (decimal?)null;
+            
+            // 檢查該日是否有任何有效的血壓紀錄（有填數值）
+            bool hasAnyActualBPReading = records.Any(r => r.AvgSystolicBP.HasValue || r.AvgDiastolicBP.HasValue);
+            bool hasAnyNotMeasured = records.Any(r => r.BP_Morning_NotMeasured == true || r.BP_Evening_NotMeasured == true);
 
             // 🆕 根據是否為今日設定訊息前綴
             string prefix = isToday ? "今日" : "";

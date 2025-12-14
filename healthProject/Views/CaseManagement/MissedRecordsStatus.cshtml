@@ -2,7 +2,26 @@
 @{
     ViewData["Title"] = "個案健康資訊填寫狀況";
     Layout = null;
-    var searchResult = Model.FirstOrDefault(m => !string.IsNullOrEmpty(ViewBag.SearchIdNumber) && m.IDNumber == ViewBag.SearchIdNumber);
+
+    // 🎯 關鍵修改：searchResult 從 ViewBag 獨立取得
+    var searchResult = ViewBag.SearchResult as healthProject.Models.MissedRecordViewModel;
+    var trackingList = ViewBag.TrackingList as List<healthProject.Models.MissedRecordViewModel> ?? new List<healthProject.Models.MissedRecordViewModel>();
+    var activeTab = ViewBag.ActiveTab ?? "days2";
+
+    // 使用完整資料計算徽章
+    var allMissedDaysRecords = ViewBag.AllMissedDaysRecords as List<healthProject.Models.MissedRecordViewModel>
+        ?? new List<healthProject.Models.MissedRecordViewModel>();
+
+    // 計算各分類的數量
+    var countDays2 = allMissedDaysRecords.Count(m => m.MissedDays == 2);
+    var countDays3 = allMissedDaysRecords.Count(m => m.MissedDays == 3);
+    var countDays4 = allMissedDaysRecords.Count(m => m.MissedDays == 4);
+    var countDays5Plus = allMissedDaysRecords.Count(m => m.MissedDays >= 5 && m.MissedDays < 999);
+    var countNever = allMissedDaysRecords.Count(m => m.MissedDays >= 999);
+    var count722Missing = trackingList.Count(t => t.IsBothMissing || t.IsMorningMissing || t.IsEveningMissing);
+
+    // 判斷是否有查詢條件
+    bool hasSearch = !string.IsNullOrEmpty(ViewBag.SearchIdNumber);
 }
 
 <!DOCTYPE html>
@@ -48,7 +67,6 @@
             margin-bottom: 1.5rem;
         }
 
-        /* ✅ 查詢結果卡片樣式 */
         .search-result-card {
             background: white;
             padding: 1.5rem;
@@ -105,11 +123,23 @@
                 background: #5a7d7d;
                 color: white;
             }
+
+        .nav-tabs .nav-item {
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .nav-tabs .nav-link .badge {
+            min-width: 28px;
+            padding: 0.4em 0.6em;
+            display: inline-block;
+            white-space: nowrap;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="main-container">
-        <!-- 頁首 -->
         <div class="page-header d-flex justify-content-between align-items-center">
             <h1 class="page-title"><i class="bi bi-clipboard-data"></i> 個案健康資訊填寫狀況</h1>
             <a href="@Url.Action("Dashboard", "Home")" class="btn-back">
@@ -117,9 +147,8 @@
             </a>
         </div>
 
-        <!-- 搜尋區塊 -->
         <div class="search-card">
-            <form method="get" class="row g-3">
+            <form method="get" action="@Url.Action("MissedRecordsStatus")" class="row g-3">
                 <div class="col-md-8">
                     <input type="text"
                            class="form-control"
@@ -138,161 +167,189 @@
             </form>
         </div>
 
-        <!-- ✅ 查詢結果顯示區塊 -->
-        @if (searchResult != null)
+        @* 🎯 查詢結果區塊：只要有查詢就顯示，不受 tab 影響 *@
+        @if (hasSearch)
         {
-            <div class="search-result-card">
-                <div class="result-header mb-3">
-                    <h5 class="mb-0"><i class="bi bi-search"></i> 查詢結果</h5>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>未填天數</th>
-                                <th>姓名</th>
-                                <th>身分證字號</th>
-                                <th>生日</th>
-                                <th>性別</th>
-                                <th>電話</th>
-                                <th>上次填寫</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    @if (searchResult.MissedDays >= 999)
-                                    {
-                                        <span class="badge bg-secondary" style="font-size: 1rem; padding: 0.5rem 1rem;">從未填寫</span>
-                                    }
-                                    else if (searchResult.MissedDays >= 5)
-                                    {
-                                        <span class="badge bg-danger" style="font-size: 1rem; padding: 0.5rem 1rem;">@searchResult.MissedDays 天</span>
-                                    }
-                                    else if (searchResult.MissedDays >= 2)
-                                    {
-                                        <span class="badge bg-warning text-dark" style="font-size: 1rem; padding: 0.5rem 1rem;">@searchResult.MissedDays 天</span>
-                                    }
-                                </td>
-                                <td><strong>@searchResult.FullName</strong></td>
-                                <td>@searchResult.IDNumber</td>
-                                <td>@(searchResult.BirthDate == DateTime.MinValue ? "--" : searchResult.BirthDate.ToString("yyyy-MM-dd"))</td>
-                                <td>@(string.IsNullOrEmpty(searchResult.Gender) ? "--" : searchResult.Gender)</td>
-                                <td>@(string.IsNullOrEmpty(searchResult.PhoneNumber) ? "--" : searchResult.PhoneNumber)</td>
-                                <td>@(searchResult.LastRecordDate?.ToString("yyyy-MM-dd") ?? "從未填寫")</td>
-                                <td>
-                                    <!-- ✅ 修改:使用 GetPatientRecords 並傳入 idNumber -->
-                                    <a href="@Url.Action("GetPatientRecords", "DailyHealth", new { idNumber = searchResult.IDNumber })"
-                                       class="btn btn-primary btn-sm me-1">
-                                        <i class="bi bi-clipboard-data"></i> 健康紀錄
-                                    </a>
+            @if (searchResult != null)
+            {
+                <div class="search-result-card">
+                    <div class="result-header mb-3">
+                        <h5 class="mb-0"><i class="bi bi-search"></i> 查詢結果</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>未填天數</th>
+                                    <th>姓名</th>
+                                    <th>身分證字號</th>
+                                    <th>生日</th>
+                                    <th>性別</th>
+                                    <th>電話</th>
+                                    <th>上次填寫</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        @if (searchResult.MissedDays >= 999)
+                                        {
+                                            <span class="badge bg-secondary" style="font-size: 1rem; padding: 0.5rem 1rem;">從未填寫</span>
+                                        }
+                                        else if (searchResult.MissedDays >= 5)
+                                        {
+                                            <span class="badge bg-danger" style="font-size: 1rem; padding: 0.5rem 1rem;">@searchResult.MissedDays 天</span>
+                                        }
+                                        else if (searchResult.MissedDays >= 2)
+                                        {
+                                            <span class="badge bg-warning text-dark" style="font-size: 1rem; padding: 0.5rem 1rem;">@searchResult.MissedDays 天</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success" style="font-size: 1rem; padding: 0.5rem 1rem;">@searchResult.MissedDays 天</span>
+                                        }
+                                    </td>
+                                    <td><strong>@searchResult.FullName</strong></td>
+                                    <td>@searchResult.IDNumber</td>
+                                    <td>@(searchResult.BirthDate == DateTime.MinValue ? "--" : searchResult.BirthDate.ToString("yyyy-MM-dd"))</td>
+                                    <td>@(string.IsNullOrEmpty(searchResult.Gender) ? "--" : searchResult.Gender)</td>
+                                    <td>@(string.IsNullOrEmpty(searchResult.PhoneNumber) ? "--" : searchResult.PhoneNumber)</td>
+                                    <td>@(searchResult.LastRecordDate?.ToString("yyyy-MM-dd") ?? "從未填寫")</td>
+                                    <td>
+                                        <a href="@Url.Action("GetPatientRecords", "DailyHealth", new { idNumber = searchResult.IDNumber })"
+                                           class="btn btn-primary btn-sm me-1">
+                                            <i class="bi bi-clipboard-data"></i> 健康紀錄
+                                        </a>
 
-                                    <!-- ✅ 修改原因按鈕邏輯 -->
-                                    @if (!string.IsNullOrEmpty(searchResult.MissedReason))
-                                    {
-                                        <!-- 有原因:顯示「查看原因」按鈕 -->
-                                        <button type="button"
-                                                class="btn btn-info btn-sm"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#reasonModal"
-                                                onclick="showReason('@searchResult.FullName', '@searchResult.MissedReason')">
-                                            <i class="bi bi-chat-square-text"></i> 查看原因
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <!-- 沒原因:顯示「尚未回覆」 -->
-                                        <span class="badge bg-secondary">尚未回覆</span>
-                                    }
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                        @if (!string.IsNullOrEmpty(searchResult.MissedReason))
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-info btn-sm"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#reasonModal"
+                                                    onclick="showReason('@searchResult.FullName', '@searchResult.MissedReason')">
+                                                <i class="bi bi-chat-square-text"></i> 查看原因
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">尚未回覆</span>
+                                        }
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            }
+            else
+            {
+                <div class="alert alert-warning mb-3">
+                    <i class="bi bi-exclamation-triangle"></i> 查無身分證字號「@ViewBag.SearchIdNumber」的個案資料
+                </div>
+            }
         }
-        else if (!string.IsNullOrEmpty(ViewBag.SearchIdNumber))
-        {
-            <div class="alert alert-warning mb-3">
-                <i class="bi bi-exclamation-triangle"></i> 查無此身分證字號的未填寫記錄
-            </div>
-        }
 
-        <!-- ✅ 原因顯示 Modal -->
-        <div class="modal fade" id="reasonModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="bi bi-chat-square-text"></i> 未填寫原因
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p><strong>個案:</strong> <span id="modalPatientName"></span></p>
-                        <p><strong>原因:</strong></p>
-                        <div class="alert alert-info mb-0">
-                            <span id="modalReason"></span>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 修改分頁標籤,新增「從未填寫」分頁 -->
+        @* Tab 導航列 *@
         <ul class="nav nav-tabs mb-3" id="missedDaysTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="days2-tab" data-bs-toggle="tab"
-                        data-bs-target="#days2" type="button" role="tab">
-                    兩天未填 <span class="badge bg-warning text-dark">@Model.Count(m => m.MissedDays == 2)</span>
+                <button class="nav-link @(activeTab == "722" ? "active" : "")" id="days722-tab" type="button"
+                        onclick="window.location.href='@Url.Action("MissedRecordsStatus", new { tab = "722", searchIdNumber = ViewBag.SearchIdNumber, checkDate = ViewBag.CheckDate })'">
+                    需測量722血壓
+                    <span class="badge @(count722Missing > 0 ? "bg-danger" : "bg-success")">@count722Missing</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="days3-tab" data-bs-toggle="tab"
-                        data-bs-target="#days3" type="button" role="tab">
-                    三天未填 <span class="badge bg-warning text-dark">@Model.Count(m => m.MissedDays == 3)</span>
+                <button class="nav-link @(activeTab == "days2" ? "active" : "")" id="days2-tab" type="button"
+                        onclick="window.location.href='@Url.Action("MissedRecordsStatus", new { tab = "days2", searchIdNumber = ViewBag.SearchIdNumber })'">
+                    兩天未填 <span class="badge bg-warning text-dark">@countDays2</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="days4-tab" data-bs-toggle="tab"
-                        data-bs-target="#days4" type="button" role="tab">
-                    四天未填 <span class="badge bg-warning text-dark">@Model.Count(m => m.MissedDays == 4)</span>
+                <button class="nav-link @(activeTab == "days3" ? "active" : "")" id="days3-tab" type="button"
+                        onclick="window.location.href='@Url.Action("MissedRecordsStatus", new { tab = "days3", searchIdNumber = ViewBag.SearchIdNumber })'">
+                    三天未填 <span class="badge bg-warning text-dark">@countDays3</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="days5plus-tab" data-bs-toggle="tab"
-                        data-bs-target="#days5plus" type="button" role="tab">
-                    五天以上 <span class="badge bg-danger">@Model.Count(m => m.MissedDays >= 5 && m.MissedDays < 999)</span>
+                <button class="nav-link @(activeTab == "days4" ? "active" : "")" id="days4-tab" type="button"
+                        onclick="window.location.href='@Url.Action("MissedRecordsStatus", new { tab = "days4", searchIdNumber = ViewBag.SearchIdNumber })'">
+                    四天未填 <span class="badge bg-warning text-dark">@countDays4</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="never-tab" data-bs-toggle="tab"
-                        data-bs-target="#never" type="button" role="tab">
-                    從未填寫 <span class="badge bg-secondary">@Model.Count(m => m.MissedDays >= 999)</span>
+                <button class="nav-link @(activeTab == "days5plus" ? "active" : "")" id="days5plus-tab" type="button"
+                        onclick="window.location.href='@Url.Action("MissedRecordsStatus", new { tab = "days5plus", searchIdNumber = ViewBag.SearchIdNumber })'">
+                    五天以上 <span class="badge bg-danger">@countDays5Plus</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(activeTab == "never" ? "active" : "")" id="never-tab" type="button"
+                        onclick="window.location.href='@Url.Action("MissedRecordsStatus", new { tab = "never", searchIdNumber = ViewBag.SearchIdNumber })'">
+                    從未填寫 <span class="badge bg-secondary">@countNever</span>
                 </button>
             </li>
         </ul>
 
-        <!-- 分頁內容 -->
+        @* 🎯 下方表格區塊：根據當前 tab 顯示對應資料 *@
         <div class="tab-content table-card" id="missedDaysTabContent">
-            <div class="tab-pane fade show active" id="days2" role="tabpanel">
-                @await Html.PartialAsync("_MissedRecordsTable", Model.Where(m => m.MissedDays == 2).ToList())
-            </div>
-            <div class="tab-pane fade" id="days3" role="tabpanel">
-                @await Html.PartialAsync("_MissedRecordsTable", Model.Where(m => m.MissedDays == 3).ToList())
-            </div>
-            <div class="tab-pane fade" id="days4" role="tabpanel">
-                @await Html.PartialAsync("_MissedRecordsTable", Model.Where(m => m.MissedDays == 4).ToList())
-            </div>
-            <div class="tab-pane fade" id="days5plus" role="tabpanel">
-                @await Html.PartialAsync("_MissedRecordsTable", Model.Where(m => m.MissedDays >= 5 && m.MissedDays < 999).OrderByDescending(m => m.MissedDays).ToList())
-            </div>
-            <div class="tab-pane fade" id="never" role="tabpanel">
-                @await Html.PartialAsync("_MissedRecordsTable", Model.Where(m => m.MissedDays >= 999).ToList())
+            @if (activeTab == "722")
+            {
+                <div class="tab-pane fade show active" id="days722" role="tabpanel">
+                    <h4 class="mb-3 text-primary">
+                        <i class="bi bi-heart-pulse"></i> 需測量 722 血壓個案追蹤
+                        <small class="text-muted fs-6 ms-3">檢查日期: @(((DateTime)ViewBag.CheckDate).ToString("yyyy-MM-dd"))</small>
+                    </h4>
+                    @if (trackingList.Any())
+                    {
+                        @await Html.PartialAsync("_722BPStatusTable", trackingList)
+                    }
+                    else
+                    {
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle"></i> 目前沒有需要測量 722 血壓的個案
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="tab-pane fade show active" id="missedDaysGeneral" role="tabpanel">
+                    @if (Model.Any())
+                    {
+                        @await Html.PartialAsync("_MissedRecordsTable", Model)
+                    }
+                    else
+                    {
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle"></i> 目前沒有符合條件的個案
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="modal fade" id="reasonModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-chat-square-text"></i> 未填寫原因
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>個案:</strong> <span id="modalPatientName"></span></p>
+                    <p><strong>原因:</strong></p>
+                    <div class="alert alert-info mb-0">
+                        <span id="modalReason"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                </div>
             </div>
         </div>
     </div>

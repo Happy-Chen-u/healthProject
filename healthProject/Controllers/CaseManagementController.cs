@@ -9,7 +9,11 @@ using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
+using System.Text.Json; 
+using System;
+using System.Collections.Generic;
 
 namespace healthProject.Controllers
 {
@@ -913,156 +917,101 @@ namespace healthProject.Controllers
             }
         }
 
-        // ========================================
-        // 📋 查看個案健康資訊填寫狀況
-        // ========================================
-
+        // 查看個案填寫狀況
+        // 查看個案填寫狀況
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public async Task<IActionResult> MissedRecordsStatus(string searchIdNumber = null)
+        public async Task<IActionResult> MissedRecordsStatus(string searchIdNumber = null, string tab = null, DateTime? checkDate = null)
         {
-            // ⭐ 一進此頁就清除未讀提醒（紅點變藍色）
-            HttpContext.Session.SetString("LastViewedMissedRecords", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-
-            // ⭐ 清除未讀提醒
             var currentTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             HttpContext.Session.SetString("LastViewedMissedRecords", currentTime);
 
-            // ✅ 加入 log 確認有寫入
-            _logger.LogInformation($"✅ 已設定 LastViewedMissedRecords = {currentTime}");
-
-            // 立即讀取確認
-            var readBack = HttpContext.Session.GetString("LastViewedMissedRecords");
-            _logger.LogInformation($"✅ 立即讀取 LastViewedMissedRecords = {readBack}");
-
-
             try
             {
-                var connStr = _configuration.GetConnectionString("DefaultConnection")
-                    + ";SSL Mode=Require;Trust Server Certificate=True;";
+                List<MissedRecordViewModel> allRecordsData;
+                DateTime dateToCheck = checkDate?.Date ?? DateTime.Today.Date;
 
-                var allMissedRecords = new List<MissedRecordViewModel>();
+                const string CacheKey = "AllMissedRecordsData";
+                bool isSearching = !string.IsNullOrEmpty(searchIdNumber) || checkDate.HasValue;
 
-                using var conn = new NpgsqlConnection(connStr);
-                await conn.OpenAsync();
-
-                string sql = @"
-            SELECT 
-                u.""Id"" as UserId,
-                u.""IDNumber"",
-                u.""FullName"",
-                u.""PhoneNumber"",
-                MAX(t.""RecordDate"") as LastRecordDate
-            FROM public.""Users"" u
-            LEFT JOIN public.""Today"" t ON u.""Id"" = t.""UserId"" 
-                AND t.""IsReminderRecord"" = FALSE
-            WHERE u.""Role"" = 'Patient' 
-                AND u.""IsActive"" = TRUE
-                AND (@searchIdNumber IS NULL OR u.""IDNumber"" ILIKE '%' || @searchIdNumber || '%')
-            GROUP BY u.""Id"", u.""IDNumber"", u.""FullName"", u.""PhoneNumber""
-        ";
-
-                using (var cmd = new NpgsqlCommand(sql, conn))
+                if (!isSearching && HttpContext.Session.TryGetValue(CacheKey, out byte[] cachedBytes))
                 {
-                    cmd.Parameters.Add("@searchIdNumber", NpgsqlTypes.NpgsqlDbType.Text).Value =
-                        (object)searchIdNumber ?? DBNull.Value;
+                    string json = Encoding.UTF8.GetString(cachedBytes);
+                    allRecordsData = JsonSerializer.Deserialize<List<MissedRecordViewModel>>(json);
+                }
+                else
+                {
+                    allRecordsData = await GetMissedRecordsAndCaseInfoAsync(searchIdNumber, dateToCheck);
 
-                    using var reader = await cmd.ExecuteReaderAsync();
-
-                    while (await reader.ReadAsync())
+                    if (!isSearching && dateToCheck == DateTime.Today.Date)
                     {
-                        int userId = reader.GetInt32(0);
-                        string idNumber = reader.GetString(1);
-                        string fullName = reader.GetString(2);
-                        string phoneNumber = reader.IsDBNull(3) ? "" : reader.GetString(3);
-                        DateTime? lastRecordDate = reader.IsDBNull(4) ? null : reader.GetDateTime(4);
-
-                        int missedDays = 0;
-                        if (lastRecordDate.HasValue)
-                        {
-                            missedDays = (DateTime.Now.Date - lastRecordDate.Value.Date).Days;
-                        }
-                        else
-                        {
-                            missedDays = 999;
-                        }
-
-                        if (missedDays >= 2)
-                        {
-                            string genderBirthdaySql = @"
-                        SELECT ""Gender"", ""BirthDate""
-                        FROM public.""CaseManagement""
-                        WHERE ""UserId"" = @userId
-                        ORDER BY ""Id"" DESC
-                        LIMIT 1
-                    ";
-
-                            string gender = "";
-                            DateTime birthDate = DateTime.MinValue;
-
-                            using (var conn2 = new NpgsqlConnection(connStr))
-                            {
-                                await conn2.OpenAsync();
-                                using var cmd2 = new NpgsqlCommand(genderBirthdaySql, conn2);
-                                cmd2.Parameters.AddWithValue("@userId", userId);
-
-                                using var reader2 = await cmd2.ExecuteReaderAsync();
-                                if (await reader2.ReadAsync())
-                                {
-                                    gender = reader2.IsDBNull(0) ? "" : reader2.GetString(0);
-                                    birthDate = reader2.IsDBNull(1) ? DateTime.MinValue : reader2.GetDateTime(1);
-                                }
-                            }
-
-                            if (string.IsNullOrEmpty(gender) && idNumber.Length >= 2)
-                            {
-                                char secondChar = idNumber[1];
-                                gender = secondChar == '1' ? "男" : secondChar == '2' ? "女" : "";
-                            }
-
-                            string reasonSql = @"
-                        SELECT ""MissedReason""
-                        FROM public.""Today""
-                        WHERE ""UserId"" = @userId 
-                            AND ""IsReminderRecord"" = TRUE
-                            AND ""MissedReason"" IS NOT NULL
-                            AND ""MissedReason"" != ''
-                        ORDER BY ""RecordDate"" DESC
-                        LIMIT 1
-                    ";
-
-                            string missedReason = "";
-                            using (var conn3 = new NpgsqlConnection(connStr))
-                            {
-                                await conn3.OpenAsync();
-                                using var cmd3 = new NpgsqlCommand(reasonSql, conn3);
-                                cmd3.Parameters.AddWithValue("@userId", userId);
-
-                                var result = await cmd3.ExecuteScalarAsync();
-                                if (result != null && result != DBNull.Value)
-                                {
-                                    missedReason = result.ToString();
-                                }
-                            }
-
-                            allMissedRecords.Add(new MissedRecordViewModel
-                            {
-                                UserId = userId,
-                                IDNumber = idNumber,
-                                FullName = fullName,
-                                PhoneNumber = phoneNumber,
-                                Gender = gender,
-                                BirthDate = birthDate,
-                                LastRecordDate = lastRecordDate,
-                                MissedDays = missedDays,
-                                MissedReason = missedReason
-                            });
-                        }
+                        string json = JsonSerializer.Serialize(allRecordsData);
+                        HttpContext.Session.Set(CacheKey, Encoding.UTF8.GetBytes(json));
                     }
                 }
 
+                var trackingCandidates = allRecordsData.Where(r => r.Is722Tracking).ToList();
+                var trackingList = await Get722TrackingListAsync(trackingCandidates, dateToCheck);
+                var allMissedDaysRecords = allRecordsData.Where(r => r.MissedDays >= 2 || r.MissedDays == 999).ToList();
+
+                ViewBag.AllMissedDaysRecords = allMissedDaysRecords;
+
+                // 🎯 新增：查詢結果（獨立於 tab，只要有查詢就顯示）
+                MissedRecordViewModel searchResult = null;
+                if (!string.IsNullOrEmpty(searchIdNumber))
+                {
+                    // 從所有資料中尋找該個案（不受 MissedDays 限制）
+                    searchResult = allRecordsData.FirstOrDefault(m =>
+                        m.IDNumber.Equals(searchIdNumber, StringComparison.OrdinalIgnoreCase));
+
+                    // 如果在 allRecordsData 找不到，從 Users 表直接查詢
+                    if (searchResult == null)
+                    {
+                        searchResult = await GetPatientBasicInfoAsync(searchIdNumber);
+                    }
+                }
+                ViewBag.SearchResult = searchResult;
+
+                // 如果沒有指定 tab，預設為 days2
+                if (string.IsNullOrEmpty(tab))
+                {
+                    tab = "days2";
+                }
+
+                // 🎯 根據 tab 篩選要顯示在下方表格的資料
+                List<MissedRecordViewModel> recordsToShow;
+
+                switch (tab.ToLower())
+                {
+                    case "722":
+                        recordsToShow = trackingList;
+                        break;
+                    case "days2":
+                        recordsToShow = allMissedDaysRecords.Where(m => m.MissedDays == 2).ToList();
+                        break;
+                    case "days3":
+                        recordsToShow = allMissedDaysRecords.Where(m => m.MissedDays == 3).ToList();
+                        break;
+                    case "days4":
+                        recordsToShow = allMissedDaysRecords.Where(m => m.MissedDays == 4).ToList();
+                        break;
+                    case "days5plus":
+                        recordsToShow = allMissedDaysRecords.Where(m => m.MissedDays >= 5 && m.MissedDays < 999).ToList();
+                        break;
+                    case "never":
+                        recordsToShow = allMissedDaysRecords.Where(m => m.MissedDays >= 999).ToList();
+                        break;
+                    default:
+                        recordsToShow = allMissedDaysRecords.Where(m => m.MissedDays == 2).ToList();
+                        break;
+                }
+
                 ViewBag.SearchIdNumber = searchIdNumber;
-                return View(allMissedRecords);
+                ViewBag.TrackingList = trackingList;
+                ViewBag.ActiveTab = tab;
+                ViewBag.CheckDate = dateToCheck;
+
+                return View(recordsToShow);
             }
             catch (Exception ex)
             {
@@ -1072,36 +1021,80 @@ namespace healthProject.Controllers
             }
         }
 
-
-
-        // ========================================
-        // 🧠 資料庫操作區
-        // ========================================
-        private async Task<UserDBModel> GetPatientByIdNumberAsync(string idNumber)
+        // 🆕 新增：取得個案基本資訊（用於查詢結果顯示）
+        private async Task<MissedRecordViewModel> GetPatientBasicInfoAsync(string idNumber)
         {
-            var connStr = _configuration.GetConnectionString("DefaultConnection");
-            await using var conn = new NpgsqlConnection(connStr);
+            var connStr = _configuration.GetConnectionString("DefaultConnection")
+                + ";SSL Mode=Require;Trust Server Certificate=True;";
+
+            using var conn = new NpgsqlConnection(connStr);
             await conn.OpenAsync();
 
-            var query = @"
-                SELECT ""Id"", ""Username"", ""FullName"", ""IDNumber"", ""Role""
-                FROM ""Users""
-                WHERE ""IDNumber"" = @IDNumber AND ""IsActive"" = true
-                LIMIT 1";
+            string sql = @"
+        SELECT 
+            u.""Id"" as UserId, u.""IDNumber"", u.""FullName"", u.""PhoneNumber"",
+            MAX(t.""RecordDate"") FILTER (WHERE t.""IsReminderRecord"" = FALSE) as LastRecordDate,
+            c.""Gender"", c.""BirthDate"", c.""BloodPressureGuidance722""
+        FROM public.""Users"" u
+        LEFT JOIN public.""Today"" t ON u.""Id"" = t.""UserId"" 
+            AND t.""IsReminderRecord"" = FALSE
+        LEFT JOIN (
+            SELECT DISTINCT ON (""IDNumber"") *
+            FROM public.""CaseManagement""
+            ORDER BY ""IDNumber"", ""AssessmentDate"" DESC
+        ) c ON u.""IDNumber"" = c.""IDNumber""
+        WHERE u.""IDNumber"" = @idNumber
+            AND u.""Role"" = 'Patient'
+            AND u.""IsActive"" = TRUE
+        GROUP BY u.""Id"", u.""IDNumber"", u.""FullName"", u.""PhoneNumber"", 
+                 c.""Gender"", c.""BirthDate"", c.""BloodPressureGuidance722""
+    ";
 
-            await using var cmd = new NpgsqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@IDNumber", idNumber);
-            await using var reader = await cmd.ExecuteReaderAsync();
+            using var cmd = new NpgsqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@idNumber", idNumber);
 
+            using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return new UserDBModel
+                int userId = reader.GetInt32(0);
+                string fullName = reader.GetString(2);
+                string phoneNumber = reader.IsDBNull(3) ? "" : reader.GetString(3);
+                DateTime? lastRecordDate = reader.IsDBNull(4) ? null : reader.GetDateTime(4);
+                string gender = reader.IsDBNull(5) ? "" : reader.GetString(5);
+                DateTime birthDate = reader.IsDBNull(6) ? DateTime.MinValue : reader.GetDateTime(6);
+                bool is722Tracking = reader.IsDBNull(7) ? false : reader.GetBoolean(7);
+
+                // 補充性別判斷
+                if (string.IsNullOrEmpty(gender) && idNumber.Length >= 2)
                 {
-                    Id = reader.GetInt32(0),
-                    Username = reader.GetString(1),
-                    FullName = reader.IsDBNull(2) ? null : reader.GetString(2),
-                    IDNumber = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    Role = reader.GetString(4)
+                    char secondChar = idNumber[1];
+                    gender = secondChar == '1' ? "男" : secondChar == '2' ? "女" : "";
+                }
+
+                int missedDays = 0;
+                if (lastRecordDate.HasValue)
+                {
+                    missedDays = (DateTime.Today.Date - lastRecordDate.Value.Date).Days;
+                }
+                else
+                {
+                    missedDays = 999;
+                }
+
+                string missedReason = await GetLatestMissedReasonAsync(userId, connStr);
+
+                return new MissedRecordViewModel
+                {
+                    UserId = userId,
+                    IDNumber = idNumber,
+                    FullName = fullName,
+                    PhoneNumber = phoneNumber,
+                    Gender = gender,
+                    BirthDate = birthDate,
+                    LastRecordDate = lastRecordDate,
+                    MissedDays = missedDays,
+                    MissedReason = missedReason,
+                    Is722Tracking = is722Tracking
                 };
             }
 
@@ -2607,5 +2600,186 @@ namespace healthProject.Controllers
 
             await command.ExecuteNonQueryAsync();
         }
+
+        /// <summary>
+        /// 🎯 修正後的 Helper: 取得所有符合條件的未填寫紀錄，並包含 CaseManagement 中的性別/生日/722狀態。
+        /// </summary>
+        private async Task<List<MissedRecordViewModel>> GetMissedRecordsAndCaseInfoAsync(string searchIdNumber = null, DateTime? dateToCheck = null)
+        {
+            var connStr = _configuration.GetConnectionString("DefaultConnection")
+                + ";SSL Mode=Require;Trust Server Certificate=True;";
+
+            var allMissedRecords = new List<MissedRecordViewModel>();
+
+            // 🎯 修正 1: 定義計算基準日
+            DateTime endDate = dateToCheck?.Date ?? DateTime.Today.Date;
+
+            using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+
+            // 修正 SQL: 合併 Users, Today 和 CaseManagement 的最新紀錄
+            string sql = @"
+                SELECT 
+                    u.""Id"" as UserId, u.""IDNumber"", u.""FullName"", u.""PhoneNumber"",
+                    MAX(t.""RecordDate"") FILTER (WHERE t.""IsReminderRecord"" = FALSE) as LastRecordDate,
+                    c.""Gender"", c.""BirthDate"", c.""BloodPressureGuidance722""
+                FROM public.""Users"" u
+                LEFT JOIN public.""Today"" t ON u.""Id"" = t.""UserId"" 
+                    AND t.""IsReminderRecord"" = FALSE
+                LEFT JOIN (
+                    SELECT DISTINCT ON (""IDNumber"") *
+                    FROM public.""CaseManagement""
+                    ORDER BY ""IDNumber"", ""AssessmentDate"" DESC
+                ) c ON u.""IDNumber"" = c.""IDNumber""
+                WHERE u.""Role"" = 'Patient' 
+                    AND u.""IsActive"" = TRUE
+                    AND (@searchIdNumber IS NULL OR u.""IDNumber"" ILIKE '%' || @searchIdNumber || '%')
+                GROUP BY u.""Id"", u.""IDNumber"", u.""FullName"", u.""PhoneNumber"", c.""Gender"", c.""BirthDate"", c.""BloodPressureGuidance722""
+                ORDER BY u.""Id""
+            ";
+
+            using (var cmd = new NpgsqlCommand(sql, conn))
+            {
+                cmd.Parameters.Add("@searchIdNumber", NpgsqlTypes.NpgsqlDbType.Text).Value = (object)searchIdNumber ?? DBNull.Value;
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    int userId = reader.GetInt32(0);
+                    string idNumber = reader.GetString(1);
+                    string fullName = reader.GetString(2);
+                    string phoneNumber = reader.IsDBNull(3) ? "" : reader.GetString(3);
+                    DateTime? lastRecordDate = reader.IsDBNull(4) ? null : reader.GetDateTime(4);
+                    string gender = reader.IsDBNull(5) ? "" : reader.GetString(5);
+                    DateTime birthDate = reader.IsDBNull(6) ? DateTime.MinValue : reader.GetDateTime(6);
+                    bool is722Tracking = reader.IsDBNull(7) ? false : reader.GetBoolean(7);
+
+                    int missedDays = 0;
+                    if (lastRecordDate.HasValue)
+                    {
+                        // 🎯 修正 2: 使用 endDate (檢查日) 計算 MissedDays
+                        missedDays = (endDate - lastRecordDate.Value.Date).Days;
+                    }
+                    else
+                    {
+                        missedDays = 999;
+                    }
+
+                    // 檢查身分證字號性別 (用於補足 CaseManagement 缺失的情況)
+                    if (string.IsNullOrEmpty(gender) && idNumber.Length >= 2)
+                    {
+                        char secondChar = idNumber[1];
+                        gender = secondChar == '1' ? "男" : secondChar == '2' ? "女" : "";
+                    }
+
+                    // 獲取最近一次未填寫原因 (與 MissedDays 計算無關，獨立查詢)
+                    string missedReason = await GetLatestMissedReasonAsync(userId, connStr);
+
+                    allMissedRecords.Add(new MissedRecordViewModel
+                    {
+                        UserId = userId,
+                        IDNumber = idNumber,
+                        FullName = fullName,
+                        PhoneNumber = phoneNumber,
+                        Gender = gender,
+                        BirthDate = birthDate,
+                        LastRecordDate = lastRecordDate,
+                        MissedDays = missedDays,
+                        MissedReason = missedReason,
+                        Is722Tracking = is722Tracking
+                    });
+                }
+            }
+
+            // 返回 MissedDays >= 2 或正在追蹤 722 的個案
+            return allMissedRecords.Where(r => r.MissedDays >= 2 || r.Is722Tracking).ToList();
+        }
+
+        /// <summary>
+        /// 取得所有需要 722 追蹤的個案，並檢查其當天的血壓填寫狀況
+        /// </summary>
+        private async Task<List<MissedRecordViewModel>> Get722TrackingListAsync(List<MissedRecordViewModel> trackingCandidates, DateTime checkDate)
+        {
+            var connStr = _configuration.GetConnectionString("DefaultConnection")
+                + ";SSL Mode=Require;Trust Server Certificate=True;";
+
+            var userIds = trackingCandidates.Select(x => x.UserId).ToArray();
+            if (!userIds.Any()) return new List<MissedRecordViewModel>();
+
+            // 查詢指定日期是否有有效紀錄 (數值或勾選尚未測量)
+            string todaySql = @"
+                SELECT 
+                    ""UserId"",
+                    BOOL_OR(""BP_First_1_Systolic"" IS NOT NULL OR ""BP_First_2_Systolic"" IS NOT NULL OR ""BP_Morning_NotMeasured"" = TRUE) AS HasMorningRecord,
+                    BOOL_OR(""BP_Second_1_Systolic"" IS NOT NULL OR ""BP_Second_2_Systolic"" IS NOT NULL OR ""BP_Evening_NotMeasured"" = TRUE) AS HasEveningRecord
+                FROM public.""Today""
+                WHERE ""UserId"" = ANY(@UserIds) AND ""RecordDate"" = @Today
+                GROUP BY ""UserId"";
+            ";
+
+            var todayStatus = new Dictionary<int, (bool HasMorning, bool HasEvening)>();
+            using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+            using var todayCmd = new NpgsqlCommand(todaySql, conn);
+            todayCmd.Parameters.AddWithValue("@UserIds", userIds);
+            todayCmd.Parameters.AddWithValue("@Today", checkDate); // 🎯 修正點：使用 checkDate
+
+            using (var todayReader = await todayCmd.ExecuteReaderAsync())
+            {
+                while (await todayReader.ReadAsync())
+                {
+                    todayStatus.Add(todayReader.GetInt32(0), (
+                        HasMorning: todayReader.GetBoolean(1),
+                        HasEvening: todayReader.GetBoolean(2)
+                    ));
+                }
+            }
+
+            // 更新缺失狀態
+            foreach (var item in trackingCandidates)
+            {
+                if (todayStatus.TryGetValue(item.UserId, out var status))
+                {
+                    // 有紀錄：根據查詢結果設定缺失狀態
+                    item.IsMorningMissing = !status.HasMorning;
+                    item.IsEveningMissing = !status.HasEvening;
+                }
+                else
+                {
+                    // 🎯 修正點：沒有紀錄 (例如徐小美的情況) -> 標記為完全缺失
+                    item.IsMorningMissing = true;
+                    item.IsEveningMissing = true;
+                }
+                item.IsBothMissing = item.IsMorningMissing && item.IsEveningMissing;
+            }
+
+            return trackingCandidates.Where(r => r.Is722Tracking).ToList();
+        }
+
+        /// <summary>
+        /// 取得最近一次未填寫原因 (從 Today 表)
+        /// </summary>
+        private async Task<string> GetLatestMissedReasonAsync(int userId, string connStr)
+        {
+            string reasonSql = @"
+                SELECT ""MissedReason""
+                FROM public.""Today""
+                WHERE ""UserId"" = @userId 
+                    AND ""IsReminderRecord"" = TRUE
+                    AND ""MissedReason"" IS NOT NULL
+                    AND ""MissedReason"" != ''
+                ORDER BY ""RecordDate"" DESC
+                LIMIT 1
+            ";
+
+            using var conn = new NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+            using var cmd = new NpgsqlCommand(reasonSql, conn);
+            cmd.Parameters.AddWithValue("@userId", userId);
+            var result = await cmd.ExecuteScalarAsync();
+
+            return result != null && result != DBNull.Value ? result.ToString() : "";
+        }
+
     }
 }
