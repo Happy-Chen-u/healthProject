@@ -62,10 +62,20 @@ namespace healthProject.Models
 
             // --- 階段 1: 數值下限檢查 (確保輸入是安全的) ---
 
-            // ... (數值下限檢查邏輯保持不變，略)
             if (BP_First_1_Systolic.HasValue && BP_First_1_Systolic.Value < 30)
                 warnings.Add("⚠️ 上午第一遍收縮壓不可低於 30 mmHg");
-            // ... (其他 7 個數值下限檢查)
+            if (BP_First_1_Diastolic.HasValue && BP_First_1_Diastolic.Value < 10)
+                warnings.Add("⚠️ 上午第一遍舒張壓不可低於 10 mmHg");
+            if (BP_First_2_Systolic.HasValue && BP_First_2_Systolic.Value < 30)
+                warnings.Add("⚠️ 上午第二遍收縮壓不可低於 30 mmHg");
+            if (BP_First_2_Diastolic.HasValue && BP_First_2_Diastolic.Value < 10)
+                warnings.Add("⚠️ 上午第二遍舒張壓不可低於 10 mmHg");
+            if (BP_Second_1_Systolic.HasValue && BP_Second_1_Systolic.Value < 30)
+                warnings.Add("⚠️ 睡前第一遍收縮壓不可低於 30 mmHg");
+            if (BP_Second_1_Diastolic.HasValue && BP_Second_1_Diastolic.Value < 10)
+                warnings.Add("⚠️ 睡前第一遍舒張壓不可低於 10 mmHg");
+            if (BP_Second_2_Systolic.HasValue && BP_Second_2_Systolic.Value < 30)
+                warnings.Add("⚠️ 睡前第二遍收縮壓不可低於 30 mmHg");
             if (BP_Second_2_Diastolic.HasValue && BP_Second_2_Diastolic.Value < 10)
                 warnings.Add("⚠️ 睡前第二遍舒張壓不可低於 10 mmHg");
 
@@ -76,43 +86,43 @@ namespace healthProject.Models
             bool hasBPF1_Sys = BP_First_1_Systolic.HasValue;
             bool hasBPF1_Dia = BP_First_1_Diastolic.HasValue;
             if (hasBPF1_Sys != hasBPF1_Dia)
-                errors.Add("🔴 上午血壓第一遍：收縮壓和舒張壓必須同時填寫！");
+                errors.Add("🔴 上午血壓第一遍:收縮壓和舒張壓必須同時填寫!");
 
             // 檢查 BP_First_2 配對
             bool hasBPF2_Sys = BP_First_2_Systolic.HasValue;
             bool hasBPF2_Dia = BP_First_2_Diastolic.HasValue;
             if (hasBPF2_Sys != hasBPF2_Dia)
-                errors.Add("🔴 上午血壓第二遍：收縮壓和舒張壓必須同時填寫！");
+                errors.Add("🔴 上午血壓第二遍:收縮壓和舒張壓必須同時填寫!");
 
             // 檢查 BP_Second_1 配對
             bool hasBPS1_Sys = BP_Second_1_Systolic.HasValue;
             bool hasBPS1_Dia = BP_Second_1_Diastolic.HasValue;
             if (hasBPS1_Sys != hasBPS1_Dia)
-                errors.Add("🔴 睡前血壓第一遍：收縮壓和舒張壓必須同時填寫！");
+                errors.Add("🔴 睡前血壓第一遍:收縮壓和舒張壓必須同時填寫!");
 
             // 檢查 BP_Second_2 配對
             bool hasBPS2_Sys = BP_Second_2_Systolic.HasValue;
             bool hasBPS2_Dia = BP_Second_2_Diastolic.HasValue;
             if (hasBPS2_Sys != hasBPS2_Dia)
-                errors.Add("🔴 睡前血壓第二遍：收縮壓和舒張壓必須同時填寫！");
+                errors.Add("🔴 睡前血壓第二遍:收縮壓和舒張壓必須同時填寫!");
 
-            // 如果有配對錯誤，則先返回，不進行更複雜的時段檢查
+            // 如果有配對錯誤,則先返回,不進行更複雜的時段檢查
             if (errors.Any()) return errors;
 
 
-            // --- 階段 3: 時段完整性檢查 (BP_First_1/2 必須一起填；BP_Second_1/2 必須一起填) ---
+            // --- 階段 3: 時段完整性檢查 (BP_First_1/2 必須一起填;BP_Second_1/2 必須一起填) ---
 
             // 檢查上午血壓完整性 (排除勾選「尚未測量」和已完成的情況)
             bool isMorningInputAttempted = hasBPF1_Sys || hasBPF2_Sys;
             bool isMorningChecked = BP_Morning_NotMeasured == true;
-            bool isMorningComplete = hasBPF1_Sys && hasBPF2_Sys; // 定義：兩遍都填了
+            bool isMorningComplete = hasBPF1_Sys && hasBPF2_Sys; // 定義:兩遍都填了
 
             // 🚨 需求 2.3: 檢查第一遍/第二遍互補
             if (isMorningInputAttempted && !isMorningChecked)
             {
                 if ((hasBPF1_Sys && !hasBPF2_Sys) || (!hasBPF1_Sys && hasBPF2_Sys))
                 {
-                    errors.Add("🔴 上午血壓：請務必將第一遍和第二遍**同時**填寫完整才能上傳。");
+                    errors.Add("🔴 上午血壓:請務必將第一遍和第二遍**同時**填寫完整才能上傳。");
                     return errors; // 配對錯誤優先
                 }
             }
@@ -121,36 +131,59 @@ namespace healthProject.Models
             // 檢查睡前血壓完整性 (排除勾選「尚未測量」和已完成的情況)
             bool isEveningInputAttempted = hasBPS1_Sys || hasBPS2_Sys;
             bool isEveningChecked = BP_Evening_NotMeasured == true;
-            bool isEveningComplete = hasBPS1_Sys && hasBPS2_Sys; // 定義：兩遍都填了
+            bool isEveningComplete = hasBPS1_Sys && hasBPS2_Sys; // 定義:兩遍都填了
 
             // 🚨 需求 2.3: 檢查第一遍/第二遍互補
             if (isEveningInputAttempted && !isEveningChecked)
             {
                 if ((hasBPS1_Sys && !hasBPS2_Sys) || (!hasBPS1_Sys && hasBPS2_Sys))
                 {
-                    errors.Add("🔴 睡前血壓：請務必將第一遍和第二遍**同時**填寫完整才能上傳。");
+                    errors.Add("🔴 睡前血壓:請務必將第一遍和第二遍**同時**填寫完整才能上傳。");
                     return errors; // 配對錯誤優先
                 }
             }
 
 
-            // --- 階段 4: 必填邏輯檢查 (檢查兩個時段是否都已完成或勾選) ---
+            // --- 階段 4: 必填邏輯檢查 ---
 
-            // 檢查上午時段是否需要強制輸入/勾選
-            // 邏輯: 如果今天未完成上午紀錄 (IsMorningCompletedToday=false) 且 (這次也沒填寫 OR 這次也沒勾選)
-            if (!IsMorningCompletedToday && !(isMorningComplete || isMorningChecked))
+            // ✅ 🎯 核心修正: 如果兩個時段都已完成,則完全跳過必填檢查
+            if (IsMorningCompletedToday && IsEveningCompletedToday)
             {
-                errors.Add("🔴 上午血壓為必填時段。請填寫上午血壓（兩遍）或勾選『尚未測量』。");
+                // 什麼都不做,直接跳過所有必填檢查
+                // 允許使用者不填任何血壓資料
+            }
+            // ✅ 情況 2: 如果只有上午完成,則只檢查睡前時段
+            else if (IsMorningCompletedToday && !IsEveningCompletedToday)
+            {
+                if (!(isEveningComplete || isEveningChecked))
+                {
+                    errors.Add("🔴 睡前血壓為必填時段。請填寫睡前血壓(兩遍)或勾選『尚未測量』。");
+                }
+            }
+            // ✅ 情況 3: 如果只有睡前完成,則只檢查上午時段
+            else if (!IsMorningCompletedToday && IsEveningCompletedToday)
+            {
+                if (!(isMorningComplete || isMorningChecked))
+                {
+                    errors.Add("🔴 上午血壓為必填時段。請填寫上午血壓(兩遍)或勾選『尚未測量』。");
+                }
+            }
+            // ✅ 情況 4: 兩個時段都未完成,則兩者都要檢查
+            else
+            {
+                if (!(isMorningComplete || isMorningChecked))
+                {
+                    errors.Add("🔴 上午血壓為必填時段。請填寫上午血壓(兩遍)或勾選『尚未測量』。");
+                }
+
+                if (!(isEveningComplete || isEveningChecked))
+                {
+                    errors.Add("🔴 睡前血壓為必填時段。請填寫睡前血壓(兩遍)或勾選『尚未測量』。");
+                }
             }
 
-            // 檢查睡前時段是否需要強制輸入/勾選
-            if (!IsEveningCompletedToday && !(isEveningComplete || isEveningChecked))
-            {
-                errors.Add("🔴 睡前血壓為必填時段。請填寫睡前血壓（兩遍）或勾選『尚未測量』。");
-            }
 
-
-            // 返回所有錯誤，如果有硬性錯誤 (errors)，會優先於警告 (warnings) 顯示
+            // 返回所有錯誤,如果有硬性錯誤 (errors),會優先於警告 (warnings) 顯示
             if (errors.Any()) return errors;
             return warnings;
         }
@@ -163,7 +196,7 @@ namespace healthProject.Models
         public string? BP_Second_1_Input { get; set; }
         public string? BP_Second_2_Input { get; set; }
 
-        
+
 
 
         private void ParseBPInput(string input, out decimal? systolic, out decimal? diastolic)
@@ -184,7 +217,7 @@ namespace healthProject.Models
             }
         }
 
-        
+
 
         // ========================================
         // 計算平均血壓 (所有有效測量的平均)

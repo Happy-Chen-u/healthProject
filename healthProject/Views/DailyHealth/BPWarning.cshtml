@@ -2,6 +2,9 @@
 @{
     ViewData["Title"] = "血壓記錄提醒";
     Layout = null;
+    var hasDuplicatedMeals = ViewBag.HasDuplicatedMeals == true;
+    var duplicatedMeals = ViewBag.DuplicatedMealsList as List<string> ?? new List<string>();
+    var existingMeals = ViewBag.ExistingMeals as Dictionary<string, MealSelection> ?? new Dictionary<string, MealSelection>();
 }
 
 <!DOCTYPE html>
@@ -82,10 +85,10 @@
             color: #475569;
         }
 
-        .btn-cancel:hover {
-            background: #cbd5e1;
-            transform: translateY(-2px);
-        }
+            .btn-cancel:hover {
+                background: #cbd5e1;
+                transform: translateY(-2px);
+            }
 
         .btn-confirm {
             background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
@@ -93,10 +96,10 @@
             box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
         }
 
-        .btn-confirm:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
-        }
+            .btn-confirm:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+            }
 
         .info-box {
             background: #fef3c7;
@@ -105,6 +108,17 @@
             border-radius: 8px;
             margin: 1.5rem 0;
             text-align: left;
+        }
+
+        @@media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -115,13 +129,13 @@
 
         <div class="warning-message">
             <p><span class="highlight">今日此筆血壓測量已填寫完成</span></p>
-            <p>如需修改血壓記錄，請到「查看紀錄」進行編輯</p>
+            <p>如需修改血壓記錄,請到「查看紀錄」進行編輯</p>
         </div>
 
         @if (ViewBag.HasOtherData == true)
         {
             <div class="info-box">
-                <strong>📝 提醒：</strong> 您本次填寫了其他健康資訊（飲食/運動/血糖等），<br>
+                <strong>📝 提醒:</strong> 您本次填寫了其他健康資訊(飲食/運動/血糖等),<br>
                 點擊「繼續上傳其他資訊」將保留這些資料進行上傳
             </div>
         }
@@ -133,13 +147,71 @@
 
             @if (ViewBag.HasOtherData == true)
             {
-                <form method="post" asp-action="ConfirmWithoutBP" style="display: inline;">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="formDataJson" value="@System.Text.Json.JsonSerializer.Serialize(ViewBag.FormData)" />
-                    <button type="submit" class="btn btn-confirm">
+                @if (hasDuplicatedMeals)
+                {
+                    <!-- 情況1: 血壓重複 + 三餐也重複 - 使用 JavaScript confirm -->
+                    <button type="button" class="btn btn-confirm" onclick="handleMealDuplication()">
                         ✓ 繼續上傳其他資訊
                     </button>
-                </form>
+
+                    <form id="confirmForm" method="post" asp-action="ConfirmWithoutBP" style="display: none;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="formDataJson" value="@System.Text.Json.JsonSerializer.Serialize(ViewBag.FormData)" />
+                    </form>
+
+                    <form id="confirmWithoutMealsForm" method="get" action="@Url.Action("ShowMealChoices", "DailyHealth")" style="display: none;">
+                        <input type="hidden" name="formDataJson" value="@System.Text.Json.JsonSerializer.Serialize(ViewBag.FormData)" />
+                        <input type="hidden" name="duplicatedMealsJson" value="@System.Text.Json.JsonSerializer.Serialize(duplicatedMeals)" />
+                        <input type="hidden" name="existingMealsJson" value="@System.Text.Json.JsonSerializer.Serialize(existingMeals)" />
+                        <input type="hidden" name="fromBPWarning" value="true" />
+                    </form>
+
+                    <script>
+                        function handleMealDuplication() {
+                            var duplicatedMeals = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(duplicatedMeals));
+                            var existingMealsData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(existingMeals));
+
+                            // 組合訊息
+                            var message = "⚠️ 您今日已有以下三餐紀錄:\n\n";
+
+                            duplicatedMeals.forEach(function (mealType) {
+                                var icon = mealType === "早餐" ? "🌅" : (mealType === "午餐" ? "☀️" : "🌙");
+                                message += icon + " " + mealType + ":\n";
+
+                                if (existingMealsData[mealType]) {
+                                    var meal = existingMealsData[mealType];
+                                    if (meal.Vegetables) message += "  🥬 蔬菜: " + meal.Vegetables + " 拳頭\n";
+                                    if (meal.Protein) message += "  🍗 蛋白質: " + meal.Protein + " 拳頭\n";
+                                    if (meal.Carbs) message += "  🍚 澱粉: " + meal.Carbs + " 拳頭\n";
+                                }
+                                message += "\n";
+                            });
+
+                            message += "請選擇:\n";
+                            message += "【確定】→ 前往選擇頁面，決定每個三餐要保留或刪除\n";
+                            message += "【取消】→ 保留所有資料繼續上傳";
+
+                            if (confirm(message)) {
+                                // 用戶選擇前往選擇頁面
+                                document.getElementById('confirmWithoutMealsForm').submit();
+                            } else {
+                                // 用戶選擇保留所有資料
+                                document.getElementById('confirmForm').submit();
+                            }
+                        }
+                    </script>
+                }
+                else
+                {
+                    <!-- 原本的邏輯: 只有血壓重複 -->
+                    <form method="post" asp-action="ConfirmWithoutBP" style="display: inline;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="formDataJson" value="@System.Text.Json.JsonSerializer.Serialize(ViewBag.FormData)" />
+                        <button type="submit" class="btn btn-confirm">
+                            ✓ 繼續上傳其他資訊
+                        </button>
+                    </form>
+                }
             }
             else
             {

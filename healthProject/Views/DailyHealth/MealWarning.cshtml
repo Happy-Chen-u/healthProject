@@ -1,0 +1,244 @@
+﻿@model HealthRecordViewModel
+@{
+    ViewData["Title"] = "三餐記錄提醒";
+    Layout = null;
+    var duplicatedMeals = ViewBag.DuplicatedMealsList as List<string> ?? new List<string>();
+    var existingMeals = ViewBag.ExistingMeals as Dictionary<string, MealSelection> ?? new Dictionary<string, MealSelection>();
+    var hasOtherData = ViewBag.HasOtherData == true;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        body {
+            background-color: #e5eef5;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .warning-container {
+            max-width: 700px;
+            margin: 2rem;
+            padding: 2rem;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .warning-icon {
+            font-size: 5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .warning-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #f59e0b;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .meal-duplicate-box {
+            background: #fff7ed;
+            border: 2px solid #fb923c;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .meal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ea580c;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .meal-content {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        .meal-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+
+        .meal-item:last-child {
+            border-bottom: none;
+        }
+
+        .meal-label {
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .meal-value {
+            font-weight: 700;
+            color: #ea580c;
+        }
+
+        .info-box {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .btn-cancel {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-cancel:hover {
+            background: #cbd5e1;
+            transform: translateY(-2px);
+        }
+
+        .btn-continue {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+        }
+
+        .btn-continue:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+        }
+
+        .btn-choose {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-choose:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+
+        @@media (max-width: 768px) {
+            .warning-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="warning-container">
+        <div class="warning-icon">🍽️</div>
+        <div class="warning-title">三餐記錄提醒</div>
+
+        @foreach (var mealType in duplicatedMeals)
+        {
+            var mealIcon = mealType == "早餐" ? "🌅" : (mealType == "午餐" ? "☀️" : "🌙");
+            var existingMeal = existingMeals.ContainsKey(mealType) ? existingMeals[mealType] : null;
+
+            <div class="meal-duplicate-box">
+                <div class="meal-title">
+                    <span>@mealIcon</span>
+                    <span>您當日已有@(mealType)紀錄</span>
+                </div>
+                
+                @if (existingMeal != null)
+                {
+                    <div class="meal-content">
+                        <div class="meal-item">
+                            <span class="meal-label">🥬 蔬菜:</span>
+                            <span class="meal-value">@(string.IsNullOrEmpty(existingMeal.Vegetables) ? "未填寫" : existingMeal.Vegetables + " 拳頭")</span>
+                        </div>
+                        <div class="meal-item">
+                            <span class="meal-label">🍗 蛋白質:</span>
+                            <span class="meal-value">@(string.IsNullOrEmpty(existingMeal.Protein) ? "未填寫" : existingMeal.Protein + " 拳頭")</span>
+                        </div>
+                        <div class="meal-item">
+                            <span class="meal-label">🍚 澱粉:</span>
+                            <span class="meal-value">@(string.IsNullOrEmpty(existingMeal.Carbs) ? "未填寫" : existingMeal.Carbs + " 拳頭")</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="info-box">
+            <strong>📝 您可以選擇如何處理這些重複的三餐記錄</strong>
+        </div>
+
+        <div class="button-group">
+            <a href="@Url.Action("Index", "DailyHealth")" class="btn btn-cancel">
+                ❌ 取消全部
+            </a>
+
+            <form method="get" action="@Url.Action("ShowMealChoices", "DailyHealth")" style="display: inline;">
+                <input type="hidden" name="formDataJson" value="@System.Text.Json.JsonSerializer.Serialize(ViewBag.FormData)" />
+                <input type="hidden" name="duplicatedMealsJson" value="@System.Text.Json.JsonSerializer.Serialize(duplicatedMeals)" />
+                <input type="hidden" name="existingMealsJson" value="@System.Text.Json.JsonSerializer.Serialize(existingMeals)" />
+                <button type="submit" class="btn btn-choose">
+                    🔍 個別選擇
+                </button>
+            </form>
+
+            <form method="post" asp-action="ConfirmWithoutBP" style="display: inline;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="formDataJson" value="@System.Text.Json.JsonSerializer.Serialize(ViewBag.FormData)" />
+                <button type="submit" class="btn btn-continue">
+                    ✅ 全部保留
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

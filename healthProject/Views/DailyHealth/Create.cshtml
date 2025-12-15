@@ -937,27 +937,40 @@
         // 🚨 步驟二：新增前端必填檢查函數
         // ----------------------------------------------------
         function validateBloodPressureRequired() {
-            const morningChecked = document.getElementById('morning_not_measured').checked;
-            const eveningChecked = document.getElementById('evening_not_measured').checked;
+            // 不需要前端檢查了，後端會處理所有邏輯
+            return true;
+        }
 
-            // 檢查是否有填寫任何血壓值
-            const allBpInputs = document.querySelectorAll('.morning-bp-input, .evening-bp-input');
-            let isAnyBPFilled = false;
+        // 或者直接在 prepareMealData() 中移除對這個函數的呼叫:
+        function prepareMealData() {
+            // ❌ 刪除這一行:
+            // if (!validateBloodPressureRequired()) {
+            //     return false;
+            // }
 
-            // 只有在輸入框未被禁用時，才檢查是否有值
-            allBpInputs.forEach(input => {
-                if (!input.disabled && input.value.trim() !== '') {
-                    isAnyBPFilled = true;
+            // 直接處理三餐資料
+            const serializeMeal = (vegId, proteinId, carbsId, hiddenId) => {
+                const veg = document.getElementById(vegId)?.value;
+                const protein = document.getElementById(proteinId)?.value;
+                const carbs = document.getElementById(carbsId)?.value;
+
+                if (veg || protein || carbs) {
+                    const meal = {
+                        Vegetables: veg,
+                        Protein: protein,
+                        Carbs: carbs
+                    };
+                    document.getElementById(hiddenId).value = JSON.stringify(meal);
+                } else {
+                    document.getElementById(hiddenId).value = '';
                 }
-            });
+            };
 
-            // 邏輯: 如果既沒有填寫任何數值 AND 兩者都沒有勾選「尚未測量」
-            if (!isAnyBPFilled && !morningChecked && !eveningChecked) {
-                alert("血壓為必填項目。\n\n請至少填寫一個時段的血壓值，\n或勾選『尚未測量』後再上傳。");
-                return false; // 阻止提交
-            }
+            serializeMeal('breakfast-veg', 'breakfast-protein', 'breakfast-carbs', 'Meals_Breakfast_Json');
+            serializeMeal('lunch-veg', 'lunch-protein', 'lunch-carbs', 'Meals_Lunch_Json');
+            serializeMeal('dinner-veg', 'dinner-protein', 'dinner-carbs', 'Meals_Dinner_Json');
 
-            return true; // 允許繼續提交
+            return true;
         }
 
 
