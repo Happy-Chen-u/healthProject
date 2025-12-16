@@ -162,8 +162,8 @@ namespace healthProject.Controllers
                             id = reader.GetInt32(0),
                             name = reader.GetString(1),
                             idNumber = reader.GetString(2),
-                            gender = "男", // 如果 Users 表有性別欄位，請替換
-                            birthDate = "", // 如果 Users 表有生日欄位，請替換
+                            gender = "男", 
+                            birthDate = "", 
                             birthDateDisplay = "--"
                         }
                     });
@@ -178,18 +178,18 @@ namespace healthProject.Controllers
             }
         }
 
-        // 在 CaseManagementController 裡加入這個 action（供病患查看自己的紀錄列表）
+        // 供病患查看自己的紀錄列表
         [HttpGet]
         public async Task<IActionResult> PatientRecords()
         {
             // 確認使用者已登入
             if (!User.Identity.IsAuthenticated)
             {
-                // 導到登入或回傳 401
-                return Challenge(); // 或 RedirectToAction("Login", "Account");
+                
+                return Challenge(); 
             }
 
-            // 取得登入使用者 Id（你的系統是在 Claims 裡放 NameIdentifier）
+            // 取得登入使用者 Id（系統是在 Claims 裡放 NameIdentifier）
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
             {
@@ -197,10 +197,10 @@ namespace healthProject.Controllers
                 return Forbid();
             }
 
-            // 使用你已寫好的方法抓取該病患的紀錄
+            // 使用已寫好的方法抓取該病患的紀錄
             var records = await GetUserRecordsAsync(userId);
 
-            // 回傳 view（確保 Views/CaseManagement/PatientRecords.cshtml 存在）
+            // 回傳 view
             return View("PatientRecords", records);
         }
 
@@ -425,7 +425,7 @@ namespace healthProject.Controllers
                         while (await reader.ReadAsync())
                         {
                             int achievedCount = 0;
-                            int total = 9; // 原本7項 + 抽菸 + 嚼檳榔 = 9項
+                            int total = 9; 
 
                             // 體重
                             decimal? weight = reader["Weight"] as decimal?;
@@ -757,7 +757,7 @@ namespace healthProject.Controllers
                         return RedirectToAction("ViewAllRecords");
                     }
 
-                    // 🆕 從所有記錄中取得病患基本資訊
+                    // 從所有記錄中取得病患基本資訊
                     var firstRecord = allRecords.FirstOrDefault();
                     if (firstRecord != null)
                     {
@@ -830,8 +830,7 @@ namespace healthProject.Controllers
                 return View(model);
             }
         }
-        // 在 CaseManagementController.cs 加入
-        // 在 CaseManagementController.cs 的 GetLatestPatientData 方法中修改
+       
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetLatestPatientData(string idNumber)
@@ -868,7 +867,7 @@ namespace healthProject.Controllers
                 if (userId == 0)
                     return Json(new { success = false, message = "查無此病患" });
 
-                // 🆕 自動從身分證字號判斷性別
+                // 自動從身分證字號判斷性別
                 string gender = "";
                 if (!string.IsNullOrEmpty(idNumber) && idNumber.Length >= 2)
                 {
@@ -917,7 +916,7 @@ namespace healthProject.Controllers
             }
         }
 
-        // 查看個案填寫狀況
+        
         // 查看個案填寫狀況
         [Authorize(Roles = "Admin")]
         [HttpGet]
@@ -1021,7 +1020,7 @@ namespace healthProject.Controllers
             }
         }
 
-        // 🆕 新增：取得個案基本資訊（用於查詢結果顯示）
+        // 取得個案基本資訊（用於查詢結果顯示）
         private async Task<MissedRecordViewModel> GetPatientBasicInfoAsync(string idNumber)
         {
             var connStr = _configuration.GetConnectionString("DefaultConnection")
@@ -1487,7 +1486,7 @@ namespace healthProject.Controllers
         }
 
         /// <summary>
-        /// 取得個案所有歷史記錄 (支援年月篩選) - 完整版
+        /// 取得個案所有歷史記錄 (支援年月篩選) 
         /// </summary>
 
         private async Task<List<CaseManagementViewModel>> GetPatientHistoryAsync(string idNumber, int? year, int? month)
@@ -1699,7 +1698,7 @@ namespace healthProject.Controllers
             return records;
         }
 
-        // 根據 ID 取得紀錄 (完整版 - 包含所有欄位)
+        // 根據 ID 取得紀錄 (包含所有欄位)
         private async Task<CaseManagementViewModel> GetRecordByIdAsync(int id)
         {
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
@@ -2136,7 +2135,7 @@ namespace healthProject.Controllers
         }
 
         // ========================================
-        // 💾 儲存新紀錄 (完整版 - 支援所有欄位)
+        // 💾 儲存新紀錄 (支援所有欄位)
         // ========================================
         private async Task SaveRecordAsync(CaseManagementViewModel model)
         {
@@ -2602,7 +2601,7 @@ namespace healthProject.Controllers
         }
 
         /// <summary>
-        /// 🎯 修正後的 Helper: 取得所有符合條件的未填寫紀錄，並包含 CaseManagement 中的性別/生日/722狀態。
+        /// 🎯 取得所有符合條件的未填寫紀錄，並包含 CaseManagement 中的性別/生日/722狀態。
         /// </summary>
         private async Task<List<MissedRecordViewModel>> GetMissedRecordsAndCaseInfoAsync(string searchIdNumber = null, DateTime? dateToCheck = null)
         {
@@ -2611,13 +2610,13 @@ namespace healthProject.Controllers
 
             var allMissedRecords = new List<MissedRecordViewModel>();
 
-            // 🎯 修正 1: 定義計算基準日
+            // 🎯定義計算基準日
             DateTime endDate = dateToCheck?.Date ?? DateTime.Today.Date;
 
             using var conn = new NpgsqlConnection(connStr);
             await conn.OpenAsync();
 
-            // 修正 SQL: 合併 Users, Today 和 CaseManagement 的最新紀錄
+            // 合併 Users, Today 和 CaseManagement 的最新紀錄
             string sql = @"
                 SELECT 
                     u.""Id"" as UserId, u.""IDNumber"", u.""FullName"", u.""PhoneNumber"",
@@ -2657,7 +2656,7 @@ namespace healthProject.Controllers
                     int missedDays = 0;
                     if (lastRecordDate.HasValue)
                     {
-                        // 🎯 修正 2: 使用 endDate (檢查日) 計算 MissedDays
+                        // 🎯 使用 endDate (檢查日) 計算 MissedDays
                         missedDays = (endDate - lastRecordDate.Value.Date).Days;
                     }
                     else
@@ -2706,7 +2705,7 @@ namespace healthProject.Controllers
             var userIds = trackingCandidates.Select(x => x.UserId).ToArray();
             if (!userIds.Any()) return new List<MissedRecordViewModel>();
 
-            // 🎯 修改查詢：除了檢查是否有記錄，還要取得實際血壓值
+            // 🎯 除了檢查是否有記錄，還要取得實際血壓值
             string todaySql = @"
         SELECT 
             ""UserId"",
@@ -2785,7 +2784,7 @@ namespace healthProject.Controllers
                     item.IsMorningMissing = !status.HasMorning;
                     item.IsEveningMissing = !status.HasEvening;
 
-                    // 🆕 設定血壓值
+                    // 設定血壓值
                     item.MorningSystolic1 = status.MorningSys1;
                     item.MorningDiastolic1 = status.MorningDia1;
                     item.MorningSystolic2 = status.MorningSys2;

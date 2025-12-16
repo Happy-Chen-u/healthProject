@@ -173,7 +173,7 @@ namespace healthProject.Models
 
         public string? Notes { get; set; }
 
-        // ⭐ 新增：用於傳遞多筆評估記錄到 View (不對應資料庫欄位)
+        // 用於傳遞多筆評估記錄到 View (不對應資料庫欄位)
         [NotMapped]
         public List<EvaluationRecord> EvaluationRecords { get; set; } = new List<EvaluationRecord>();
 

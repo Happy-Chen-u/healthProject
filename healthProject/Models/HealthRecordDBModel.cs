@@ -11,7 +11,7 @@ namespace healthProject.Models
         public TimeSpan? RecordTime { get; set; }
 
         
-        // ✅ 血壓 - 8個欄位
+        //  血壓 - 8個欄位
         public decimal? BP_First_1_Systolic { get; set; }
         public decimal? BP_First_1_Diastolic { get; set; }
         public decimal? BP_First_2_Systolic { get; set; }
@@ -83,7 +83,7 @@ namespace healthProject.Models
                 BloodSugar = BloodSugar
             };
 
-            // 🆕 重建輸入框的顯示值 (用於編輯時)
+            //  重建輸入框的顯示值 (用於編輯時)
             if (BP_First_1_Systolic.HasValue && BP_First_1_Diastolic.HasValue)
                 vm.BP_First_1_Input = $"{BP_First_1_Systolic}/{BP_First_1_Diastolic}";
 
@@ -157,7 +157,7 @@ namespace healthProject.Models
             }
         }
 
-        // 🆕 三餐總計
+        //  三餐總計
         public class MealTotal
         {
             public decimal NumericTotal { get; set; }  // 數字總和

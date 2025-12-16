@@ -35,7 +35,7 @@ namespace healthProject.Models
 
         public TimeSpan? RecordTime { get; set; }
 
-        // ✅ 只保留這 8 個數字欄位
+        // 只保留這 8 個數字欄位
         public decimal? BP_First_1_Systolic { get; set; }
         public decimal? BP_First_1_Diastolic { get; set; }
         public decimal? BP_First_2_Systolic { get; set; }

@@ -60,7 +60,6 @@ namespace healthProject.Controllers
 
 
         // 檢查是否有新的未填寫記錄(管理者未查看過的)
-        // 🆕 檢查是否有新的未填寫記錄(管理者未查看過的)
         private async Task<bool> CheckHasNewMissedRecordsAsync()
         {
             try
@@ -129,7 +128,6 @@ namespace healthProject.Controllers
         }
 
 
-        // 🆕 清除未讀提醒（管理者點擊「個案填寫狀況」後呼叫）
 
 
         // 隱私頁面

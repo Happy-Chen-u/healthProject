@@ -31,7 +31,7 @@
         public decimal? EveningSystolic2 { get; set; }
         public decimal? EveningDiastolic2 { get; set; }
 
-        // 🆕 計算平均血壓
+        //  計算平均血壓
         public string MorningBPDisplay
         {
             get

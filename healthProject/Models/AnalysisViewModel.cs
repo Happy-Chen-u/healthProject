@@ -57,17 +57,17 @@ namespace healthProject.Models
         public int LowExerciseDays { get; set; }
         public decimal LowExercisePercentage => TotalDays > 0 ? (decimal)LowExerciseDays / TotalDays * 100 : 0;
 
-        // 🆕 抽菸
+        // 抽菸
         public decimal? AvgCigarettes { get; set; }
         public int SmokingDays { get; set; }
         public decimal TotalCigarettes { get; set; }
 
-        // 🆕 檳榔
+        // 檳榔
         public decimal? AvgBetelNut { get; set; }
         public int BetelNutDays { get; set; }
         public decimal TotalBetelNut { get; set; }
 
-        // 🆕 三餐平均
+        // 三餐平均
         public decimal? AvgVegetables { get; set; }
         public decimal? AvgProtein { get; set; }
         public decimal? AvgCarbs { get; set; }
@@ -81,20 +81,20 @@ namespace healthProject.Models
         public List<ChartPoint> WaterIntakeData { get; set; } = new();
         public List<ChartPoint> ExerciseDurationData { get; set; } = new();
 
-        // 🆕 抽菸檳榔數據
+        //  抽菸檳榔數據
         public List<ChartPoint> CigarettesData { get; set; } = new();
         public List<ChartPoint> BetelNutData { get; set; } = new();
 
         public List<MealRecord> MealRecords { get; set; } = new();
         public List<BeverageRecord> BeverageRecords { get; set; } = new();
 
-        // 🆕 週/月三餐統計
+        //  週/月三餐統計
         public MealSummary WeeklyMealSummary { get; set; }
         public MealSummary MonthlyMealSummary { get; set; }
         public MealSummary YearlyMealSummary { get; set; }
     }
 
-    // 🆕 三餐統計摘要
+    //  三餐統計摘要
     public class MealSummary
     {
         public decimal TotalVegetables { get; set; }
@@ -119,10 +119,10 @@ namespace healthProject.Models
     {
         public string Date { get; set; }
         public string Meals { get; set; }  // 保留舊格式(給 PDF 用)
-        public MealStatistics MealData { get; set; }  // 🆕 新格式(給前端用)
+        public MealStatistics MealData { get; set; }  //  新格式(給前端用)
     }
 
-    // 🆕 三餐統計資料結構
+    //  三餐統計資料結構
     public class MealStatistics
     {
         public List<string> Vegetables { get; set; } = new();

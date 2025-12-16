@@ -229,7 +229,7 @@ namespace healthProject.Controllers
         }
 
         // ========================================
-        // 🔍 產生分析報表 (修正版 - 年報表特殊處理)
+        // 🔍 產生分析報表 (年報表特殊處理)
         // ========================================
         private async Task<AnalysisViewModel> GenerateAnalysisAsync(
             int userId,
@@ -502,7 +502,7 @@ namespace healthProject.Controllers
         {
             try
             {
-                // 1️⃣ 取得登入使用者 ID (修正)
+                // 1️ 取得登入使用者 ID (修正)
                 var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userIdClaim))
                 {
@@ -511,20 +511,20 @@ namespace healthProject.Controllers
 
                 var userId = int.Parse(userIdClaim);
 
-                // 2️⃣ 查出使用者資料
+                // 2️ 查出使用者資料
                 var user = await GetUserByIdAsync(userId);
                 if (user == null)
                 {
                     return Json(new { success = false, message = "找不到使用者資料" });
                 }
 
-                // 3️⃣ 檢查是否已綁定 LINE
+                // 3️ 檢查是否已綁定 LINE
                 if (string.IsNullOrEmpty(user.LineUserId))
                 {
                     return Json(new { success = false, message = "您尚未綁定 LINE 帳號,無法傳送週報" });
                 }
 
-                // 4️⃣ 計算上週日期 (週一到週日)
+                // 4️ 計算上週日期 (週一到週日)
                 var today = DateTime.Today;
                 var dayOfWeek = (int)today.DayOfWeek;
 
@@ -535,7 +535,7 @@ namespace healthProject.Controllers
 
                 _logger.LogInformation($"準備產生週報: {user.FullName} ({lastMonday:yyyy-MM-dd} ~ {lastSunday:yyyy-MM-dd})");
 
-                // 5️⃣ 呼叫服務產生週報 PDF 並傳 LINE
+                // 5️ 呼叫服務產生週報 PDF 並傳 LINE
                 var scheduledJobService = HttpContext.RequestServices.GetRequiredService<ScheduledJobService>();
                 await scheduledJobService.SendWeeklyReportToUserAsync(user, lastMonday, lastSunday);
 
@@ -631,17 +631,17 @@ WHERE ""Id"" = @UserId";
                     ? records.Where(r => r.ExerciseDuration.HasValue).Average(r => r.ExerciseDuration.Value)
                     : null,
 
-                // 🆕 抽菸
+                //  抽菸
                 TotalCigarettes = totalCigs,
                 AvgCigarettes = records.Count > 0 ? totalCigs / records.Count : 0,
                 SmokingDays = records.Count(r => r.Cigarettes.HasValue && r.Cigarettes.Value > 0),
 
-                // 🆕 檳榔
+                //  檳榔
                 TotalBetelNut = totalBetel,
                 AvgBetelNut = records.Count > 0 ? totalBetel / records.Count : 0,
                 BetelNutDays = records.Count(r => r.BetelNut.HasValue && r.BetelNut.Value > 0),
 
-                // 🆕 三餐平均
+                //  三餐平均
                 AvgVegetables = mealStats.AvgVegetables,
                 AvgProtein = mealStats.AvgProtein,
                 AvgCarbs = mealStats.AvgCarbs,
@@ -664,7 +664,7 @@ WHERE ""Id"" = @UserId";
             return stats;
         }
 
-        // 🆕 計算三餐統計
+        //  計算三餐統計
         private MealSummary CalculateMealStatistics(List<HealthRecordViewModel> records)
         {
             var totalVeg = 0m;
@@ -704,7 +704,7 @@ WHERE ""Id"" = @UserId";
         }
 
         // ========================================
-        // 🆕 建立每日三餐統計摘要
+        //  建立每日三餐統計摘要
         // ========================================
         private MealSelection CreateDailyMealSummary(DailyRecordGroup dailyGroup, string mealType)
         {
@@ -733,7 +733,7 @@ WHERE ""Id"" = @UserId";
 
 
         // ========================================
-        // 🆕 修改：合併三餐項目，計算總和而不是顯示算式
+        //  修改：合併三餐項目，計算總和而不是顯示算式
         // ========================================
         private string CombineMealItem(IEnumerable<string> items)
         {
@@ -788,7 +788,7 @@ WHERE ""Id"" = @UserId";
 
        
         // ========================================
-        // 📊 產生圖表數據 (修正版)
+        // 📊 產生圖表數據 
         // ========================================
         private ChartData GenerateChartData(List<HealthRecordViewModel> records, ReportType reportType)
         {
@@ -1019,8 +1019,7 @@ WHERE ""Id"" = @UserId";
         }
 
         // ========================================
-        // 🆕 新增輔助方法：計算三餐項目總和
-        // 加在 AnalysisController 類別中
+        // 新增輔助方法：計算三餐項目總和
         // ========================================
         private string CalculateMealTotal(List<string> items)
         {
@@ -1084,7 +1083,7 @@ WHERE ""Id"" = @UserId";
                     ? null
                     : reader.GetTimeSpan(reader.GetOrdinal("RecordTime")),
 
-                // 🩸 血壓資料 - 8個欄位
+                //  血壓資料 - 8個欄位
                 BP_First_1_Systolic = reader.IsDBNull(reader.GetOrdinal("BP_First_1_Systolic"))
                     ? null : reader.GetDecimal(reader.GetOrdinal("BP_First_1_Systolic")),
                 BP_First_1_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_First_1_Diastolic"))
