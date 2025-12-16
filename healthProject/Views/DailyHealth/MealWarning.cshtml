@@ -218,9 +218,11 @@
         </div>
 
         <div class="button-group">
-            <a href="@Url.Action("Index", "DailyHealth")" class="btn btn-cancel">
+            <a href="@Url.Action("Create", "DailyHealth")" class="btn btn-cancel">
                 ❌ 取消全部
             </a>
+
+
 
             <form method="get" action="@Url.Action("ShowMealChoices", "DailyHealth")" style="display: inline;">
                 <input type="hidden" name="formDataJson" value="@System.Text.Json.JsonSerializer.Serialize(ViewBag.FormData)" />
