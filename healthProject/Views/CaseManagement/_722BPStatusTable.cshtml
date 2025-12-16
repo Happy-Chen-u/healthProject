@@ -5,13 +5,14 @@
     <table class="table table-hover table-bordered align-middle">
         <thead class="table-light">
             <tr>
-                <th style="width:10%">姓名</th>
-                <th style="width:12%">身分證字號</th>
-                <th style="width:12%">生日</th>
-                <th style="width:6%">性別</th>
-                <th style="width:10%">電話</th>
-                <th style="width:10%">上次填寫</th>
-                <th style="width:25%">今日血壓回報狀態 (@DateTime.Today.ToString("MM/dd"))</th>
+                <th style="width:8%">姓名</th>
+                <th style="width:10%">身分證字號</th>
+                <th style="width:10%">生日</th>
+                <th style="width:5%">性別</th>
+                <th style="width:9%">電話</th>
+                <th style="width:9%">上次填寫</th>
+                <th style="width:18%">今日血壓回報狀態 (@DateTime.Today.ToString("MM/dd"))</th>
+                <th style="width:16%">當日血壓值</th>
                 <th style="width:15%">操作</th>
             </tr>
         </thead>
@@ -19,7 +20,7 @@
             @if (!Model.Any())
             {
                 <tr>
-                    <td colspan="8" class="text-center text-muted">目前沒有正在追蹤 722 血壓的個案</td>
+                    <td colspan="9" class="text-center text-muted">目前沒有正在追蹤 722 血壓的個案</td>
                 </tr>
             }
             @foreach (var record in Model.OrderByDescending(r => r.IsBothMissing))
@@ -56,6 +57,30 @@
                         <span class="badge @statusBadgeClass fs-6">
                             @statusText
                         </span>
+                    </td>
+                    <td>
+                        @* 🆕 顯示當日血壓值 *@
+                        <div style="font-size: 0.9rem;">
+                            @if (!string.IsNullOrEmpty(record.MorningBPDisplay) && record.MorningBPDisplay != "--")
+                            {
+                                <div class="mb-1">
+                                    <span class="badge bg-info text-dark me-1">上午</span>
+                                    <strong>@record.MorningBPDisplay</strong>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(record.EveningBPDisplay) && record.EveningBPDisplay != "--")
+                            {
+                                <div>
+                                    <span class="badge bg-primary me-1">睡前</span>
+                                    <strong>@record.EveningBPDisplay</strong>
+                                </div>
+                            }
+                            @if ((string.IsNullOrEmpty(record.MorningBPDisplay) || record.MorningBPDisplay == "--") &&
+                           (string.IsNullOrEmpty(record.EveningBPDisplay) || record.EveningBPDisplay == "--"))
+                            {
+                                <span class="text-muted">尚無數值</span>
+                            }
+                        </div>
                     </td>
                     <td>
                         <a href="@Url.Action("GetPatientRecords", "DailyHealth", new { idNumber = record.IDNumber })"

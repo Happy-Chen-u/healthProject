@@ -45,7 +45,7 @@ namespace healthProject.Controllers
             decimal? BP_First_2_Systolic, decimal? BP_First_2_Diastolic,
             decimal? BP_Second_1_Systolic, decimal? BP_Second_1_Diastolic,
             decimal? BP_Second_2_Systolic, decimal? BP_Second_2_Diastolic,
-            bool? BP_Morning_NotMeasured, bool? BP_Evening_NotMeasured, // 🆕 新增
+            bool? BP_Morning_NotMeasured, bool? BP_Evening_NotMeasured,
             string? Meals_Breakfast, string? Meals_Lunch, string? Meals_Dinner,
             string? ExerciseType, decimal? ExerciseDuration,
             decimal? WaterIntake, string? Beverage,
@@ -59,7 +59,7 @@ namespace healthProject.Controllers
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var todayRecords = await GetUserRecordsByDateAsync(userId, DateTime.Today);
 
-            // 🎯 修正點 (邏輯 1: 檢查當日是否已完成該時段的完整紀錄)
+            // 🎯 檢查當日是否已完成該時段的完整紀錄（四個數值都有）
             bool isMorningCompleted = todayRecords.Any(r =>
                 r.BP_First_1_Systolic.HasValue && r.BP_First_1_Diastolic.HasValue &&
                 r.BP_First_2_Systolic.HasValue && r.BP_First_2_Diastolic.HasValue);
@@ -72,7 +72,7 @@ namespace healthProject.Controllers
             {
                 RecordDate = DateTime.Today,
                 RecordTime = DateTime.Now.TimeOfDay,
-                // 傳遞完成狀態給 ViewModel 的驗證邏輯
+                // 🆕 傳遞完成狀態給 ViewModel（用於前端鎖定判斷）
                 IsMorningCompletedToday = isMorningCompleted,
                 IsEveningCompletedToday = isEveningCompleted,
             };
@@ -89,7 +89,6 @@ namespace healthProject.Controllers
                 model.BP_Second_1_Diastolic = BP_Second_1_Diastolic;
                 model.BP_Second_2_Systolic = BP_Second_2_Systolic;
                 model.BP_Second_2_Diastolic = BP_Second_2_Diastolic;
-                // 恢復血壓狀態
                 model.BP_Morning_NotMeasured = BP_Morning_NotMeasured;
                 model.BP_Evening_NotMeasured = BP_Evening_NotMeasured;
 
@@ -113,8 +112,6 @@ namespace healthProject.Controllers
             return View(model);
         }
 
-
-
         // ========================================
         // 新增今日紀錄 - POST (提交表單)
         // ========================================
@@ -122,7 +119,7 @@ namespace healthProject.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(HealthRecordViewModel model,
-    string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
+            string Meals_Breakfast, string Meals_Lunch, string Meals_Dinner)
         {
             ModelState.Remove("Meals_Breakfast");
             ModelState.Remove("Meals_Lunch");
@@ -146,8 +143,49 @@ namespace healthProject.Controllers
                 r.BP_Second_1_Systolic.HasValue && r.BP_Second_1_Diastolic.HasValue &&
                 r.BP_Second_2_Systolic.HasValue && r.BP_Second_2_Diastolic.HasValue);
 
+            // ========================================
+            // 🎯 新增驗證 1: 檢查是否「只勾選尚未測量」而沒有其他資料
+            // ========================================
+            bool morningNotMeasuredChecked = model.BP_Morning_NotMeasured == true;
+            bool eveningNotMeasuredChecked = model.BP_Evening_NotMeasured == true;
 
+            bool hasMorningBP = model.BP_First_1_Systolic.HasValue || model.BP_First_1_Diastolic.HasValue ||
+                                model.BP_First_2_Systolic.HasValue || model.BP_First_2_Diastolic.HasValue;
 
+            bool hasEveningBP = model.BP_Second_1_Systolic.HasValue || model.BP_Second_1_Diastolic.HasValue ||
+                                model.BP_Second_2_Systolic.HasValue || model.BP_Second_2_Diastolic.HasValue;
+
+            // 檢查是否有其他任何資料
+            bool hasAnyOtherData = !string.IsNullOrEmpty(Meals_Breakfast) || !string.IsNullOrEmpty(Meals_Lunch) ||
+                                   !string.IsNullOrEmpty(Meals_Dinner) || !string.IsNullOrEmpty(model.ExerciseType) ||
+                                   model.ExerciseDuration.HasValue || model.WaterIntake.HasValue ||
+                                   !string.IsNullOrEmpty(model.Beverage) || model.Cigarettes.HasValue ||
+                                   model.BetelNut.HasValue || model.BloodSugar.HasValue;
+
+            // 🚨 情況 1: 兩個時段都勾選「尚未測量」，且沒有填寫任何其他資料
+            if (morningNotMeasuredChecked && eveningNotMeasuredChecked && !hasAnyOtherData)
+            {
+                TempData["BPWarnings"] = "🔴 您只勾選了「尚未測量」但未填寫任何數值，請至少填寫一項健康資訊。";
+                return View(model);
+            }
+
+            // 🚨 情況 2: 上午時段勾選「尚未測量」，睡前時段也沒填（且已完成），其他資料也沒填
+            if (morningNotMeasuredChecked && model.IsEveningCompletedToday && !hasEveningBP && !hasAnyOtherData)
+            {
+                TempData["BPWarnings"] = "🔴 您只勾選了「上午尚未測量」但未填寫任何其他數值，請至少填寫一項健康資訊。";
+                return View(model);
+            }
+
+            // 🚨 情況 3: 睡前時段勾選「尚未測量」，上午時段也沒填（且已完成），其他資料也沒填
+            if (eveningNotMeasuredChecked && model.IsMorningCompletedToday && !hasMorningBP && !hasAnyOtherData)
+            {
+                TempData["BPWarnings"] = "🔴 您只勾選了「睡前尚未測量」但未填寫任何其他數值，請至少填寫一項健康資訊。";
+                return View(model);
+            }
+
+            // ========================================
+            // 血壓數值驗證
+            // ========================================
             var bpWarnings = model.ValidateBloodPressure();
             if (bpWarnings.Any())
             {
@@ -160,81 +198,7 @@ namespace healthProject.Controllers
             }
 
             // ========================================
-            // 🎯 新增邏輯: 當兩個時段都已完成時,檢查是否「完全沒填寫任何數值」
-            // ========================================
-            if (model.IsMorningCompletedToday && model.IsEveningCompletedToday)
-            {
-                // 檢查是否有任何資料
-                bool hasAnyData = false;
-
-                
-
-                // 檢查三餐
-                if (!string.IsNullOrEmpty(Meals_Breakfast) || !string.IsNullOrEmpty(Meals_Lunch) || !string.IsNullOrEmpty(Meals_Dinner))
-                {
-                    hasAnyData = true;
-                }
-
-                // 檢查其他欄位
-                if (!string.IsNullOrEmpty(model.ExerciseType) || model.ExerciseDuration.HasValue ||
-                    model.WaterIntake.HasValue || !string.IsNullOrEmpty(model.Beverage) ||
-                    model.Cigarettes.HasValue || model.BetelNut.HasValue || model.BloodSugar.HasValue)
-                {
-                    hasAnyData = true;
-                }
-
-                
-                // 如果完全沒填寫任何資料,則顯示錯誤並返回
-                if (!hasAnyData)
-                {
-                    TempData["BPWarnings"] = "🔴 尚未填寫任何數值。";
-                    return View(model);
-                }
-            }
-
-            // ========================================
-            // 🔍 血壓重複檢查
-            // ========================================
-            bool todayHasFirstBP = todayRecords.Any(r =>
-                r.BP_First_1_Systolic.HasValue || r.BP_First_1_Diastolic.HasValue ||
-                r.BP_First_2_Systolic.HasValue || r.BP_First_2_Diastolic.HasValue
-            );
-
-            bool todayHasSecondBP = todayRecords.Any(r =>
-                r.BP_Second_1_Systolic.HasValue || r.BP_Second_1_Diastolic.HasValue ||
-                r.BP_Second_2_Systolic.HasValue || r.BP_Second_2_Diastolic.HasValue
-            );
-
-            bool currentHasFirstBP = (model.BP_Morning_NotMeasured != true) &&
-                                     (model.BP_First_1_Systolic.HasValue || model.BP_First_1_Diastolic.HasValue ||
-                                      model.BP_First_2_Systolic.HasValue || model.BP_First_2_Diastolic.HasValue);
-
-            bool currentHasSecondBP = (model.BP_Evening_NotMeasured != true) &&
-                                      (model.BP_Second_1_Systolic.HasValue || model.BP_Second_1_Diastolic.HasValue ||
-                                       model.BP_Second_2_Systolic.HasValue || model.BP_Second_2_Diastolic.HasValue);
-
-            bool hasOtherData = !string.IsNullOrEmpty(Meals_Breakfast) || !string.IsNullOrEmpty(Meals_Lunch) ||
-                                !string.IsNullOrEmpty(Meals_Dinner) || !string.IsNullOrEmpty(model.ExerciseType) ||
-                                model.ExerciseDuration.HasValue || model.WaterIntake.HasValue ||
-                                !string.IsNullOrEmpty(model.Beverage) || model.Cigarettes.HasValue ||
-                                model.BetelNut.HasValue || model.BloodSugar.HasValue;
-
-            bool hasDuplicatedBP = false;
-            string bpSection = "";
-
-            if (currentHasFirstBP && todayHasFirstBP)
-            {
-                hasDuplicatedBP = true;
-                bpSection = "第一次 (上午)";
-            }
-            else if (currentHasSecondBP && todayHasSecondBP)
-            {
-                hasDuplicatedBP = true;
-                bpSection = "第二次 (睡前)";
-            }
-
-            // ========================================
-            // 🍽️ 三餐重複檢查
+            // 🍽️ 三餐重複檢查（保留此邏輯）
             // ========================================
             var duplicatedMeals = new List<string>();
             var existingMeals = new Dictionary<string, MealSelection>();
@@ -270,79 +234,8 @@ namespace healthProject.Controllers
             }
 
             // ========================================
-            // 🎯 處理重複情況
+            // 🎯 處理三餐重複情況（保留）
             // ========================================
-
-            // 情況1: 血壓重複 + 三餐也重複
-            if (hasDuplicatedBP && duplicatedMeals.Any())
-            {
-                ViewBag.BPWarningMessage = $"⚠️ 您今天已記錄過【{bpSection}】的血壓數據。若要修改請使用『編輯』功能,請勿重複新增。";
-                ViewBag.HasOtherData = hasOtherData;
-                ViewBag.HasDuplicatedMeals = true;
-                ViewBag.DuplicatedMealsList = duplicatedMeals;
-                ViewBag.ExistingMeals = existingMeals;
-
-                ViewBag.FormData = new
-                {
-                    model.BP_First_1_Systolic,
-                    model.BP_First_1_Diastolic,
-                    model.BP_First_2_Systolic,
-                    model.BP_First_2_Diastolic,
-                    model.BP_Second_1_Systolic,
-                    model.BP_Second_1_Diastolic,
-                    model.BP_Second_2_Systolic,
-                    model.BP_Second_2_Diastolic,
-                    BP_Morning_NotMeasured = model.BP_Morning_NotMeasured ?? false,
-                    BP_Evening_NotMeasured = model.BP_Evening_NotMeasured ?? false,
-                    Meals_Breakfast,
-                    Meals_Lunch,
-                    Meals_Dinner,
-                    model.ExerciseType,
-                    model.ExerciseDuration,
-                    model.WaterIntake,
-                    model.Beverage,
-                    model.Cigarettes,
-                    model.BetelNut,
-                    model.BloodSugar
-                };
-
-                return View("BPWarning", model);
-            }
-
-            // 情況2: 只有血壓重複
-            if (hasDuplicatedBP)
-            {
-                ViewBag.BPWarningMessage = $"⚠️ 您今天已記錄過【{bpSection}】的血壓數據。若要修改請使用『編輯』功能,請勿重複新增。";
-                ViewBag.HasOtherData = hasOtherData;
-
-                ViewBag.FormData = new
-                {
-                    model.BP_First_1_Systolic,
-                    model.BP_First_1_Diastolic,
-                    model.BP_First_2_Systolic,
-                    model.BP_First_2_Diastolic,
-                    model.BP_Second_1_Systolic,
-                    model.BP_Second_1_Diastolic,
-                    model.BP_Second_2_Systolic,
-                    model.BP_Second_2_Diastolic,
-                    BP_Morning_NotMeasured = model.BP_Morning_NotMeasured ?? false,
-                    BP_Evening_NotMeasured = model.BP_Evening_NotMeasured ?? false,
-                    Meals_Breakfast,
-                    Meals_Lunch,
-                    Meals_Dinner,
-                    model.ExerciseType,
-                    model.ExerciseDuration,
-                    model.WaterIntake,
-                    model.Beverage,
-                    model.Cigarettes,
-                    model.BetelNut,
-                    model.BloodSugar
-                };
-
-                return View("BPWarning", model);
-            }
-
-            // 情況3: 血壓未重複,但三餐重複
             if (duplicatedMeals.Any())
             {
                 ViewBag.DuplicatedMealsList = duplicatedMeals;
@@ -353,7 +246,7 @@ namespace healthProject.Controllers
                                                   model.ExerciseDuration.HasValue || model.WaterIntake.HasValue ||
                                                   !string.IsNullOrEmpty(model.Beverage) || model.Cigarettes.HasValue ||
                                                   model.BetelNut.HasValue || model.BloodSugar.HasValue ||
-                                                  currentHasFirstBP || currentHasSecondBP;
+                                                  hasMorningBP || hasEveningBP;
 
                 ViewBag.HasOtherData = hasOtherDataExcludingMeals;
 
@@ -395,6 +288,7 @@ namespace healthProject.Controllers
 
             return View("Confirm", model);
         }
+
 
 
 

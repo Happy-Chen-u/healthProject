@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using System.Text.Json; 
+using System.Text.Json;
 using System;
 using System.Collections.Generic;
 
@@ -29,8 +29,8 @@ namespace healthProject.Controllers
             _logger = logger;
         }
 
-        
-        
+
+
 
         // 新增個案頁面 (管理者)
         [Authorize(Roles = "Admin")]
@@ -40,7 +40,7 @@ namespace healthProject.Controllers
             return View();
         }
 
-        
+
         // 處理提交
         [Authorize(Roles = "Admin")]
         [HttpPost]
@@ -1489,7 +1489,7 @@ namespace healthProject.Controllers
         /// <summary>
         /// 取得個案所有歷史記錄 (支援年月篩選) - 完整版
         /// </summary>
-        
+
         private async Task<List<CaseManagementViewModel>> GetPatientHistoryAsync(string idNumber, int? year, int? month)
         {
             var records = new List<CaseManagementViewModel>();
@@ -2706,47 +2706,98 @@ namespace healthProject.Controllers
             var userIds = trackingCandidates.Select(x => x.UserId).ToArray();
             if (!userIds.Any()) return new List<MissedRecordViewModel>();
 
-            // 查詢指定日期是否有有效紀錄 (數值或勾選尚未測量)
+            // 🎯 修改查詢：除了檢查是否有記錄，還要取得實際血壓值
             string todaySql = @"
-                SELECT 
-                    ""UserId"",
-                    BOOL_OR(""BP_First_1_Systolic"" IS NOT NULL OR ""BP_First_2_Systolic"" IS NOT NULL OR ""BP_Morning_NotMeasured"" = TRUE) AS HasMorningRecord,
-                    BOOL_OR(""BP_Second_1_Systolic"" IS NOT NULL OR ""BP_Second_2_Systolic"" IS NOT NULL OR ""BP_Evening_NotMeasured"" = TRUE) AS HasEveningRecord
-                FROM public.""Today""
-                WHERE ""UserId"" = ANY(@UserIds) AND ""RecordDate"" = @Today
-                GROUP BY ""UserId"";
-            ";
+        SELECT 
+            ""UserId"",
+            BOOL_OR(""BP_First_1_Systolic"" IS NOT NULL OR ""BP_First_2_Systolic"" IS NOT NULL OR ""BP_Morning_NotMeasured"" = TRUE) AS HasMorningRecord,
+            BOOL_OR(""BP_Second_1_Systolic"" IS NOT NULL OR ""BP_Second_2_Systolic"" IS NOT NULL OR ""BP_Evening_NotMeasured"" = TRUE) AS HasEveningRecord,
+            MAX(""BP_First_1_Systolic"") FILTER (WHERE ""BP_First_1_Systolic"" IS NOT NULL) AS MorningSystolic1,
+            MAX(""BP_First_1_Diastolic"") FILTER (WHERE ""BP_First_1_Diastolic"" IS NOT NULL) AS MorningDiastolic1,
+            MAX(""BP_First_2_Systolic"") FILTER (WHERE ""BP_First_2_Systolic"" IS NOT NULL) AS MorningSystolic2,
+            MAX(""BP_First_2_Diastolic"") FILTER (WHERE ""BP_First_2_Diastolic"" IS NOT NULL) AS MorningDiastolic2,
+            MAX(""BP_Second_1_Systolic"") FILTER (WHERE ""BP_Second_1_Systolic"" IS NOT NULL) AS EveningSystolic1,
+            MAX(""BP_Second_1_Diastolic"") FILTER (WHERE ""BP_Second_1_Diastolic"" IS NOT NULL) AS EveningDiastolic1,
+            MAX(""BP_Second_2_Systolic"") FILTER (WHERE ""BP_Second_2_Systolic"" IS NOT NULL) AS EveningSystolic2,
+            MAX(""BP_Second_2_Diastolic"") FILTER (WHERE ""BP_Second_2_Diastolic"" IS NOT NULL) AS EveningDiastolic2
+        FROM public.""Today""
+        WHERE ""UserId"" = ANY(@UserIds) AND ""RecordDate"" = @Today
+        GROUP BY ""UserId"";
+    ";
 
-            var todayStatus = new Dictionary<int, (bool HasMorning, bool HasEvening)>();
+            var todayStatus = new Dictionary<int, (bool HasMorning, bool HasEvening,
+                decimal? MorningSys1, decimal? MorningDia1, decimal? MorningSys2, decimal? MorningDia2,
+                decimal? EveningSys1, decimal? EveningDia1, decimal? EveningSys2, decimal? EveningDia2)>();
+
             using var conn = new NpgsqlConnection(connStr);
             await conn.OpenAsync();
             using var todayCmd = new NpgsqlCommand(todaySql, conn);
             todayCmd.Parameters.AddWithValue("@UserIds", userIds);
-            todayCmd.Parameters.AddWithValue("@Today", checkDate); // 🎯 修正點：使用 checkDate
+            todayCmd.Parameters.AddWithValue("@Today", checkDate);
 
             using (var todayReader = await todayCmd.ExecuteReaderAsync())
             {
                 while (await todayReader.ReadAsync())
                 {
-                    todayStatus.Add(todayReader.GetInt32(0), (
-                        HasMorning: todayReader.GetBoolean(1),
-                        HasEvening: todayReader.GetBoolean(2)
+                    int userId = todayReader.GetInt32(0);
+
+                    // 安全地讀取 boolean 值
+                    bool hasMorning = false;
+                    bool hasEvening = false;
+
+                    if (!todayReader.IsDBNull(1))
+                        hasMorning = todayReader.GetBoolean(1);
+
+                    if (!todayReader.IsDBNull(2))
+                        hasEvening = todayReader.GetBoolean(2);
+
+                    // 讀取血壓值
+                    decimal? morningSys1 = todayReader.IsDBNull(3) ? null : todayReader.GetDecimal(3);
+                    decimal? morningDia1 = todayReader.IsDBNull(4) ? null : todayReader.GetDecimal(4);
+                    decimal? morningSys2 = todayReader.IsDBNull(5) ? null : todayReader.GetDecimal(5);
+                    decimal? morningDia2 = todayReader.IsDBNull(6) ? null : todayReader.GetDecimal(6);
+                    decimal? eveningSys1 = todayReader.IsDBNull(7) ? null : todayReader.GetDecimal(7);
+                    decimal? eveningDia1 = todayReader.IsDBNull(8) ? null : todayReader.GetDecimal(8);
+                    decimal? eveningSys2 = todayReader.IsDBNull(9) ? null : todayReader.GetDecimal(9);
+                    decimal? eveningDia2 = todayReader.IsDBNull(10) ? null : todayReader.GetDecimal(10);
+
+                    todayStatus.Add(userId, (
+                        HasMorning: hasMorning,
+                        HasEvening: hasEvening,
+                        MorningSys1: morningSys1,
+                        MorningDia1: morningDia1,
+                        MorningSys2: morningSys2,
+                        MorningDia2: morningDia2,
+                        EveningSys1: eveningSys1,
+                        EveningDia1: eveningDia1,
+                        EveningSys2: eveningSys2,
+                        EveningDia2: eveningDia2
                     ));
                 }
             }
 
-            // 更新缺失狀態
+            // 更新缺失狀態和血壓值
             foreach (var item in trackingCandidates)
             {
                 if (todayStatus.TryGetValue(item.UserId, out var status))
                 {
-                    // 有紀錄：根據查詢結果設定缺失狀態
+                    // 設定缺失狀態
                     item.IsMorningMissing = !status.HasMorning;
                     item.IsEveningMissing = !status.HasEvening;
+
+                    // 🆕 設定血壓值
+                    item.MorningSystolic1 = status.MorningSys1;
+                    item.MorningDiastolic1 = status.MorningDia1;
+                    item.MorningSystolic2 = status.MorningSys2;
+                    item.MorningDiastolic2 = status.MorningDia2;
+                    item.EveningSystolic1 = status.EveningSys1;
+                    item.EveningDiastolic1 = status.EveningDia1;
+                    item.EveningSystolic2 = status.EveningSys2;
+                    item.EveningDiastolic2 = status.EveningDia2;
                 }
                 else
                 {
-                    // 🎯 修正點：沒有紀錄 (例如徐小美的情況) -> 標記為完全缺失
+                    // 沒有紀錄 -> 標記為完全缺失
                     item.IsMorningMissing = true;
                     item.IsEveningMissing = true;
                 }
