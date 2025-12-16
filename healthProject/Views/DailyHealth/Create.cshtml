@@ -382,14 +382,35 @@
                         <h4 style="margin: 0; color: #F57C00; font-weight: 700;">第一次 (上午)</h4>
                     </div>
                     <!-- 🆕 尚未測量 checkbox - 根據完成狀態決定是否鎖定 -->
-                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: @(Model.IsMorningCompletedToday ? "not-allowed" : "pointer"); background: rgba(255,255,255,0.8); padding: 0.5rem 1rem; border-radius: 8px; border: 2px solid #FFB300; @(Model.IsMorningCompletedToday ? "opacity: 0.6;" : "")">
-                        <input type="checkbox" 
-                               id="morning_not_measured" 
-                               onchange="toggleMorningBP(this.checked)" 
-                               style="width: 18px; height: 18px; cursor: @(Model.IsMorningCompletedToday ? "not-allowed" : "pointer");"
-                               @(Model.IsMorningCompletedToday ? "disabled" : "")>
-                        <span style="color: #E65100; font-weight: 600;">尚未測量</span>
-                    </label>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
+
+                            <label style="display: flex; align-items: center; gap: 0.5rem;
+                                          cursor: @(Model.IsMorningCompletedToday ? "not-allowed" : "pointer");
+                                          background: rgba(255,255,255,0.8);
+                                          padding: 0.5rem 1rem;
+                                          border-radius: 8px;
+                                          border: 2px solid #FFB300;
+                                          @(Model.IsMorningCompletedToday ? "opacity: 0.6;" : "")">
+
+                                <input type="checkbox"
+                                       id="morning_not_measured"
+                                       onchange="toggleMorningBP(this.checked)"
+                                       style="width: 18px; height: 18px;
+                                              cursor: @(Model.IsMorningCompletedToday ? "not-allowed" : "pointer");"
+                                       @(Model.IsMorningCompletedToday ? "disabled" : "")>
+
+                                <span style="color: #E65100; font-weight: 600;">尚未測量</span>
+                            </label>
+
+                            @* 🔒 鎖定原因提示 *@
+                            @if (Model.IsMorningCompletedToday)
+                            {
+                                <div style="font-size: 0.8rem; color: #BF360C; font-weight: 600; text-align: right;">
+                                    已完成今日上午血壓，<br />
+                                    若要修改請至「我的紀錄」
+                                </div>
+                            }
+                        </div>
                 </div>
 
                 <!-- 第一遍 -->
@@ -479,14 +500,35 @@
                         <h4 style="margin: 0; color: #6A1B9A; font-weight: 700;">第二次 (睡前)</h4>
                     </div>
                     <!-- 🆕 尚未測量 checkbox - 根據完成狀態決定是否鎖定 -->
-                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: @(Model.IsEveningCompletedToday ? "not-allowed" : "pointer"); background: rgba(255,255,255,0.8); padding: 0.5rem 1rem; border-radius: 8px; border: 2px solid #AB47BC; @(Model.IsEveningCompletedToday ? "opacity: 0.6;" : "")">
-                        <input type="checkbox" 
-                               id="evening_not_measured" 
-                               onchange="toggleEveningBP(this.checked)" 
-                               style="width: 18px; height: 18px; cursor: @(Model.IsEveningCompletedToday ? "not-allowed" : "pointer");"
-                               @(Model.IsEveningCompletedToday ? "disabled" : "")>
-                        <span style="color: #4A148C; font-weight: 600;">尚未測量</span>
-                    </label>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
+
+                            <label style="display: flex; align-items: center; gap: 0.5rem;
+                                          cursor: @(Model.IsEveningCompletedToday ? "not-allowed" : "pointer");
+                                          background: rgba(255,255,255,0.8);
+                                          padding: 0.5rem 1rem;
+                                          border-radius: 8px;
+                                          border: 2px solid #FFB300;
+                                          @(Model.IsEveningCompletedToday ? "opacity: 0.6;" : "")">
+
+                                <input type="checkbox"
+                                       id="evening_not_measured"
+                                       onchange="toggleEveningBP(this.checked)"
+                                       style="width: 18px; height: 18px;
+                                              cursor: @(Model.IsEveningCompletedToday ? "not-allowed" : "pointer");"
+                                       @(Model.IsEveningCompletedToday ? "disabled" : "")>
+
+                                <span style="color: #E65100; font-weight: 600;">尚未測量</span>
+                            </label>
+
+                            @* 🔒 睡前鎖定原因提示 *@
+                            @if (Model.IsEveningCompletedToday)
+                            {
+                                <div style="font-size: 0.8rem; color: #6B21AB; font-weight: 600; text-align: right;">
+                                    已完成今日睡前血壓，<br />
+                                    若要修改請至「我的紀錄」
+                                </div>
+                            }
+                        </div>
                 </div>
 
                 <!-- 第一遍 -->
