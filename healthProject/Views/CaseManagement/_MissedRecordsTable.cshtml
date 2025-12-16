@@ -135,19 +135,20 @@
                             <td>@(record.LastRecordDate?.ToString("yyyy-MM-dd") ?? "從未填寫")</td>
                             <td>
                                 <a href="@Url.Action("GetPatientRecords", "DailyHealth", new { idNumber = record.IDNumber })"
-                                   class="btn btn-sm btn-primary me-1"
+                                   class="btn btn-sm btn-health me-1"
                                    title="查看健康紀錄">
                                     <i class="bi bi-file-medical"></i> 健康紀錄
                                 </a>
                                 @if (!string.IsNullOrEmpty(record.MissedReason))
                                 {
                                     <button type="button"
-                                            class="btn btn-sm btn-info me-1"
+                                            class="btn btn-sm btn-reason me-1"
                                             data-bs-toggle="modal"
                                             data-bs-target="#reasonModal-@record.UserId"
                                             title="查看未填原因">
                                         <i class="bi bi-chat-left-text"></i> 原因
                                     </button>
+
                                 }
                                 else
                                 {
@@ -168,16 +169,20 @@
                 <div class="modal fade" id="reasonModal-@record.UserId" tabindex="-1" aria-labelledby="reasonModalLabel-@record.UserId" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                         <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="reasonModalLabel-@record.UserId">未填寫原因 - @record.FullName</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                            <div class="modal-header reason-header">
+                                <h5 class="modal-title" id="reasonModalLabel-@record.UserId">
+                                    <i class="bi bi-chat-square-text me-1"></i>
+                                    未填寫原因 - @record.FullName
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
                                 <p><strong>個案:</strong> @record.FullName (@record.IDNumber)</p>
                                 <p><strong>原因:</strong></p>
-                                <div class="alert alert-secondary">
+                                <div class="reason-box">
                                     @record.MissedReason
                                 </div>
+
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>

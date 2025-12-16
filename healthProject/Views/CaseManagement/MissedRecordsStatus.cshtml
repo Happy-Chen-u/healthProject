@@ -136,7 +136,108 @@
             white-space: nowrap;
             text-align: center;
         }
+
+        /* 🔍 查詢按鈕 */
+        .btn-search {
+            background: linear-gradient(135deg, #4f7db8, #3a5f9b);
+            color: #fff;
+            border: none;
+        }
+
+            .btn-search:hover {
+                background: linear-gradient(135deg, #3a5f9b, #2f4f85);
+                color: #fff;
+            }
+
+        /* ✅ 已完成 */
+        .badge-complete {
+            background-color: #3f8f8b;
+            color: #fff;
+        }
+
+        /* ⚠️ 睡前未測 */
+        .badge-missing {
+            background-color: #ffc445;
+            color: #fff;
+        }
+
+        /* 🚨 上午＋睡前都未測 */
+        .badge-danger-soft {
+            background-color: #c84c4c;
+            color: #fff;
+        }
+
+        /* 🌤 上午 */
+        .badge-morning {
+            background-color: #5fa8d3;
+            color: #fff;
+        }
+
+        /* 🌙 睡前 */
+        .badge-evening {
+            background-color: #3b6ea5;
+            color: #fff;
+        }
+
+        /* 📘 健康紀錄按鈕 */
+        .btn-health {
+            background: linear-gradient(135deg, #4fb3a2, #3a9d8f);
+            color: #fff;
+            border: none;
+        }
+
+            .btn-health:hover {
+                background: linear-gradient(135deg, #3a9d8f, #2e7f73);
+                color: #fff;
+            }
+
+        /* 表格 badge 微圓角 */
+        .badge {
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        /* ===== 原因按鈕（質感版） ===== */
+        .btn-reason {
+            background: linear-gradient(135deg, #f6c343, #f0ad4e);
+            border: none;
+            color: #4a3b00;
+            font-weight: 500;
+            box-shadow: 0 2px 6px rgba(240, 173, 78, 0.35);
+            transition: all 0.2s ease-in-out;
+        }
+
+            .btn-reason:hover {
+                background: linear-gradient(135deg, #f0b429, #ec9c2b);
+                color: #3a2e00;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 10px rgba(240, 173, 78, 0.45);
+            }
+
+        /* ===== 原因 Modal 標題 ===== */
+        .modal-header.reason-header {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e6ed;
+        }
+
+            .modal-header.reason-header .modal-title {
+                color: #2c3e50;
+                font-weight: 600;
+            }
+
+        /* ===== 原因內容框（質感重點） ===== */
+        .reason-box {
+            background: #fff8e1;
+            border-left: 5px solid #f0ad4e;
+            color: #5a4a00;
+            padding: 0.75rem 1rem;
+            border-radius: 0.4rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+
     </style>
+
 </head>
 <body>
     <div class="main-container">
@@ -157,7 +258,7 @@
                            value="@ViewBag.SearchIdNumber">
                 </div>
                 <div class="col-md-4">
-                    <button type="submit" class="btn btn-primary me-2">
+                    <button type="submit" class="btn btn-search me-2">
                         <i class="bi bi-search"></i> 查詢
                     </button>
                     <a href="@Url.Action("MissedRecordsStatus")" class="btn btn-secondary">

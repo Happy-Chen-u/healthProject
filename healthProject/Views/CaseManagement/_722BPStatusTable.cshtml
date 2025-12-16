@@ -26,17 +26,17 @@
             @foreach (var record in Model.OrderByDescending(r => r.IsBothMissing))
             {
                 // 決定狀態顏色
-                string statusBadgeClass = "bg-success";
+                string statusBadgeClass = "badge-complete";
                 string statusText = "已完成";
 
                 if (record.IsBothMissing)
                 {
-                    statusBadgeClass = "bg-danger";
+                    statusBadgeClass = "badge-danger-soft";
                     statusText = "上午及睡前均未測";
                 }
                 else if (record.IsMorningMissing || record.IsEveningMissing)
                 {
-                    statusBadgeClass = "bg-warning text-dark";
+                    statusBadgeClass = "badge-missing";
                     statusText = (record.IsMorningMissing ? "上午未測" : "") +
                     (record.IsMorningMissing && record.IsEveningMissing ? " & " : "") +
                     (record.IsEveningMissing ? "睡前未測" : "");
@@ -64,14 +64,14 @@
                             @if (!string.IsNullOrEmpty(record.MorningBPDisplay) && record.MorningBPDisplay != "--")
                             {
                                 <div class="mb-1">
-                                    <span class="badge bg-info text-dark me-1">上午</span>
+                                    <span class="badge badge-morning me-1">上午</span>
                                     <strong>@record.MorningBPDisplay</strong>
                                 </div>
                             }
                             @if (!string.IsNullOrEmpty(record.EveningBPDisplay) && record.EveningBPDisplay != "--")
                             {
                                 <div>
-                                    <span class="badge bg-primary me-1">睡前</span>
+                                    <span class="badge badge-evening me-1">睡前</span>
                                     <strong>@record.EveningBPDisplay</strong>
                                 </div>
                             }
@@ -84,7 +84,7 @@
                     </td>
                     <td>
                         <a href="@Url.Action("GetPatientRecords", "DailyHealth", new { idNumber = record.IDNumber })"
-                           class="btn btn-sm btn-primary me-1" title="查看健康紀錄">
+                               class="btn btn-sm btn-health me-1" title="查看健康紀錄">
                             <i class="bi bi-file-medical"></i> 健康紀錄
                         </a>
                     </td>
