@@ -26,13 +26,13 @@
         }
 
         .confirm-header {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
             color: white;
             padding: 2rem;
             border-radius: 15px;
             text-align: center;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 4px 15px rgba(15, 118, 110, 0.35);
         }
 
         .confirm-header h1 {
@@ -56,10 +56,10 @@
         .section-title {
             font-size: 1.2rem;
             font-weight: 700;
-            color: #8b5cf6;
+            color: #0f766e;
             margin-bottom: 1.5rem;
             padding-bottom: 0.75rem;
-            border-bottom: 3px solid #e2e8f0;
+            border-bottom: 3px solid #cbd5e1;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -75,7 +75,7 @@
             padding: 1rem;
             background: #f8fafc;
             border-radius: 10px;
-            border-left: 4px solid #8b5cf6;
+            border-left: 4px solid #0f766e;
         }
 
         .data-label {
@@ -106,7 +106,7 @@
             background: white;
             padding: 0.75rem;
             border-radius: 8px;
-            border-left: 3px solid #a78bfa;
+            border-left: 3px solid #5eead4;
         }
 
         .bp-label {
@@ -346,9 +346,9 @@
                 </div>
                 @if (Model.AvgSystolicBP.HasValue && Model.AvgDiastolicBP.HasValue)
                 {
-                    <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 8px; text-align: center;">
-                        <strong style="color: #0891b2;">平均血壓:</strong>
-                        <span style="font-size: 1.2rem; font-weight: 700; color: #0e7490;">
+                    <div style="margin-top: 1rem; padding: 1rem; background: #ecfeff; border-radius: 8px; text-align: center;">
+                        <strong style="color: #0f766e;">平均血壓:</strong>
+                        <span style="font-size: 1.2rem; font-weight: 700; color: #115e59;">
                             @Model.AvgSystolicBP.Value.ToString("0") / @Model.AvgDiastolicBP.Value.ToString("0") mmHg
                         </span>
                     </div>
