@@ -114,7 +114,7 @@
         }
 
         .btn {
-            padding: 1rem 2rem;
+            padding: 0.9rem 1.4rem;
             border: none;
             border-radius: 50px;
             font-size: 1.05rem;
@@ -125,7 +125,8 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            white-space: nowrap;
+            white-space: normal;
+            text-align: center;
         }
 
         .btn-cancel {
@@ -161,6 +162,7 @@
         }
 
         @@media (max-width: 768px) {
+
             .warning-container {
                 margin: 1rem;
                 padding: 1.5rem;
@@ -168,11 +170,20 @@
 
             .button-group {
                 flex-direction: column;
+                align-items: stretch; 
             }
+
+                .button-group > a,
+                .button-group > form {
+                    width: 100%;
+                }
 
             .btn {
                 width: 100%;
+                display: flex;
                 justify-content: center;
+                box-sizing: border-box;
+                font-size: 1rem; 
             }
         }
     </style>
