@@ -271,7 +271,7 @@
             }
         }
 
-        /* 測試用 - 顯示驗證碼提示 */
+       
         .test-hint {
             background: #fff7ed;
             border: 2px dashed #fb923c;
@@ -315,7 +315,7 @@
                 </div>
             </div>
 
-            @* 測試用 - 顯示驗證碼 (正式環境請移除) *@
+            @* 測試用 - 顯示驗證碼  *@
             @if (TempData["VerificationCode"] != null)
             {
                 <div class="test-hint">
@@ -467,8 +467,6 @@
         // 重新發送 OTP
         function resendOtp() {
             if (confirm('確定要重新發送驗證碼嗎?')) {
-                // 這裡可以實作重新發送的邏輯
-                // 或導回登入頁面
                 window.location.href = '@Url.Action("Login", "Account")';
             }
         }

@@ -109,7 +109,7 @@
         box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
     }
 
-    /* 🆕 鎖定樣式 */
+    /* 鎖定樣式 */
     .form-control:disabled, .form-select:disabled {
         background-color: #f0f0f0;
         color: #94a3b8;
@@ -225,7 +225,7 @@
         margin-bottom: 1rem;
     }
 
-    /* 🆕 鎖定提示訊息樣式 */
+    /* 鎖定提示訊息樣式 */
     .locked-notice {
         background: #FFF3E0;
         border: 2px solid #FF9800;
@@ -337,7 +337,7 @@
                 <span>血壓測量 (mmHg)</span>
             </div>
 
-            <!-- 🆕 鎖定提示訊息 - 移到血壓區塊內 -->
+            <!--  鎖定提示訊息 - 移到血壓區塊內 -->
             @if (Model.IsMorningCompletedToday || Model.IsEveningCompletedToday)
             {
                 <div class="locked-notice">
@@ -381,7 +381,7 @@
                         <span style="font-size: 1.5rem;">🌅</span>
                         <h4 style="margin: 0; color: #F57C00; font-weight: 700;">第一次 (上午)</h4>
                     </div>
-                    <!-- 🆕 尚未測量 checkbox - 根據完成狀態決定是否鎖定 -->
+                    <!-- 尚未測量 checkbox - 根據完成狀態決定是否鎖定 -->
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
 
                             <label style="display: flex; align-items: center; gap: 0.5rem;
@@ -499,7 +499,7 @@
                         <span style="font-size: 1.5rem;">🌙</span>
                         <h4 style="margin: 0; color: #6A1B9A; font-weight: 700;">第二次 (睡前)</h4>
                     </div>
-                    <!-- 🆕 尚未測量 checkbox - 根據完成狀態決定是否鎖定 -->
+                    <!-- 尚未測量 checkbox - 根據完成狀態決定是否鎖定 -->
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
 
                             <label style="display: flex; align-items: center; gap: 0.5rem;
@@ -874,14 +874,14 @@
 
 <script>
     // ----------------------------------------------------
-    // 🆕 血壓鎖定/解鎖函數 (根據後端傳來的完成狀態)
+    // 血壓鎖定/解鎖函數 (根據後端傳來的完成狀態)
     // ----------------------------------------------------
     
     // 判斷上午血壓是否已完成（從後端傳來）
     const isMorningCompleted = @Json.Serialize(Model.IsMorningCompletedToday);
     const isEveningCompleted = @Json.Serialize(Model.IsEveningCompletedToday);
 
-    // 🆕 控制上午血壓輸入框的啟用/禁用
+    // 控制上午血壓輸入框的啟用/禁用
     function toggleMorningBP(checked) {
         const inputs = document.querySelectorAll('.morning-bp-input');
         inputs.forEach(input => {
@@ -905,7 +905,7 @@
         document.getElementById('BP_Morning_NotMeasured').value = checked ? 'true' : 'false';
     }
 
-    // 🆕 控制睡前血壓輸入框的啟用/禁用
+    // 控制睡前血壓輸入框的啟用/禁用
     function toggleEveningBP(checked) {
         const inputs = document.querySelectorAll('.evening-bp-input');
         inputs.forEach(input => {
@@ -1001,7 +1001,7 @@
             });
         }
 
-        // 🆕 恢復三餐選項
+        // 恢復三餐選項
         function restoreMealSelection(selectId, value) {
             if (!value) return;
             const selectElement = document.getElementById(selectId);

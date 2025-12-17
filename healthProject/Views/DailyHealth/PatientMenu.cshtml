@@ -22,7 +22,6 @@
             font-family: 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* 共用容器 */
         .health-container {
             min-height: 100vh;
             display: flex;
@@ -127,7 +126,7 @@
             display: inline-block;
             background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
             color: white;
-            padding: 1rem 2rem; /* 原本 2.5rem → 改 2rem */
+            padding: 1rem 2rem; 
             border-radius: 25px;
             text-decoration: none;
             font-weight: 600;
@@ -135,7 +134,7 @@
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
             text-align: center;
-            white-space: nowrap; /* 防止文字換行 */
+            white-space: nowrap; 
         }
 
         .back-button:hover {
@@ -151,7 +150,6 @@
             margin: 2rem 0;
         }
 
-        /* 響應式設計（與 Dashboard 一致） */
         @@media (max-width: 768px) {
             .health-container
 
@@ -172,10 +170,10 @@
         }
 
         .back-button {
-            padding: 0.85rem 1.8rem; /* 稍微縮小一點，更貼合 */
+            padding: 0.85rem 1.8rem; 
             font-size: 1rem;
-            width: auto; /* 自動寬度 */
-            max-width: 220px; /* 最多 220px，避免太寬 */
+            width: auto; 
+            max-width: 220px; 
             display: inline-block;
         }
 

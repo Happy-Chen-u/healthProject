@@ -34,9 +34,7 @@
             font-size: 20px;
             font-weight: bold;
             letter-spacing: 2px;
-        }
-        
-        /* 搜尋區塊 */
+        }        
         .search-section {
             background: #e8f4ea;
             padding: 15px 20px;
@@ -133,11 +131,7 @@
         .record-type-badge { padding: 4px 12px; border-radius: 15px; font-size: 12px; font-weight: 600; }
         .badge-first { background: #d4edda; color: #2a5a3a; }
         .badge-annual { background: #cce5ff; color: #004085; }
-        
-        /* 區塊標題 */
-        .section-title { background: #5a9; color: white; padding: 8px 15px; font-weight: bold; font-size: 14px; }
-        
-        /* 表格容器 */
+        .section-title { background: #5a9; color: white; padding: 8px 15px; font-weight: bold; font-size: 14px; }        
         .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         
         /* 表格 */
@@ -746,8 +740,6 @@
                 console.error('取得歷史資料失敗:', error);
             }
         }
-
-        // 顯示表單
         // 顯示表單
         function showRecordForm() {
             if (!currentPatientId || !currentPatientIdNumber) { alert('請先搜尋個案'); return; }
@@ -768,7 +760,7 @@
             const birthInput = document.getElementById('inputBirthDate');
             const birthText = document.getElementById('displayBirthText');
 
-            // 🆕 自動從身分證字號判斷性別
+            // 自動從身分證字號判斷性別
             let autoGender = '';
             if (currentPatientIdNumber && currentPatientIdNumber.length >= 2) {
                 const secondChar = currentPatientIdNumber.charAt(1);
@@ -786,7 +778,7 @@
                 badge.className = 'record-type-badge badge-first';
                 document.getElementById('hiddenAnnualAssessment').value = 'false';
 
-                // 🆕 性別 - 自動填入但允許修改
+                // 性別 - 自動填入但允許修改
                 genderSelect.style.display = 'inline-block';
                 genderText.style.display = 'none';
                 genderSelect.value = autoGender; // 自動選擇性別

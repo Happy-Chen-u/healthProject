@@ -85,7 +85,7 @@
     color: white;
     }
 
-    /* 🆕 日期分組卡片 */
+    /* 日期分組卡片 */
     .date-group {
     background: white;
     border-radius: 15px;
@@ -121,7 +121,6 @@
     gap: 0.5rem;
     }
 
-    /* 記錄項目 */
     .record-items {
     padding: 1.5rem;
     }
@@ -231,7 +230,6 @@
     margin-bottom: 1.5rem;
     }
 
-    /* 🆕 按鈕樣式 */
     .btn-toggle-details {
     background: linear-gradient(135deg, #81af74 0%, #5a8a4a 100%);
     color: white;
@@ -273,8 +271,8 @@
         }
 
         .search-input-group {
-            flex: 1 1 250px; /* 彈性伸縮,最小250px */
-            min-width: 0; /* 允許縮小 */
+            flex: 1 1 250px; 
+            min-width: 0; 
         }
 
         .search-label {
@@ -291,19 +289,19 @@
             border: 2px solid #ddd;
             border-radius: 8px;
             font-size: 1rem;
-            box-sizing: border-box; /* 重要:包含 padding 在寬度內 */
-            max-width: 100%; /* 防止超出 */
+            box-sizing: border-box;
+            max-width: 100%; 
         }
 
         .search-buttons {
             display: flex;
             gap: 0.5rem;
-            flex-shrink: 0; /* 按鈕不縮小 */
+            flex-shrink: 0; 
         }
 
         .search-btn {
-            white-space: nowrap; /* 按鈕文字不換行 */
-            min-width: 100px; /* 按鈕最小寬度 */
+            white-space: nowrap; 
+            min-width: 100px; 
         }
 
         .search-result {
@@ -313,16 +311,13 @@
         }
 
 
-    /* 🔥 手機：讓整頁完整響應式 */
-        @@media (max-width: 768px) {
-            /* 基礎字體放大 */
+        @@media (max-width: 768px) {     
             body
 
         {
             font-size: 18px;
         }
-
-        /* 標題字體 */
+      
         .page-header h1 {
             font-size: 1.8rem !important;
         }
@@ -416,16 +411,12 @@
 
         }
 
-        /* 🔥 小螢幕手機專用:max-width 480px */
         @@media (max-width: 480px) {
-            /* 基礎字體 */
             body
-
         {
             font-size: 16px;
         }
 
-        /* 標題字體 */
         .page-header h1 {
             font-size: 1.5rem !important;
         }
@@ -534,7 +525,7 @@
 
     </div>
 
-    <!-- 🆕 日期搜尋欄位 -->
+    <!-- 日期搜尋欄位 -->
         <div class="search-section">
             <div class="search-wrapper">
                 <div class="search-input-group">
@@ -583,7 +574,7 @@
                         </div>
                     </div>
 
-                    <!-- 🆕 按鈕區 (只有多筆記錄時顯示) -->
+                    <!-- 按鈕區 (只有多筆記錄時顯示) -->
                     @if (group.Records.Count > 1)
                     {
                             <div style="padding: 1rem 2rem; background: #f8f9fa; border-bottom: 1px solid #e2e8f0; margin-bottom: 1rem;">
@@ -593,7 +584,7 @@
                         </div>
                     }
 
-                    <!-- 🆕 各筆記錄 (多筆時預設隱藏) -->
+                    <!-- 各筆記錄 (多筆時預設隱藏) -->
                     <div class="record-items" style="@(group.Records.Count > 1 ? "display: none;" : "")">
                         @foreach (var record in group.Records)
                         {
@@ -728,7 +719,7 @@
                         }
                     </div>
 
-                    <!-- 🆕 今日統計 (永遠顯示,不受按鈕控制) -->
+                    <!-- 今日統計 (永遠顯示,不受按鈕控制) -->
                     @if (group.Records.Count > 1)
                     {
                         <div class="daily-summary" style="margin: 0 1.5rem 1.5rem 1.5rem;">
@@ -818,7 +809,7 @@
 </div>
 
 <script>
-    // 🆕 切換詳細記錄顯示/隱藏
+    // 切換詳細記錄顯示/隱藏
     function toggleDetails(button) {
         const dateGroup = button.closest('.date-group');
         const recordItems = dateGroup.querySelector('.record-items');

@@ -217,7 +217,7 @@
             <p>@Model.RecordDate.ToString("yyyy年MM月dd日")</p>
         </div>
 
-        <!-- 🆕 異常值警告區 -->
+        <!--  異常值警告區 -->
         @{
             var warnings = new List<string>();
             
@@ -531,7 +531,7 @@
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="UserId" />
 
-            <!-- 🆕 修改這裡:使用完整的 DateTime 格式 -->
+            <!-- 完整的 DateTime 格式 -->
             <input type="hidden" asp-for="RecordDate" value="@Model.RecordDate.ToString("yyyy-MM-ddTHH:mm:ss")" />
             <input type="hidden" asp-for="RecordTime" value="@Model.RecordTime?.ToString()" />
 
