@@ -273,6 +273,13 @@
         .search-input-group {
             flex: 1 1 250px; 
             min-width: 0; 
+            max-width: 100%;
+        }
+
+        input[type="date"] {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .search-label {
@@ -409,6 +416,60 @@
             grid-template-columns: 1fr;
         }
 
+        .search-buttons {
+            flex-shrink: 1;
+            width: 100%;
+        }
+
+        .search-btn {
+            min-width: 0; 
+            flex: 1; 
+        }
+
+        .search-input-group {
+            flex: 1 1 100%;
+        }
+
+            input[type="date"],
+            .date-input,
+            #searchDate {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                display: block;
+            }
+
+            .search-input-group {
+                flex: 1 1 100%;
+                min-width: 0 !important;
+                overflow: hidden;
+            }
+
+            .search-wrapper {
+                overflow-x: hidden;
+            }
+            /* 搜尋區塊改為直向排列（重點） */
+            .search-wrapper {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+                overflow-x: visible; /* 不要裁掉 */
+            }
+            /* 日期欄位 */
+            .search-input-group {
+                width: 100%;
+            }
+            /* 按鈕區改成上下 or 平均 */
+            .search-buttons {
+                width: 100%;
+                display: flex;
+                gap: 0.5rem;
+            }
+
+            .search-btn {
+                flex: 1;
+                min-width: 0;
+            }
         }
 
         @@media (max-width: 480px) {
