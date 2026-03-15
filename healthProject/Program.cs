@@ -84,12 +84,12 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 });
 
 // ========================================
-// 設定每週日晚上 8 點發送週報
+// 設定 每週一 09:00 發送週報
 // ========================================
 RecurringJob.AddOrUpdate<ScheduledJobService>(
     "send-weekly-reports",
     service => service.SendWeeklyReportsAsync(),
-    "0 20 * * 0", // Cron 表達式: 每週日 20:00
+    "0 9 * * 1", // 每週一 09:00
     TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time")
 );
 

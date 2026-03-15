@@ -29,9 +29,6 @@ namespace healthProject.Controllers
             _logger = logger;
         }
 
-
-
-
         // 新增個案頁面 (管理者)
         [Authorize(Roles = "Admin")]
         [HttpGet]
@@ -53,14 +50,14 @@ namespace healthProject.Controllers
                 return View(viewModel);
             }
 
-            // ✅ 驗證身分證字號格式(第一碼為英文大寫,第二碼為1或2,總共10碼)
+            // 驗證身分證字號格式(第一碼為英文大寫,第二碼為1或2,總共10碼)
             if (!System.Text.RegularExpressions.Regex.IsMatch(viewModel.IDNumber, @"^[A-Z][12]\d{8}$"))
             {
                 ModelState.AddModelError("IDNumber", "身分證格式有誤:第一碼為英文大寫,第二碼為1或2,總共10碼");
                 return View(viewModel);
             }
 
-            // ✅ 驗證電話號碼格式(必須是10碼數字)
+            // 驗證電話號碼格式(必須是10碼數字)
             if (!System.Text.RegularExpressions.Regex.IsMatch(viewModel.PhoneNumber, @"^\d{10}$"))
             {
                 ModelState.AddModelError("PhoneNumber", "電話號碼格式有誤:請輸入10碼數字");
@@ -204,10 +201,7 @@ namespace healthProject.Controllers
             return View("PatientRecords", records);
         }
 
-
-        // ========================================
-        // 🏠 Index
-        // ========================================
+        // Index
         public async Task<IActionResult> Index()
         {
             if (User.IsInRole("Admin"))
@@ -220,9 +214,7 @@ namespace healthProject.Controllers
             return View("PatientRecords", records);
         }
 
-        // ========================================
-        // ➕ 新增個案紀錄
-        // ========================================
+        // 新增個案紀錄
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public IActionResult CreateRecord()
@@ -254,11 +246,7 @@ namespace healthProject.Controllers
             }
         }
 
-
-        // ========================================
-        // 🔍 查詢病患 
-        // ========================================
-
+        // 查詢病患 
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> SearchPatient([FromBody] SearchRequest request)
@@ -354,12 +342,7 @@ namespace healthProject.Controllers
             public string Username { get; set; }
         }
 
-
-
-
-        // ========================================
-        // 🗑️ 刪除紀錄
-        // ========================================
+        //  刪除紀錄
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -379,11 +362,7 @@ namespace healthProject.Controllers
             }
         }
 
-
-        // ========================================
-        // 📋 查看個案目標值是否達標(ViewTargets/ViewDetails)
-        // ========================================
-
+        // 查看個案目標值是否達標(ViewTargets/ViewDetails)
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> ViewTargets(string idNumber = null)
@@ -546,7 +525,7 @@ namespace healthProject.Controllers
                                     isFirstRecord = false;
                                 }
 
-                                // 決定評估日期 (優先使用 AssessmentDate,其次 AnnualAssessment_Date)
+                                // 決定評估日期 (優先使用 AssessmentDate,其次才使用 AnnualAssessment_Date)
                                 DateTime? evalDate = reader["AssessmentDate"] as DateTime?
                                     ?? reader["AnnualAssessment_Date"] as DateTime?;
 
@@ -663,17 +642,8 @@ namespace healthProject.Controllers
             }
         }
 
-        // ========================================
-        // 🔍 輔助方法:判斷是否達成目標
-        // ========================================
-
-        /// <summary>
-        /// 判斷指標是否達成目標
-        /// </summary>
-        /// <param name="currentValue">當前值</param>
-        /// <param name="targetValue">目標值</param>
-        /// <param name="type">指標類型 (waist, weight, glucose, hba1c, triglycerides, hdl, ldl)</param>
-        /// <returns>是否達成</returns>
+        // 輔助方法:判斷是否達成目標
+        //判斷指標是否達成目標
         private bool CheckAchievement(decimal? currentValue, decimal? targetValue, string type)
         {
             // 如果任一值為 null,視為未達成
@@ -699,12 +669,8 @@ namespace healthProject.Controllers
                     return false;
             }
         }
-
-
-        // ========================================
-        // 📋 紀錄管理區塊（ViewAll / Details / Edit）
-        // ========================================
-
+        
+        // 紀錄管理區塊（ViewAll / Details / Edit）
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ViewAllRecords(string searchIdNumber = null)
         {
@@ -725,10 +691,8 @@ namespace healthProject.Controllers
             return View(records);
         }
 
-        // ========================================
-        // 📋 PatientHistory - 顯示個案所有歷史記錄 + 日期篩選
-        // ========================================
-
+        
+        // PatientHistory - 顯示個案所有歷史記錄 + 日期篩選
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> PatientHistory(string idNumber, int? year = null, int? month = null)
         {
@@ -742,7 +706,7 @@ namespace healthProject.Controllers
             {
                 var records = await GetPatientHistoryAsync(idNumber, year, month);
 
-                // 🔧 無論有沒有記錄,都先取得病患基本資訊
+                // 無論有沒有記錄,都先取得病患基本資訊
                 ViewBag.PatientIdNumber = idNumber;
 
                 if (!records.Any())
@@ -955,7 +919,7 @@ namespace healthProject.Controllers
 
                 ViewBag.AllMissedDaysRecords = allMissedDaysRecords;
 
-                // 🎯 新增：查詢結果（獨立於 tab，只要有查詢就顯示）
+                // 查詢結果（獨立於 tab，只要有查詢就顯示）
                 MissedRecordViewModel searchResult = null;
                 if (!string.IsNullOrEmpty(searchIdNumber))
                 {
@@ -977,7 +941,7 @@ namespace healthProject.Controllers
                     tab = "days2";
                 }
 
-                // 🎯 根據 tab 篩選要顯示在下方表格的資料
+                // 根據 tab 篩選要顯示在下方表格的資料
                 List<MissedRecordViewModel> recordsToShow;
 
                 switch (tab.ToLower())
@@ -1386,9 +1350,7 @@ namespace healthProject.Controllers
             return records;
         }
 
-        /// <summary>
-        /// 取得所有個案的最新一筆紀錄
-        /// </summary>
+        // 取得所有個案的最新一筆紀錄
         private async Task<List<CaseManagementViewModel>> GetLatestRecordsForAllPatientsAsync()
         {
             var records = new List<CaseManagementViewModel>();
@@ -1436,9 +1398,7 @@ namespace healthProject.Controllers
             return records;
         }
 
-        /// <summary>
-        /// 根據身分證查詢該個案的最新一筆紀錄
-        /// </summary>
+        // 根據身分證查詢該個案的最新一筆紀錄
         private async Task<List<CaseManagementViewModel>> GetLatestRecordsByIdNumberAsync(string idNumber)
         {
             var records = new List<CaseManagementViewModel>();
@@ -1485,10 +1445,7 @@ namespace healthProject.Controllers
             return records;
         }
 
-        /// <summary>
-        /// 取得個案所有歷史記錄 (支援年月篩選) 
-        /// </summary>
-
+        // 取得個案所有歷史記錄 (支援年月篩選)  
         private async Task<List<CaseManagementViewModel>> GetPatientHistoryAsync(string idNumber, int? year, int? month)
         {
             var records = new List<CaseManagementViewModel>();
@@ -1686,7 +1643,7 @@ namespace healthProject.Controllers
                     Notes = reader.IsDBNull(105) ? null : reader.GetString(105)
                 };
 
-                // ⭐ 關鍵邏輯：如果這筆紀錄的 Id 等於第一筆的 Id,強制設為收案評估
+                // 如果這筆紀錄的 Id 等於第一筆的 Id,強制設為收案評估
                 if (firstRecordId.HasValue && record.Id == firstRecordId.Value)
                 {
                     record.AnnualAssessment = false; // 強制設為收案評估
@@ -1905,10 +1862,6 @@ namespace healthProject.Controllers
             return null;
         }
 
-
-        // ========================================
-        // 🧠 資料庫操作區 - 新增方法
-        // ========================================
 
         // 取得最新的紀錄 (依身分證)
         private async Task<CaseManagementViewModel> GetLatestRecordByIdNumberAsync(string idNumber)
@@ -2134,9 +2087,7 @@ namespace healthProject.Controllers
             await command.ExecuteNonQueryAsync();
         }
 
-        // ========================================
-        // 💾 儲存新紀錄 (支援所有欄位)
-        // ========================================
+        // 儲存新紀錄 
         private async Task SaveRecordAsync(CaseManagementViewModel model)
         {
             try
@@ -2379,9 +2330,7 @@ namespace healthProject.Controllers
             }
         }
 
-        // ========================================
-        // 🔄 更新紀錄 (完整版)
-        // ========================================
+        // 更新紀錄 
         private async Task UpdateRecordAsync(CaseManagementViewModel model)
         {
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
@@ -2599,10 +2548,8 @@ namespace healthProject.Controllers
 
             await command.ExecuteNonQueryAsync();
         }
-
-        /// <summary>
-        /// 🎯 取得所有符合條件的未填寫紀錄，並包含 CaseManagement 中的性別/生日/722狀態。
-        /// </summary>
+      
+        // 取得所有符合條件的未填寫紀錄，並包含 CaseManagement 中的性別/生日/722狀態。
         private async Task<List<MissedRecordViewModel>> GetMissedRecordsAndCaseInfoAsync(string searchIdNumber = null, DateTime? dateToCheck = null)
         {
             var connStr = _configuration.GetConnectionString("DefaultConnection")
@@ -2656,7 +2603,7 @@ namespace healthProject.Controllers
                     int missedDays = 0;
                     if (lastRecordDate.HasValue)
                     {
-                        // 🎯 使用 endDate (檢查日) 計算 MissedDays
+                        // 使用 endDate 計算 MissedDays
                         missedDays = (endDate - lastRecordDate.Value.Date).Days;
                     }
                     else
@@ -2694,9 +2641,7 @@ namespace healthProject.Controllers
             return allMissedRecords.Where(r => r.MissedDays >= 2 || r.Is722Tracking).ToList();
         }
 
-        /// <summary>
-        /// 取得所有需要 722 追蹤的個案，並檢查其當天的血壓填寫狀況
-        /// </summary>
+        // 取得所有需要 722 追蹤的個案，並檢查其當天的血壓填寫狀
         private async Task<List<MissedRecordViewModel>> Get722TrackingListAsync(List<MissedRecordViewModel> trackingCandidates, DateTime checkDate)
         {
             var connStr = _configuration.GetConnectionString("DefaultConnection")
@@ -2705,7 +2650,7 @@ namespace healthProject.Controllers
             var userIds = trackingCandidates.Select(x => x.UserId).ToArray();
             if (!userIds.Any()) return new List<MissedRecordViewModel>();
 
-            // 🎯 除了檢查是否有記錄，還要取得實際血壓值
+            // 取得實際血壓值
             string todaySql = @"
         SELECT 
             ""UserId"",
@@ -2806,9 +2751,8 @@ namespace healthProject.Controllers
             return trackingCandidates.Where(r => r.Is722Tracking).ToList();
         }
 
-        /// <summary>
-        /// 取得最近一次未填寫原因 (從 Today 表)
-        /// </summary>
+        
+        // 取得最近一次未填寫原因
         private async Task<string> GetLatestMissedReasonAsync(int userId, string connStr)
         {
             string reasonSql = @"

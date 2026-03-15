@@ -36,10 +36,10 @@ namespace healthProject.Controllers
         {
             try
             {
-                // 🆕 如果是管理者,檢查是否有新的未填寫記錄
+                // 如果是管理者,檢查是否有新的未填寫記錄
                 if (User.IsInRole("Admin"))
                 {
-                    // ✅ 加入 log 查看 Session
+                    // 加入 log 查看 Session
                     var lastViewed = HttpContext.Session.GetString("LastViewedMissedRecords");
                     _logger.LogInformation($"📌 Dashboard - LastViewedMissedRecords = {lastViewed ?? "NULL"}");
 
@@ -81,14 +81,14 @@ namespace healthProject.Controllers
                     }
                 }
 
-                // ✅ 如果管理者「今天」已經查看過,就不顯示紅點
+                // 如果管理者「今天」已經查看過,就不顯示紅點
                 if (lastViewedTime.HasValue && lastViewedTime.Value.Date == DateTime.Today)
                 {
                     _logger.LogInformation("✅ 管理者今天已查看過,不顯示紅點");
                     return false;
                 }
 
-                // ✅ 否則,只要有未填寫超過兩天的記錄,就顯示紅點
+                // 否則,只要有未填寫超過兩天的記錄,就顯示紅點
                 string sql = @"
             WITH LastRecords AS (
                 SELECT 
@@ -126,9 +126,6 @@ namespace healthProject.Controllers
                 return false;
             }
         }
-
-
-
 
         // 隱私頁面
         public IActionResult Privacy()

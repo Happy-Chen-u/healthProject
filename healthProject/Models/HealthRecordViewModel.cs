@@ -5,9 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace healthProject.Models
 {
-    // ========================================
-    // 三餐選項 Model
-    // ========================================
+    // 三餐選項 
     public class MealSelection
     {
         public string? Vegetables { get; set; }
@@ -20,9 +18,7 @@ namespace healthProject.Models
         }
     }
 
-    // ========================================
-    // 今日健康記錄 ViewModel
-    // ========================================
+    // 今日健康記錄
     public class HealthRecordViewModel
     {
         public int Id { get; set; }
@@ -60,7 +56,7 @@ namespace healthProject.Models
             var errors = new List<string>();
             var warnings = new List<string>();
 
-            // --- 階段 1: 數值下限檢查 (確保輸入是安全的) ---
+            //數值下限檢查
 
             if (BP_First_1_Systolic.HasValue && BP_First_1_Systolic.Value < 30)
                 warnings.Add("⚠️ 上午第一遍收縮壓不可低於 30 mmHg");
@@ -80,7 +76,7 @@ namespace healthProject.Models
                 warnings.Add("⚠️ 睡前第二遍舒張壓不可低於 10 mmHg");
 
 
-            // --- 階段 2: 遍數完整性檢查 (填了收縮壓就必須填舒張壓) ---
+            // 遍數完整性檢查 
 
             // 檢查 BP_First_1 配對
             bool hasBPF1_Sys = BP_First_1_Systolic.HasValue;
@@ -110,7 +106,7 @@ namespace healthProject.Models
             if (errors.Any()) return errors;
 
 
-            // --- 階段 3: 時段完整性檢查 (BP_First_1/2 必須一起填;BP_Second_1/2 必須一起填) ---
+            // 時段完整性檢查 (BP_First_1/2 必須一起填;BP_Second_1/2 必須一起填)
 
             // 檢查上午血壓完整性 (排除勾選「尚未測量」和已完成的情況)
             bool isMorningInputAttempted = hasBPF1_Sys || hasBPF2_Sys;
@@ -133,7 +129,7 @@ namespace healthProject.Models
             bool isEveningChecked = BP_Evening_NotMeasured == true;
             bool isEveningComplete = hasBPS1_Sys && hasBPS2_Sys; // 定義:兩遍都填了
 
-            // 🚨 需求 2.3: 檢查第一遍/第二遍互補
+            // 檢查第一遍/第二遍互補
             if (isEveningInputAttempted && !isEveningChecked)
             {
                 if ((hasBPS1_Sys && !hasBPS2_Sys) || (!hasBPS1_Sys && hasBPS2_Sys))
@@ -143,16 +139,12 @@ namespace healthProject.Models
                 }
             }
 
-
-            // --- 階段 4: 必填邏輯檢查 ---
-
-            // ✅ 🎯 核心修正: 如果兩個時段都已完成,則完全跳過必填檢查
+            // 如果兩個時段都已完成,則完全跳過必填檢查
             if (IsMorningCompletedToday && IsEveningCompletedToday)
             {
-                // 什麼都不做,直接跳過所有必填檢查
                 // 允許使用者不填任何血壓資料
             }
-            // ✅ 情況 2: 如果只有上午完成,則只檢查睡前時段
+            // 如果只有上午完成,則只檢查睡前時段
             else if (IsMorningCompletedToday && !IsEveningCompletedToday)
             {
                 if (!(isEveningComplete || isEveningChecked))
@@ -160,7 +152,7 @@ namespace healthProject.Models
                     errors.Add("🔴 睡前血壓為必填時段。請填寫睡前血壓(兩遍)或勾選『尚未測量』。");
                 }
             }
-            // ✅ 情況 3: 如果只有睡前完成,則只檢查上午時段
+            // 如果只有睡前完成,則只檢查上午時段
             else if (!IsMorningCompletedToday && IsEveningCompletedToday)
             {
                 if (!(isMorningComplete || isMorningChecked))
@@ -168,7 +160,7 @@ namespace healthProject.Models
                     errors.Add("🔴 上午血壓為必填時段。請填寫上午血壓(兩遍)或勾選『尚未測量』。");
                 }
             }
-            // ✅ 情況 4: 兩個時段都未完成,則兩者都要檢查
+            // 兩個時段都未完成,則兩者都要檢查
             else
             {
                 if (!(isMorningComplete || isMorningChecked))
@@ -182,22 +174,16 @@ namespace healthProject.Models
                 }
             }
 
-
-            // 返回所有錯誤,如果有硬性錯誤 (errors),會優先於警告 (warnings) 顯示
+            // 返回所有錯誤,如果有硬性錯誤 ,會優先於警告 顯示
             if (errors.Any()) return errors;
             return warnings;
         }
 
-        // ========================================
-        // 🆕 前端輸入用的字串欄位 (格式: "120/80")
-        // ========================================
+        // 前端輸入用的字串欄位
         public string? BP_First_1_Input { get; set; }
         public string? BP_First_2_Input { get; set; }
         public string? BP_Second_1_Input { get; set; }
         public string? BP_Second_2_Input { get; set; }
-
-
-
 
         private void ParseBPInput(string input, out decimal? systolic, out decimal? diastolic)
         {
@@ -217,11 +203,7 @@ namespace healthProject.Models
             }
         }
 
-
-
-        // ========================================
-        // 計算平均血壓 (所有有效測量的平均)
-        // ========================================
+        // 計算平均血壓
         public decimal? AvgSystolicBP
         {
             get
@@ -248,9 +230,7 @@ namespace healthProject.Models
             }
         }
 
-        // ========================================
         // 三餐 - JSON 格式
-        // ========================================
         public MealSelection? Meals_Breakfast { get; set; }
         public MealSelection? Meals_Lunch { get; set; }
         public MealSelection? Meals_Dinner { get; set; }
@@ -267,9 +247,7 @@ namespace healthProject.Models
             }
         }
 
-        // ========================================
         // 其他欄位
-        // ========================================
         [StringLength(100)]
         [Display(Name = "運動類型")]
         public string? ExerciseType { get; set; }

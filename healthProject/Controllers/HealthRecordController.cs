@@ -23,9 +23,7 @@ namespace healthProject.Controllers
             _logger = logger;
         }
 
-        // ========================================
-        // 🏠 首頁 - 病患或管理員
-        // ========================================
+        // 首頁 - 病患或管理員
         public IActionResult Index()
         {
             if (User.IsInRole("Admin"))
@@ -35,9 +33,7 @@ namespace healthProject.Controllers
             return View("PatientMenu");
         }
 
-        // ========================================
         // ➕ 新增今日紀錄 - GET (顯示表單)
-        // ========================================
         [HttpGet]
         public async Task<IActionResult> Create(
             int? Id,
@@ -59,7 +55,7 @@ namespace healthProject.Controllers
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var todayRecords = await GetUserRecordsByDateAsync(userId, DateTime.Today);
 
-            // 🎯 檢查當日是否已完成該時段的完整紀錄（四個數值都有）
+            // 檢查當日是否已完成該時段的完整紀錄（四個數值都有）
             bool isMorningCompleted = todayRecords.Any(r =>
                 r.BP_First_1_Systolic.HasValue && r.BP_First_1_Diastolic.HasValue &&
                 r.BP_First_2_Systolic.HasValue && r.BP_First_2_Diastolic.HasValue);
@@ -72,7 +68,7 @@ namespace healthProject.Controllers
             {
                 RecordDate = DateTime.Today,
                 RecordTime = DateTime.Now.TimeOfDay,
-                //  傳遞完成狀態給 ViewModel（用於前端鎖定判斷）
+                // 傳遞完成狀態給 ViewModel（用於前端鎖定判斷）
                 IsMorningCompletedToday = isMorningCompleted,
                 IsEveningCompletedToday = isEveningCompleted,
             };
@@ -112,10 +108,7 @@ namespace healthProject.Controllers
             return View(model);
         }
 
-        // ========================================
         // 新增今日紀錄 - POST (提交表單)
-        // ========================================
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(HealthRecordViewModel model,
@@ -143,9 +136,7 @@ namespace healthProject.Controllers
                 r.BP_Second_1_Systolic.HasValue && r.BP_Second_1_Diastolic.HasValue &&
                 r.BP_Second_2_Systolic.HasValue && r.BP_Second_2_Diastolic.HasValue);
 
-            // ========================================
-            // 🎯 檢查是否「只勾選尚未測量」而沒有其他資料
-            // ========================================
+            // 檢查是否「只勾選尚未測量」而沒有其他資料
             bool morningNotMeasuredChecked = model.BP_Morning_NotMeasured == true;
             bool eveningNotMeasuredChecked = model.BP_Evening_NotMeasured == true;
 
@@ -162,30 +153,28 @@ namespace healthProject.Controllers
                                    !string.IsNullOrEmpty(model.Beverage) || model.Cigarettes.HasValue ||
                                    model.BetelNut.HasValue || model.BloodSugar.HasValue;
 
-            // 🚨 情況 1: 兩個時段都勾選「尚未測量」，且沒有填寫任何其他資料
+            //  兩個時段都勾選「尚未測量」，且沒有填寫任何其他資料
             if (morningNotMeasuredChecked && eveningNotMeasuredChecked && !hasAnyOtherData)
             {
                 TempData["BPWarnings"] = "🔴 您只勾選了「尚未測量」但未填寫任何數值，請至少填寫一項健康資訊。";
                 return View(model);
             }
 
-            // 🚨 情況 2: 上午時段勾選「尚未測量」，睡前時段也沒填（且已完成），其他資料也沒填
+            // 上午時段勾選「尚未測量」，睡前時段也沒填（且已完成），其他資料也沒填
             if (morningNotMeasuredChecked && model.IsEveningCompletedToday && !hasEveningBP && !hasAnyOtherData)
             {
                 TempData["BPWarnings"] = "🔴 您只勾選了「上午尚未測量」但未填寫任何其他數值，請至少填寫一項健康資訊。";
                 return View(model);
             }
 
-            // 🚨 情況 3: 睡前時段勾選「尚未測量」，上午時段也沒填（且已完成），其他資料也沒填
+            // 睡前時段勾選「尚未測量」，上午時段也沒填（且已完成），其他資料也沒填
             if (eveningNotMeasuredChecked && model.IsMorningCompletedToday && !hasMorningBP && !hasAnyOtherData)
             {
                 TempData["BPWarnings"] = "🔴 您只勾選了「睡前尚未測量」但未填寫任何其他數值，請至少填寫一項健康資訊。";
                 return View(model);
             }
 
-            // ========================================
             // 血壓數值驗證
-            // ========================================
             var bpWarnings = model.ValidateBloodPressure();
             if (bpWarnings.Any())
             {
@@ -197,9 +186,7 @@ namespace healthProject.Controllers
                 TempData["BPWarnings"] = string.Join("\n", bpWarnings);
             }
 
-            // ========================================
             // 🍽️ 三餐重複檢查
-            // ========================================
             var duplicatedMeals = new List<string>();
             var existingMeals = new Dictionary<string, MealSelection>();
 
@@ -233,9 +220,7 @@ namespace healthProject.Controllers
                 existingMeals["晚餐"] = existing;
             }
 
-            // ========================================
-            // 🎯 處理三餐重複情況
-            // ========================================
+            // 處理三餐重複情況
             if (duplicatedMeals.Any())
             {
                 ViewBag.DuplicatedMealsList = duplicatedMeals;
@@ -289,9 +274,6 @@ namespace healthProject.Controllers
             return View("Confirm", model);
         }
 
-
-
-
         // 確認上傳
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -337,7 +319,6 @@ namespace healthProject.Controllers
             }
         }
 
-        
         // 上傳成功頁面
         public IActionResult Success()
         {
@@ -349,9 +330,7 @@ namespace healthProject.Controllers
             return RedirectToAction("Index");
         }
 
-        // ========================================
-        // 📚 查看歷史紀錄 - 病患專用 (分組顯示)
-        // ========================================
+        // 查看歷史紀錄 - 病患專用 (分組顯示)
         public async Task<IActionResult> MyRecords()
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -371,9 +350,7 @@ namespace healthProject.Controllers
             return View(groupedRecords);
         }
 
-        // ========================================
-        // 📝 編輯紀錄
-        // ========================================
+        // 編輯紀錄
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -401,7 +378,7 @@ namespace healthProject.Controllers
             if (!string.IsNullOrEmpty(Meals_Dinner))
                 model.Meals_Dinner = JsonSerializer.Deserialize<MealSelection>(Meals_Dinner);
 
-            // ⚠️ 清除 ModelState（因為手動處理了三餐）
+            // 清除 ModelState（因為手動處理了三餐）
             ModelState.Clear();
 
             // 重新驗證
@@ -420,10 +397,7 @@ namespace healthProject.Controllers
             return View("Confirm", model);
         }
 
-
-        // ========================================
-        // ✅ 確認更新
-        // ========================================
+        // 確認更新
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmUpdate(HealthRecordViewModel model,
@@ -485,10 +459,7 @@ namespace healthProject.Controllers
             }
         }
 
-        // ========================================
-        // 🔍 管理員搜尋病患紀錄
-        // ========================================
-
+        // 管理員搜尋病患紀錄
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> SearchPatientRecords([FromBody] SearchRequest request)
@@ -622,9 +593,6 @@ namespace healthProject.Controllers
             }
         }
 
-
-
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmWithoutBP(string formDataJson)
@@ -648,7 +616,7 @@ namespace healthProject.Controllers
                     BP_Second_1_Diastolic = null,
                     BP_Second_2_Systolic = null,
                     BP_Second_2_Diastolic = null,
-                    // 🎯 傳遞血壓狀態，讓資料庫知道這次是特意不填
+                    // 傳遞血壓狀態，讓資料庫知道這次是特意不填
                     BP_Morning_NotMeasured = formData.ContainsKey("BP_Morning_NotMeasured") && formData["BP_Morning_NotMeasured"].ValueKind == JsonValueKind.True,
                     BP_Evening_NotMeasured = formData.ContainsKey("BP_Evening_NotMeasured") && formData["BP_Evening_NotMeasured"].ValueKind == JsonValueKind.True
                 };
@@ -686,9 +654,7 @@ namespace healthProject.Controllers
             }
         }
 
-        // ========================================
-        // 📊 查看個案填寫紀錄 - 管理員專用 
-        // ========================================
+        // 查看個案填寫紀錄 - 管理員專用 
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public IActionResult GetPatientRecords(string idNumber)
@@ -704,9 +670,7 @@ namespace healthProject.Controllers
             return View("AdminSearch");
         }
 
-        // ========================================
         // 刪除重複三餐後上傳其他資訊
-        // ========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmWithoutMeals(string formDataJson, string duplicatedMealsJson, bool fromBPWarning = false)
@@ -723,7 +687,7 @@ namespace healthProject.Controllers
                     RecordTime = DateTime.Now.TimeOfDay
                 };
 
-                // 🎯 如果是從 BPWarning 來的，不恢復血壓資料（因為血壓重複）
+                // 如果是從 BPWarning 來的，不恢復血壓資料（因為血壓重複）
                 if (!fromBPWarning)
                 {
                     // 恢復血壓資料
@@ -750,7 +714,7 @@ namespace healthProject.Controllers
                                                    formData["BP_Evening_NotMeasured"].ValueKind == JsonValueKind.True;
                 }
 
-                // 🎯 恢復三餐,但排除重複的餐次
+                // 恢復三餐,但排除重複的餐次
                 if (!duplicatedMeals.Contains("早餐") &&
                     formData.ContainsKey("Meals_Breakfast") &&
                     formData["Meals_Breakfast"].ValueKind == JsonValueKind.String &&
@@ -791,7 +755,7 @@ namespace healthProject.Controllers
                 if (formData.ContainsKey("BloodSugar") && formData["BloodSugar"].ValueKind == JsonValueKind.Number)
                     model.BloodSugar = formData["BloodSugar"].GetDecimal();
 
-                // 🎯 檢查是否有任何有效資料（排除重複的血壓和三餐後）
+                // 檢查是否有任何有效資料（排除重複的血壓和三餐後）
                 bool hasAnyValidData =
                     model.BP_First_1_Systolic.HasValue || model.BP_First_1_Diastolic.HasValue ||
                     model.BP_First_2_Systolic.HasValue || model.BP_First_2_Diastolic.HasValue ||
@@ -818,9 +782,7 @@ namespace healthProject.Controllers
             }
         }
 
-        // ========================================
         // 根據用戶選擇處理三餐重複
-        // ========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmWithMealChoices(
@@ -863,7 +825,7 @@ namespace healthProject.Controllers
                 model.BP_Evening_NotMeasured = formData.ContainsKey("BP_Evening_NotMeasured") &&
                                                formData["BP_Evening_NotMeasured"].ValueKind == JsonValueKind.True;
 
-                // 🎯 根據用戶選擇恢復三餐
+                // 根據用戶選擇恢復三餐
                 // 早餐
                 if (choice_breakfast == "keep" &&
                     formData.ContainsKey("Meals_Breakfast") &&
@@ -933,9 +895,7 @@ namespace healthProject.Controllers
             }
         }
 
-        // ========================================
         // 顯示三餐選擇頁面
-        // ========================================
         [HttpGet]
         public IActionResult ShowMealChoices(
             string formDataJson,
@@ -962,9 +922,7 @@ namespace healthProject.Controllers
             }
         }
 
-        // ========================================
         // 從 BPWarning 來的三餐選擇（不恢復血壓）
-        // ========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmWithMealChoicesFromBP(
@@ -984,7 +942,7 @@ namespace healthProject.Controllers
                     RecordTime = DateTime.Now.TimeOfDay
                 };
 
-                // 🎯 從 BPWarning 來的，不恢復血壓資料
+                // 從 BPWarning 來的，不恢復血壓資料
 
                 // 根據用戶選擇恢復三餐
                 if (choice_breakfast == "keep" && 
@@ -1048,12 +1006,10 @@ namespace healthProject.Controllers
                 return RedirectToAction("Create");
             }
         }
-
-                // ========================================
-                // 🧠 資料庫操作 - 新增
-                // ========================================
-                private async Task SaveRecordAsync(HealthRecordViewModel model)
-                {
+ 
+       // 新增
+        private async Task SaveRecordAsync(HealthRecordViewModel model)
+         {
                     var connStr = _configuration.GetConnectionString("DefaultConnection");
                     await using var conn = new NpgsqlConnection(connStr);
                     await conn.OpenAsync();
@@ -1121,12 +1077,7 @@ namespace healthProject.Controllers
                     await cmd.ExecuteNonQueryAsync();
                 }
 
-
-
-
-        // ========================================
-        // 🧠 資料庫操作 - 更新
-        // ========================================
+        // 更新
         private async Task UpdateRecordAsync(HealthRecordViewModel model)
         {
             var connStr = _configuration.GetConnectionString("DefaultConnection");
@@ -1169,7 +1120,7 @@ namespace healthProject.Controllers
             cmd.Parameters.AddWithValue("@BP_Second_2_Systolic", model.BP_Second_2_Systolic ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@BP_Second_2_Diastolic", model.BP_Second_2_Diastolic ?? (object)DBNull.Value);
 
-            // ⚠️ 三餐 JSON - 加入 ::jsonb 轉換
+            // 三餐 JSON - 加入 ::jsonb 轉換
             cmd.Parameters.AddWithValue("@Meals_Breakfast",
                 model.Meals_Breakfast != null ? JsonSerializer.Serialize(model.Meals_Breakfast) : (object)DBNull.Value);
             cmd.Parameters.AddWithValue("@Meals_Lunch",
@@ -1188,10 +1139,8 @@ namespace healthProject.Controllers
 
             await cmd.ExecuteNonQueryAsync();
         }
-
-        // ========================================
-        // 🧠 資料庫操作 - 查詢
-        // ========================================
+        
+        // 查詢
         private async Task<List<HealthRecordViewModel>> GetUserRecordsAsync(int userId)
         {
             var records = new List<HealthRecordViewModel>();
@@ -1289,9 +1238,7 @@ namespace healthProject.Controllers
             public DateTime? BirthDate { get; set; }
         }
 
-        // ========================================
-        // 🧠 資料庫讀取 - MapFromReader 
-        // ========================================
+        // 資料庫讀取 - MapFromReader 
         private HealthRecordDBModel MapFromReader(NpgsqlDataReader reader)
         {
             return new HealthRecordDBModel
@@ -1302,7 +1249,7 @@ namespace healthProject.Controllers
                 RecordTime = reader.IsDBNull(reader.GetOrdinal("RecordTime"))
                     ? null : reader.GetTimeSpan(reader.GetOrdinal("RecordTime")),
 
-                // 🆕 血壓 - 8個欄位
+                // 血壓 - 8個欄位
                 BP_First_1_Systolic = reader.IsDBNull(reader.GetOrdinal("BP_First_1_Systolic"))
                     ? null : reader.GetDecimal(reader.GetOrdinal("BP_First_1_Systolic")),
                 BP_First_1_Diastolic = reader.IsDBNull(reader.GetOrdinal("BP_First_1_Diastolic"))
@@ -1350,9 +1297,7 @@ namespace healthProject.Controllers
             };
         }
 
-        // ========================================
-        // 💬 產生回饋訊息
-        // ========================================
+        // 產生回饋訊息
         private FeedbackViewModel GenerateFeedback(HealthRecordViewModel model)
         {
             var feedback = new FeedbackViewModel();
@@ -1441,10 +1386,7 @@ namespace healthProject.Controllers
             return feedback;
         }
 
-
-        // ========================================
-        // 📱 發送 LINE 通知
-        // ========================================
+        // 發送 LINE 通知
         private async Task SendLineNotification(int userId, FeedbackViewModel feedback, DateTime recordDate, bool isToday)
         {
             try
@@ -1629,7 +1571,6 @@ namespace healthProject.Controllers
         }
 
         // 使用當日總計產生 Feedback
-        // 使用當日總計產生 Feedback(新增日期和是否為今日參數)
         private FeedbackViewModel GenerateFeedbackWithDailyTotal(List<HealthRecordViewModel> records, DateTime recordDate, bool isToday)
         {
             var feedback = new FeedbackViewModel();
@@ -1672,7 +1613,7 @@ namespace healthProject.Controllers
             // 根據是否為今日設定訊息前綴
             string prefix = isToday ? "今日" : "";
 
-            // 💧 水分攝取
+            // 水分攝取
             if (totalWater > 0)
             {
                 if (totalWater < HealthRecordViewModel.WATER_STANDARD)
@@ -1688,7 +1629,7 @@ namespace healthProject.Controllers
                 }
             }
 
-            // 🏃 運動時間
+            // 運動時間
             if (totalExercise > 0)
             {
                 if (totalExercise < HealthRecordViewModel.EXERCISE_STANDARD)
@@ -1704,7 +1645,7 @@ namespace healthProject.Controllers
                 }
             }
 
-            // 🚬 抽菸
+            // 抽菸
             if (totalCigarettes > 0)
             {
                 if (totalCigarettes < 3)
@@ -1724,7 +1665,7 @@ namespace healthProject.Controllers
                 }
             }
 
-            // ❤️ 血壓
+            // 血壓
             if (avgSystolic.HasValue && avgSystolic.Value > 120)
             {
                 feedback.BloodPressureMessage = $"⚠️ {prefix}平均收縮壓 {avgSystolic.Value:0} mmHg 偏高（>120），建議注意飲食與作息！";

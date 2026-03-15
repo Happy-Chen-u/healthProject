@@ -12,9 +12,39 @@ namespace healthProject.Models
         Yearly   // 每年
     }
 
+    
+    
+    // 病患個人化目標值 (從最新一筆 CaseManagement 取得)
+    public class PatientGoals
+    {
+        // 血壓目標 (若無則用預設值)
+        public decimal? SystolicBPTarget { get; set; }   // 預設 130
+        public decimal? DiastolicBPTarget { get; set; }  // 預設 80
+
+        // 血糖目標
+        public decimal? FastingGlucoseTarget { get; set; } // 預設 100
+
+        // 飲水目標 (CaseManagement 沒有此欄位，固定 2000)
+        public decimal WaterTarget { get; set; } = 2000;
+
+        // 腰圍體重目標 (供參考)
+        public decimal? WaistTarget { get; set; }
+        public decimal? WeightTarget { get; set; }
+
+        // HbA1c, 三酸甘油酯等
+        public decimal? HbA1cTarget { get; set; }
+        public decimal? TriglyceridesTarget { get; set; }
+        public decimal? HDLTarget { get; set; }
+        public decimal? LDLTarget { get; set; }
+    }
+
     // 分析報表主 ViewModel
     public class AnalysisViewModel
     {
+        // 性別、生日、目標
+        public string PatientGender { get; set; } //
+        public DateTime? PatientBirthDate { get; set; } //
+        public PatientGoals Goals { get; set; }  // 目標值
         public string PatientName { get; set; }
         public string IDNumber { get; set; }
         public ReportType ReportType { get; set; }

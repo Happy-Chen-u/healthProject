@@ -25,9 +25,7 @@ namespace healthProject
                 {
                     var now = DateTime.Now;
 
-                    // ========================================
-                    // 🆕 中午 12:00 - 檢查上午血壓
-                    // ========================================
+                    // 中午 12:00 - 檢查上午血壓
                     if (now.Hour == 12 && now.Minute == 0)
                     {
                         _logger.LogInformation("⏰ [12:00] 開始檢查上午血壓填寫狀況");
@@ -41,9 +39,7 @@ namespace healthProject
                         await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
                     }
 
-                    // ========================================
-                    // 🆕 晚上 22:00 - 執行所有晚間檢查
-                    // ========================================
+                    // 晚上 22:00 - 執行所有晚間檢查
                     if (now.Hour == 22 && now.Minute == 0)
 
                     {
@@ -71,9 +67,7 @@ namespace healthProject
                         await Task.Delay(TimeSpan.FromSeconds(40), stoppingToken);
                     }
 
-                    // ========================================
-                    // 原本的 9:00 檢查(連續兩天未填)
-                    // ========================================
+                    // 9:00 檢查(連續兩天未填)
                     if (now.Hour == 9 && now.Minute == 0)
                     {
                         using var scope = _serviceProvider.CreateScope();

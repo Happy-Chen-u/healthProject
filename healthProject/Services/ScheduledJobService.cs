@@ -34,8 +34,9 @@ namespace healthProject.Services
                 }
 
                 var today = DateTime.Today;
-                var lastSunday = today.AddDays(-(int)today.DayOfWeek);
-                var lastMonday = lastSunday.AddDays(-6);
+                // 週一執行，前一週是「上週一到上週日」
+                var lastMonday = today.AddDays(-7);  // 上週一
+                var lastSunday = today.AddDays(-1);  // 上週日（昨天）
 
                 _logger.LogInformation($"📊 週報日期: {lastMonday:yyyy/MM/dd} ~ {lastSunday:yyyy/MM/dd}");
 
@@ -66,9 +67,7 @@ namespace healthProject.Services
             }
         }
 
-        // ========================================
-        // 📤 發送週報給單一使用者
-        // ========================================
+        // 發送週報給單一使用者 
         public async Task SendWeeklyReportToUserAsync(
             UserDBModel user,
             DateTime startDate,
@@ -106,10 +105,7 @@ namespace healthProject.Services
             }
         }
 
-
-        // ========================================
-        // 🔔 檢查並提醒兩天未填寫的個案
-        // ========================================
+        // 檢查並提醒兩天未填寫的個案
         public async Task CheckAndRemindMissedRecordsAsync()
         {
             try
@@ -160,9 +156,7 @@ namespace healthProject.Services
             }
         }
 
-        // ========================================
-        // 🔍 取得連續兩天以上未填寫的個案（修正版）
-        // ========================================
+        // 🔍 取得連續兩天以上未填寫的個案
         private async Task<List<MissedUserInfo>> GetUsersWithMissedRecordsAsync(DateTime twoDaysAgo)
         {
             var users = new List<MissedUserInfo>();
@@ -171,7 +165,6 @@ namespace healthProject.Services
             await using var conn = new NpgsqlConnection(connStr);
             await conn.OpenAsync();
 
-            // 修正：使用小寫的欄位名稱
             var query = @"
         WITH LastRecords AS (
             SELECT 
@@ -235,9 +228,7 @@ namespace healthProject.Services
             return users;
         }
 
-        // ========================================
-        // 📤 發送 LINE 提醒訊息
-        // ========================================
+        // 發送 LINE 提醒訊息
         private async Task SendMissedRecordReminderAsync(MissedUserInfo user)
         {
             var token = _configuration["Line:ChannelAccessToken"];
@@ -256,7 +247,7 @@ namespace healthProject.Services
                 {
                     type = "message",
                     label = "🗓️ 工作行程太忙",
-                    text = "🗓️ 工作行程太忙"  // ✅ 改為顯示文字而非代碼
+                    text = "🗓️ 工作行程太忙"  
                 }
             },
             new
@@ -266,7 +257,7 @@ namespace healthProject.Services
                 {
                     type = "message",
                     label = "😷 身體有點不舒服",
-                    text = "😷 身體有點不舒服"  // ✅ 改為顯示文字
+                    text = "😷 身體有點不舒服"  
                 }
             },
             new
@@ -276,7 +267,7 @@ namespace healthProject.Services
                 {
                     type = "message",
                     label = "🔢 不確定要填寫什麼",
-                    text = "🔢 不確定要填寫什麼"  // ✅ 改為顯示文字
+                    text = "🔢 不確定要填寫什麼" 
                 }
             },
             new
@@ -286,7 +277,7 @@ namespace healthProject.Services
                 {
                     type = "message",
                     label = "📱 手機不在身邊/沒電",
-                    text = "📱 手機不在身邊/沒電"  // ✅ 改為顯示文字
+                    text = "📱 手機不在身邊/沒電"  
                 }
             },
             new
@@ -296,7 +287,7 @@ namespace healthProject.Services
                 {
                     type = "message",
                     label = "💬 其他原因",
-                    text = "💬 其他原因"  // ✅ 改為顯示文字
+                    text = "💬 其他原因" 
                 }
             }
         }
@@ -354,9 +345,7 @@ namespace healthProject.Services
             }
         }
 
-        // ========================================
-        // 💾 更新最後提醒日期 (改為插入提醒記錄)
-        // ========================================
+        // 更新最後提醒日期
         private async Task UpdateLastReminderDateAsync(int userId)
         {
             var connStr = _configuration.GetConnectionString("DefaultConnection");
@@ -376,9 +365,7 @@ namespace healthProject.Services
             await cmd.ExecuteNonQueryAsync();
         }
 
-        // ========================================
-        // 💾 儲存使用者未填寫原因
-        // ========================================
+        // 儲存使用者未填寫原因
         public async Task SaveMissedReasonAsync(int userId, string reason)
         {
             var connStr = _configuration.GetConnectionString("DefaultConnection");
@@ -421,9 +408,7 @@ namespace healthProject.Services
             public int MissedDays { get; set; }
         }
 
-        // ========================================
-        // 📤 傳送 LINE 通知
-        // ========================================
+        // 傳送 LINE 通知
         private async Task SendLineNotificationAsync(
             UserDBModel user,
             DateTime startDate,
@@ -475,9 +460,7 @@ namespace healthProject.Services
             _logger.LogInformation($"✅ LINE 訊息已傳送: {user.LineUserId}");
         }
 
-        // ========================================
-        // 💾 儲存報表到資料庫
-        // ========================================
+        // 儲存報表到資料庫
         private async Task<string> SaveWeeklyReportAsync(
             int userId, DateTime startDate, DateTime endDate, byte[] pdfBytes)
         {
@@ -742,9 +725,8 @@ namespace healthProject.Services
 
             return charts;
         }
-        // ========================================
-        // 🆕 中午 12:00 - 檢查上午血壓
-        // ========================================
+
+        // 中午 12:00 - 檢查上午血壓
         public async Task CheckMorningBloodPressureAsync()
         {
             try
@@ -796,9 +778,7 @@ namespace healthProject.Services
             }
         }
 
-        // ========================================
-        // 🆕 晚上 22:00 - 檢查睡前血壓
-        // ========================================
+        // 晚上 22:00 - 檢查睡前血壓
         public async Task CheckEveningBloodPressureAsync()
         {
             try
@@ -850,9 +830,7 @@ namespace healthProject.Services
             }
         }
 
-        // ========================================
-        // 🆕 晚上 22:00 - 檢查全日血壓
-        // ========================================
+        // 晚上 22:00 - 檢查全日血壓
         public async Task CheckAllDayBloodPressureAsync()
         {
             try
@@ -905,9 +883,7 @@ namespace healthProject.Services
             }
         }
 
-        // ========================================
-        // 🆕 晚上 22:00 - 檢查三餐記錄
-        // ========================================
+        // 晚上 22:00 - 檢查三餐記錄
         public async Task CheckMealsRecordAsync()
         {
             try
@@ -967,9 +943,7 @@ namespace healthProject.Services
             }
         }
 
-        // ========================================
-        // 🆕 晚上 22:00 - 發送完成感謝訊息
-        // ========================================
+        // 晚上 22:00 - 發送完成感謝訊息
         public async Task SendCompletionThankYouAsync()
         {
             try
@@ -1022,9 +996,7 @@ namespace healthProject.Services
             }
         }
 
-        // ========================================
-        // 🔍 資料庫查詢 - 上午血壓未填寫
-        // ========================================
+        // 資料庫查詢 - 上午血壓未填寫
         private async Task<List<UserBasicInfo>> GetUsersNeedMorningBPReminderAsync()
         {
             var users = new List<UserBasicInfo>();
@@ -1067,9 +1039,7 @@ namespace healthProject.Services
             return users;
         }
 
-        // ========================================
-        // 🔍 資料庫查詢 - 睡前血壓未填寫(但上午有填)
-        // ========================================
+        // 資料庫查詢 - 睡前血壓未填寫(但上午有填)
         private async Task<List<UserBasicInfo>> GetUsersNeedEveningBPReminderAsync()
         {
             var users = new List<UserBasicInfo>();
@@ -1122,9 +1092,7 @@ namespace healthProject.Services
             return users;
         }
 
-        // ========================================
-        // 🔍 資料庫查詢 - 全日血壓都未填寫
-        // ========================================
+        // 資料庫查詢 - 全日血壓都未填寫
         private async Task<List<UserBasicInfo>> GetUsersNeedAllDayBPReminderAsync()
         {
             var users = new List<UserBasicInfo>();
@@ -1171,9 +1139,7 @@ namespace healthProject.Services
             return users;
         }
 
-        // ========================================
-        // 🔍 資料庫查詢 - 有餐食未填寫的個案
-        // ========================================
+        // 資料庫查詢 - 有餐食未填寫的個案
         private async Task<List<UserWithMissedMeals>> GetUsersWithMissedMealsAsync()
         {
             var users = new List<UserWithMissedMeals>();
@@ -1246,7 +1212,7 @@ namespace healthProject.Services
             return users;
         }
 
-        // 🆕 輔助方法:檢查是否有填寫任何餐食內容
+        // 檢查是否有填寫任何餐食內容
         private bool HasAnyMealContent(string mealsJson)
         {
             if (string.IsNullOrEmpty(mealsJson) || mealsJson == "null")
@@ -1282,12 +1248,7 @@ namespace healthProject.Services
             }
         }
 
-        // ========================================
-        // 🔍 資料庫查詢 - 完成所有記錄的個案
-        // ========================================
-        // ========================================
-        // 🔍 資料庫查詢 - 完成所有記錄的個案
-        // ========================================
+        // 資料庫查詢 - 完成所有記錄的個案
         private async Task<List<UserBasicInfo>> GetUsersCompletedTodayRecordsAsync()
         {
             var users = new List<UserBasicInfo>();
@@ -1296,7 +1257,7 @@ namespace healthProject.Services
             await using var conn = new NpgsqlConnection(connStr);
             await conn.OpenAsync();
 
-            // 🆕 檢查: 上午血壓 + 睡前血壓 + 三餐全部完成 + 水分 (已優化，可處理分次填寫)
+            //  檢查: 上午血壓 + 睡前血壓 + 三餐全部完成 + 水分
             var query = @"
 WITH TodayRecords AS (
     SELECT 
@@ -1357,9 +1318,7 @@ WHERE u.""IsActive"" = true
             return users;
         }
 
-        // ========================================
-        // 📤 發送 LINE 提醒訊息(通用方法)
-        // ========================================
+        // 發送 LINE 提醒訊息(通用方法)
         private async Task SendLineReminderAsync(string lineUserId, string message)
         {
             var token = _configuration["Line:ChannelAccessToken"];
@@ -1389,9 +1348,7 @@ WHERE u.""IsActive"" = true
             }
         }
 
-        // ========================================
-        // 🆕 輔助類別
-        // ========================================
+        // 輔助類別
         public class UserBasicInfo
         {
             public int Id { get; set; }
