@@ -13,7 +13,7 @@ namespace healthProject.Models
     }
 
     
-    
+
     // 病患個人化目標值 (從最新一筆 CaseManagement 取得)
     public class PatientGoals
     {
@@ -59,6 +59,26 @@ namespace healthProject.Models
 
         // 圖表數據
         public ChartData Charts { get; set; }
+
+        public TrendSummary TrendSummary { get; set; }
+    }
+
+    public class TrendSummary
+    {
+        public string PeriodLabel { get; set; }
+        public List<TrendItem> Items { get; set; } = new();
+    }
+
+    public class TrendItem
+    {
+        public string Label { get; set; }
+        public string Icon { get; set; }
+        public string CurrentValue { get; set; }
+        public string PrevValue { get; set; }
+        public string DiffText { get; set; }
+        // "good" | "warn" | "bad"
+        public string TrendType { get; set; }
+        public string Message { get; set; }
     }
 
     // 統計數據

@@ -245,14 +245,22 @@ namespace healthProject.Controllers
             // ✅ 統計用原始範圍
             var rawRecords = await GetRecordsInRangeAsync(userId, startDate, endDate);
 
-            // ✅ 圖表用擴展範圍（前後各 90 天，每日報表不需要擴展）
+            
+            // ✅ 圖表用擴展範圍
             List<HealthRecordViewModel> chartRawRecords;
             if (reportType == ReportType.Daily)
             {
                 chartRawRecords = rawRecords;
             }
+            else if (reportType == ReportType.Yearly)
+            {
+                // 年報表只往前擴展，不往後，避免出現下一年資料
+                var extendedStart = startDate.AddDays(-90);
+                chartRawRecords = await GetRecordsInRangeAsync(userId, extendedStart, endDate);
+            }
             else
             {
+                // 週/月報表前後各擴展 90 天
                 var extendedStart = startDate.AddDays(-90);
                 var extendedEnd = endDate.AddDays(90);
                 chartRawRecords = await GetRecordsInRangeAsync(userId, extendedStart, extendedEnd);
@@ -351,9 +359,136 @@ namespace healthProject.Controllers
                 Statistics = statistics,
                 Records = aggregatedRecords,
                 Charts = charts,
-                Goals = goals
+                Goals = goals,
+                TrendSummary = await GenerateTrendSummaryAsync(userId, reportType, startDate, endDate, statistics, goals)
             };
         }
+
+        private async Task<TrendSummary> GenerateTrendSummaryAsync(
+    int userId,
+    ReportType reportType,
+    DateTime startDate,
+    DateTime endDate,
+    AnalysisStatistics currentStats,
+    PatientGoals goals)
+        {
+            // 計算上一期的日期範圍
+            var span = (endDate - startDate).Days + 1;
+            var prevStart = startDate.AddDays(-span);
+            var prevEnd = startDate.AddDays(-1);
+
+            var prevRawRecords = await GetRecordsInRangeAsync(userId, prevStart, prevEnd);
+            if (!prevRawRecords.Any())
+                return null;
+
+            var prevDailyGroups = prevRawRecords
+                .GroupBy(r => r.RecordDate.Date)
+                .Select(g => new DailyRecordGroup
+                {
+                    Date = g.Key,
+                    Records = g.OrderBy(r => r.RecordTime).ToList()
+                }).ToList();
+
+            var prevAggregated = prevDailyGroups.Select(d => new HealthRecordViewModel
+            {
+                RecordDate = d.Date,
+                BP_First_1_Systolic = d.AvgSystolicBP,
+                BP_First_1_Diastolic = d.AvgDiastolicBP,
+                BloodSugar = d.AvgBloodSugar,
+                WaterIntake = d.TotalWater > 0 ? d.TotalWater : null,
+                ExerciseDuration = d.TotalExercise > 0 ? d.TotalExercise : null,
+                Cigarettes = d.TotalCigarettes > 0 ? d.TotalCigarettes : null,
+                BetelNut = d.TotalBetelNut > 0 ? d.TotalBetelNut : null,
+            }).ToList();
+
+            var prevStats = CalculateStatistics(prevAggregated, goals);
+
+            var items = new List<TrendItem>();
+
+            // 血壓
+            if (currentStats.AvgSystolicBP.HasValue && prevStats.AvgSystolicBP.HasValue)
+            {
+                var diff = (double)(currentStats.AvgSystolicBP.Value - prevStats.AvgSystolicBP.Value);
+                items.Add(new TrendItem
+                {
+                    Label = "血壓（收縮壓）",
+                    Icon = "❤️",
+                    CurrentValue = $"{currentStats.AvgSystolicBP:F0}/{currentStats.AvgDiastolicBP:F0} mmHg",
+                    PrevValue = $"{prevStats.AvgSystolicBP:F0}/{prevStats.AvgDiastolicBP:F0} mmHg",
+                    DiffText = diff == 0 ? "持平" : $"{(diff > 0 ? "↑" : "↓")} {Math.Abs(diff):F0} mmHg",
+                    TrendType = diff <= 0 ? "good" : (diff <= 5 ? "warn" : "bad"),
+                    Message = diff <= -3 ? "血壓明顯改善，繼續保持！" :
+                              diff <= 0 ? "血壓持平或略降，表現不錯。" :
+                              diff <= 5 ? "血壓略有上升，請注意飲食與鹽分攝取。" :
+                              "血壓明顯上升，建議諮詢醫師。"
+                });
+            }
+
+            // 血糖
+            if (currentStats.AvgBloodSugar.HasValue && prevStats.AvgBloodSugar.HasValue)
+            {
+                var diff = (double)(currentStats.AvgBloodSugar.Value - prevStats.AvgBloodSugar.Value);
+                items.Add(new TrendItem
+                {
+                    Label = "血糖",
+                    Icon = "🩸",
+                    CurrentValue = $"{currentStats.AvgBloodSugar:F1} mg/dL",
+                    PrevValue = $"{prevStats.AvgBloodSugar:F1} mg/dL",
+                    DiffText = diff == 0 ? "持平" : $"{(diff > 0 ? "↑" : "↓")} {Math.Abs(diff):F1} mg/dL",
+                    TrendType = diff <= 0 ? "good" : (diff <= 5 ? "warn" : "bad"),
+                    Message = diff <= -3 ? "血糖控制進步，很棒！" :
+                              diff <= 0 ? "血糖維持穩定。" :
+                              diff <= 5 ? "血糖略升，注意甜食攝取。" :
+                              "血糖明顯上升，建議回診確認。"
+                });
+            }
+
+            // 飲水量
+            if (currentStats.AvgWaterIntake.HasValue && prevStats.AvgWaterIntake.HasValue)
+            {
+                var diff = (double)(currentStats.AvgWaterIntake.Value - prevStats.AvgWaterIntake.Value);
+                items.Add(new TrendItem
+                {
+                    Label = "飲水量",
+                    Icon = "💧",
+                    CurrentValue = $"{currentStats.AvgWaterIntake:F0} ml",
+                    PrevValue = $"{prevStats.AvgWaterIntake:F0} ml",
+                    DiffText = diff == 0 ? "持平" : $"{(diff > 0 ? "↑" : "↓")} {Math.Abs(diff):F0} ml",
+                    TrendType = diff >= 0 ? "good" : (diff >= -200 ? "warn" : "bad"),
+                    Message = diff >= 200 ? "飲水量明顯增加，很棒！" :
+                              diff >= 0 ? "飲水量維持或小幅提升。" :
+                              diff >= -200 ? "飲水量略有減少，記得多喝水。" :
+                              "飲水量明顯減少，請養成規律補水習慣。"
+                });
+            }
+
+            // 運動時間
+            if (currentStats.AvgExerciseDuration.HasValue && prevStats.AvgExerciseDuration.HasValue)
+            {
+                var diff = (double)(currentStats.AvgExerciseDuration.Value - prevStats.AvgExerciseDuration.Value);
+                items.Add(new TrendItem
+                {
+                    Label = "運動時間",
+                    Icon = "🏃",
+                    CurrentValue = $"{currentStats.AvgExerciseDuration:F0} 分鐘",
+                    PrevValue = $"{prevStats.AvgExerciseDuration:F0} 分鐘",
+                    DiffText = diff == 0 ? "持平" : $"{(diff > 0 ? "↑" : "↓")} {Math.Abs(diff):F0} 分鐘",
+                    TrendType = diff >= 0 ? "good" : (diff >= -15 ? "warn" : "bad"),
+                    Message = diff >= 30 ? "運動量大幅提升，非常棒！" :
+                              diff >= 0 ? "運動量維持或小幅增加。" :
+                              diff >= -15 ? "運動時間略有減少，試著維持規律運動。" :
+                              "運動時間明顯減少，建議重新安排運動計畫。"
+                });
+            }
+
+            return new TrendSummary
+            {
+                PeriodLabel = reportType == ReportType.Weekly ? "上週" :
+                              reportType == ReportType.Monthly ? "上月" : "去年",
+                Items = items
+            };
+        }
+
         private async Task<(PatientGoals goals, string gender, DateTime? birthDate)> GetPatientGoalsAsync(int userId)
         {
             var connStr = _configuration.GetConnectionString("DefaultConnection");
