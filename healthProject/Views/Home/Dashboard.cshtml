@@ -94,15 +94,15 @@
         /* 調整為 4 欄布局 */
         .page-selection {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
             margin-bottom: 2rem;
         }
 
         .page-card {
             background: linear-gradient(135deg, #6da7cc 0%, #5a92b8 100%);
             color: white;
-            padding: 2.5rem 1.5rem;
+            padding: 1.75rem 1rem; /* 原本是 2.5rem 1.5rem */
             border-radius: 15px;
             text-align: center;
             cursor: pointer;
@@ -159,18 +159,18 @@
         }
 
         .page-card-icon {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
         }
 
         .page-card-title {
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
         }
 
         .page-card-description {
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             opacity: 0.9;
         }
 
@@ -365,6 +365,14 @@
                         <h3 class="page-card-title">個案填寫狀況</h3>
                         <p class="page-card-description">
                             查看未填寫健康資訊的個案
+                        </p>
+                    </a>
+                    <a href="@Url.Action("Index", "Education")" class="page-card"
+                       style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
+                        <div class="page-card-icon">📚</div>
+                        <h3 class="page-card-title">衛教內容管理</h3>
+                        <p class="page-card-description">
+                            管理每日推播給病患的衛教訊息
                         </p>
                     </a>
                 }
