@@ -4,6 +4,7 @@
     Layout = null;
     var currentCategory = ViewBag.Category as string ?? "";
     var categories = ViewBag.Categories as List<string> ?? new List<string>();
+    var userName = User.FindFirst("FullName")?.Value ?? User.Identity.Name;
 
     var categoryColors = new Dictionary<string, string>
     {
@@ -23,7 +24,7 @@
         {"運動",   "🏃"},
         {"水分",   "💧"},
         {"抽菸",   "🚭"},
-        {"嚼檳榔", ""},
+        {"嚼檳榔", "🌿"},
         {"綜合",   "📋"}
     };
 }
@@ -32,258 +33,627 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
+    <title>衛教內容管理 — 代謝症候群疾病管理與追蹤系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <style>
-        body { background: #f0f4f8; font-family: 'Microsoft JhengHei', Arial, sans-serif; }
-        .main-container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; }
-
-        .page-header {
-            background: linear-gradient(135deg, #388E3C 0%, #2E7D32 100%);
-            color: white; padding: 1.5rem; border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            margin-bottom: 1.5rem;
-            display: flex; justify-content: space-between; align-items: center;
+        :root {
+            --navy: #0a2540;
+            --navy-mid: #103a5e;
+            --blue: #1a6fb5;
+            --blue-lt: #2589d8;
+            --bg: #f4f6f9;
+            --surface: #ffffff;
+            --border: #dde3ea;
+            --text: #1a2635;
+            --text-sub: #5a6a7e;
+            --text-pale: #8fa0b4;
+            --green: #2e7d32;
+            --danger: #c0392b;
         }
 
-        .stats-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
-        .stat-card {
-            background: white; border-radius: 10px; padding: 0.85rem 1.25rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08); flex: 1; min-width: 120px;
-            border-left: 4px solid #ccc; text-align: center;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-        .stat-card .stat-num { font-size: 1.6rem; font-weight: 700; line-height: 1; }
-        .stat-card .stat-label { font-size: 0.78rem; color: #6b7280; margin-top: 0.2rem; }
 
-        .filter-bar {
-            background: white;
-            border-radius: 10px;
-            padding: 1rem 1.25rem 1.2rem 1.25rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-            margin-bottom: 1rem;
+        html, body {
+            min-height: 100%;
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /* ── TOP BAR ── */
+        .topbar {
+            background: var(--navy);
+            height: 56px;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+        }
+
+        .topbar-logo {
             display: flex;
             align-items: center;
             gap: 0.6rem;
-            flex-wrap: wrap;
-        }
-
-        .category-badge {
-    display: inline-block; padding: 0.35rem 0.9rem;
-    border-radius: 20px; font-size: 0.8rem; font-weight: 600;
-    cursor: pointer; border: 2px solid transparent;
-    transition: all 0.2s; white-space: nowrap;
-    text-decoration: none; line-height: 1.5;
-}
-        .category-badge:hover { opacity: 0.85; }
-        .category-badge.active { border-color: #333; box-shadow: 0 0 0 2px rgba(0,0,0,0.1); }
-
-        .table-card {
-            background: white; border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;
-        }
-
-        .edu-table th {
-            background: #f8f9fa; font-weight: 600;
-            font-size: 0.85rem; color: #374151; border-bottom: 2px solid #e5e7eb;
-        }
-        .edu-table td { vertical-align: middle; font-size: 0.88rem; }
-        .edu-table tr:hover { background: #f9fafb; }
-
-        .content-preview {
-            max-width: 320px; overflow: hidden;
-            text-overflow: ellipsis; white-space: nowrap;
-            color: #6b7280; font-size: 0.82rem;
-        }
-
-        .toggle-btn {
-            border: none; padding: 0.3rem 0.75rem; border-radius: 20px;
-            font-size: 0.78rem; font-weight: 600; cursor: pointer;
-            transition: all 0.2s;
-        }
-        .toggle-btn.active { background: #dcfce7; color: #166534; }
-        .toggle-btn.inactive { background: #fee2e2; color: #991b1b; }
-
-        .action-btn {
-            border: none; background: none; padding: 0.3rem 0.5rem;
-            border-radius: 6px; cursor: pointer; transition: background 0.15s;
+            color: white;
+            font-weight: 700;
             font-size: 1rem;
         }
-        .action-btn:hover { background: #f3f4f6; }
-        .action-btn.edit:hover { background: #dbeafe; color: #1d4ed8; }
-        .action-btn.delete:hover { background: #fee2e2; color: #dc2626; }
+
+        .cross {
+            width: 28px;
+            height: 28px;
+            background: var(--blue-lt);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 900;
+            color: white;
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255,255,255,0.75);
+            font-size: 0.82rem;
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            background: var(--blue-lt);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .topbar-back {
+            color: rgba(255,255,255,0.65);
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.8rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+        }
+
+            .topbar-back:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
+                text-decoration: none;
+            }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(100deg, var(--navy-mid) 0%, var(--blue) 100%);
+            padding: 2rem 2.5rem 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .hero::after {
+                content: '';
+                position: absolute;
+                right: -60px;
+                top: -60px;
+                width: 240px;
+                height: 240px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.04);
+                pointer-events: none;
+            }
+
+        .hero-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 0.4rem;
+        }
+
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .hero-sub {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.55);
+        }
+
+        .hero-actions {
+            position: absolute;
+            right: 2.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-add {
+            background: white;
+            color: var(--navy);
+            border: none;
+            padding: 0.5rem 1.25rem;
+            border-radius: 7px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: opacity 0.15s;
+        }
+
+            .btn-add:hover {
+                opacity: 0.9;
+                color: var(--navy);
+                text-decoration: none;
+            }
+
+        /* ── CONTENT ── */
+        .content {
+            padding: 1.5rem 2.5rem;
+        }
+
+        /* ── SUCCESS MSG ── */
+        .success-bar {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            color: var(--green);
+            padding: 0.7rem 1rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        /* ── FILTER BAR ── */
+        .filter-bar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.85rem 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+
+        .filter-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            white-space: nowrap;
+            margin-right: 0.25rem;
+        }
+
+        .cat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            transition: all 0.15s;
+            white-space: nowrap;
+            text-decoration: none;
+            line-height: 1.5;
+        }
+
+            .cat-badge:hover {
+                opacity: 0.85;
+                text-decoration: none;
+            }
+
+            .cat-badge.active {
+                border-color: currentColor;
+                box-shadow: 0 0 0 2px rgba(0,0,0,0.08);
+            }
+
+        /* ── TABLE CARD ── */
+        .table-card {
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+
+        .table-card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-card-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-sub);
+        }
+
+        .count-badge {
+            background: var(--navy);
+            color: white;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.15rem 0.55rem;
+            border-radius: 20px;
+        }
+
+        /* ── TABLE ── */
+        .edu-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+            .edu-table th {
+                background: var(--bg);
+                padding: 0.65rem 0.85rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: var(--text-sub);
+                border-bottom: 1px solid var(--border);
+                text-align: left;
+                white-space: nowrap;
+            }
+
+                .edu-table th.center {
+                    text-align: center;
+                }
+
+            .edu-table td {
+                padding: 0.75rem 0.85rem;
+                font-size: 0.85rem;
+                border-bottom: 1px solid var(--border);
+                vertical-align: middle;
+            }
+
+            .edu-table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            .edu-table tbody tr:hover {
+                background: #f8fafc;
+            }
+
+        .content-preview {
+            max-width: 360px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text-sub);
+            font-size: 0.82rem;
+        }
+
+        /* 分類標籤 */
+        .cat-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* 啟用/停用 */
+        .toggle-btn {
+            border: none;
+            padding: 0.28rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+            .toggle-btn.active {
+                background: #e8f5e9;
+                color: #166534;
+            }
+
+            .toggle-btn.inactive {
+                background: #fdecea;
+                color: #991b1b;
+            }
+
+        /* 操作按鈕 */
+        .action-btn {
+            border: none;
+            background: none;
+            padding: 0.3rem 0.45rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            text-decoration: none;
+        }
+
+            .action-btn:hover {
+                background: #f3f4f6;
+                color: var(--text);
+            }
+
+            .action-btn.edit:hover {
+                background: #dbeafe;
+                color: #1d4ed8;
+            }
+
+            .action-btn.delete:hover {
+                background: #fee2e2;
+                color: #dc2626;
+            }
+
+        /* 空狀態 */
+        .empty-state {
+            padding: 3.5rem;
+            text-align: center;
+            color: var(--text-pale);
+        }
+
+            .empty-state i {
+                font-size: 2.5rem;
+                display: block;
+                margin-bottom: 0.75rem;
+            }
 
         /* 預覽 Modal */
-        .preview-bubble {
-            background: #f0f0f0; border-radius: 18px 18px 18px 4px;
-            padding: 1rem 1.25rem; max-width: 320px;
-            font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
         .preview-header {
-            background: #00b900; color: white; padding: 0.75rem 1rem;
-            border-radius: 8px 8px 0 0; font-weight: 600; font-size: 0.9rem;
+            background: #00b900;
+            color: white;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            font-size: 0.88rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
         }
 
-        .alert-success-custom {
-            background: #dcfce7; border: 1px solid #bbf7d0; color: #166534;
-            border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem;
-            display: flex; align-items: center; gap: 0.5rem;
+        .preview-bubble {
+            background: #f0f0f0;
+            border-radius: 4px 18px 18px 18px;
+            padding: 0.85rem 1rem;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            min-height: 80px;
+        }
+
+        @@media (max-width: 768px) {
+            .topbar {
+                padding: 0 1rem;
+            }
+
+            .topbar-user {
+                display: none;
+            }
+
+            .hero {
+                padding: 1.5rem 1.25rem;
+            }
+
+            .hero-actions {
+                position: static;
+                transform: none;
+                margin-top: 1rem;
+            }
+
+            .content {
+                padding: 1.25rem;
+            }
+
+            .edu-table {
+                display: block;
+                overflow-x: auto;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="main-container">
 
-        <!-- 頁首 -->
-        <div class="page-header">
-            <div>
-                <h1 style="font-size:1.6rem; font-weight:700; margin:0;">
-                    <i class="bi bi-journal-medical"></i> 衛教內容管理
-                </h1>
-                <div style="font-size:0.85rem; opacity:0.85; margin-top:0.25rem;">
-                    管理每日推播給病患的衛教訊息
-                </div>
-            </div>
-            <div class="d-flex gap-2">
-                <a href="@Url.Action("Create")" class="btn btn-light btn-sm fw-bold">
-                    <i class="bi bi-plus-lg"></i> 新增衛教
-                </a>
-                <a href="@Url.Action("Index", "Home")" class="btn btn-sm"
-                   style="background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.4);">
-                    <i class="bi bi-arrow-left"></i> 返回主選單
-                </a>
-            </div>
+    <!-- TOP BAR -->
+    <header class="topbar">
+        <div class="topbar-logo">
+            <div class="cross">✚</div>
+            代謝症候群疾病管理與追蹤系統
         </div>
+        <div class="topbar-right">
+            <div class="topbar-user">
+                <div class="user-avatar">@(userName?.Length > 0 ? userName[0].ToString() : "醫")</div>
+                <span>@userName</span>
+            </div>
+            <a href="@Url.Action("Dashboard", "Home")" class="topbar-back">
+                <i class="bi bi-arrow-left"></i> 返回主選單
+            </a>
+        </div>
+    </header>
 
-        <!-- 成功訊息 -->
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-eyebrow">Health Education</div>
+        <div class="hero-title">
+            <i class="bi bi-journal-medical"></i>
+            衛教內容管理
+        </div>
+        <div class="hero-sub">管理每日推播給病患的衛教訊息</div>
+
+        <div class="hero-actions">
+            <a href="@Url.Action("Create")" class="btn-add">
+                <i class="bi bi-plus-lg"></i> 新增衛教
+            </a>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
         @if (TempData["Success"] != null)
         {
-            <div class="alert-success-custom">
+            <div class="success-bar">
                 <i class="bi bi-check-circle-fill"></i> @TempData["Success"]
             </div>
         }
 
-        <!-- 統計卡片 -->
-        <div class="stats-row" id="statsRow">
-            <div class="stat-card" style="border-left-color:#4CAF50;">
-                <div class="stat-num" id="totalCount">@Model.Count</div>
-                <div class="stat-label">全部</div>
-            </div>
-        </div>
-
         <!-- 分類篩選 -->
         <div class="filter-bar">
-            <span style="font-size:0.85rem; color:#6b7280; font-weight:600;">篩選分類：</span>
+            <span class="filter-label"><i class="bi bi-funnel"></i> 篩選分類</span>
+
             <a href="@Url.Action("Index")"
-               class="category-badge @(currentCategory == "" ? "active" : "")"
+               class="cat-badge @(currentCategory == "" ? "active" : "")"
                style="background:#e5e7eb; color:#374151;">
                 全部（@Model.Count）
             </a>
+
             @foreach (var cat in categories)
             {
                 var color = categoryColors.GetValueOrDefault(cat, "#6b7280");
                 var emoji = categoryEmoji.GetValueOrDefault(cat, "📋");
                 var count = Model.Count(m => m.Category == cat);
                 <a href="@Url.Action("Index", new { category = cat })"
-                   class="category-badge @(currentCategory == cat ? "active" : "")"
-                   style="background:@color 20; color:@color; border-color:@(currentCategory == cat ? color : "transparent");">
+                   class="cat-badge @(currentCategory == cat ? "active" : "")"
+                   style="background:@(color)18; color:@color;">
                     @emoji @cat（@count）
                 </a>
             }
         </div>
 
-        <!-- 內容列表 -->
+        <!-- 表格 -->
         <div class="table-card">
-            <div style="padding:1rem 1.25rem; border-bottom:1px solid #e5e7eb; display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:600; color:#374151;">
+            <div class="table-card-header">
+                <span class="table-card-title">
+                    <i class="bi bi-table" style="color:var(--blue); margin-right:0.3rem;"></i>
                     @(currentCategory == "" ? "全部衛教內容" : $"{currentCategory} 分類")
-                    <span style="color:#6b7280; font-weight:400; font-size:0.85rem;">（共 @Model.Count 則）</span>
                 </span>
+                <span class="count-badge">共 @Model.Count 則</span>
             </div>
 
             @if (!Model.Any())
             {
-                <div style="padding:3rem; text-align:center; color:#9ca3af;">
-                    <i class="bi bi-journal-x" style="font-size:2.5rem;"></i>
-                    <p class="mt-2">目前沒有衛教內容，點擊「新增衛教」開始建立</p>
+                <div class="empty-state">
+                    <i class="bi bi-journal-x"></i>
+                    <p>目前沒有衛教內容，點擊「新增衛教」開始建立</p>
                 </div>
             }
             else
             {
-                <div class="table-responsive">
-                    <table class="table edu-table mb-0">
-                        <thead>
-                            <tr>
-                                <th style="width:60px;">排序</th>
-                                <th style="width:90px;">分類</th>
-                                <th style="width:200px;">標題</th>
-                                <th>內容預覽</th>
-                                <th style="width:90px; text-align:center;">狀態</th>
-                                <th style="width:120px; text-align:center;">操作</th>
+                <table class="edu-table">
+                    <thead>
+                        <tr>
+                            <th style="width:55px;">排序</th>
+                            <th style="width:100px;">分類</th>
+                            <th style="width:210px;">標題</th>
+                            <th>內容預覽</th>
+                            <th class="center" style="width:90px;">狀態</th>
+                            <th class="center" style="width:110px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var color = categoryColors.GetValueOrDefault(item.Category, "#6b7280");
+                            var emoji = categoryEmoji.GetValueOrDefault(item.Category, "📋");
+                            <tr id="row-@item.Id">
+                                <td style="color:var(--text-pale); font-size:0.8rem; text-align:center;">@item.SortOrder</td>
+                                <td>
+                                    <span class="cat-tag" style="background:@(color)18; color:@color;">
+                                        @emoji @item.Category
+                                    </span>
+                                </td>
+                                <td style="font-weight:500; color:var(--text);">@item.Title</td>
+                                <td>
+                                    <div class="content-preview" title="@item.Content">@item.Content</div>
+                                </td>
+                                <td style="text-align:center;">
+                                    <button class="toggle-btn @(item.IsActive ? "active" : "inactive")"
+                                            id="toggle-@item.Id"
+                                            onclick="toggleActive(@item.Id)">
+                                        @(item.IsActive ? "✓ 啟用" : "✗ 停用")
+                                    </button>
+                                </td>
+                                <td style="text-align:center;">
+                                    <button class="action-btn" title="預覽 LINE 訊息效果"
+                                            onclick="previewEducation('@Html.Raw(item.Category)', '@Html.Raw(item.Title)', '@Html.Raw(item.Content.Replace("'", "\\'").Replace("\n", "\\n"))')">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <a href="@Url.Action("Edit", new { id = item.Id })"
+                                       class="action-btn edit" title="編輯">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button class="action-btn delete" title="刪除"
+                                            onclick="deleteEducation(@item.Id, '@Html.Raw(item.Title)')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model)
-                            {
-                                var color = categoryColors.GetValueOrDefault(item.Category, "#6b7280");
-                                var emoji = categoryEmoji.GetValueOrDefault(item.Category, "📋");
-                                <tr id="row-@item.Id">
-                                    <td style="color:#9ca3af; font-size:0.8rem; text-align:center;">@item.SortOrder</td>
-                                    <td>
-                                        <span style="background:@(color)22; color:@color; padding:0.2rem 0.6rem; border-radius:20px; font-size:0.78rem; font-weight:600;">
-                                            @emoji @item.Category
-                                        </span>
-                                    </td>
-                                    <td style="font-weight:500;">@item.Title</td>
-                                    <td>
-                                        <div class="content-preview" title="@item.Content">@item.Content</div>
-                                    </td>
-                                    <td style="text-align:center;">
-                                        <button class="toggle-btn @(item.IsActive ? "active" : "inactive")"
-                                                id="toggle-@item.Id"
-                                                onclick="toggleActive(@item.Id)">
-                                            @(item.IsActive ? "✓ 啟用" : "✗ 停用")
-                                        </button>
-                                    </td>
-                                    <td style="text-align:center;">
-                                        <button class="action-btn" title="預覽 LINE 訊息效果"
-                                                onclick="previewEducation(@item.Id, '@Html.Raw(item.Category)', '@Html.Raw(item.Title)', '@Html.Raw(item.Content.Replace("'", "\\'").Replace("\n", "\\n"))')">
-                                            👁️
-                                        </button>
-                                        <a href="@Url.Action("Edit", new { id = item.Id })"
-                                           class="action-btn edit" title="編輯">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <button class="action-btn delete" title="刪除"
-                                                onclick="deleteEducation(@item.Id, '@Html.Raw(item.Title)')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                        }
+                    </tbody>
+                </table>
             }
         </div>
+
     </div>
 
     <!-- 預覽 Modal -->
     <div class="modal fade" id="previewModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
-            <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-content" style="border-radius:12px; overflow:hidden; border:none;">
                 <div class="preview-header">
                     <i class="bi bi-chat-dots-fill"></i> LINE 推播預覽
                 </div>
-                <div class="modal-body" style="background:#e0e0e0; padding:1.5rem; min-height:200px;">
-                    <div style="font-size:0.75rem; color:#666; margin-bottom:0.5rem; text-align:center;">
+                <div class="modal-body" style="background:#e0e0e0; padding:1.5rem;">
+                    <div style="font-size:0.72rem; color:#666; margin-bottom:0.6rem; text-align:center; letter-spacing:0.05em;">
                         代謝症候群管理系統
                     </div>
                     <div class="preview-bubble" id="previewContent"></div>
                 </div>
-                <div class="modal-footer" style="border:none; padding:0.75rem 1rem;">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">關閉</button>
+                <div class="modal-footer" style="border:none; padding:0.75rem 1rem; background:var(--bg);">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">關閉</button>
                 </div>
             </div>
         </div>
@@ -291,45 +661,33 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // 分類顏色對照
-        const categoryColors = {
-            '血壓': '#e53935', '血糖': '#e91e63', '運動': '#4CAF50',
-            '水分': '#1e88e5', '抽菸': '#6d4c41', '嚼檳榔': '#8d6e63', '綜合': '#7b1fa2'
-        };
         const categoryEmoji = {
             '血壓': '❤️', '血糖': '🩸', '運動': '🏃',
             '水分': '💧', '抽菸': '🚭', '嚼檳榔': '🌿', '綜合': '📋'
         };
 
-        // 啟用/停用
         async function toggleActive(id) {
             try {
-                const res = await fetch(`/Education/ToggleActive`, {
+                const res = await fetch('/Education/ToggleActive', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getToken() },
                     body: JSON.stringify(id)
                 });
                 const result = await res.json();
                 if (result.success) {
                     const btn = document.getElementById(`toggle-${id}`);
-                    if (result.isActive) {
-                        btn.className = 'toggle-btn active';
-                        btn.textContent = '✓ 啟用';
-                    } else {
-                        btn.className = 'toggle-btn inactive';
-                        btn.textContent = '✗ 停用';
-                    }
+                    btn.className = result.isActive ? 'toggle-btn active' : 'toggle-btn inactive';
+                    btn.textContent = result.isActive ? '✓ 啟用' : '✗ 停用';
                 }
             } catch (e) { alert('操作失敗，請稍後再試'); }
         }
 
-        // 刪除
         async function deleteEducation(id, title) {
             if (!confirm(`確定要刪除「${title}」嗎？\n\n此操作無法復原，相關推播紀錄也會一併刪除。`)) return;
             try {
-                const res = await fetch(`/Education/Delete`, {
+                const res = await fetch('/Education/Delete', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getAntiForgeryToken() },
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getToken() },
                     body: JSON.stringify(id)
                 });
                 const result = await res.json();
@@ -344,42 +702,16 @@
             } catch (e) { alert('刪除失敗，請稍後再試'); }
         }
 
-        // 預覽 LINE 訊息
-        function previewEducation(id, category, title, content) {
+        function previewEducation(category, title, content) {
             const emoji = categoryEmoji[category] || '📋';
             const text = `${emoji} 今日健康衛教\n━━━━━━━━━━━━━━━\n【${category}】${title}\n\n${content.replace(/\\n/g, '\n')}`;
             document.getElementById('previewContent').textContent = text;
             new bootstrap.Modal(document.getElementById('previewModal')).show();
         }
 
-        // 取得 Anti-Forgery Token
-        function getAntiForgeryToken() {
+        function getToken() {
             return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
         }
-
-        // 載入統計
-        async function loadStats() {
-            try {
-                const res = await fetch('/Education/Stats');
-                const stats = await res.json();
-                const row = document.getElementById('statsRow');
-                stats.forEach(s => {
-                    const color = categoryColors[s.category] || '#6b7280';
-                    const emoji = categoryEmoji[s.category] || '📋';
-                    const card = document.createElement('div');
-                    card.className = 'stat-card';
-                    card.style.borderLeftColor = color;
-                    card.innerHTML = `
-                        <div class="stat-num" style="color:${color}">${s.active}</div>
-                        <div class="stat-label">${emoji} ${s.category}</div>
-                        <div style="font-size:0.7rem; color:#9ca3af;">共 ${s.total} 則</div>
-                    `;
-                    row.appendChild(card);
-                });
-            } catch (e) { console.error('載入統計失敗', e); }
-        }
-
-        document.addEventListener('DOMContentLoaded', loadStats);
     </script>
 
     @Html.AntiForgeryToken()

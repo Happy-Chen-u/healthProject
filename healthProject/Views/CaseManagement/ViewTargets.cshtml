@@ -1,8 +1,9 @@
 ﻿@model IEnumerable<healthProject.Models.TargetSummaryViewModel>
-
 @{
     ViewData["Title"] = "個案目標達成狀況";
     Layout = null;
+    var userName = User.FindFirst("FullName")?.Value ?? User.Identity.Name;
+    var totalCount = Model?.Count() ?? 0;
 }
 
 <!DOCTYPE html>
@@ -10,277 +11,534 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
+    <title>個案目標達成狀況 — 代謝症候群疾病管理與追蹤系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
+        :root {
+            --navy: #0a2540;
+            --navy-mid: #103a5e;
+            --blue: #1a6fb5;
+            --blue-lt: #2589d8;
+            --bg: #f4f6f9;
+            --surface: #ffffff;
+            --border: #dde3ea;
+            --text: #1a2635;
+            --text-sub: #5a6a7e;
+            --text-pale: #8fa0b4;
+            --green: #2e7d32;
+            --red: #c0392b;
+        }
+
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
-        body {
-            background: linear-gradient(135deg, #FFF8E1 0%, #FFE0B2 100%);
-            min-height: 100vh;
-            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-            padding: 2rem 1rem;
+        html, body {
+            min-height: 100%;
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
         }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 25px;
-            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
+        /* ── TOP BAR ── */
+        .topbar {
+            background: var(--navy);
+            height: 56px;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+        }
+
+        .topbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .cross {
+            width: 28px;
+            height: 28px;
+            background: var(--blue-lt);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 900;
+            color: white;
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255,255,255,0.75);
+            font-size: 0.82rem;
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            background: var(--blue-lt);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .topbar-back {
+            color: rgba(255,255,255,0.65);
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.8rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+        }
+
+            .topbar-back:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
+                text-decoration: none;
+            }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(100deg, var(--navy-mid) 0%, var(--blue) 100%);
+            padding: 2rem 2.5rem 1.75rem;
+            position: relative;
             overflow: hidden;
         }
 
-        .header {
-            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
-            color: white;
-            padding: 2rem;
-            text-align: center;
+            .hero::after {
+                content: '';
+                position: absolute;
+                right: -60px;
+                top: -60px;
+                width: 240px;
+                height: 240px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.04);
+                pointer-events: none;
+            }
+
+        .hero-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 0.4rem;
         }
 
-        .header-title {
-            font-size: 1.8rem;
+        .hero-title {
+            font-size: 1.5rem;
             font-weight: 700;
-        }
-
-        .content {
-            padding: 2rem;
-        }
-
-        .search-section {
-            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
-            border: 3px solid #FFB74D;
-            padding: 1.5rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
-            position: relative;
-        }
-
-        .search-form {
+            color: white;
+            margin-bottom: 0.4rem;
             display: flex;
-            justify-content: center;
-            gap: 1rem;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .hero-sub {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.55);
+        }
+
+        /* ── CONTENT ── */
+        .content {
+            padding: 2rem 2.5rem;
+        }
+
+        /* ── SEARCH BAR ── */
+        .search-bar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
             flex-wrap: wrap;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+
+        .search-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            white-space: nowrap;
         }
 
         .search-input {
             flex: 1;
-            min-width: 250px;
-            padding: 0.75rem;
-            border: 2px solid #FFB74D;
-            border-radius: 10px;
-            font-size: 1rem;
+            min-width: 220px;
+            padding: 0.6rem 0.9rem;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            font-size: 0.88rem;
+            font-family: inherit;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
         }
 
-        .top-left-btn {
-            margin-bottom: 1rem;
-        }
-
-        .btn {
-            padding: 0.7rem 1.3rem;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: 0.3s;
-            display: inline-block;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #90A4AE 0%, #78909C 100%);
-            color: white;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .back-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #90A4AE 0%, #78909C 100%);
-            color: white;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.95rem;
-            display: inline-block;
-        }
-
-            .back-btn:hover {
-                background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
+            .search-input:focus {
+                border-color: var(--blue-lt);
+                box-shadow: 0 0 0 3px rgba(37,137,216,0.1);
             }
 
-        table {
-            width: 100%;
-            max-width: 100%; 
-            margin-top: 1rem;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 10px;
+            .search-input::placeholder {
+                color: var(--text-pale);
+            }
+
+        .btn-search {
+            padding: 0.6rem 1.25rem;
+            background: var(--navy);
+            border: none;
+            border-radius: 7px;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: background 0.15s;
+        }
+
+            .btn-search:hover {
+                background: var(--navy-mid);
+            }
+
+        .btn-clear {
+            padding: 0.6rem 1rem;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            color: var(--text-sub);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: background 0.15s;
+        }
+
+            .btn-clear:hover {
+                background: var(--bg);
+                text-decoration: none;
+                color: var(--text-sub);
+            }
+
+        /* ── TABLE CARD ── */
+        .table-card {
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
             overflow: hidden;
         }
 
+        .table-card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
 
-        th {
-            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+        .table-card-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .count-badge {
+            background: var(--navy);
             color: white;
-            padding: 1rem;
+            font-size: 0.72rem;
             font-weight: 700;
+            padding: 0.15rem 0.55rem;
+            border-radius: 20px;
         }
 
-        td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid #FFE0B2;
+        /* ── TABLE ── */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+            .data-table thead th {
+                background: var(--bg);
+                padding: 0.75rem 1rem;
+                font-size: 0.78rem;
+                font-weight: 600;
+                color: var(--text-sub);
+                text-align: left;
+                border-bottom: 1px solid var(--border);
+                letter-spacing: 0.03em;
+            }
+
+                .data-table thead th.center {
+                    text-align: center;
+                }
+
+            .data-table tbody td {
+                padding: 0.85rem 1rem;
+                font-size: 0.88rem;
+                border-bottom: 1px solid var(--border);
+                vertical-align: middle;
+            }
+
+            .data-table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            .data-table tbody tr:hover {
+                background: #f8fafc;
+            }
+
+        .td-center {
             text-align: center;
         }
 
-        tr:hover {
-            background: #FFF8E1;
+        /* 達成/未達成 數字 */
+        .badge-achieved {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: #e8f5e9;
+            color: var(--green);
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 0.25rem 0.65rem;
+            border-radius: 20px;
         }
 
-        .details-btn {
-            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+        .badge-unachieved {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: #fdecea;
+            color: var(--red);
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 0.25rem 0.65rem;
+            border-radius: 20px;
+        }
+
+        /* 詳細按鈕 */
+        .btn-detail {
+            padding: 0.4rem 0.9rem;
+            background: var(--blue);
+            border: none;
+            border-radius: 6px;
             color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
             text-decoration: none;
-            font-weight: 600;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            transition: background 0.15s;
         }
 
-            .details-btn:hover {
-                background: linear-gradient(135deg, #FFA726 0%, #FB8C00 100%);
+            .btn-detail:hover {
+                background: var(--blue-lt);
+                color: white;
+                text-decoration: none;
             }
 
-        .no-data {
+        /* 無資料 */
+        .empty-state {
+            padding: 3rem;
             text-align: center;
-            color: #E65100;
-            font-size: 1.1rem;
-            margin-top: 1rem;
+            color: var(--text-pale);
         }
 
-        .record-count {
-            text-align: right;
-            margin-top: 1.5rem;
-            font-weight: 600;
-            color: #333;
-        }
+            .empty-state i {
+                font-size: 2.5rem;
+                margin-bottom: 0.75rem;
+                display: block;
+            }
 
+            .empty-state p {
+                font-size: 0.9rem;
+            }
+
+        /* ── RESPONSIVE ── */
         @@media (max-width: 768px) {
+            .topbar {
+                padding: 0 1rem;
+            }
+
+            .topbar-user {
+                display: none;
+            }
+
+            .hero {
+                padding: 1.5rem 1.25rem;
+            }
+
             .content {
-                padding: 1rem; 
+                padding: 1.25rem;
             }
 
-            .search-form {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-
-            table {
-                width: 100%;
+            .data-table {
                 display: block;
                 overflow-x: auto;
-            }
-
-            th, td {
-                padding: 0.5rem 0.75rem;
-                font-size: 0.85rem;
-            }
-
-            .top-left-btn {
-                margin-bottom: 0.8rem;
-            }
-
-            .back-btn {
-                display: inline-block;
-                width: auto;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 class="header-title">🎯 個案目標達成狀況</h1>
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+        <div class="topbar-logo">
+            <div class="cross">✚</div>
+            代謝症候群疾病管理與追蹤系統
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-user">
+                <div class="user-avatar">@(userName?.Length > 0 ? userName[0].ToString() : "醫")</div>
+                <span>@userName</span>
+            </div>
+            <a href="@Url.Action("Index", "CaseManagement")" class="topbar-back">
+                <i class="bi bi-arrow-left"></i> 返回上一頁
+            </a>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-eyebrow">Target Achievement</div>
+        <div class="hero-title">
+            <i class="bi bi-bullseye"></i>
+            個案目標達成狀況
+        </div>
+        <div class="hero-sub">查看個案是否達成每次評估設定的目標值</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <!-- 搜尋列 -->
+        <div class="search-bar">
+            <span class="search-label"><i class="bi bi-search"></i> 搜尋</span>
+            <form asp-action="ViewTargets" method="get" style="display:contents;">
+                <input type="text" name="idNumber" class="search-input"
+                       placeholder="輸入身分證字號查詢"
+                       value="@ViewBag.SearchIdNumber" />
+                <button type="submit" class="btn-search">
+                    <i class="bi bi-search"></i> 查詢
+                </button>
+                @if (!string.IsNullOrEmpty(ViewBag.SearchIdNumber as string))
+                {
+                    <a href="@Url.Action("ViewTargets", "CaseManagement")" class="btn-clear">
+                        <i class="bi bi-x"></i> 清除
+                    </a>
+                }
+            </form>
         </div>
 
-        <div class="content">
-            <!-- 返回主選單按鈕 -->
-            <div class="button-group top-left-btn">
-                <a href="@Url.Action("Index", "CaseManagement")" class="btn btn-secondary">
-                    ← 返回主選單
-                </a>
+        <!-- 資料表格 -->
+        <div class="table-card">
+            <div class="table-card-header">
+                <span class="table-card-title">
+                    <i class="bi bi-table"></i>
+                    個案列表
+                </span>
+                <span class="count-badge">共 @totalCount 筆</span>
             </div>
 
-            <!-- 查詢區 -->
-            <div class="search-section">
-                <form asp-action="ViewTargets" method="get" class="search-form">
-                    <input type="text" name="idNumber" placeholder="輸入身分證字號查詢" value="@ViewBag.SearchIdNumber" class="search-input" />
-                    <button type="submit" class="btn btn-primary">🔍 查詢</button>
-                    @if (!string.IsNullOrEmpty(ViewBag.SearchIdNumber))
-                    {
-                        <a href="@Url.Action("ViewTargets", "CaseManagement")" class="btn btn-secondary">清除搜尋</a>
-                    }
-                </form>
-            </div>
-
-            <!-- 資料表格 -->
-            @using System.Linq  
             @if (!Model.Any())
             {
-                <p class="no-data">查無資料</p>
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>查無資料</p>
+                </div>
             }
             else
             {
-                <table>
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>姓名</th>
                             <th>身分證字號</th>
-                            <th>達成項目</th>
-                            <th>未達成項目</th>
-                            <th>操作</th>
+                            <th class="center">達成項目</th>
+                            <th class="center">未達成項目</th>
+                            <th class="center">操作</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Model)
                         {
                             <tr>
-                                <td>@item.Name</td>
-                                <td>@item.IDNumber</td>
-                                <td>@item.AchievedCount</td>
-                                <td>@item.UnachievedCount</td>
-                                <td>
+                                <td><strong>@item.Name</strong></td>
+                                <td style="color:var(--text-sub); font-size:0.83rem;">@item.IDNumber</td>
+                                <td class="td-center">
+                                    <span class="badge-achieved">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        @item.AchievedCount
+                                    </span>
+                                </td>
+                                <td class="td-center">
+                                    <span class="badge-unachieved">
+                                        <i class="bi bi-x-circle-fill"></i>
+                                        @item.UnachievedCount
+                                    </span>
+                                </td>
+                                <td class="td-center">
                                     <a asp-action="TargetDetails"
                                        asp-route-idNumber="@item.IDNumber"
-                                       class="btn btn-primary">
-                                        查看詳細評估記錄
+                                       class="btn-detail">
+                                        <i class="bi bi-clipboard2-data"></i>
+                                        查看詳細
                                     </a>
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
-
-                <!-- 顯示總筆數 -->
-                <p class="record-count">共 @Model.Count() 筆紀錄</p>
             }
-
         </div>
+
     </div>
+
 </body>
 </html>

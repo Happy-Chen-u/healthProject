@@ -1,178 +1,314 @@
 ﻿@{
     ViewData["Title"] = "查詢病患健康資訊";
     Layout = null;
+    var userName = User.FindFirst("FullName")?.Value ?? User.Identity.Name;
 }
 
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
+    <title>查詢病患健康資訊 — 代謝症候群疾病管理與追蹤系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
-        body {
-            background-color: #f5f5f5;
-            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
+        :root {
+            --navy:      #0a2540;
+            --navy-mid:  #103a5e;
+            --blue:      #1a6fb5;
+            --blue-lt:   #2589d8;
+            --teal:      #0e8a7a;
+            --bg:        #f4f6f9;
+            --surface:   #ffffff;
+            --border:    #dde3ea;
+            --text:      #1a2635;
+            --text-sub:  #5a6a7e;
+            --text-pale: #8fa0b4;
         }
 
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            min-height: 100%;
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
         }
 
-        .page-title {
-            text-align: center;
-            color: #333;
-            font-size: 22px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-
-        .search-container {
+        /* ── TOP BAR ── */
+        .topbar {
+            background: var(--navy);
+            height: 56px;
             display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
             align-items: center;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
         }
 
-        .search-box {
+        .topbar-logo {
             display: flex;
-            flex-wrap: nowrap; 
             align-items: center;
-            padding: 12px 20px;
-            background: white;
-            border: 2px solid #455a64;
-            border-radius: 12px;
-            gap: 8px;
-            max-width: 100%;
-            width: 100%;
-            box-sizing: border-box;
-            overflow-x: auto; 
+            gap: 0.6rem;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
         }
 
-
-            .search-box label {
-                font-size: 14px;
-                color: #333;
-                white-space: nowrap;
-                margin: 0;
-            }
-
-            .search-box input {
-                padding: 5px 10px;
-                border: 1px solid #ccc;
-                border-radius: 3px;
-                font-size: 14px;
-                width: 100px; 
-                min-width: 80px; 
-                flex-shrink: 0; 
-            }
-
-            .search-box button {
-                padding: 5px 18px;
-                background: #5a9a5a;
-                color: white;
-                border: none;
-                border-radius: 3px;
-                cursor: pointer;
-                font-size: 14px;
-            }
-
-                .search-box button:hover {
-                    background: #4a8a4a;
-                }
-
-        .date-filter-box {
-            display: none;
+        .cross {
+            width: 28px; height: 28px;
+            background: var(--blue-lt);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: 900; color: white;
         }
 
-            .date-filter-box.show {
-                display: inline-flex;
-            }
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
 
-        .patient-info {
-            background: #f7f5e7;
-            border: 2px solid #455a64;
-            padding: 12px 20px;
-            margin-bottom: 15px;
-            display: none;
-            font-size: 14px;
-            border-radius: 12px;
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255,255,255,0.75);
+            font-size: 0.82rem;
+        }
+
+        .user-avatar {
+            width: 28px; height: 28px;
+            background: var(--blue-lt);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; color: white;
+        }
+
+        .topbar-back {
+            color: rgba(255,255,255,0.65);
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.8rem;
+            text-decoration: none;
+            display: flex; align-items: center; gap: 0.35rem;
+            transition: all 0.2s;
+        }
+        .topbar-back:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+        }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(100deg, var(--navy-mid) 0%, var(--blue) 100%);
+            padding: 2rem 2.5rem 1.75rem;
+            position: relative;
             overflow: hidden;
         }
 
-            .patient-info.show {
-                display: block;
-            }
+        .hero::after {
+            content: '';
+            position: absolute;
+            right: -60px; top: -60px;
+            width: 240px; height: 240px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+            pointer-events: none;
+        }
 
-        .patient-info-content {
+        .hero-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 0.4rem;
+        }
+
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.4rem;
             display: flex;
-            gap: 30px;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .hero-sub {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.55);
+        }
+
+        /* ── CONTENT ── */
+        .content {
+            padding: 2rem 2.5rem;
+        }
+
+        /* ── SEARCH BARS ── */
+        .search-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+
+        .search-bar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+
+        .search-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            white-space: nowrap;
+        }
+
+        .search-input {
+            padding: 0.55rem 0.9rem;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            font-size: 0.88rem;
+            font-family: inherit;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
+            min-width: 160px;
+        }
+        .search-input:focus {
+            border-color: var(--blue-lt);
+            box-shadow: 0 0 0 3px rgba(37,137,216,0.1);
+        }
+        .search-input::placeholder { color: var(--text-pale); }
+
+        .btn-search {
+            padding: 0.55rem 1.1rem;
+            background: var(--navy);
+            border: none;
+            border-radius: 7px;
+            color: white;
+            font-size: 0.83rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 0.35rem;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+        .btn-search:hover { background: var(--navy-mid); }
+
+        .date-bar { display: none; }
+        .date-bar.show { display: flex; }
+
+        /* ── PATIENT INFO STRIP ── */
+        .patient-strip {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            display: none;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .patient-strip.show { display: block; }
+
+        .patient-strip-inner {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             flex-wrap: wrap;
         }
 
-        .patient-info-item {
+        .patient-avatar {
+            width: 38px; height: 38px;
+            background: var(--blue-lt);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .patient-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .patient-meta {
             display: flex;
-            gap: 8px;
+            flex-wrap: wrap;
+            gap: 1.25rem;
+            margin-top: 0.15rem;
         }
 
-        .patient-info-label {
-            font-weight: bold;
+        .patient-meta-item {
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
         }
 
-        .record-container {
-            display: none;
-        }
+        /* ── RECORDS ── */
+        .records-wrap { display: none; }
+        .records-wrap.show { display: block; }
 
-            .record-container.show {
-                display: block;
-            }
-
-        .record-block {
-            margin-bottom: 10px;
-            border: 2px solid #455a64;
-            background: white;
+        .record-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 12px;
             overflow: hidden;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
         }
 
-            .record-block table {
-                width: 100%;
-                border-collapse: collapse;
-            }
-
-
-        .date-header {
-            background: #e8f5e9;
-            border-bottom: 2px solid #455a64;
-            padding: 10px 15px;
-            font-weight: bold;
-            font-size: 15px;
-            padding: 10px 5px;
-            text-align: left;
+        .record-date-header {
+            padding: 0.75rem 1.25rem;
+            background: var(--navy);
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .bp-section {
-            border-bottom: 2px solid #455a64;
+        /* 血壓區塊 */
+        .record-section {
+            border-bottom: 1px solid var(--border);
         }
+        .record-section:last-child { border-bottom: none; }
 
-        .section-title {
-            padding: 8px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .bp-title {
-            background: #699a54;
-            color: #ebebeb;
-        }
-
-        .lifestyle-title {
-            background: #699a54;
-            color: #ebebeb;
+        .section-header {
+            padding: 0.6rem 1.25rem;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
         }
 
         .data-table {
@@ -180,413 +316,355 @@
             border-collapse: collapse;
         }
 
-            .data-table th {
-                background: #f5f5f5;
-                padding: 8px;
-                text-align: center;
-                font-weight: bold;
-                font-size: 13px;
-                border: 1px solid #455a64;
-            }
-
-            .data-table td {
-                padding: 8px;
-                text-align: center;
-                font-size: 13px;
-                border: 1px solid #455a64;
-            }
-
-        .bp-section .data-table th {
-            background: #d4decf;
+        .data-table th {
+            background: var(--bg);
+            padding: 0.6rem 0.75rem;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            border-bottom: 1px solid var(--border);
         }
 
-        .lifestyle-section .data-table th {
-            background: #d4decf;
+        .data-table td {
+            padding: 0.65rem 0.75rem;
+            text-align: center;
+            font-size: 0.83rem;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+            color: var(--text);
         }
+
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: #f8fafc; }
+
+        .empty-cell { color: var(--text-pale); }
 
         .meal-content {
             text-align: left;
-            font-size: 12px;
-            line-height: 1.3;
-            padding: 4px;
+            font-size: 0.75rem;
+            line-height: 1.6;
         }
 
-           
-            .meal-content span {
-                display: inline-block;
-                width: 20px;
-            }
-
-        .empty-cell {
-            color: #999;
-            font-style: italic;
-        }
-
+        /* 無資料 */
         .empty-state {
+            padding: 3rem;
             text-align: center;
-            padding: 40px;
-            background: white;
-            border: 2px solid #455a64;
-            color: #666;
-            margin-top: 20px;
+            color: var(--text-pale);
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 12px;
         }
+        .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
 
-        .btn-back {
-            padding: 8px 18px;
-            background: #607D8B;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 14px;
-        }
-
-            .btn-back:hover {
-                background: #455A64;
-                color: white;
-                text-decoration: none;
-            }
-
-        .date-header {
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            padding: 8px 0;
-        }
-
+        /* ── RESPONSIVE ── */
         @@media (max-width: 768px) {
-            .search-container
-
-        {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .search-box {
-            width: 100%;
-            justify-content: space-between;
-        }
-
-            .search-box input {
-                flex: 1;
-                max-width: none;
-            }
-
-        /* 手機上表格水平滾動 */
-        .bp-section table,
-        .lifestyle-section table {
-            display: block; 
-            overflow-x: auto;
-            white-space: nowrap; 
-        }
-
-            .bp-section table th,
-            .bp-section table td,
-            .lifestyle-section table th,
-            .lifestyle-section table td {
-                min-width: 80px; 
-            }
-
+            .topbar { padding: 0 1rem; }
+            .topbar-user { display: none; }
+            .hero { padding: 1.5rem 1.25rem; }
+            .content { padding: 1.25rem; }
+            .data-table { display: block; overflow-x: auto; white-space: nowrap; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="page-title">🔍 查詢病患健康資訊</h1>
 
-        <div style="margin-bottom: 15px;">
-            <a href="@Url.Action("Dashboard", "Home")" class="btn-back">← 返回主選單</a>
+<!-- TOP BAR -->
+<header class="topbar">
+    <div class="topbar-logo">
+        <div class="cross">✚</div>
+        代謝症候群疾病管理與追蹤系統
+    </div>
+    <div class="topbar-right">
+        <div class="topbar-user">
+            <div class="user-avatar">@(userName?.Length > 0 ? userName[0].ToString() : "醫")</div>
+            <span>@userName</span>
+        </div>
+        <a href="@Url.Action("Dashboard", "Home")" class="topbar-back">
+            <i class="bi bi-arrow-left"></i> 返回主選單
+        </a>
+    </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+    <div class="hero-eyebrow">Daily Health Records</div>
+    <div class="hero-title">
+        <i class="bi bi-activity"></i>
+        查詢病患健康資訊
+    </div>
+    <div class="hero-sub">搜尋並查看病患每日健康數據記錄</div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+    <!-- 搜尋列 -->
+    <div class="search-row">
+        <div class="search-bar" style="flex:1;">
+            <span class="search-label"><i class="bi bi-person-search"></i> 病患搜尋</span>
+            <input type="text" id="searchIdNumber" class="search-input"
+                   placeholder="輸入身分證字號，例：A123456789" maxlength="10" />
+            <button type="button" class="btn-search" onclick="searchPatient()">
+                <i class="bi bi-search"></i> 搜尋
+            </button>
         </div>
 
-        <div class="search-container">
-            <div class="search-box">
-                <label>輸入病患身分證字號：</label>
-                <input type="text" id="searchIdNumber" placeholder="例:A123456789" maxlength="10" />
-                <button type="button" onclick="searchPatient()">搜尋</button>
-            </div>
-
-            <div class="search-box date-filter-box" id="dateFilterBox">
-                <label>日期查詢：</label>
-                <input type="date" id="filterDate" />
-                <button type="button" onclick="applyDateFilter()">搜尋</button>
-            </div>
+        <div class="search-bar date-bar" id="dateFilterBox">
+            <span class="search-label"><i class="bi bi-calendar3"></i> 日期查詢</span>
+            <input type="date" id="filterDate" class="search-input" style="min-width:140px;" />
+            <button type="button" class="btn-search" onclick="applyDateFilter()">
+                <i class="bi bi-search"></i> 搜尋
+            </button>
         </div>
+    </div>
 
-        <div class="patient-info" id="patientInfo">
-            <div class="patient-info-content">
-                <div class="patient-info-item">
-                    <span class="patient-info-label">姓名：</span>
-                    <span id="patientName"></span>
-                </div>
-                <div class="patient-info-item">
-                    <span class="patient-info-label">身分證字號：</span>
-                    <span id="patientId"></span>
-                </div>
-                <div class="patient-info-item">
-                    <span class="patient-info-label">性別：</span>
-                    <span id="patientGender"></span>
-                </div>
-                <div class="patient-info-item">
-                    <span class="patient-info-label">生日：</span>
-                    <span id="patientBirthDate"></span>
-                </div>
+    <!-- 病患資訊列 -->
+    <div class="patient-strip" id="patientInfo">
+        <div class="patient-strip-inner">
+            <div class="patient-avatar">
+                <i class="bi bi-person-fill"></i>
             </div>
-        </div>
-
-        <div id="recordContainer" class="record-container">
-            <div id="recordsContent"></div>
-            <div id="emptyState" class="empty-state" style="display: none;">
-                <div style="font-size: 48px; margin-bottom: 15px;">📝</div>
-                <div>此日期沒有健康資訊紀錄</div>
+            <div>
+                <div class="patient-name" id="patientName"></div>
+                <div class="patient-meta">
+                    <span class="patient-meta-item">
+                        <i class="bi bi-card-text"></i>
+                        <span id="patientId"></span>
+                    </span>
+                    <span class="patient-meta-item">
+                        <i class="bi bi-gender-ambiguous"></i>
+                        <span id="patientGender"></span>
+                    </span>
+                    <span class="patient-meta-item">
+                        <i class="bi bi-calendar3"></i>
+                        <span id="patientBirthDate"></span>
+                    </span>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        let currentPatientId = null;
+    <!-- 紀錄內容 -->
+    <div id="recordContainer" class="records-wrap">
+        <div id="recordsContent"></div>
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <i class="bi bi-inbox"></i>
+            <p>此日期沒有健康資訊紀錄</p>
+        </div>
+    </div>
 
-        function parseMeal(mealData) {
-            if (!mealData) return null;
-            if (typeof mealData === "object") return mealData;
-            try {
-                return JSON.parse(mealData);
-            } catch {
-                return null;
-            }
+</div>
+
+@Html.AntiForgeryToken()
+
+<script>
+    let currentPatientId = null;
+
+    function parseMeal(mealData) {
+        if (!mealData) return null;
+        if (typeof mealData === 'object') return mealData;
+        try { return JSON.parse(mealData); } catch { return null; }
+    }
+
+    function formatMealContent(mealList) {
+    if (!mealList || mealList.length === 0) return '<span class="empty-cell">—</span>';
+    const allVeg = [], allProt = [], allCarb = [];
+    mealList.forEach(m => {
+        const meal = parseMeal(m);
+        if (meal) {
+            if (meal.vegetables && meal.vegetables !== '0') allVeg.push(meal.vegetables);
+            if (meal.protein   && meal.protein   !== '0') allProt.push(meal.protein);
+            if (meal.carbs     && meal.carbs     !== '0') allCarb.push(meal.carbs);
         }
+    });
+    if (!allVeg.length && !allProt.length && !allCarb.length)
+        return '<span class="empty-cell">—</span>';
 
-        function formatMealContent(mealList) {
-            if (!mealList || mealList.length === 0) return '<span class="empty-cell">-</span>';
+    const row = (emoji, arr) => arr.length
+        ? `<tr>
+             <td style="padding:1px 4px 1px 0; white-space:nowrap;">${emoji}</td>
+             <td style="padding:1px 0; white-space:nowrap; text-align:right;">${arr.join('+')} 拳</td>
+           </tr>`
+        : '';
 
-            const allVeg = [], allProtein = [], allCarbs = [];
+    return `<table style="border:none; font-size:0.75rem; line-height:1.5; margin:0 auto;">
+                ${row('🥬', allVeg)}
+                ${row('🥩', allProt)}
+                ${row('🍚', allCarb)}
+            </table>`;
+}
 
-            mealList.forEach(m => {
-                const meal = parseMeal(m);
-                if (meal) {
-                    if (meal.vegetables && meal.vegetables !== '0') allVeg.push(meal.vegetables);
-                    if (meal.protein && meal.protein !== '0') allProtein.push(meal.protein);
-                    if (meal.carbs && meal.carbs !== '0') allCarbs.push(meal.carbs);
+    function getToken() {
+        return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+    }
+
+    async function searchPatient() {
+        const idNumber = document.getElementById('searchIdNumber').value.trim();
+        if (!idNumber) { alert('請輸入身分證字號'); return; }
+        currentPatientId = idNumber;
+
+        try {
+            const res = await fetch('@Url.Action("SearchPatientRecords", "DailyHealth")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getToken() },
+                body: JSON.stringify({ idNumber, startDate: null, endDate: null })
+            });
+            const result = await res.json();
+
+            if (result.success) {
+                document.getElementById('patientName').textContent      = result.data.patientName;
+                document.getElementById('patientId').textContent        = result.data.idNumber;
+                document.getElementById('patientGender').textContent    = result.data.gender || '—';
+                document.getElementById('patientBirthDate').textContent = result.data.birthDate || '—';
+                document.getElementById('patientInfo').classList.add('show');
+                document.getElementById('dateFilterBox').classList.add('show');
+                document.getElementById('filterDate').value = '';
+                displayRecords(result.data.dailyStats);
+            } else {
+                alert(result.message || '查無此病患');
+                document.getElementById('patientInfo').classList.remove('show');
+                document.getElementById('dateFilterBox').classList.remove('show');
+                document.getElementById('recordContainer').classList.remove('show');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('搜尋失敗，請稍後再試');
+        }
+    }
+
+    async function applyDateFilter() {
+        if (!currentPatientId) { alert('請先搜尋病患'); return; }
+        const filterDate = document.getElementById('filterDate').value;
+        if (!filterDate) { alert('請選擇日期'); return; }
+
+        try {
+            const res = await fetch('@Url.Action("SearchPatientRecords", "DailyHealth")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getToken() },
+                body: JSON.stringify({ idNumber: currentPatientId, startDate: filterDate, endDate: filterDate })
+            });
+            const result = await res.json();
+            if (result.success) displayRecords(result.data.dailyStats);
+            else alert('查詢失敗');
+        } catch (err) {
+            console.error(err);
+            alert('查詢失敗，請稍後再試');
+        }
+    }
+
+    function displayRecords(dailyStats) {
+        const container  = document.getElementById('recordContainer');
+        const content    = document.getElementById('recordsContent');
+        const emptyState = document.getElementById('emptyState');
+
+        container.classList.add('show');
+
+        if (!dailyStats || dailyStats.length === 0) {
+            content.innerHTML = '';
+            emptyState.style.display = 'block';
+            return;
+        }
+        emptyState.style.display = 'none';
+
+        content.innerHTML = dailyStats.map(day => {
+            const d = new Date(day.date);
+            const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+
+            const bpLabels = ['第一次第一遍', '第一次第二遍', '第二次第一遍', '第二次第二遍'];
+            const bpCells = bpLabels.map(label => {
+                if (day.bloodPressure?.readings) {
+                    const r = day.bloodPressure.readings.find(x => x.label === label);
+                    return r ? `${Math.round(r.systolic)}/${Math.round(r.diastolic)}` : '<span class="empty-cell">—</span>';
                 }
+                return '<span class="empty-cell">—</span>';
             });
 
-                    const parts = [];
-        if (allVeg.length > 0) parts.push(`<span>🥬</span>: ${allVeg.join('+')}`);
-        if (allProtein.length > 0) parts.push(`<span>🥩</span>: ${allProtein.join('+')}`);
-        if (allCarbs.length > 0) parts.push(`<span>🍚</span>: ${allCarbs.join('+')}`);
+            const exerciseText = day.exercise
+                ? day.exercise.map(e => `${e.type} ${e.duration}分`).join('、')
+                : '<span class="empty-cell">—</span>';
 
-        return parts.length > 0 ? `<div class="meal-content">${parts.join('<br>')}</div>` : '<span class="empty-cell">-</span>';
+            return `
+<div class="record-card">
+    <div class="record-date-header">
+        <i class="bi bi-calendar3"></i> ${dateStr}
+    </div>
 
-        }
-
-        async function searchPatient() {
-            const idNumber = document.getElementById('searchIdNumber').value.trim();
-
-            if (!idNumber) {
-                alert('請輸入身分證字號');
-                return;
-            }
-
-            currentPatientId = idNumber;
-
-            try {
-                const response = await fetch('@Url.Action("SearchPatientRecords", "DailyHealth")', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': '@Html.AntiForgeryToken()'
-                    },
-                    body: JSON.stringify({
-                        idNumber: idNumber,
-                        startDate: null,
-                        endDate: null
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    document.getElementById('patientName').textContent = result.data.patientName;
-                    document.getElementById('patientId').textContent = result.data.idNumber;
-                    document.getElementById('patientGender').textContent = result.data.gender || '-';
-                    document.getElementById('patientBirthDate').textContent = result.data.birthDate || '-';
-
-                    document.getElementById('patientInfo').classList.add('show');
-                    document.getElementById('dateFilterBox').classList.add('show');
-                    document.getElementById('filterDate').value = '';
-
-                    displayRecords(result.data.dailyStats);
-                } else {
-                    alert(result.message || '查無此病患');
-                    document.getElementById('patientInfo').classList.remove('show');
-                    document.getElementById('dateFilterBox').classList.remove('show');
-                    document.getElementById('recordContainer').classList.remove('show');
-                }
-            } catch (error) {
-                console.error('搜尋失敗:', error);
-                alert('搜尋失敗，請稍後再試');
-            }
-        }
-
-        async function applyDateFilter() {
-            if (!currentPatientId) {
-                alert('請先搜尋病患');
-                return;
-            }
-
-            const filterDate = document.getElementById('filterDate').value;
-
-            if (!filterDate) {
-                alert('請選擇日期');
-                return;
-            }
-
-            try {
-                const response = await fetch('@Url.Action("SearchPatientRecords", "DailyHealth")', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': '@Html.AntiForgeryToken()'
-                    },
-                    body: JSON.stringify({
-                        idNumber: currentPatientId,
-                        startDate: filterDate,
-                        endDate: filterDate
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    displayRecords(result.data.dailyStats);
-                } else {
-                    alert('查詢失敗');
-                }
-            } catch (error) {
-                console.error('查詢失敗:', error);
-                alert('查詢失敗，請稍後再試');
-            }
-        }
-
-        function displayRecords(dailyStats) {
-            const recordContainer = document.getElementById('recordContainer');
-            const recordsContent = document.getElementById('recordsContent');
-            const emptyState = document.getElementById('emptyState');
-
-            recordContainer.classList.add('show');
-
-            if (!dailyStats || dailyStats.length === 0) {
-                recordsContent.innerHTML = '';
-                emptyState.style.display = 'block';
-                return;
-            }
-
-            emptyState.style.display = 'none';
-
-            recordsContent.innerHTML = dailyStats.map(dayStat => {
-                const date = new Date(dayStat.date);
-                const dateStr = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
-
-                const bpReadings = ['第一次第一遍', '第一次第二遍', '第二次第一遍', '第二次第二遍'].map(label => {
-                    if (dayStat.bloodPressure && dayStat.bloodPressure.readings) {
-                        const reading = dayStat.bloodPressure.readings.find(r => r.label === label);
-                        return reading ? `${Math.round(reading.systolic)}/${Math.round(reading.diastolic)}` : '';
-                    }
-                    return '';
-                });
-
-                const exerciseText = dayStat.exercise
-                    ? dayStat.exercise.map(e => `${e.type} ${e.duration}分`).join(', ')
-                    : '';
-
-                return `
-                                                    <div class="record-block">
-            <div class="date-header">日期：${dateStr}</div>
-
-            <div class="bp-section">
-                <div class="section-title bp-title">722血壓測量</div>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>第一次第一遍</th>
-                            <th>第一次第二遍</th>
-                            <th>第二次第一遍</th>
-                            <th>第二次第二遍</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>${bpReadings[0] || '<span class="empty-cell">-</span>'}</td>
-                            <td>${bpReadings[1] || '<span class="empty-cell">-</span>'}</td>
-                            <td>${bpReadings[2] || '<span class="empty-cell">-</span>'}</td>
-                            <td>${bpReadings[3] || '<span class="empty-cell">-</span>'}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="lifestyle-section">
-                <div class="section-title lifestyle-title">生活習慣與飲食記錄</div>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>血糖</th>
-                            <th>運動</th>
-                            <th>水分</th>
-                            <th>飲料</th>
-                            <th>早餐</th>
-                            <th>午餐</th>
-                            <th>晚餐</th>
-                            <th>抽菸</th>
-                            <th>檳榔</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>${dayStat.bloodSugar ? `${dayStat.bloodSugar}` : '<span class="empty-cell">-</span>'}</td>
-                            <td>${exerciseText || '<span class="empty-cell">-</span>'}</td>
-                            <td>${dayStat.water ? `${Math.round(dayStat.water)}ml` : '<span class="empty-cell">-</span>'}</td>
-                            <td>${dayStat.beverage || '<span class="empty-cell">-</span>'}</td>
-                            <td>${formatMealContent(dayStat.breakfast)}</td>
-                            <td>${formatMealContent(dayStat.lunch)}</td>
-                            <td>${formatMealContent(dayStat.dinner)}</td>
-                            <td>${dayStat.cigarettes ? `${Math.round(dayStat.cigarettes)}支` : '<span class="empty-cell">-</span>'}</td>
-                            <td>${dayStat.betelNut ? `${Math.round(dayStat.betelNut)}次` : '<span class="empty-cell">-</span>'}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+    <div class="record-section">
+        <div class="section-header">
+            <i class="bi bi-heart-pulse"></i> 722 血壓測量
         </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>第一次第一遍</th>
+                    <th>第一次第二遍</th>
+                    <th>第二次第一遍</th>
+                    <th>第二次第二遍</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>${bpCells[0]}</td>
+                    <td>${bpCells[1]}</td>
+                    <td>${bpCells[2]}</td>
+                    <td>${bpCells[3]}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
-                                        `;
-            }).join('');
+    <div class="record-section">
+        <div class="section-header">
+            <i class="bi bi-journal-text"></i> 生活習慣與飲食記錄
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>血糖</th>
+                    <th>運動</th>
+                    <th>水分</th>
+                    <th>飲料</th>
+                    <th>早餐</th>
+                    <th>午餐</th>
+                    <th>晚餐</th>
+                    <th>抽菸</th>
+                    <th>檳榔</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>${day.bloodSugar ? `${day.bloodSugar} mg/dL` : '<span class="empty-cell">—</span>'}</td>
+                    <td>${exerciseText}</td>
+                    <td>${day.water ? `${Math.round(day.water)} ml` : '<span class="empty-cell">—</span>'}</td>
+                    <td>${day.beverage || '<span class="empty-cell">—</span>'}</td>
+                    <td>${formatMealContent(day.breakfast)}</td>
+                    <td>${formatMealContent(day.lunch)}</td>
+                    <td>${formatMealContent(day.dinner)}</td>
+                    <td>${day.cigarettes ? `${Math.round(day.cigarettes)} 支` : '<span class="empty-cell">—</span>'}</td>
+                    <td>${day.betelNut ? `${Math.round(day.betelNut)} 次` : '<span class="empty-cell">—</span>'}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>`;
+        }).join('');
+    }
+
+    document.getElementById('searchIdNumber')?.addEventListener('keypress', e => {
+        if (e.key === 'Enter') { e.preventDefault(); searchPatient(); }
+    });
+    document.getElementById('filterDate')?.addEventListener('keypress', e => {
+        if (e.key === 'Enter') { e.preventDefault(); applyDateFilter(); }
+    });
+
+    window.addEventListener('DOMContentLoaded', function () {
+        const autoId = '@ViewBag.AutoSearchIdNumber';
+        if (autoId && autoId !== '') {
+            document.getElementById('searchIdNumber').value = autoId;
+            setTimeout(() => searchPatient(), 300);
         }
-
-        document.getElementById('searchIdNumber')?.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                searchPatient();
-            }
-        });
-
-        document.getElementById('filterDate')?.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                applyDateFilter();
-            }
-        });
-        window.addEventListener('DOMContentLoaded', function () {
-            const autoSearchId = '@ViewBag.AutoSearchIdNumber';
-            if (autoSearchId && autoSearchId !== '') {
-                console.log('🔍 自動搜尋個案:', autoSearchId);
-                document.getElementById('searchIdNumber').value = autoSearchId;
-                // 延遲 300ms 讓頁面完全載入後再搜尋
-                setTimeout(() => {
-                    searchPatient();
-                }, 300);
-            }
-        });
-    </script>
+    });
+</script>
 </body>
 </html>

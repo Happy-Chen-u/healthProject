@@ -1,8 +1,8 @@
 ﻿@model healthProject.Models.CaseManagementViewModel
-
 @{
     ViewData["Title"] = "個案目標詳細內容";
     Layout = null;
+    var userName = User.FindFirst("FullName")?.Value ?? User.Identity.Name;
 }
 
 <!DOCTYPE html>
@@ -10,211 +10,470 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
+    <title>個案目標詳細內容 — 代謝症候群疾病管理與追蹤系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
+        :root {
+            --navy: #0a2540;
+            --navy-mid: #103a5e;
+            --blue: #1a6fb5;
+            --blue-lt: #2589d8;
+            --bg: #f4f6f9;
+            --surface: #ffffff;
+            --border: #dde3ea;
+            --text: #1a2635;
+            --text-sub: #5a6a7e;
+            --text-pale: #8fa0b4;
+            --green: #2e7d32;
+            --red: #c0392b;
+        }
+
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
-        body {
-            background: linear-gradient(135deg, #FFF8E1 0%, #FFE0B2 100%);
-            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-            padding: 2rem 1rem;
-            min-height: 100vh;
+        html, body {
+            min-height: 100%;
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
         }
 
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            background: white;
-            border-radius: 25px;
-            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
+        /* ── TOP BAR ── */
+        .topbar {
+            background: var(--navy);
+            height: 56px;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+        }
+
+        .topbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .cross {
+            width: 28px;
+            height: 28px;
+            background: var(--blue-lt);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 900;
+            color: white;
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255,255,255,0.75);
+            font-size: 0.82rem;
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            background: var(--blue-lt);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .topbar-back {
+            color: rgba(255,255,255,0.65);
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.8rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+        }
+
+            .topbar-back:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
+                text-decoration: none;
+            }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(100deg, var(--navy-mid) 0%, var(--blue) 100%);
+            padding: 2rem 2.5rem 1.75rem;
+            position: relative;
             overflow: hidden;
         }
 
-        .header {
-            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+            .hero::after {
+                content: '';
+                position: absolute;
+                right: -60px;
+                top: -60px;
+                width: 240px;
+                height: 240px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.04);
+                pointer-events: none;
+            }
+
+        .hero-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 0.4rem;
+        }
+
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 700;
             color: white;
-            padding: 2rem;
-            text-align: center;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
         }
 
-        .header-title {
-            font-size: 1.8rem;
-            font-weight: 700;
+        .hero-sub {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.55);
         }
 
+        /* ── CONTENT ── */
         .content {
-            padding: 2rem;
-            overflow-x: auto;
+            padding: 2rem 2.5rem;
         }
 
-        .case-info {
-            margin-bottom: 2rem;
-            padding: 1rem 1.5rem;
-            background: #FFF3E0;
-            border-radius: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        /* ── CASE INFO ── */
+        .case-info-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
 
-        .case-info-title {
-            font-size: 1.2rem;
+        .case-avatar {
+            width: 44px;
+            height: 44px;
+            background: var(--blue-lt);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .case-name {
+            font-size: 1rem;
             font-weight: 700;
-            color: #F57C00;
-            margin-bottom: 0.8rem;
+            color: var(--text);
         }
 
-        .case-info-content {
+        .case-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 1.5rem;
+            gap: 1.25rem;
+            margin-top: 0.2rem;
         }
 
-        .case-info-item {
-            font-size: 1rem;
-            color: #E65100;
+        .case-meta-item {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* ── LEGEND ── */
+        .legend {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            padding: 0.75rem 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 1.25rem;
+            font-size: 0.78rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--text-sub);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        /* ── TABLE CARD ── */
+        .table-card {
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .table-card-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-sub);
         }
 
         .table-wrapper {
             overflow-x: auto;
-            margin-bottom: 2rem;
         }
 
-        table {
+        /* ── DATA TABLE ── */
+        .data-table {
             width: 100%;
-            min-width: 1200px;
+            min-width: 1100px;
             border-collapse: collapse;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
-        th {
-            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
-            color: white;
-            padding: 0.8rem 0.5rem;
-            font-size: 0.95rem;
-            border: 1px solid #FFA726;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        td {
-            padding: 0.7rem 0.5rem;
-            text-align: center;
-            border: 1px solid #FFE0B2;
-            font-size: 0.9rem;
-            vertical-align: middle;
-        }
-
-        .label-column {
-            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
-            font-weight: 600;
-            color: #F57C00;
-            text-align: left;
-            padding-left: 1rem;
-            white-space: nowrap;
-        }
-
-        .target-row {
-            background: #FFE0B2;
-            font-weight: 600;
-            color: #1565C0;
-        }
-
-        .date-cell {
-            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
-            font-weight: 600;
-            color: #E65100;
-            font-size: 0.85rem;
-        }
-
-        .value-cell {
-            font-weight: 600;
-            color: #333;
-            background: white;
-        }
-
-            .value-cell.achieved {
-                color: #38A358;
-                font-weight: 700;
+            .data-table th {
+                padding: 0.7rem 0.6rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: var(--text-sub);
+                text-align: center;
+                border-bottom: 1px solid var(--border);
+                background: var(--bg);
+                white-space: nowrap;
             }
 
-        .achievement-count {
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: #1565C0;
+                .data-table th.th-label {
+                    text-align: left;
+                    padding-left: 1rem;
+                }
+
+            /* 目標值列 */
+            .data-table .target-row th {
+                background: #e8f1fb;
+                color: var(--blue);
+                font-size: 0.78rem;
+                font-weight: 700;
+                border-bottom: 2px solid var(--border);
+            }
+
+            .data-table td {
+                padding: 0.75rem 0.6rem;
+                text-align: center;
+                font-size: 0.85rem;
+                border-bottom: 1px solid var(--border);
+                vertical-align: middle;
+            }
+
+            .data-table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            .data-table tbody tr:hover {
+                background: #f8fafc;
+            }
+
+        .td-date {
+            text-align: left;
+            padding-left: 1rem;
+            font-size: 0.82rem;
+            color: var(--text-sub);
+            white-space: nowrap;
+            font-weight: 500;
         }
 
-        .back-btn {
-            display: inline-block;
-            margin-top: 2rem;
-            background: linear-gradient(135deg, #90A4AE 0%, #78909C 100%);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
-            text-decoration: none;
+        .td-val {
             font-weight: 600;
-            transition: 0.3s;
+            color: var(--text);
         }
 
-            .back-btn:hover {
-                background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            .td-val.achieved {
+                color: var(--green);
+            }
+
+        .td-score {
+            font-weight: 700;
+            color: var(--navy);
+            font-size: 0.9rem;
+        }
+
+        /* 返回按鈕 */
+        .btn-back {
+            padding: 0.7rem 1.5rem;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: background 0.15s;
+        }
+
+            .btn-back:hover {
+                background: var(--bg);
+                text-decoration: none;
+                color: var(--text-sub);
+            }
+
+        /* 無資料 */
+        .empty-state {
+            padding: 3rem;
+            text-align: center;
+            color: var(--text-pale);
+        }
+
+            .empty-state i {
+                font-size: 2.5rem;
+                display: block;
+                margin-bottom: 0.75rem;
             }
 
         @@media (max-width: 768px) {
-            .content
+            .topbar {
+                padding: 0 1rem;
+            }
 
-        {
-            padding: 1rem;
-        }
+            .topbar-user {
+                display: none;
+            }
 
-        th, td {
-            font-size: 0.75rem;
-            padding: 0.5rem 0.3rem;
-        }
+            .hero {
+                padding: 1.5rem 1.25rem;
+            }
 
-        .case-info-title {
-            font-size: 1rem;
-        }
-
-        .case-info-item {
-            font-size: 0.95rem;
-        }
-
+            .content {
+                padding: 1.25rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 class="header-title">🎯 個案目標詳細內容</h1>
-        </div>
 
-        <div class="content">
-            <!-- 個案基本資料 -->
-            <div class="case-info">
-                <div class="case-info-title">👤 個案資訊</div>
-                <div class="case-info-content">
-                    <div class="case-info-item">姓名: <span style="font-weight:600">@Model.Name</span></div>
-                    <div class="case-info-item">身分證字號: <span style="font-weight:600">@Model.IDNumber</span></div>
-                    <div class="case-info-item">性別: <span style="font-weight:600">@Model.Gender</span></div>
-                    <div class="case-info-item">生日: <span style="font-weight:600">@Model.BirthDate.ToString("yyyy年MM月dd日")</span></div>
+    <!-- TOP BAR -->
+    <header class="topbar">
+        <div class="topbar-logo">
+            <div class="cross">✚</div>
+            代謝症候群疾病管理與追蹤系統
+        </div>
+        <div class="topbar-right">
+            <div class="topbar-user">
+                <div class="user-avatar">@(userName?.Length > 0 ? userName[0].ToString() : "醫")</div>
+                <span>@userName</span>
+            </div>
+            <a href="@Url.Action("ViewTargets", "CaseManagement")" class="topbar-back">
+                <i class="bi bi-arrow-left"></i> 返回列表
+            </a>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-eyebrow">Target Details</div>
+        <div class="hero-title">
+            <i class="bi bi-clipboard2-data"></i>
+            個案目標詳細內容
+        </div>
+        <div class="hero-sub">各次評估的目標達成狀況</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <!-- 個案資訊 -->
+        <div class="case-info-card">
+            <div class="case-avatar">
+                <i class="bi bi-person-fill"></i>
+            </div>
+            <div>
+                <div class="case-name">@Model.Name</div>
+                <div class="case-meta">
+                    <span class="case-meta-item">
+                        <i class="bi bi-card-text"></i> @Model.IDNumber
+                    </span>
+                    <span class="case-meta-item">
+                        <i class="bi bi-gender-ambiguous"></i> @Model.Gender
+                    </span>
+                    <span class="case-meta-item">
+                        <i class="bi bi-calendar3"></i> @Model.BirthDate.ToString("yyyy 年 MM 月 dd 日")
+                    </span>
                 </div>
             </div>
+        </div>
 
-            <!-- 說明文字 -->
-            <div style="margin-bottom: 1.5rem; padding: 0.8rem 1.2rem; background: #E8F5E9; border-left: 4px solid #2E7D32; border-radius: 8px;">
-                <div style="font-size: 0.95rem; color: #1B5E20;">
-                    💡 <strong>說明:</strong> <span style="color: #2E7D32; font-weight: 700;">綠色文字</span> 代表該項目已達標
-                </div>
-                <div style="font-size: 0.95rem; color: #0D47A1;">
-                    💡 <strong>說明:</strong> <span style="color: #1565C0; font-weight: 700;">藍色文字</span> 代表該項目最新一筆紀錄表目標值
-                </div>
+        <!-- 圖例 -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-dot" style="background:var(--green);"></div>
+                <span style="color:var(--green); font-weight:600;">綠色數值</span> 代表已達標
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background:var(--blue);"></div>
+                <span style="color:var(--blue); font-weight:600;">藍色目標列</span> 為最新一筆紀錄設定的目標值
+            </div>
+        </div>
+
+        <!-- 評估記錄表 -->
+        <div class="table-card">
+            <div class="table-card-header">
+                <i class="bi bi-table" style="color:var(--blue); font-size:0.9rem;"></i>
+                <span class="table-card-title">評估記錄</span>
             </div>
 
             @if (Model.EvaluationRecords != null && Model.EvaluationRecords.Any())
@@ -222,136 +481,97 @@
                 var latestRecord = Model.EvaluationRecords.First();
 
                 <div class="table-wrapper">
-                    <table>
+                    <table class="data-table">
                         <thead>
                             <tr>
-                                <!-- 第一列:指標名稱 -->
-                                <th rowspan="2" style="width: 120px;">評估日期</th>
+                                <th class="th-label" rowspan="2">評估日期</th>
                                 <th>腰圍</th>
                                 <th>體重</th>
-                                <th>飯前血糖值</th>
+                                <th>飯前血糖</th>
                                 <th>醣化血紅素</th>
                                 <th>三酸甘油脂</th>
-                                <th>高密度脂蛋白膽固醇</th>
-                                <th>低密度脂蛋白膽固醇</th>
+                                <th>高密度脂蛋白</th>
+                                <th>低密度脂蛋白</th>
                                 <th>抽菸</th>
                                 <th>嚼檳榔</th>
-                                <th rowspan="2" style="width: 100px;">達標項目總數</th>
+                                <th rowspan="2">達標數</th>
                             </tr>
-                            <tr>
-                                <!-- 第二列:目標值 -->
-                                <th class="target-row">@latestRecord.WaistTarget_Value</th>
-                                <th class="target-row">@latestRecord.WeightTarget_Value</th>
-                                <th class="target-row">@latestRecord.FastingGlucoseTarget_Value</th>
-                                <th class="target-row">@latestRecord.HbA1cTarget_Value</th>
-                                <th class="target-row">@latestRecord.TriglyceridesTarget_Value</th>
-                                <th class="target-row">@latestRecord.HDL_CholesterolTarget_Value</th>
-                                <th class="target-row">@latestRecord.LDL_CholesterolTarget_Value</th>
-                                <th class="target-row">無</th>
-                                <th class="target-row">無</th>
+                            <tr class="target-row">
+                                <th>@latestRecord.WaistTarget_Value</th>
+                                <th>@latestRecord.WeightTarget_Value</th>
+                                <th>@latestRecord.FastingGlucoseTarget_Value</th>
+                                <th>@latestRecord.HbA1cTarget_Value</th>
+                                <th>@latestRecord.TriglyceridesTarget_Value</th>
+                                <th>@latestRecord.HDL_CholesterolTarget_Value</th>
+                                <th>@latestRecord.LDL_CholesterolTarget_Value</th>
+                                <th>無</th>
+                                <th>無</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var evaluation in Model.EvaluationRecords)
+                            @foreach (var eval in Model.EvaluationRecords)
                             {
-                                // 計算達標數量
-                                int achievedCount = 0;
-                                if (evaluation.WaistAchievement) achievedCount++;
-                                if (evaluation.WeightAchievement) achievedCount++;
-                                if (evaluation.FastingGlucoseAchievement) achievedCount++;
-                                if (evaluation.HbA1cAchievement) achievedCount++;
-                                if (evaluation.TriglyceridesAchievement) achievedCount++;
-                                if (evaluation.HDL_CholesterolAchievement) achievedCount++;
-                                if (evaluation.LDL_CholesterolAchievement) achievedCount++;
-                                if (evaluation.SmokingNone) achievedCount++;
-                                if (evaluation.BetelNutNone) achievedCount++;
+                                int achieved = 0;
+                                if (eval.WaistAchievement) achieved++;
+                                if (eval.WeightAchievement) achieved++;
+                                if (eval.FastingGlucoseAchievement) achieved++;
+                                if (eval.HbA1cAchievement) achieved++;
+                                if (eval.TriglyceridesAchievement) achieved++;
+                                if (eval.HDL_CholesterolAchievement) achieved++;
+                                if (eval.LDL_CholesterolAchievement) achieved++;
+                                if (eval.SmokingNone) achieved++;
+                                if (eval.BetelNutNone) achieved++;
 
                                 <tr>
-                                    <td class="date-cell">@evaluation.EvaluationDate.ToString("yyyy/MM/dd")</td>
-
-                                    <!-- 腰圍 -->
-                                    <td class="value-cell @(evaluation.WaistAchievement ? "achieved" : "")">
-                                        @evaluation.WaistCurrent_Value
-                                    </td>
-
-                                    <!-- 體重 -->
-                                    <td class="value-cell @(evaluation.WeightAchievement ? "achieved" : "")">
-                                        @evaluation.WeightCurrent_Value
-                                    </td>
-
-                                    <!-- 飯前血糖值 -->
-                                    <td class="value-cell @(evaluation.FastingGlucoseAchievement ? "achieved" : "")">
-                                        @evaluation.FastingGlucoseCurrent_Value
-                                    </td>
-
-                                    <!-- 醣化血紅素 -->
-                                    <td class="value-cell @(evaluation.HbA1cAchievement ? "achieved" : "")">
-                                        @evaluation.HbA1cCurrent_Value
-                                    </td>
-
-                                    <!-- 三酸甘油脂 -->
-                                    <td class="value-cell @(evaluation.TriglyceridesAchievement ? "achieved" : "")">
-                                        @evaluation.TriglyceridesCurrent_Value
-                                    </td>
-
-                                    <!-- 高密度脂蛋白膽固醇 -->
-                                    <td class="value-cell @(evaluation.HDL_CholesterolAchievement ? "achieved" : "")">
-                                        @evaluation.HDL_CholesterolCurrent_Value
-                                    </td>
-
-                                    <!-- 低密度脂蛋白膽固醇 -->
-                                    <td class="value-cell @(evaluation.LDL_CholesterolAchievement ? "achieved" : "")">
-                                        @evaluation.LDL_CholesterolCurrent_Value
-                                    </td>
-
-                                    <!-- 抽菸 -->
-                                    <td class="value-cell @(evaluation.SmokingNone ? "achieved" : "")">
-                                        @if (evaluation.SmokingNone)
+                                    <td class="td-date">@eval.EvaluationDate.ToString("yyyy/MM/dd")</td>
+                                    <td class="td-val @(eval.WaistAchievement ? "achieved" : "")">@eval.WaistCurrent_Value</td>
+                                    <td class="td-val @(eval.WeightAchievement ? "achieved" : "")">@eval.WeightCurrent_Value</td>
+                                    <td class="td-val @(eval.FastingGlucoseAchievement ? "achieved" : "")">@eval.FastingGlucoseCurrent_Value</td>
+                                    <td class="td-val @(eval.HbA1cAchievement ? "achieved" : "")">@eval.HbA1cCurrent_Value</td>
+                                    <td class="td-val @(eval.TriglyceridesAchievement ? "achieved" : "")">@eval.TriglyceridesCurrent_Value</td>
+                                    <td class="td-val @(eval.HDL_CholesterolAchievement ? "achieved" : "")">@eval.HDL_CholesterolCurrent_Value</td>
+                                    <td class="td-val @(eval.LDL_CholesterolAchievement ? "achieved" : "")">@eval.LDL_CholesterolCurrent_Value</td>
+                                    <td class="td-val @(eval.SmokingNone ? "achieved" : "")">
+                                        @if (eval.SmokingNone)
                                         {
                                             <span>無</span>
                                         }
-                                        else if (evaluation.SmokingUsually)
+                                        else if (eval.SmokingUsually)
                                         {
                                             <span>偶爾</span>
                                         }
-                                        else if (evaluation.SmokingUnder10)
+                                        else if (eval.SmokingUnder10)
                                         {
                                             <span>&lt;10支/天</span>
                                         }
-                                        else if (evaluation.SmokingOver10)
+                                        else if (eval.SmokingOver10)
                                         {
                                             <span>≥10支/天</span>
                                         }
                                         else
                                         {
-                                            <span>-</span>
+                                            <span>—</span>
                                         }
                                     </td>
-
-                                    <!-- 嚼檳榔 -->
-                                    <td class="value-cell @(evaluation.BetelNutNone ? "achieved" : "")">
-                                        @if (evaluation.BetelNutNone)
+                                    <td class="td-val @(eval.BetelNutNone ? "achieved" : "")">
+                                        @if (eval.BetelNutNone)
                                         {
                                             <span>無</span>
                                         }
-                                        else if (evaluation.BetelNutUsually)
+                                        else if (eval.BetelNutUsually)
                                         {
                                             <span>偶爾</span>
                                         }
-                                        else if (evaluation.BetelNutAlways)
+                                        else if (eval.BetelNutAlways)
                                         {
                                             <span>經常</span>
                                         }
                                         else
                                         {
-                                            <span>-</span>
+                                            <span>—</span>
                                         }
                                     </td>
-
-                                    <!-- 達標項目總數 -->
-                                    <td class="achievement-count">
-                                        @achievedCount / 9
-                                    </td>
+                                    <td class="td-score">@achieved / 9</td>
                                 </tr>
                             }
                         </tbody>
@@ -360,13 +580,18 @@
             }
             else
             {
-                <p style="text-align: center; color: #666; padding: 2rem;">目前尚無評估記錄</p>
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>目前尚無評估記錄</p>
+                </div>
             }
-
-            <div style="text-align:center;">
-                <a asp-action="ViewTargets" class="back-btn">← 返回列表</a>
-            </div>
         </div>
+
+        <a asp-action="ViewTargets" class="btn-back">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
+
     </div>
+
 </body>
 </html>

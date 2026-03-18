@@ -9,512 +9,578 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
         :root {
-            --primary-color: #06b6d4;
-            --primary-dark: #0891b2;
-            --secondary-color: #10b981;
-            --accent-color: #8b5cf6;
-            --bg-light: #f1f5f9;
-            --text-dark: #1e293b;
-            --text-gray: #64748b;
+            --navy:     #0a2540;
+            --navy-mid: #103a5e;
+            --blue:     #1a6fb5;
+            --blue-lt:  #2589d8;
+            --teal:     #0e8a7a;
+            --bg:       #f4f6f9;
+            --surface:  #ffffff;
+            --border:   #dde3ea;
+            --text:     #1a2635;
+            --text-sub: #5a6a7e;
+            --text-pale:#8fa0b4;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         html, body {
             height: 100%;
-            width: 100%;
-            overflow-x: hidden;
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
         }
 
-        body {
-            background: linear-gradient(135deg, #FFFCEC 0%, #FFF8DC 100%);
-            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-            min-height: 100vh;
-            margin: 0;
-            padding: 0;
-        }
-
-        .page-frame {
-            max-width: 1100px;
-            margin: 2rem auto;
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            background: white;
-        }
-        
-        .mobile-container {
-            min-height: 100vh;
+        /* ── TOP BAR ── */
+        .topbar {
+            background: var(--navy);
+            height: 56px;
             display: flex;
-            flex-direction: column;
-            padding: 1rem;
-            padding-bottom: 2rem;
+            align-items: center;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
         }
 
-        .main-card {
-            background: white;
-            border-radius: 25px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            overflow: hidden;
+        .topbar-logo {
             display: flex;
-            flex-direction: column;
-            max-width: 600px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .header-section {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            align-items: center;
+            gap: 0.6rem;
             color: white;
-            padding: 2.5rem 1.5rem;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.02em;
+        }
+
+        .cross {
+            width: 28px; height: 28px;
+            background: var(--blue-lt);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: 900; color: white;
+        }
+
+        .topbar-right {
+            margin-left: auto;
+        }
+
+        .login-topbar-btn {
+            background: var(--blue-lt);
+            color: white;
+            border: none;
+            padding: 0.4rem 1.25rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: flex; align-items: center; gap: 0.4rem;
+            transition: background 0.2s;
+            font-family: inherit;
+        }
+        .login-topbar-btn:hover {
+            background: var(--blue);
+            color: white;
+            text-decoration: none;
+        }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(110deg, var(--navy) 0%, var(--navy-mid) 45%, var(--blue) 100%);
+            padding: 5rem 2.5rem 4.5rem;
             text-align: center;
-            border-top-left-radius: 24px;
-            border-top-right-radius: 24px;
+            position: relative;
             overflow: hidden;
         }
 
-        .system-icon {
-            font-size: 4rem;
+        .hero-circle-1 {
+            position: absolute;
+            width: 400px; height: 400px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.03);
+            top: -120px; right: -80px;
+            pointer-events: none;
+        }
+        .hero-circle-2 {
+            position: absolute;
+            width: 250px; height: 250px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.03);
+            bottom: -80px; left: 5%;
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: rgba(255,255,255,0.8);
+            font-size: 0.78rem;
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        .hero-title {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 700;
+            color: white;
+            line-height: 1.25;
             margin-bottom: 1rem;
-            animation: pulse 2s ease-in-out infinite;
+            letter-spacing: -0.01em;
         }
 
-        @@keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        .hero-subtitle {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 2.5rem;
+            line-height: 1.7;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
-        .system-title {
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: white;
+            color: var(--navy);
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 0.85rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .hero-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            color: var(--navy);
+            text-decoration: none;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 3.5rem;
+            flex-wrap: wrap;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-num {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            line-height: 1;
+        }
+
+        .hero-stat-label {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.5);
+            margin-top: 0.3rem;
+            letter-spacing: 0.05em;
+        }
+
+        .hero-stat-divider {
+            width: 1px;
+            background: rgba(255,255,255,0.15);
+            align-self: stretch;
+        }
+
+        /* ── FEATURES ── */
+        .features-section {
+            padding: 4rem 2.5rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .section-eyebrow {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .section-title {
             font-size: 1.6rem;
             font-weight: 700;
-            margin-bottom: 0.75rem;
-            line-height: 1.3;
+            color: var(--text);
+            margin-bottom: 0.5rem;
         }
 
-        .system-subtitle {
+        .section-desc {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-bottom: 2.5rem;
+            line-height: 1.7;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+
+        .feature-item {
+            background: var(--surface);
+            padding: 2rem 1.75rem;
+            transition: background 0.15s;
+        }
+
+        .feature-item:hover { background: #f8fafc; }
+
+        .feature-icon-wrap {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .fi-blue   { background: #e8f1fb; }
+        .fi-teal   { background: #e5f5f3; }
+        .fi-indigo { background: #eceffe; }
+
+        .feature-name {
             font-size: 1rem;
-            opacity: 0.95;
-            line-height: 1.5;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.4rem;
         }
 
-        .content-section {
-            padding: 2rem 1.5rem;
-            flex: 1;
+        .feature-desc {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            line-height: 1.6;
         }
 
-        .welcome-box {
-            text-align: center;
+        .feature-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 1rem;
+        }
+
+        .feature-tag {
+            font-size: 0.72rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            background: var(--bg);
+            color: var(--text-sub);
+            border: 1px solid var(--border);
+        }
+
+        /* ── ROLES ── */
+        .roles-section {
+            background: var(--navy);
+            padding: 3.5rem 2.5rem;
+        }
+
+        .roles-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .roles-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.4rem;
+        }
+
+        .roles-sub {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
             margin-bottom: 2rem;
         }
 
-        .welcome-title {
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: var(--text-dark);
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+
+        .role-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .role-icon {
+            font-size: 1.5rem;
             margin-bottom: 0.75rem;
         }
 
-        .welcome-desc {
-            color: var(--text-gray);
-            font-size: 1rem;
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-        }
-
-        .login-btn {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+        .role-name {
+            font-size: 0.95rem;
             font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            width: 100%;
-            max-width: 300px;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
             color: white;
-            text-decoration: none;
+            margin-bottom: 0.75rem;
         }
 
-        .login-btn:active {
-            transform: translateY(0);
-        }
-
-        .features-section {
+        .role-list {
+            list-style: none;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            gap: 0.4rem;
         }
 
-        .feature-card {
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-            overflow: hidden;
-        }
-
-        .feature-button {
-            width: 100%;
-            background: transparent;
-            border: none;
-            padding: 1.25rem;
+        .role-list li {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
             display: flex;
             align-items: center;
-            gap: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            gap: 0.5rem;
         }
 
-        .feature-button:hover {
-            background: rgba(6, 182, 212, 0.05);
-        }
-
-        .feature-button:active {
-            transform: scale(0.98);
-        }
-
-        .feature-icon {
-            font-size: 2.5rem;
-            min-width: 60px;
-            text-align: center;
+        .role-list li::before {
+            content: '';
+            width: 4px; height: 4px;
+            background: var(--blue-lt);
+            border-radius: 50%;
             flex-shrink: 0;
-            transition: transform 0.3s ease;
         }
 
-        .feature-card.active .feature-icon {
-            transform: scale(1.1);
-        }
-
-        .feature-content {
-            flex: 1;
-            text-align: left;
-        }
-
-        .feature-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 0.25rem;
-        }
-
-        .feature-description {
-            color: var(--text-gray);
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-
-        .expand-icon {
-            font-size: 1.2rem;
-            transition: transform 0.3s ease;
-            color: var(--text-gray);
-        }
-
-        .feature-card.active .expand-icon {
-            transform: rotate(180deg);
-        }
-
-        .feature-details {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease, padding 0.3s ease;
-            background: white;
-        }
-
-        .feature-card.active .feature-details {
-            max-height: 300px;
-            padding: 1rem 1.25rem 1.25rem 1.25rem;
-            border-top: 2px dashed #e2e8f0;
-        }
-
-        .detail-item {
+        /* ── FOOTER ── */
+        .footer {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 1.25rem 2.5rem;
             display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
-            padding: 0.75rem;
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border-radius: 10px;
-            border-left: 4px solid var(--primary-color);
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
-        .detail-item:last-child {
-            margin-bottom: 0;
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
         }
 
-        .detail-icon {
-            font-size: 1.2rem;
-            flex-shrink: 0;
-            margin-top: 0.1rem;
+        .footer-copy {
+            font-size: 0.75rem;
+            color: var(--text-pale);
         }
 
-        .detail-text {
-            color: var(--text-dark);
-            font-size: 0.95rem;
-            line-height: 1.5;
+        .footer-login {
+            font-size: 0.8rem;
+            color: var(--blue);
+            text-decoration: none;
+            display: flex; align-items: center; gap: 0.3rem;
+        }
+        .footer-login:hover { text-decoration: underline; }
+
+        /* ── RESPONSIVE ── */
+        @@media (max-width: 768px) {
+            .topbar { padding: 0 1rem; }
+            .hero { padding: 3.5rem 1.25rem 3rem; }
+            .hero-stats { gap: 2rem; }
+            .hero-stat-divider { display: none; }
+            .features-section { padding: 3rem 1.25rem; }
+            .roles-section { padding: 2.5rem 1.25rem; }
+            .footer { padding: 1rem 1.25rem; }
         }
 
-        .footer-info {
-            text-align: center;
-            padding: 1.25rem 1rem;
-            color: var(--text-gray);
-            font-size: 0.9rem;
-            border-top: 1px solid #e2e8f0;
-            background: #fafafa;
+        /* ── ANIMATIONS ── */
+        .fade-up {
+            animation: fadeUp 0.5s ease both;
         }
+        .fade-up:nth-child(2) { animation-delay: 0.1s; }
+        .fade-up:nth-child(3) { animation-delay: 0.2s; }
 
-        @@media (min-width: 768px) {
-            .mobile-container {
-                padding: 2rem;
-            }
-
-            .main-card {
-                max-width: 700px;
-            }
-
-            .header-section {
-                padding: 3rem 2rem;
-            }
-
-            .system-icon {
-                font-size: 5rem;
-            }
-
-            .system-title {
-                font-size: 2rem;
-            }
-
-            .system-subtitle {
-                font-size: 1.1rem;
-            }
-
-            .content-section {
-                padding: 2.5rem 2rem;
-            }
-
-            .features-section {
-                gap: 1.25rem;
-            }
-
-            .feature-button {
-                padding: 1.5rem;
-            }
-
-            .feature-card:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            }
-        }
-
-        @@media (min-width: 1024px) {
-            .main-card {
-                max-width: 900px;
-            }
-
-            .features-section {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 1.5rem;
-            }
-
-            .feature-button {
-                flex-direction: column;
-                text-align: center;
-                padding: 2rem 1.5rem;
-            }
-
-            .feature-icon {
-                font-size: 3rem;
-                margin-bottom: 0.5rem;
-            }
-
-            .feature-content {
-                text-align: center;
-            }
-
-            .expand-icon {
-                position: absolute;
-                top: 1rem;
-                right: 1rem;
-            }
-
-            .feature-card {
-                position: relative;
-            }
-
-            .feature-details {
-                text-align: left;
-            }
-        }
-
-        @@media (max-height: 700px) {
-            .mobile-container {
-                min-height: auto;
-            }
-
-            .system-icon {
-                font-size: 3rem;
-                margin-bottom: 0.5rem;
-            }
-
-            .header-section {
-                padding: 1.5rem 1rem;
-            }
-
-            .content-section {
-                padding: 1.5rem 1rem;
-            }
+        @@keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
-    <div class="mobile-container">
-        <div class="main-card">
-            <div class="header-section">
-                <div class="system-icon">🏥</div>
-                <h1 class="system-title">代謝症候群<br>疾病管理與追蹤系統</h1>
-                <p class="system-subtitle">專業健康管理平台<br>協助您追蹤與管理健康數據</p>
-            </div>
 
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <script>
-                    window.location.href = '@Url.Action("Dashboard", "Home")';
-                </script>
-            }
-            else
-            {
-                <div class="page-frame">
-                    <div class="content-section">
-                        <div class="welcome-box">
-                            <h2 class="welcome-title">歡迎使用</h2>
-                            <p class="welcome-desc">請先登入以使用完整功能</p>
-                            <a href="@Url.Action("Login", "Account")" class="login-btn">
-                                <span>🔐</span>
-                                <span>登入系統</span>
-                            </a>
-                        </div>
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <script>window.location.href = '@Url.Action("Dashboard", "Home")';</script>
+}
 
-                        <div class="features-section">
-                            <!-- 疾病個管系統 -->
-                            <div class="feature-card" id="feature1">
-                                <button class="feature-button" onclick="toggleFeature('feature1')">
-                                    <div class="feature-icon">📊</div>
-                                    <div class="feature-content">
-                                        <h3 class="feature-title">疾病個管系統</h3>
-                                        <p class="feature-description">追蹤您的健康狀況與治療進展</p>
-                                    </div>
-                                    <div class="expand-icon">▼</div>
-                                </button>
-                                <div class="feature-details">
-                                    <div class="detail-item">
-                                        <div class="detail-icon">👤</div>
-                                        <div class="detail-text">查看您的疾病管理紀錄表</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-icon">👨‍⚕️</div>
-                                        <div class="detail-text">醫師追蹤病患疾病紀錄</div>
-                                    </div>
-                                </div>
-                            </div>
+<!-- TOP BAR -->
+<header class="topbar">
+    <div class="topbar-logo">
+        <div class="cross">✚</div>
+        代謝症候群疾病管理與追蹤系統
+    </div>
+</header>
 
-                            <!-- 健康資訊上傳 -->
-                            <div class="feature-card" id="feature2">
-                                <button class="feature-button" onclick="toggleFeature('feature2')">
-                                    <div class="feature-icon">📝</div>
-                                    <div class="feature-content">
-                                        <h3 class="feature-title">健康資訊上傳</h3>
-                                        <p class="feature-description">記錄血壓、血糖、體重等指標</p>
-                                    </div>
-                                    <div class="expand-icon">▼</div>
-                                </button>
-                                <div class="feature-details">
-                                    <div class="detail-item">
-                                        <div class="detail-icon">📤</div>
-                                        <div class="detail-text">上傳您每日的健康資訊</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-icon">👨‍⚕️</div>
-                                        <div class="detail-text">醫師查看病患每日健康資訊</div>
-                                    </div>
-                                </div>
-                            </div>
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-circle-1"></div>
+    <div class="hero-circle-2"></div>
 
-                            <!-- 數據分析追蹤 -->
-                            <div class="feature-card" id="feature3">
-                                <button class="feature-button" onclick="toggleFeature('feature3')">
-                                    <div class="feature-icon">📈</div>
-                                    <div class="feature-content">
-                                        <h3 class="feature-title">數據分析追蹤</h3>
-                                        <p class="feature-description">查看健康趨勢與個人化建議</p>
-                                    </div>
-                                    <div class="expand-icon">▼</div>
-                                </button>
-                                <div class="feature-details">
-                                    <div class="detail-item">
-                                        <div class="detail-icon">📊</div>
-                                        <div class="detail-text">查看您每日、每週與每月的健康趨勢與個人化建議</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-icon">👨‍⚕️</div>
-                                        <div class="detail-text">醫師查看病患健康趨勢，追蹤病患狀態</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="footer-info">
-                        © 2025 代謝症候群管理系統
-                    </div>
-                </div>
-            }
-        </div>
+    <div class="hero-badge fade-up">
+        <i class="bi bi-shield-plus"></i>
+        輔仁大學附設醫院
     </div>
 
-    <script>
-        function toggleFeature(featureId) {
-            const feature = document.getElementById(featureId);
-            const allFeatures = document.querySelectorAll('.feature-card');
-            
-            // 如果點擊的是已經展開的卡片，就收起來
-            if (feature.classList.contains('active')) {
-                feature.classList.remove('active');
-            } else {
-                // 先關閉所有其他卡片
-                allFeatures.forEach(f => f.classList.remove('active'));
-                // 展開點擊的卡片
-                feature.classList.add('active');
-            }
-        }
+    <h1 class="hero-title fade-up">
+        代謝症候群<br>疾病管理與追蹤系統
+    </h1>
 
-        // 點擊卡片外部時關閉所有展開的卡片
-        document.addEventListener('click', function(event) {
-            if (!event.target.closest('.feature-card')) {
-                document.querySelectorAll('.feature-card').forEach(f => f.classList.remove('active'));
-            }
-        });
-    </script>
+    <p class="hero-subtitle fade-up">
+        整合血壓、血糖、運動、飲水等健康數據，<br>
+        協助醫療團隊與病患共同管理健康。
+    </p>
+
+    <a href="@Url.Action("Login", "Account")" class="hero-cta fade-up">
+        <i class="bi bi-box-arrow-in-right"></i>
+        登入系統
+    </a>
+
+    <div class="hero-stats fade-up">
+        <div class="hero-stat">
+            <div class="hero-stat-num">6+</div>
+            <div class="hero-stat-label">健康追蹤項目</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+            <div class="hero-stat-num">LINE</div>
+            <div class="hero-stat-label">即時推播通知</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+            <div class="hero-stat-num">AI</div>
+            <div class="hero-stat-label">智能資料輸入</div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section">
+    <div class="section-eyebrow">系統功能</div>
+    <div class="section-title">完整的健康管理流程</div>
+    <div class="section-desc">從每日健康記錄到長期趨勢分析，提供醫療團隊與病患完整的健康追蹤工具。</div>
+
+    <div class="features-grid">
+        <div class="feature-item fade-up">
+            <div class="feature-icon-wrap fi-blue">
+                <i class="bi bi-clipboard2-pulse" style="color:#1a6fb5;"></i>
+            </div>
+            <div class="feature-name">疾病個管系統</div>
+            <div class="feature-desc">建立並追蹤每位病患的個人化健康目標，包含血壓、血糖、體重等指標的目標設定。</div>
+            <div class="feature-tags">
+                <span class="feature-tag">目標設定</span>
+                <span class="feature-tag">個人化管理</span>
+                <span class="feature-tag">病患紀錄</span>
+            </div>
+        </div>
+
+        <div class="feature-item fade-up">
+            <div class="feature-icon-wrap fi-teal">
+                <i class="bi bi-activity" style="color:#0e8a7a;"></i>
+            </div>
+            <div class="feature-name">今日健康資訊</div>
+            <div class="feature-desc">每日記錄血壓、血糖、飲水量、運動時間、三餐等健康數據，支援 LINE Bot 智能輸入。</div>
+            <div class="feature-tags">
+                <span class="feature-tag">每日記錄</span>
+                <span class="feature-tag">LINE Bot</span>
+                <span class="feature-tag">AI 輸入</span>
+            </div>
+        </div>
+
+        <div class="feature-item fade-up">
+            <div class="feature-icon-wrap fi-indigo">
+                <i class="bi bi-graph-up-arrow" style="color:#4a57c8;"></i>
+            </div>
+            <div class="feature-name">健康分析</div>
+            <div class="feature-desc">每日、每週、每月、每年的健康趨勢圖表，並可自動產生 PDF 健康週報傳送至 LINE。</div>
+            <div class="feature-tags">
+                <span class="feature-tag">趨勢圖表</span>
+                <span class="feature-tag">週報 PDF</span>
+                <span class="feature-tag">統計分析</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ROLES -->
+<section class="roles-section">
+    <div class="roles-inner">
+        <div class="roles-title">適合不同角色使用</div>
+        <div class="roles-sub">依照使用者身份提供對應的功能介面</div>
+
+        <div class="roles-grid">
+            <div class="role-card">
+                <div class="role-icon">👨‍⚕️</div>
+                <div class="role-name">醫療人員 / 管理者</div>
+                <ul class="role-list">
+                    <li>管理所有病患疾病個管紀錄</li>
+                    <li>查看所有病患每日健康數據</li>
+                    <li>追蹤病患健康趨勢與異常</li>
+                    <li>管理每日衛教推播內容</li>
+                    <li>查看個案填寫狀況提醒</li>
+                </ul>
+            </div>
+
+            <div class="role-card">
+                <div class="role-icon">👤</div>
+                <div class="role-name">病患 / 個案</div>
+                <ul class="role-list">
+                    <li>查看個人疾病管理紀錄</li>
+                    <li>透過 LINE Bot 記錄每日健康</li>
+                    <li>查看個人健康趨勢與統計</li>
+                    <li>接收每週 PDF 健康報表</li>
+                    <li>接收每日個人化衛教推播</li>
+                </ul>
+            </div>
+
+            <div class="role-card">
+                <div class="role-icon">🤖</div>
+                <div class="role-name">LINE Bot 功能</div>
+                <ul class="role-list">
+                    <li>AI 自然語言輸入健康資料</li>
+                    <li>每日健康填寫提醒推播</li>
+                    <li>血壓、血糖異常即時警示</li>
+                    <li>每日個人化衛教訊息</li>
+                    <li>每週健康週報 PDF 傳送</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-logo">
+        <div class="cross" style="width:22px;height:22px;font-size:0.8rem;">✚</div>
+        輔仁大學附設醫院
+    </div>
+    <span class="footer-copy">© 2025 代謝症候群疾病管理與追蹤系統</span>
+</footer>
+
 </body>
 </html>

@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "新增個案資料";
     Layout = null;
+    var userName = User.FindFirst("FullName")?.Value ?? User.Identity.Name;
 }
 
 <!DOCTYPE html>
@@ -9,428 +10,610 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
+    <title>新增個案資料 — 代謝症候群疾病管理與追蹤系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
+        :root {
+            --navy: #0a2540;
+            --navy-mid: #103a5e;
+            --blue: #1a6fb5;
+            --blue-lt: #2589d8;
+            --bg: #f4f6f9;
+            --surface: #ffffff;
+            --border: #dde3ea;
+            --text: #1a2635;
+            --text-sub: #5a6a7e;
+            --text-pale: #8fa0b4;
+            --danger: #c0392b;
+            --success: #2e7d32;
+        }
+
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
-        body {
-            background: linear-gradient(135deg, #FFF8E1 0%, #FFE0B2 100%);
-            min-height: 100vh;
-            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-            padding: 2rem 1rem;
+        html, body {
+            min-height: 100%;
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 25px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
+        /* ── TOP BAR ── */
+        .topbar {
+            background: var(--navy);
+            height: 56px;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
         }
 
-        .header {
-            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+        .topbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
             color: white;
-            padding: 2rem;
-            text-align: center;
-            position: relative;
+            font-weight: 700;
+            font-size: 1rem;
         }
 
-        .header-icon {
-            background: white;
-            color: #FF9800;
-            width: 80px;
-            height: 80px;
+        .cross {
+            width: 28px;
+            height: 28px;
+            background: var(--blue-lt);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 900;
+            color: white;
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255,255,255,0.75);
+            font-size: 0.82rem;
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            background: var(--blue-lt);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
-            margin: 0 auto 1rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .header-title {
-            font-size: 1.8rem;
+            font-size: 0.75rem;
             font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .form-content {
-            padding: 2rem;
-        }
-
-        .form-section {
-            background: linear-gradient(135deg, #FFECB3 0%, #FFE082 100%);
-            border: 2px solid #FFB74D;
-            padding: 1.5rem;
-            border-radius: 15px;
-            margin-bottom: 1.5rem;
-        }
-
-        .section-title {
-            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
             color: white;
-            padding: 0.75rem 1rem;
-            border-radius: 10px;
-            font-size: 1.1rem;
+        }
+
+        .topbar-back {
+            color: rgba(255,255,255,0.65);
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.8rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+        }
+
+            .topbar-back:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
+                text-decoration: none;
+            }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(100deg, var(--navy-mid) 0%, var(--blue) 100%);
+            padding: 2rem 2.5rem 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .hero::after {
+                content: '';
+                position: absolute;
+                right: -60px;
+                top: -60px;
+                width: 240px;
+                height: 240px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.04);
+                pointer-events: none;
+            }
+
+        .hero-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 0.4rem;
+        }
+
+        .hero-title {
+            font-size: 1.5rem;
             font-weight: 700;
-            margin: -1.5rem -1.5rem 1rem -1.5rem;
-        }
-
-        .form-row {
+            color: white;
+            margin-bottom: 0.4rem;
             display: flex;
-            gap: 1rem;
-            flex-wrap: wrap; 
+            align-items: center;
+            gap: 0.6rem;
         }
 
-        .form-group {
-            flex: 1 1 200px;
-            min-width: 200px;
+        .hero-sub {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.55);
         }
 
-        .form-label {
-            display: block;
-            color: #E65100;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
+        /* ── CONTENT ── */
+        .content {
+            padding: 2rem 2.5rem;
         }
 
-        .form-control {
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #FFB74D;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-family: inherit;
-            background: white;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #FF9800;
-            box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.1);
-        }
-
-        .button-group {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 1rem 2.5rem;
-            border: none;
-            border-radius: 25px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
-        }
-
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
-            text-decoration: none;
-            color: white;
-        }
-
+        /* ── ALERTS ── */
         .alert {
-            padding: 1rem;
-            border-radius: 10px;
-            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.83rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
         }
 
-        .alert-danger {
-            background: #FFEBEE;
-            border: 2px solid #EF5350;
-            color: #C62828;
+        .alert-error {
+            background: #fdecea;
+            border: 1px solid #f5c6c2;
+            color: var(--danger);
         }
 
         .alert-success {
-            background: #E8F5E9;
-            border: 2px solid #66BB6A;
-            color: #2E7D32;
+            background: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            color: var(--success);
         }
 
-        .modal {
+        /* ── FORM CARD ── */
+        .form-card {
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+            .form-card-header i {
+                color: var(--blue);
+                font-size: 0.95rem;
+            }
+
+        .form-card-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            letter-spacing: 0.02em;
+        }
+
+        .form-card-body {
+            padding: 1.5rem 1.25rem;
+        }
+
+        /* ── FORM FIELDS ── */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .field {
+        }
+
+        .field-label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 0.4rem;
+        }
+
+            .field-label .required {
+                color: var(--danger);
+                margin-left: 0.2rem;
+            }
+
+        .field-input {
+            width: 100%;
+            padding: 0.72rem 0.9rem;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--surface);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+            .field-input:focus {
+                border-color: var(--blue-lt);
+                box-shadow: 0 0 0 3px rgba(37,137,216,0.12);
+            }
+
+            .field-input.error {
+                border-color: var(--danger);
+            }
+
+            .field-input::placeholder {
+                color: var(--text-pale);
+            }
+
+        .field-error {
+            font-size: 0.75rem;
+            color: var(--danger);
+            margin-top: 0.3rem;
+        }
+
+        /* ── BUTTONS ── */
+        .btn-row {
+            display: flex;
+            gap: 0.75rem;
+            padding-top: 0.5rem;
+        }
+
+        .btn-submit {
+            padding: 0.75rem 2rem;
+            background: var(--navy);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: background 0.15s;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+            .btn-submit:hover {
+                background: var(--navy-mid);
+            }
+
+        .btn-cancel {
+            padding: 0.75rem 1.5rem;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: background 0.15s;
+        }
+
+            .btn-cancel:hover {
+                background: var(--bg);
+                text-decoration: none;
+                color: var(--text-sub);
+            }
+
+        /* ── MODAL ── */
+        .modal-overlay {
             display: none;
             position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            inset: 0;
+            background: rgba(10,37,64,0.5);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
         }
 
-        .modal-content {
-            background-color: white;
-            margin: 15% auto;
+            .modal-overlay.open {
+                display: flex;
+            }
+
+        .modal-box {
+            background: white;
+            border-radius: 12px;
             padding: 2rem;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            width: 380px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
         }
 
-        .modal-header {
-            font-size: 1.5rem;
+        .modal-title {
+            font-size: 1rem;
             font-weight: 700;
-            color: #E65100;
-            margin-bottom: 1rem;
-            text-align: center;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .modal-body {
-            font-size: 1.1rem;
-            color: #424242;
+            font-size: 0.88rem;
+            color: var(--text-sub);
             margin-bottom: 1.5rem;
             line-height: 1.6;
         }
 
-        .modal-buttons {
+            .modal-body strong {
+                color: var(--text);
+            }
+
+        .modal-actions {
             display: flex;
-            gap: 1rem;
-            justify-content: center;
+            gap: 0.75rem;
+            justify-content: flex-end;
         }
 
+        .modal-cancel {
+            padding: 0.5rem 1.25rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: white;
+            color: var(--text-sub);
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .modal-confirm {
+            padding: 0.5rem 1.25rem;
+            border-radius: 6px;
+            border: none;
+            background: var(--navy);
+            color: white;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+            .modal-confirm:hover {
+                background: var(--navy-mid);
+            }
+
         @@media (max-width: 768px) {
-            body {
-                padding: 1rem 0.5rem;
+            .topbar {
+                padding: 0 1rem;
             }
 
-            .header {
-                padding: 1.5rem 1rem;
+            .topbar-user {
+                display: none;
             }
 
-            .header-title {
-                font-size: 1.3rem;
+            .hero {
+                padding: 1.5rem 1.25rem;
             }
 
-            .form-content {
-                padding: 1.5rem 1rem;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-
-            .modal-content {
-                margin: 50% auto;
+            .content {
+                padding: 1.25rem;
             }
 
             .form-row {
-                flex-direction: column;
+                grid-template-columns: 1fr;
             }
 
-            .form-group {
-                flex: 1 1 100%; 
-                min-width: 0;
+            .btn-row {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-icon">📋</div>
-            <h1 class="header-title">新增個案資料</h1>
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+        <div class="topbar-logo">
+            <div class="cross">✚</div>
+            代謝症候群疾病管理與追蹤系統
         </div>
-
-        <div class="form-content">
-            @if (TempData["SuccessMessage"] != null)
-            {
-                <div class="alert alert-success mt-3">
-                    @TempData["SuccessMessage"]
-                </div>
-            }
-
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger mt-3 text-center">
-                    @TempData["ErrorMessage"]
-                </div>
-            }
-
-            <form id="caseForm" asp-action="Create" method="post" class="mt-4">
-                <div class="form-section">
-                    <div class="section-title">個案資料</div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label asp-for="SpecialSymbol" class="form-label">特殊符號 *</label>
-                            <input asp-for="SpecialSymbol" class="form-control" placeholder="請輸入1個特殊符號" maxlength="1" required />
-                            <span asp-validation-for="SpecialSymbol" class="text-danger"></span>
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="IDNumber" class="form-label">身分證字號 *</label>
-                            <input asp-for="IDNumber" class="form-control" placeholder="請輸入身分證字號" required />
-                            <span asp-validation-for="IDNumber" class="text-danger"></span>
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="FullName" class="form-label">姓名 *</label>
-                            <input asp-for="FullName" class="form-control" placeholder="請輸入姓名" required />
-                            <span asp-validation-for="FullName" class="text-danger"></span>
-                        </div>
-                        <div class="form-group">
-                            <label asp-for="PhoneNumber" class="form-label">電話 *</label>
-                            <input asp-for="PhoneNumber" class="form-control" placeholder="請輸入電話號碼" required />
-                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="button-group">
-                    <button type="button" id="submitBtn" class="btn btn-primary">新增個案</button>
-                    <a href="@Url.Action("Index", "CaseManagement")" class="btn btn-secondary">
-                        ← 返回上一頁
-                    </a>
-                </div>
-            </form>
+        <div class="topbar-right">
+            <div class="topbar-user">
+                <div class="user-avatar">@(userName?.Length > 0 ? userName[0].ToString() : "醫")</div>
+                <span>@userName</span>
+            </div>
+            <a href="@Url.Action("Index", "CaseManagement")" class="topbar-back">
+                <i class="bi bi-arrow-left"></i> 返回上一頁
+            </a>
         </div>
+    </header>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-eyebrow">Case Management</div>
+        <div class="hero-title">
+            <i class="bi bi-person-plus"></i>
+            新增個案資料
+        </div>
+        <div class="hero-sub">建立新的病患個案基本資料</div>
     </div>
 
-    <!-- 確認對話框 -->
-    <div id="confirmModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">確認新增個案</div>
+    <!-- CONTENT -->
+    <div class="content">
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle-fill"></i>
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-error">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        <form id="caseForm" asp-action="Create" method="post">
+
+            <div class="form-card">
+                <div class="form-card-header">
+                    <i class="bi bi-person-vcard"></i>
+                    <span class="form-card-title">個案資料</span>
+                </div>
+                <div class="form-card-body">
+                    <div class="form-row">
+
+                        <div class="field">
+                            <label asp-for="SpecialSymbol" class="field-label">
+                                特殊符號 <span class="required">*</span>
+                            </label>
+                            <input asp-for="SpecialSymbol" class="field-input"
+                                   placeholder="請輸入 1 個特殊符號" maxlength="1" required />
+                            <span asp-validation-for="SpecialSymbol" class="field-error"></span>
+                        </div>
+
+                        <div class="field">
+                            <label asp-for="IDNumber" class="field-label">
+                                身分證字號 <span class="required">*</span>
+                            </label>
+                            <input asp-for="IDNumber" id="IDNumber" class="field-input"
+                                   placeholder="例：A123456789" required />
+                            <span asp-validation-for="IDNumber" class="field-error"></span>
+                        </div>
+
+                        <div class="field">
+                            <label asp-for="FullName" class="field-label">
+                                姓名 <span class="required">*</span>
+                            </label>
+                            <input asp-for="FullName" id="FullName" class="field-input"
+                                   placeholder="請輸入姓名" required />
+                            <span asp-validation-for="FullName" class="field-error"></span>
+                        </div>
+
+                        <div class="field">
+                            <label asp-for="PhoneNumber" class="field-label">
+                                電話 <span class="required">*</span>
+                            </label>
+                            <input asp-for="PhoneNumber" id="PhoneNumber" class="field-input"
+                                   placeholder="請輸入 10 碼電話號碼" required />
+                            <span asp-validation-for="PhoneNumber" class="field-error"></span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <button type="button" id="submitBtn" class="btn-submit">
+                    <i class="bi bi-person-plus"></i> 新增個案
+                </button>
+                <a href="@Url.Action("Index", "CaseManagement")" class="btn-cancel">
+                    <i class="bi bi-arrow-left"></i> 返回上一頁
+                </a>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- 確認 MODAL -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-box">
+            <div class="modal-title">
+                <i class="bi bi-person-check" style="color:var(--blue);"></i>
+                確認新增個案
+            </div>
             <div class="modal-body" id="confirmMessage"></div>
-            <div class="modal-buttons">
-                <button type="button" id="confirmBtn" class="btn btn-primary">確認</button>
-                <button type="button" id="cancelBtn" class="btn btn-secondary">取消</button>
+            <div class="modal-actions">
+                <button type="button" class="modal-cancel" id="cancelBtn">取消</button>
+                <button type="button" class="modal-confirm" id="confirmBtn">
+                    <i class="bi bi-check-lg"></i> 確認新增
+                </button>
             </div>
         </div>
     </div>
 
-   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    <script>
         const form = document.getElementById('caseForm');
         const submitBtn = document.getElementById('submitBtn');
-        const confirmModal = document.getElementById('confirmModal');
-        const confirmMessage = document.getElementById('confirmMessage');
+        const modal = document.getElementById('confirmModal');
+        const confirmMsg = document.getElementById('confirmMessage');
         const confirmBtn = document.getElementById('confirmBtn');
         const cancelBtn = document.getElementById('cancelBtn');
-
-        const symbolInput = document.getElementById('SpecialSymbol');
-        const nameInput = document.getElementById('FullName');
-        const idNumberInput = document.getElementById('IDNumber');
+        const idInput = document.getElementById('IDNumber');
         const phoneInput = document.getElementById('PhoneNumber');
+        const symbolInput = document.querySelector('[name="SpecialSymbol"]');
+        const nameInput = document.getElementById('FullName');
 
-        // 驗證身分證字號格式
-        function validateIDNumber(idNumber) {
-            const idPattern = /^[A-Z][12]\d{8}$/;
-            return idPattern.test(idNumber);
-        }
+        function validateID(v) { return /^[A-Z][12]\d{8}$/.test(v); }
+        function validatePhone(v) { return /^\d{10}$/.test(v); }
 
-        // 驗證電話號碼格式
-        function validatePhoneNumber(phone) {
-            const phonePattern = /^\d{10}$/;
-            return phonePattern.test(phone);
-        }
+        submitBtn.addEventListener('click', function () {
+            if (!form.checkValidity()) { form.reportValidity(); return; }
 
-        // 點擊新增個案按鈕
-        submitBtn.addEventListener('click', function() {
-            // 檢查表單基本驗證
-            if (!form.checkValidity()) {
-                form.reportValidity();
+            if (!validateID(idInput.value)) {
+                idInput.classList.add('error'); idInput.focus();
+                alert('身分證格式有誤\n正確格式：第一碼英文大寫，第二碼為 1 或 2，共 10 碼');
+                return;
+            }
+            if (!validatePhone(phoneInput.value)) {
+                phoneInput.classList.add('error'); phoneInput.focus();
+                alert('電話號碼格式有誤\n請輸入 10 碼數字');
                 return;
             }
 
-            const idNumber = idNumberInput.value;
-            const phone = phoneInput.value;
-
-            // 驗證身分證字號
-            if (!validateIDNumber(idNumber)) {
-                alert('身分證格式有誤\n正確格式:第一碼為英文大寫,第二碼為1或2,總共10碼');
-                idNumberInput.focus();
-                return;
-            }
-
-            // 驗證電話號碼
-            if (!validatePhoneNumber(phone)) {
-                alert('電話號碼格式有誤\n請輸入10碼數字');
-                phoneInput.focus();
-                return;
-            }
-
-            const symbol = symbolInput.value;
-            const name = nameInput.value;
-
-            // 顯示確認訊息
-            confirmMessage.innerHTML = `確認 <strong>${symbol}</strong> 特殊符號與給予個案 <strong>${name}</strong> 的特殊符號相同?`;
-            confirmModal.style.display = 'block';
+            confirmMsg.innerHTML = `確認特殊符號 <strong>${symbolInput.value}</strong> 與給予個案 <strong>${nameInput.value}</strong> 的特殊符號相同？`;
+            modal.classList.add('open');
         });
 
-        // 點擊確認按鈕
-        confirmBtn.addEventListener('click', function() {
-            confirmModal.style.display = 'none';
+        confirmBtn.addEventListener('click', function () {
+            modal.classList.remove('open');
             form.submit();
         });
 
-        // 點擊取消按鈕
-        cancelBtn.addEventListener('click', function() {
-            confirmModal.style.display = 'none';
-        });
+        cancelBtn.addEventListener('click', () => modal.classList.remove('open'));
+        modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
 
-        // 點擊對話框外部關閉
-        window.addEventListener('click', function(event) {
-            if (event.target === confirmModal) {
-                confirmModal.style.display = 'none';
-            }
+        idInput.addEventListener('blur', function () {
+            this.classList.toggle('error', !!this.value && !validateID(this.value));
         });
-
-        // 即時驗證身分證字號
-        idNumberInput.addEventListener('blur', function() {
-            if (this.value && !validateIDNumber(this.value)) {
-                this.style.borderColor = '#EF5350';
-            } else {
-                this.style.borderColor = '#FFB74D';
-            }
+        phoneInput.addEventListener('blur', function () {
+            this.classList.toggle('error', !!this.value && !validatePhone(this.value));
         });
-
-        // 即時驗證電話號碼
-        phoneInput.addEventListener('blur', function() {
-            if (this.value && !validatePhoneNumber(this.value)) {
-                this.style.borderColor = '#EF5350';
-            } else {
-                this.style.borderColor = '#FFB74D';
-            }
-        });
-    });
-</script>
+    </script>
 
     @section Scripts {
         @{

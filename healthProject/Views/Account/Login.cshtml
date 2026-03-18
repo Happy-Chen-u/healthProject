@@ -9,14 +9,25 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - 代謝症候群管理系統</title>
+    <title>登入 — 代謝症候群疾病管理與追蹤系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
         :root {
-            --primary-color: #06b6d4;
-            --primary-dark: #0891b2;
-            --danger-color: #ef4444;
-            --text-dark: #1e293b;
-            --text-gray: #64748b;
+            --navy: #0a2540;
+            --navy-mid: #103a5e;
+            --blue: #1a6fb5;
+            --blue-lt: #2589d8;
+            --teal: #0e8a7a;
+            --bg: #f4f6f9;
+            --surface: #ffffff;
+            --border: #dde3ea;
+            --text: #1a2635;
+            --text-sub: #5a6a7e;
+            --text-pale: #8fa0b4;
+            --danger: #c0392b;
+            --success: #2e7d32;
         }
 
         * {
@@ -25,380 +36,503 @@
             padding: 0;
         }
 
-        body {
-            background: linear-gradient(#FFFCEC 100%);
-            min-height: 100vh;
-            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+        html, body {
+            height: 100%;
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
         }
 
-        .login-wrapper {
+        /* ── LAYOUT ── */
+        .page {
             min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        @@media (min-width: 900px) {
+            .page {
+                grid-template-columns: 420px 1fr;
+            }
+        }
+
+        /* ── LEFT PANEL ── */
+        .left-panel {
+            background: linear-gradient(160deg, var(--navy) 0%, var(--navy-mid) 55%, var(--blue) 100%);
+            padding: 3rem 2.5rem;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            min-height: 280px;
+        }
+
+            .left-panel::before {
+                content: '';
+                position: absolute;
+                width: 320px;
+                height: 320px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.04);
+                bottom: -100px;
+                right: -80px;
+                pointer-events: none;
+            }
+
+            .left-panel::after {
+                content: '';
+                position: absolute;
+                width: 180px;
+                height: 180px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.03);
+                top: 60px;
+                right: 40px;
+                pointer-events: none;
+            }
+
+        .panel-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: auto;
+        }
+
+        .cross {
+            width: 30px;
+            height: 30px;
+            background: var(--blue-lt);
+            border-radius: 7px;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
-        }
-
-        .login-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            width: 100%;
-            max-width: 450px;
-            overflow: hidden;
-        }
-
-        .login-banner {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            font-size: 1rem;
+            font-weight: 900;
             color: white;
-            padding: 2rem 1.5rem;
-            text-align: center;
+            flex-shrink: 0;
         }
 
-        .banner-icon {
-            font-size: 3.5rem;
+        .panel-logo-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.75);
+            line-height: 1.3;
+        }
+
+        .panel-body {
+            padding-top: 2.5rem;
+        }
+
+        .panel-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.45);
+            margin-bottom: 0.6rem;
+        }
+
+        .panel-title {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: white;
+            line-height: 1.25;
             margin-bottom: 1rem;
         }
 
-        .banner-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
+        .panel-desc {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.55);
+            line-height: 1.7;
+            margin-bottom: 2.5rem;
         }
 
-        .banner-subtitle {
-            font-size: 0.9rem;
-            opacity: 0.95;
+        .panel-features {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
         }
 
-        .banner-features {
-            display: none;
+        .panel-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.65);
         }
 
-        .login-form-section {
-            padding: 2rem 1.5rem;
+        .pf-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--blue-lt);
+            flex-shrink: 0;
+        }
+
+        .panel-footer {
+            margin-top: auto;
+            padding-top: 2rem;
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.3);
+        }
+
+        /* ── RIGHT PANEL ── */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+            background: var(--surface);
+        }
+
+        .form-card {
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .form-header {
+            margin-bottom: 2rem;
         }
 
         .form-title {
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 1.5rem;
-            text-align: center;
+            color: var(--text);
+            margin-bottom: 0.3rem;
         }
 
-        .form-group {
+        .form-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-pale);
+        }
+
+        /* ── FORM ELEMENTS ── */
+        .field {
             margin-bottom: 1.25rem;
         }
 
-        .form-label {
+        .field-label {
             display: block;
-            color: var(--text-dark);
+            font-size: 0.82rem;
             font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
+            color: var(--text-sub);
+            margin-bottom: 0.45rem;
+            letter-spacing: 0.02em;
         }
 
-        .input-wrapper {
+        .field-wrap {
             position: relative;
         }
 
-        .form-control {
-            width: 100%;
-            padding: 0.875rem 1rem 0.875rem 3rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            font-family: inherit;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
-        }
-
-        .input-icon {
+        .field-icon {
             position: absolute;
-            left: 1rem;
+            left: 0.9rem;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 1.25rem;
-            color: var(--text-gray);
+            color: var(--text-pale);
+            font-size: 0.95rem;
             pointer-events: none;
         }
 
-        .password-toggle {
+        .field-input {
+            width: 100%;
+            padding: 0.72rem 0.9rem 0.72rem 2.5rem;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--surface);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+            .field-input:focus {
+                border-color: var(--blue-lt);
+                box-shadow: 0 0 0 3px rgba(37,137,216,0.12);
+            }
+
+            .field-input::placeholder {
+                color: var(--text-pale);
+            }
+
+        .field-error {
+            font-size: 0.75rem;
+            color: var(--danger);
+            margin-top: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .toggle-pw {
             position: absolute;
-            right: 1rem;
+            right: 0.75rem;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
-            font-size: 1.25rem;
+            color: var(--text-pale);
             cursor: pointer;
-            color: var(--text-gray);
             padding: 0.25rem;
-            z-index: 10;
+            font-size: 0.9rem;
+            line-height: 1;
+            transition: color 0.15s;
         }
 
-        .form-check {
+            .toggle-pw:hover {
+                color: var(--text-sub);
+            }
+
+        .field-foot {
             display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
+            justify-content: flex-end;
+            margin-top: 0.35rem;
         }
 
-        .form-check-input {
-            width: 1.25rem;
-            height: 1.25rem;
-            cursor: pointer;
+        .forgot-link {
+            font-size: 0.78rem;
+            color: var(--blue);
+            text-decoration: none;
         }
 
-        .form-check-label {
-            color: var(--text-dark);
-            font-size: 0.95rem;
-            cursor: pointer;
-        }
+            .forgot-link:hover {
+                text-decoration: underline;
+            }
 
-        .btn-login {
+        /* ── SUBMIT BTN ── */
+        .btn-submit {
             width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            padding: 0.8rem;
+            background: var(--navy);
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
             font-weight: 600;
+            font-family: inherit;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+            transition: background 0.2s, transform 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            margin-top: 1.5rem;
         }
 
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
-        }
+            .btn-submit:hover {
+                background: var(--navy-mid);
+            }
 
-        .btn-login:active {
-            transform: scale(0.98);
-        }
+            .btn-submit:active {
+                transform: scale(0.99);
+            }
 
+        /* ── ALERTS ── */
         .alert {
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.83rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            line-height: 1.5;
         }
 
-        .text-danger {
-            color: var(--danger-color);
-            font-size: 0.85rem;
-            margin-top: 0.25rem;
-            display: block;
+        .alert-error {
+            background: #fdecea;
+            border: 1px solid #f5c6c2;
+            color: var(--danger);
         }
 
-        .login-footer {
-            padding: 1rem 1.5rem;
-            background: #f8fafc;
+        .alert-success {
+            background: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            color: var(--success);
+        }
+
+        /* ── FORM FOOTER ── */
+        .form-foot {
+            margin-top: 1.75rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border);
             text-align: center;
-            border-top: 1px solid #e2e8f0;
         }
 
-        .back-link {
-            color: var(--text-gray);
+        .back-home {
+            font-size: 0.8rem;
+            color: var(--text-pale);
             text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: color 0.15s;
         }
 
-        .back-link:hover {
-            color: var(--primary-color);
-        }
-
-      
-        @@media (min-width: 768px) {
-            .login-container {
-                max-width: 900px;
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                grid-template-rows: auto 1fr auto;
+            .back-home:hover {
+                color: var(--text-sub);
             }
 
-            .login-banner {
-                grid-column: 1;
-                grid-row: 1 / -1;
-                padding: 3rem 2.5rem;
-                text-align: left;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
+        /* ── RESPONSIVE ── */
+        @@media (max-width: 899px) {
+            .left-panel {
+                padding: 2rem 1.5rem;
             }
 
-            .banner-icon {
-                font-size: 5rem;
-                margin-bottom: 1.5rem;
+            .panel-features {
+                display: none;
             }
 
-            .banner-title {
-                font-size: 2rem;
-                margin-bottom: 1rem;
+            .panel-body {
+                padding-top: 1.5rem;
             }
 
-            .banner-subtitle {
-                font-size: 1.1rem;
-                margin-bottom: 2rem;
-            }
-
-            .banner-features {
-                display: block;
-                margin-top: 2rem;
-            }
-
-            .feature-item {
-                display: flex;
-                align-items: center;
-                gap: 0.75rem;
-                margin-bottom: 1rem;
-                font-size: 0.95rem;
-                opacity: 0.95;
-            }
-
-            .feature-icon {
+            .panel-title {
                 font-size: 1.5rem;
             }
 
-            .login-form-section {
-                grid-column: 2;
-                grid-row: 1 / 3;
-                padding: 3rem 2.5rem;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
+            .panel-footer {
+                display: none;
             }
 
-            .login-footer {
-                grid-column: 2;
-                grid-row: 3;
-            }
-        }
-
-        
-        @@media (min-width: 1200px) {
-            .login-container {
-                max-width: 1100px;
-            }
-
-            .login-banner {
-                padding: 4rem 3rem;
-            }
-
-            .login-form-section {
-                padding: 4rem 3rem;
+            .right-panel {
+                padding: 2.5rem 1.5rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="login-wrapper">
-        <div class="login-container">
-            <!-- 左側橫幅 -->
-            <div class="login-banner">
-                <div class="banner-icon">🏥</div>
-                <h1 class="banner-title">代謝症候群<br>管理系統</h1>
-                <p class="banner-subtitle">智能追蹤・健康管理・專業照護</p>
-                
-                <div class="banner-features">
-                    <div class="feature-item">
-                        <span class="feature-icon">📊</span>
-                        <span>完整的疾病個管紀錄</span>
+    <div class="page">
+
+        <!-- LEFT: BRANDING PANEL -->
+        <div class="left-panel">
+            <div class="panel-logo">
+                <div class="cross">✚</div>
+                <div class="panel-logo-text">輔仁大學附設醫院</div>
+            </div>
+
+            <div class="panel-body">
+                <div class="panel-eyebrow">Medical Management System</div>
+                <h1 class="panel-title">代謝症候群<br>疾病管理與<br>追蹤系統</h1>
+                <p class="panel-desc">整合健康數據追蹤、病患個管與衛教推播的專業醫療管理平台。</p>
+
+                <div class="panel-features">
+                    <div class="panel-feature">
+                        <div class="pf-dot"></div>
+                        疾病個管與健康目標設定
                     </div>
-                    <div class="feature-item">
-                        <span class="feature-icon">📝</span>
-                        <span>每日健康資訊追蹤</span>
+                    <div class="panel-feature">
+                        <div class="pf-dot"></div>
+                        每日血壓、血糖、飲食記錄
                     </div>
-                    <div class="feature-item">
-                        <span class="feature-icon">📈</span>
-                        <span>數據分析追蹤</span>
+                    <div class="panel-feature">
+                        <div class="pf-dot"></div>
+                        健康趨勢分析與 PDF 週報
                     </div>
-                    
+                    <div class="panel-feature">
+                        <div class="pf-dot"></div>
+                        LINE Bot AI 智能資料輸入
+                    </div>
+                    <div class="panel-feature">
+                        <div class="pf-dot"></div>
+                        每日個人化衛教推播
+                    </div>
                 </div>
             </div>
 
-            <!-- 右側登入表單 -->
-            <div class="login-form-section">
-                <h2 class="form-title">登入系統</h2>
+            <div class="panel-footer">
+                © 2025 輔仁大學附設醫院　代謝症候群管理系統
+            </div>
+        </div>
 
-                @* 成功訊息 (密碼變更成功) *@
+        <!-- RIGHT: LOGIN FORM -->
+        <div class="right-panel">
+            <div class="form-card">
+
+                <div class="form-header">
+                    <div class="form-title">登入系統</div>
+                    <div class="form-subtitle">請輸入您的帳號與密碼以繼續</div>
+                </div>
+
                 @if (TempData["SuccessMessage"] != null)
                 {
                     <div class="alert alert-success">
-                        ✅ @TempData["SuccessMessage"]
+                        <i class="bi bi-check-circle-fill"></i>
+                        @TempData["SuccessMessage"]
                     </div>
                 }
 
                 @if (!ViewData.ModelState.IsValid)
                 {
-                    <div class="alert">
+                    <div class="alert alert-error">
+                        <i class="bi bi-exclamation-circle-fill"></i>
                         <div asp-validation-summary="All"></div>
                     </div>
                 }
 
                 <form asp-action="Login" asp-controller="Account" method="post">
                     <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
-                    
-                    <div class="form-group">
-                        <label asp-for="Username" class="form-label">帳號 (身分證字號)</label>
-                        <div class="input-wrapper">
-                            <span class="input-icon">👤</span>
-                            <input asp-for="Username" class="form-control" placeholder="請輸入身分證字號" autofocus required />
+
+                    <!-- 帳號 -->
+                    <div class="field">
+                        <label asp-for="Username" class="field-label">帳號（身分證字號）</label>
+                        <div class="field-wrap">
+                            <i class="bi bi-person field-icon"></i>
+                            <input asp-for="Username" class="field-input"
+                                   placeholder="例：A123456789" autofocus autocomplete="username" />
                         </div>
-                        <span asp-validation-for="Username" class="text-danger"></span>
+                        <span asp-validation-for="Username" class="field-error"></span>
                     </div>
 
-                    <div class="form-group">
-                        <label asp-for="Password" class="form-label">密碼</label>
-                        <div class="input-wrapper">
-                            <span class="input-icon">🔒</span>
-                            <input asp-for="Password" type="password" class="form-control" id="passwordInput" placeholder="請輸入密碼" required />
-                            <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
+                    <!-- 密碼 -->
+                    <div class="field">
+                        <label asp-for="Password" class="field-label">密碼</label>
+                        <div class="field-wrap">
+                            <i class="bi bi-lock field-icon"></i>
+                            <input asp-for="Password" type="password" id="pwInput"
+                                   class="field-input" placeholder="請輸入密碼"
+                                   autocomplete="current-password" />
+                            <button type="button" class="toggle-pw" onclick="togglePw()" id="pwToggle">
+                                <i class="bi bi-eye" id="pwIcon"></i>
+                            </button>
                         </div>
-                        <span asp-validation-for="Password" class="text-danger"></span>
+                        <div class="field-foot">
+                            <a asp-controller="Account" asp-action="ForgotPassword" class="forgot-link">
+                                忘記密碼？
+                            </a>
+                        </div>
+                        <span asp-validation-for="Password" class="field-error"></span>
                     </div>
 
-                    <!-- 忘記密碼超連結 -->
-                    <div style="margin-bottom: 1.5rem; text-align: right;">
-                        <a asp-controller="Account" asp-action="ForgotPassword" class="back-link">忘記密碼？</a>
-                    </div>
-                    
-
-                    <button type="submit" class="btn-login">
-                        🔓 登入系統
+                    <button type="submit" class="btn-submit">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        登入
                     </button>
                 </form>
-            </div>
 
-            <!-- 底部 -->
-            <div class="login-footer">
-                <a asp-controller="Home" asp-action="Index" class="back-link">← 返回首頁</a>
+                <div class="form-foot">
+                    <a href="@Url.Action("Index", "Home")" class="back-home">
+                        <i class="bi bi-arrow-left"></i> 返回首頁
+                    </a>
+                </div>
+
             </div>
         </div>
+
     </div>
 
     <script>
-        function togglePassword() {
-            const input = document.getElementById('passwordInput');
-            const btn = document.querySelector('.password-toggle');
+        function togglePw() {
+            const input = document.getElementById('pwInput');
+            const icon = document.getElementById('pwIcon');
             if (input.type === 'password') {
                 input.type = 'text';
-                btn.textContent = '🙈';
+                icon.className = 'bi bi-eye-slash';
             } else {
                 input.type = 'password';
-                btn.textContent = '👁️';
+                icon.className = 'bi bi-eye';
             }
         }
     </script>

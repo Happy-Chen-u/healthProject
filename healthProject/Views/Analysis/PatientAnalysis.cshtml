@@ -11,148 +11,312 @@
     <title>@ViewData["Title"]</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --navy: #0a2540;
+            --navy-mid: #103a5e;
+            --blue: #1a6fb5;
+            --blue-lt: #2589d8;
+            --bg: #f4f6f9;
+            --surface: #ffffff;
+            --border: #dde3ea;
+            --text: #1a2635;
+            --text-sub: #5a6a7e;
+            --text-pale: #8fa0b4;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            background: #f0f4f8;
-            font-family: 'Microsoft JhengHei', Arial, sans-serif;
-        }
-
-        .main-container {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .page-header {
-            background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .page-title {
-            font-size: 1.8rem;
-            font-weight: 600;
+            background: var(--bg);
+            font-family: 'Noto Sans TC','Microsoft JhengHei',Arial,sans-serif;
+            color: var(--text);
             margin: 0;
+        }
+
+        .topbar {
+            background: var(--navy);
+            height: 56px;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+        }
+
+        .topbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
             color: white;
-        }
-
-        .btn-back {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.5);
-            padding: 0.5rem 1.5rem;
-            border-radius: 5px;
-            text-decoration: none;
-        }
-
-            .btn-back:hover {
-                background: rgba(255,255,255,0.35);
-                color: white;
-            }
-
-        .nav-tabs {
-            border-bottom: 2px solid #5a9;
-        }
-
-            .nav-tabs .nav-link {
-                color: #666;
-                font-weight: 500;
-                border: none;
-                padding: 0.75rem 1.5rem;
-            }
-
-                .nav-tabs .nav-link.active {
-                    background: #ffc107;
-                    color: #333;
-                    border-radius: 8px 8px 0 0;
-                    font-weight: 600;
-                }
-
-        .table-card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 3rem;
-        }
-
-        .summary-table th {
-            background: #ffc107;
-            color: #333;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .summary-table td {
-            font-size: 1.5rem;
             font-weight: 700;
-            text-align: center;
-        }
-
-        .abnormal {
-            color: #dc3545;
-        }
-
-        .warning {
-            color: #fd7e14;
-        }
-
-        .badge {
-            font-size: 0.9rem;
-            padding: 0.4rem 0.8rem;
-        }
-
-        .patient-info-section {
-            background: white;
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 1rem;
-            border-left: 4px solid #4CAF50;
-        }
-
-        /* ===== 健康趨勢提醒卡 ===== */
-        .trend-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 1.25rem 1.5rem;
-            margin-bottom: 1rem;
-            border-left: 4px solid #4CAF50;
-        }
-
-        .trend-card-title {
             font-size: 1rem;
+        }
+
+        .cross {
+            width: 28px;
+            height: 28px;
+            background: var(--blue-lt);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 900;
+            color: white;
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .topbar-btn {
+            color: rgba(255,255,255,0.65);
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.8rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+            .topbar-btn:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
+                text-decoration: none;
+            }
+
+        .hero {
+            background: linear-gradient(100deg, var(--navy-mid) 0%, var(--blue) 100%);
+            padding: 1.5rem 2.5rem;
+        }
+
+        .hero-title {
+            font-size: 1.3rem;
             font-weight: 700;
-            color: #333;
-            margin-bottom: 1rem;
+            color: white;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
+        .main-container {
+            max-width: 1300px;
+            margin: 1.5rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .field-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-sub);
+        }
+
+        .field-input {
+            padding: 0.55rem 0.9rem;
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            font-size: 0.88rem;
+            font-family: inherit;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+            .field-input:focus {
+                border-color: var(--blue-lt);
+                box-shadow: 0 0 0 3px rgba(37,137,216,0.1);
+            }
+
+        .btn-search {
+            padding: 0.55rem 1.25rem;
+            background: var(--navy);
+            border: none;
+            border-radius: 7px;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: background 0.15s;
+        }
+
+            .btn-search:hover {
+                background: var(--navy-mid);
+            }
+
+        .btn-clear {
+            padding: 0.55rem 1rem;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 7px;
+            color: var(--text-sub);
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+            .btn-clear:hover {
+                background: var(--bg);
+            }
+
+        .report-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .report-tab {
+            padding: 0.6rem 1.25rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-pale);
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+
+            .report-tab:hover {
+                color: var(--text-sub);
+            }
+
+            .report-tab.active {
+                color: var(--navy);
+                border-bottom-color: var(--navy);
+            }
+
+        .patient-strip {
+            display: none;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+            .patient-strip.show {
+                display: flex;
+            }
+
+        .patient-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--blue-lt);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        .patient-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .patient-metas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 0.15rem;
+        }
+
+        .patient-meta-item {
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2.5rem;
+            color: var(--text-sub);
+        }
+
+        /* ── Trend ── */
+        .trend-header {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .trend-period {
+            font-size: 0.75rem;
+            color: var(--text-pale);
+            font-weight: 400;
+        }
+
         .trend-items {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
             gap: 0.75rem;
         }
 
         .trend-item {
-            border-radius: 10px;
+            border-radius: 8px;
             padding: 0.85rem 1rem;
-            border: 1px solid #e5e7eb;
-            background: #f9fafb;
+            border: 1px solid var(--border);
+            background: var(--bg);
             position: relative;
             overflow: hidden;
         }
@@ -162,26 +326,25 @@
                 position: absolute;
                 top: 0;
                 left: 0;
-                width: 4px;
+                width: 3px;
                 height: 100%;
-                border-radius: 4px 0 0 4px;
             }
 
             .trend-item.good::before {
-                background: #4CAF50;
+                background: #4caf50;
             }
 
             .trend-item.warn::before {
-                background: #FF9800;
+                background: #ff9800;
             }
 
             .trend-item.bad::before {
-                background: #F44336;
+                background: #f44336;
             }
 
         .trend-item-label {
-            font-size: 0.8rem;
-            color: #6b7280;
+            font-size: 0.78rem;
+            color: var(--text-sub);
             font-weight: 600;
             margin-bottom: 0.3rem;
         }
@@ -190,20 +353,20 @@
             display: flex;
             align-items: baseline;
             gap: 0.5rem;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.3rem;
             flex-wrap: wrap;
         }
 
         .trend-current {
-            font-size: 1.05rem;
+            font-size: 1rem;
             font-weight: 700;
-            color: #111827;
+            color: var(--text);
         }
 
         .trend-diff {
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             font-weight: 600;
-            padding: 0.1rem 0.45rem;
+            padding: 0.1rem 0.4rem;
             border-radius: 20px;
         }
 
@@ -223,465 +386,551 @@
             }
 
         .trend-prev {
-            font-size: 0.75rem;
-            color: #9ca3af;
-            margin-bottom: 0.3rem;
+            font-size: 0.72rem;
+            color: var(--text-pale);
+            margin-bottom: 0.25rem;
         }
 
         .trend-message {
-            font-size: 0.78rem;
-            color: #4b5563;
-            border-top: 1px solid #e5e7eb;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            border-top: 1px solid var(--border);
             padding-top: 0.3rem;
             margin-top: 0.2rem;
         }
 
         .trend-no-prev {
-            background: #f9fafb;
-            border: 1px dashed #d1d5db;
-            border-radius: 10px;
+            background: var(--bg);
+            border: 1px dashed var(--border);
+            border-radius: 8px;
             padding: 0.85rem 1rem;
-            color: #9ca3af;
-            font-size: 0.85rem;
+            color: var(--text-pale);
+            font-size: 0.82rem;
             text-align: center;
+        }
+
+        /* ── Summary nums ── */
+        .summary-nums {
+            display: grid;
+            grid-template-columns: repeat(5,1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+        }
+
+        .summary-num-cell {
+            background: var(--surface);
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .summary-num-val {
+            font-size: 1.6rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-num-label {
+            font-size: 0.72rem;
+            color: var(--text-pale);
+        }
+
+        .val-normal {
+            color: var(--navy);
+        }
+
+        .val-danger {
+            color: #c0392b;
+        }
+
+        .val-warn {
+            color: #e67e22;
+        }
+
+        /* ── Data table – 修正欄寬對齊 ── */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+            /* 欄寬：項目22%、平均值26%、標準值32%、狀態20% */
+            .data-table col.col-name {
+                width: 22%;
+            }
+
+            .data-table col.col-val {
+                width: 26%;
+            }
+
+            .data-table col.col-std {
+                width: 32%;
+            }
+
+            .data-table col.col-status {
+                width: 20%;
+            }
+
+            .data-table th {
+                background: var(--bg);
+                padding: 0.6rem 0.75rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: var(--text-sub);
+                border-bottom: 1px solid var(--border);
+                text-align: left;
+            }
+
+            .data-table td {
+                padding: 0.65rem 0.75rem;
+                font-size: 0.85rem;
+                border-bottom: 1px solid var(--border);
+                vertical-align: middle;
+                overflow: hidden;
+                word-break: break-word;
+            }
+                /* 數值、標準值、狀態欄：置中 */
+                .data-table th:not(:first-child),
+                .data-table td:not(:first-child) {
+                    text-align: center;
+                }
+
+            .data-table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            .data-table tbody tr:hover {
+                background: #f8fafc;
+            }
+
+        .td-center {
+            text-align: center;
+        }
+
+        .td-abnormal {
+            background: #fdf5f5;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-ok {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge-danger {
+            background: #fdecea;
+            color: #c0392b;
+        }
+
+        .badge-warn {
+            background: #fff8e1;
+            color: #e67e22;
+        }
+
+        .badge-nodata {
+            background: #f4f6f9;
+            color: #8fa0b4;
+        }
+
+        /* ── Charts ── */
+        .chart-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-nav-btn {
+            background: var(--navy);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+        }
+
+            .chart-nav-btn:hover {
+                background: var(--navy-mid);
+            }
+
+        .chart-inner {
+            flex: 1;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .daily-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .daily-nav-date {
+            font-weight: 600;
+            font-size: 0.95rem;
+            min-width: 110px;
+            text-align: center;
+            color: var(--navy);
+        }
+
+        .meal-summary-box {
+            background: #fef9e7;
+            border: 1px solid #f9e4a0;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+        }
+
+        .meal-summary-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 0.5rem;
+        }
+
+        .meal-summary-note {
+            font-size: 0.75rem;
+            color: #78350f;
+            margin-bottom: 0.4rem;
+        }
+
+        .meal-summary-rows {
+            font-size: 0.82rem;
+            line-height: 1.9;
+        }
+
+        @@media (max-width: 900px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-nums {
+                grid-template-columns: repeat(3,1fr);
+            }
+
+            .topbar {
+                padding: 0 1rem;
+            }
+
+            .hero {
+                padding: 1.25rem;
+            }
+
+            .main-container {
+                padding: 0 1rem;
+            }
         }
     </style>
 </head>
 <body>
+
+    <header class="topbar">
+        <div class="topbar-logo">
+            <div class="cross">✚</div>
+            代謝症候群疾病管理與追蹤系統
+        </div>
+        <div class="topbar-right">
+            <button class="topbar-btn" onclick="testWeeklyReport()">
+                <i class="bi bi-send"></i> 測試傳送週報到 LINE
+            </button>
+            <a href="@Url.Action("Dashboard", "Home")" class="topbar-btn">
+                <i class="bi bi-arrow-left"></i> 返回主選單
+            </a>
+        </div>
+    </header>
+
+    <div class="hero">
+        <div class="hero-title"><i class="bi bi-graph-up-arrow"></i> 我的健康分析</div>
+    </div>
+
     <div class="main-container">
-        <!-- 頁首 -->
-        <div class="page-header">
-            <h1 class="page-title"><i class="bi bi-graph-up"></i> 我的健康分析</h1>
-            <div class="d-flex gap-2">
-                <button class="btn btn-sm" onclick="testWeeklyReport()"
-                        style="background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.5);">
-                    <i class="bi bi-send"></i> 測試傳送週報到 LINE
-                </button>
-                <a href="@Url.Action("Index", "Home")" class="btn-back">
-                    <i class="bi bi-arrow-left"></i> 返回主選單
-                </a>
+
+        <div class="card">
+            <div class="report-tabs">
+                <button class="report-tab" id="tab-0" onclick="selectReportType(0)">每日</button>
+                <button class="report-tab active" id="tab-1" onclick="selectReportType(1)">每週</button>
+                <button class="report-tab" id="tab-2" onclick="selectReportType(2)">每月</button>
+                <button class="report-tab" id="tab-3" onclick="selectReportType(3)">每年</button>
+            </div>
+
+            <div id="datePanel-0" class="date-panel" style="display:none;">
+                <div style="display:flex;align-items:flex-end;gap:0.75rem;flex-wrap:wrap;">
+                    <div class="field-group"><label class="field-label">選擇日期</label><input type="date" class="field-input" id="dailyDate" /></div>
+                    <button class="btn-search" onclick="searchReport()"><i class="bi bi-search"></i> 搜尋</button>
+                    <button class="btn-clear" onclick="clearResults()">清除</button>
+                </div>
+            </div>
+
+            <div id="datePanel-1" class="date-panel">
+                <div style="display:flex;align-items:flex-end;gap:0.75rem;flex-wrap:wrap;">
+                    <div class="field-group"><label class="field-label">週開始日期</label><input type="date" class="field-input" id="weeklyStartDate" /></div>
+                    <button class="btn-search" onclick="searchReport()"><i class="bi bi-search"></i> 搜尋</button>
+                    <button class="btn-clear" onclick="clearResults()">清除</button>
+                </div>
+            </div>
+
+            <div id="datePanel-2" class="date-panel" style="display:none;">
+                <div style="display:flex;align-items:flex-end;gap:0.75rem;flex-wrap:wrap;">
+                    <div class="field-group"><label class="field-label">選擇年月</label><input type="month" class="field-input" id="monthlyDate" /></div>
+                    <button class="btn-search" onclick="searchReport()"><i class="bi bi-search"></i> 搜尋</button>
+                    <button class="btn-clear" onclick="clearResults()">清除</button>
+                </div>
+            </div>
+
+            <div id="datePanel-3" class="date-panel" style="display:none;">
+                <div style="display:flex;align-items:flex-end;gap:0.75rem;flex-wrap:wrap;">
+                    <div class="field-group"><label class="field-label">選擇年份</label><select class="field-input" id="yearlyDate"></select></div>
+                    <button class="btn-search" onclick="searchReport()"><i class="bi bi-search"></i> 搜尋</button>
+                    <button class="btn-clear" onclick="clearResults()">清除</button>
+                </div>
             </div>
         </div>
 
-        <!-- 分頁標籤 -->
-        <ul class="nav nav-tabs mb-3" id="reportTypeTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="daily-tab" data-bs-toggle="tab"
-                        data-bs-target="#daily" type="button" role="tab" onclick="selectReportType(0)">
-                    每日
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="weekly-tab" data-bs-toggle="tab"
-                        data-bs-target="#weekly" type="button" role="tab" onclick="selectReportType(1)">
-                    每週
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="monthly-tab" data-bs-toggle="tab"
-                        data-bs-target="#monthly" type="button" role="tab" onclick="selectReportType(2)">
-                    每月
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="yearly-tab" data-bs-toggle="tab"
-                        data-bs-target="#yearly" type="button" role="tab" onclick="selectReportType(3)">
-                    每年
-                </button>
-            </li>
-        </ul>
+        <div id="loadingDiv" class="loading">
+            <div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;"></div>
+            <p class="mt-2" style="font-size:0.88rem;">正在產生報表...</p>
+        </div>
 
-        <!-- 分頁內容 (日期選擇 + 搜尋按鈕) -->
-        <div class="tab-content table-card" id="reportTypeTabContent">
+        <div id="patientStrip" class="patient-strip">
+            <div class="patient-avatar"><i class="bi bi-person-fill"></i></div>
+            <div>
+                <div class="patient-name" id="patientName"></div>
+                <div class="patient-metas">
+                    <span class="patient-meta-item"><i class="bi bi-gender-ambiguous"></i><span id="patientGender"></span></span>
+                    <span class="patient-meta-item"><i class="bi bi-calendar3"></i><span id="patientBirth"></span></span>
+                </div>
+            </div>
+        </div>
+
+        <div id="reportContent" style="display:none;">
+
             <!-- 每日 -->
-            <div class="tab-pane fade" id="daily" role="tabpanel">
-                <div class="d-flex align-items-end gap-3 mb-2">
-                    <div>
-                        <label class="form-label fw-bold">選擇日期</label>
-                        <input type="date" class="form-control" id="dailyDate">
+            <div id="dailySection" style="display:none;">
+                <div class="card">
+                    <div class="daily-nav">
+                        <button class="chart-nav-btn" onclick="navigateDaily(-1)">‹</button>
+                        <span class="daily-nav-date" id="dailyNavDate"></span>
+                        <button class="chart-nav-btn" onclick="navigateDaily(1)">›</button>
                     </div>
-                    <div class="d-flex gap-2 mb-1">
-                        <button class="btn btn-primary" onclick="searchReport()"><i class="bi bi-search"></i> 搜尋</button>
-                        <button class="btn btn-secondary" onclick="clearResults()"><i class="bi bi-arrow-counterclockwise"></i> 清除</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 每週 -->
-            <div class="tab-pane fade show active" id="weekly" role="tabpanel">
-                <div class="d-flex align-items-end gap-3 mb-2">
-                    <div>
-                        <label class="form-label fw-bold">週開始日期</label>
-                        <input type="date" class="form-control" id="weeklyStartDate">
-                    </div>
-                    <div class="d-flex gap-2 mb-1">
-                        <button class="btn btn-primary" onclick="searchReport()"><i class="bi bi-search"></i> 搜尋</button>
-                        <button class="btn btn-secondary" onclick="clearResults()"><i class="bi bi-arrow-counterclockwise"></i> 清除</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 每月 -->
-            <div class="tab-pane fade" id="monthly" role="tabpanel">
-                <div class="d-flex align-items-end gap-3 mb-2">
-                    <div>
-                        <label class="form-label fw-bold">選擇年月</label>
-                        <input type="month" class="form-control" id="monthlyDate">
-                    </div>
-                    <div class="d-flex gap-2 mb-1">
-                        <button class="btn btn-primary" onclick="searchReport()"><i class="bi bi-search"></i> 搜尋</button>
-                        <button class="btn btn-secondary" onclick="clearResults()"><i class="bi bi-arrow-counterclockwise"></i> 清除</button>
+                    <div class="card-title"><i class="bi bi-calendar-day"></i> 當日健康數據</div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <colgroup>
+                                <col class="col-name">
+                                <col class="col-val">
+                                <col class="col-std">
+                                <col class="col-status">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>項目</th>
+                                    <th>數值</th>
+                                    <th>標準值</th>
+                                    <th>狀態</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dailyTableBody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <!-- 每年 -->
-            <div class="tab-pane fade" id="yearly" role="tabpanel">
-                <div class="d-flex align-items-end gap-3 mb-2">
-                    <div>
-                        <label class="form-label fw-bold">選擇年份</label>
-                        <select class="form-select" id="yearlyDate"></select>
+            <!-- 趨勢 -->
+            <div id="trendSection" style="display:none;">
+                <div class="card">
+                    <div class="trend-header"><i class="bi bi-graph-up"></i> 健康趨勢提醒 <span class="trend-period" id="trendPeriodLabel"></span></div>
+                    <div id="trendItems" class="trend-items"></div>
+                </div>
+            </div>
+
+            <!-- 統計摘要 -->
+            <div id="summarySection" style="display:none;">
+                <div class="card">
+                    <div class="card-title"><i class="bi bi-bar-chart"></i> 統計摘要</div>
+                    <div class="summary-nums">
+                        <div class="summary-num-cell"><div class="summary-num-val val-normal" id="totalDays">0</div><div class="summary-num-label">總天數</div></div>
+                        <div class="summary-num-cell"><div class="summary-num-val val-danger" id="highBPDays">0</div><div class="summary-num-label">血壓異常天數</div></div>
+                        <div class="summary-num-cell"><div class="summary-num-val val-danger" id="highBSDays">0</div><div class="summary-num-label">血糖異常天數</div></div>
+                        <div class="summary-num-cell"><div class="summary-num-val val-warn" id="lowWaterDays">0</div><div class="summary-num-label">水分不足天數</div></div>
+                        <div class="summary-num-cell"><div class="summary-num-val val-warn" id="lowExerciseDays">0</div><div class="summary-num-label">運動不足天數</div></div>
                     </div>
-                    <div class="d-flex gap-2 mb-1">
-                        <button class="btn btn-primary" onclick="searchReport()"><i class="bi bi-search"></i> 搜尋</button>
-                        <button class="btn btn-secondary" onclick="clearResults()"><i class="bi bi-arrow-counterclockwise"></i> 清除</button>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <colgroup>
+                                <col class="col-name">
+                                <col class="col-val">
+                                <col class="col-std">
+                                <col class="col-status">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>項目</th>
+                                    <th>平均值</th>
+                                    <th>標準值</th>
+                                    <th>狀態</th>
+                                </tr>
+                            </thead>
+                            <tbody id="avgTable"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <!-- 載入中 -->
-            <div id="loadingDiv" class="loading">
-                <div class="spinner-border text-success" role="status">
-                    <span class="visually-hidden">載入中...</span>
+            <!-- 圖表 -->
+            <div id="chartsSection" style="display:none;">
+                <div class="charts-grid">
+                    <div class="card"><div class="card-title"><i class="bi bi-heart-pulse"></i> 血壓趨勢</div><div class="chart-wrap"><button class="chart-nav-btn" onclick="navigateChart('bp',-1)">‹</button><div class="chart-inner"><canvas id="bpChart" style="max-height:180px;"></canvas></div><button class="chart-nav-btn" onclick="navigateChart('bp',1)">›</button></div></div>
+                    <div class="card"><div class="card-title"><i class="bi bi-droplet"></i> 血糖趨勢</div><div class="chart-wrap"><button class="chart-nav-btn" onclick="navigateChart('bs',-1)">‹</button><div class="chart-inner"><canvas id="bsChart" style="max-height:180px;"></canvas></div><button class="chart-nav-btn" onclick="navigateChart('bs',1)">›</button></div></div>
+                    <div class="card"><div class="card-title"><i class="bi bi-cup-straw"></i> 飲水量趨勢</div><div class="chart-wrap"><button class="chart-nav-btn" onclick="navigateChart('water',-1)">‹</button><div class="chart-inner"><canvas id="waterChart" style="max-height:180px;"></canvas></div><button class="chart-nav-btn" onclick="navigateChart('water',1)">›</button></div></div>
+                    <div class="card"><div class="card-title"><i class="bi bi-person-walking"></i> 運動時間趨勢</div><div class="chart-wrap"><button class="chart-nav-btn" onclick="navigateChart('exercise',-1)">‹</button><div class="chart-inner"><canvas id="exerciseChart" style="max-height:180px;"></canvas></div><button class="chart-nav-btn" onclick="navigateChart('exercise',1)">›</button></div></div>
+                    <div class="card"><div class="card-title"><i class="bi bi-x-circle"></i> 抽菸趨勢</div><div class="chart-wrap"><button class="chart-nav-btn" onclick="navigateChart('cigarette',-1)">‹</button><div class="chart-inner"><canvas id="cigaretteChart" style="max-height:180px;"></canvas></div><button class="chart-nav-btn" onclick="navigateChart('cigarette',1)">›</button></div></div>
+                    <div class="card"><div class="card-title"><i class="bi bi-flower1"></i> 檳榔趨勢</div><div class="chart-wrap"><button class="chart-nav-btn" onclick="navigateChart('betelNut',-1)">‹</button><div class="chart-inner"><canvas id="betelNutChart" style="max-height:180px;"></canvas></div><button class="chart-nav-btn" onclick="navigateChart('betelNut',1)">›</button></div></div>
                 </div>
-                <p class="mt-3 text-success fw-bold">正在產生報表...</p>
+                <div class="card"><div class="card-title"><i class="bi bi-egg-fried"></i> 三餐記錄</div><div id="mealTable"></div></div>
             </div>
 
-            <!-- 病患基本資訊 (登入者自己) -->
-            <div id="patientInfo" class="patient-info-section" style="display:none;">
-                <div class="d-flex align-items-center gap-4 flex-wrap">
-                    <span><i class="bi bi-person-circle me-1 text-success"></i><strong>姓名：</strong><span id="patientName"></span></span>
-                    <span><strong>性別：</strong><span id="patientGender">-</span></span>
-                    <span><strong>生日：</strong><span id="patientBirth">-</span></span>
-                </div>
-            </div>
-
-            <!-- 報表內容 -->
-            <div id="reportContent" style="display:none;">
-                <!-- 每日報表表格 -->
-                <div id="dailyTable" style="display:none;">
-                    <div class="table-card mt-3">
-                        <div id="dailyNav" style="display:flex; align-items:center; justify-content:center; gap:1rem; margin-bottom:1rem;">
-                            <button onclick="navigateDaily(-1)" style="background:#4CAF50; color:white; border:none; border-radius:50%; width:36px; height:36px; font-size:1.2rem; cursor:pointer;">‹</button>
-                            <span id="dailyNavDate" style="font-weight:600; font-size:1.1rem; min-width:120px; text-align:center;"></span>
-                            <button onclick="navigateDaily(1)" style="background:#4CAF50; color:white; border:none; border-radius:50%; width:36px; height:36px; font-size:1.2rem; cursor:pointer;">›</button>
-                        </div>
-                        <h5 class="mb-3"><i class="bi bi-calendar-day"></i> 當日健康數據</h5>
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="width:30%;">項目</th>
-                                        <th style="width:25%; text-align:center;">數值</th>
-                                        <th style="width:25%; text-align:center;">標準值</th>
-                                        <th style="width:20%; text-align:center;">狀態</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="dailyTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 健康趨勢提醒卡 -->
-                <div id="trendCardSection" style="display:none;">
-                    <div class="trend-card mt-3">
-                        <div class="trend-card-title">
-                            <span>📈</span>
-                            <span>健康趨勢提醒</span>
-                            <span id="trendPeriodLabel" style="font-size:0.82rem; color:#6b7280; font-weight:400; margin-left:0.3rem;"></span>
-                        </div>
-                        <div id="trendItems" class="trend-items"></div>
-                    </div>
-                </div>
-
-                <!-- 統計摘要 (週/月/年) -->
-                <div id="summarySection" style="display:none;">
-                    <div class="table-card mb-3 mt-3">
-                        <h5 class="mb-3"><i class="bi bi-bar-chart"></i> 統計摘要</h5>
-                        <div class="table-responsive">
-                            <table class="table summary-table">
-                                <thead>
-                                    <tr>
-                                        <th>總天數</th>
-                                        <th>血壓異常天數</th>
-                                        <th>血糖異常天數</th>
-                                        <th>水分不足天數</th>
-                                        <th>運動時間不足天數</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td id="totalDays">0</td>
-                                        <td id="highBPDays" class="abnormal">0</td>
-                                        <td id="highBSDays" class="abnormal">0</td>
-                                        <td id="lowWaterDays" class="warning">0</td>
-                                        <td id="lowExerciseDays" class="warning">0</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="table-responsive mt-4">
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>項目</th>
-                                        <th class="text-center">平均值</th>
-                                        <th class="text-center">標準值</th>
-                                        <th class="text-center">狀態</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="avgTable"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 圖表區域 -->
-                <div id="chartsSection" style="display:none;">
-                    <div class="table-card mb-3">
-                        <h5 class="mb-3"><i class="bi bi-heart-pulse"></i> 血壓趨勢</h5>
-                        <canvas id="bpChart" style="max-height:300px;"></canvas>
-                        <input type="range" id="bpSlider" min="0" max="100" value="0"
-                               style="width:100%; margin-top:0.5rem;" oninput="slideChart('bp', this.value)">
-                        <div style="text-align:right; margin-top:0.25rem;">
-                            <button onclick="resetZoom('bp')" class="btn btn-sm btn-outline-secondary">🔄 重置</button>
-                        </div>
-                    </div>
-
-                    <div class="table-card mb-3">
-                        <h5 class="mb-3"><i class="bi bi-droplet"></i> 血糖趨勢</h5>
-                        <canvas id="bsChart" style="max-height:300px;"></canvas>
-                        <input type="range" id="bsSlider" min="0" max="100" value="0"
-                               style="width:100%; margin-top:0.5rem;" oninput="slideChart('bs', this.value)">
-                        <div style="text-align:right; margin-top:0.5rem;">
-                            <button onclick="resetZoom('bs')" class="btn btn-sm btn-outline-secondary">🔄 重置</button>
-                        </div>
-                    </div>
-
-                    <div class="table-card mb-3">
-                        <h5 class="mb-3"><i class="bi bi-cup-straw"></i> 飲水量趨勢</h5>
-                        <canvas id="waterChart" style="max-height:300px;"></canvas>
-                        <input type="range" id="waterSlider" min="0" max="100" value="0"
-                               style="width:100%; margin-top:0.5rem;" oninput="slideChart('water', this.value)">
-                        <div style="text-align:right; margin-top:0.5rem;">
-                            <button onclick="resetZoom('water')" class="btn btn-sm btn-outline-secondary">🔄 重置</button>
-                        </div>
-                    </div>
-
-                    <div class="table-card mb-3">
-                        <h5 class="mb-3"><i class="bi bi-person-walking"></i> 運動時間趨勢</h5>
-                        <canvas id="exerciseChart" style="max-height:300px;"></canvas>
-                        <input type="range" id="exerciseSlider" min="0" max="100" value="0"
-                               style="width:100%; margin-top:0.5rem;" oninput="slideChart('exercise', this.value)">
-                        <div style="text-align:right; margin-top:0.5rem;">
-                            <button onclick="resetZoom('exercise')" class="btn btn-sm btn-outline-secondary">🔄 重置</button>
-                        </div>
-                    </div>
-
-                    <div class="table-card mb-3">
-                        <h5 class="mb-3"><i class="bi bi-x-circle"></i> 抽菸趨勢</h5>
-                        <canvas id="cigaretteChart" style="max-height:300px;"></canvas>
-                        <input type="range" id="cigaretteSlider" min="0" max="100" value="0"
-                               style="width:100%; margin-top:0.5rem;" oninput="slideChart('cigarette', this.value)">
-                        <div style="text-align:right; margin-top:0.5rem;">
-                            <button onclick="resetZoom('cigarette')" class="btn btn-sm btn-outline-secondary">🔄 重置</button>
-                        </div>
-                    </div>
-
-                    <div class="table-card mb-3">
-                        <h5 class="mb-3"><i class="bi bi-flower1"></i> 檳榔趨勢</h5>
-                        <canvas id="betelNutChart" style="max-height:300px;"></canvas>
-                        <input type="range" id="betelNutSlider" min="0" max="100" value="0"
-                               style="width:100%; margin-top:0.5rem;" oninput="slideChart('betelNut', this.value)">
-                        <div style="text-align:right; margin-top:0.5rem;">
-                            <button onclick="resetZoom('betelNut')" class="btn btn-sm btn-outline-secondary">🔄 重置</button>
-                        </div>
-                    </div>
-
-                    <div class="table-card mb-3">
-                        <h5 class="mb-3"><i class="bi bi-egg-fried"></i> 三餐記錄</h5>
-                        <div id="mealTable"></div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <script>
-        let currentReportType = 1;
-        let currentReport = null;
-        let charts = {};
-        let currentDailyDate = null;
-        let chartInitRanges = {};
+        let currentReportType = 1, currentReport = null, charts = {}, chartRanges = {}, currentDailyDate = null;
+        const CHART_VISIBLE = 10, CHART_STEP = 3;
 
-        document.addEventListener('DOMContentLoaded', function () {
-            initializeYearSelect();
-            setDefaultDates();
-        });
+        document.addEventListener('DOMContentLoaded', () => { initYearSelect(); setDefaultDates(); });
 
-        function initializeYearSelect() {
-            const yearSelect = document.getElementById('yearlyDate');
-            const currentYear = new Date().getFullYear();
-            for (let year = currentYear; year >= currentYear - 10; year--) {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year + ' 年';
-                yearSelect.appendChild(option);
+        function initYearSelect() {
+            const sel = document.getElementById('yearlyDate'), yr = new Date().getFullYear();
+            for (let y = yr; y >= yr - 10; y--) {
+                const o = document.createElement('option');
+                o.value = y; o.textContent = y + ' 年'; sel.appendChild(o);
             }
         }
 
         function setDefaultDates() {
-            const today = new Date();
-            document.getElementById('dailyDate').valueAsDate = today;
-
-            const lastMonday = new Date(today);
-            lastMonday.setDate(today.getDate() - today.getDay() - 6);
-            document.getElementById('weeklyStartDate').valueAsDate = lastMonday;
-
-            document.getElementById('monthlyDate').value = today.toISOString().substr(0, 7);
+            const t = new Date();
+            document.getElementById('dailyDate').valueAsDate = t;
+            const lm = new Date(t); lm.setDate(t.getDate() - t.getDay() - 6);
+            document.getElementById('weeklyStartDate').valueAsDate = lm;
+            document.getElementById('monthlyDate').value = t.toISOString().substr(0, 7);
         }
 
         function selectReportType(type) {
             currentReportType = type;
+            document.querySelectorAll('.report-tab').forEach((t, i) => t.classList.toggle('active', i === type));
+            document.querySelectorAll('.date-panel').forEach((p, i) => p.style.display = i === type ? 'block' : 'none');
         }
 
         function clearResults() {
-            document.getElementById('patientInfo').style.display = 'none';
+            document.getElementById('patientStrip').classList.remove('show');
             document.getElementById('reportContent').style.display = 'none';
             document.getElementById('loadingDiv').style.display = 'none';
-            document.getElementById('trendCardSection').style.display = 'none';
-            setDefaultDates();
-            currentReport = null;
+            setDefaultDates(); currentReport = null;
+            Object.values(charts).forEach(c => c && c.destroy()); charts = {}; chartRanges = {};
         }
 
-        // 每日導航 (上一天 / 下一天)
-        async function navigateDaily(direction) {
-            const current = new Date(currentDailyDate);
-            current.setDate(current.getDate() + direction);
-            const newDate = current.toISOString().substr(0, 10);
-
-            currentDailyDate = newDate;
-            document.getElementById('dailyDate').value = newDate;
-
-            const d = new Date(newDate);
-            document.getElementById('dailyNavDate').textContent =
-                `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
-
-            document.getElementById('loadingDiv').style.display = 'block';
-            document.getElementById('reportContent').style.display = 'none';
-
-            try {
-                const response = await fetch('/Analysis/GetPatientReport', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        reportType: 0,
-                        startDate: newDate,
-                        endDate: newDate
-                    })
-                });
-                const result = await response.json();
-                if (result.success) {
-                    currentReport = result.data;
-                    displayReport(result.data);
-                } else {
-                    document.getElementById('reportContent').style.display = 'block';
-                    document.getElementById('dailyTable').style.display = 'block';
-                    document.getElementById('summarySection').style.display = 'none';
-                    document.getElementById('chartsSection').style.display = 'none';
-                    document.getElementById('dailyTableBody').innerHTML =
-                        '<tr><td colspan="4" class="text-center text-muted py-4">該日期無健康數據</td></tr>';
-                }
-            } catch (error) {
-                console.error('切換日期錯誤:', error);
-            } finally {
-                document.getElementById('loadingDiv').style.display = 'none';
-            }
-        }
-
-        // 搜尋報表 (病患不需要輸入身分證)
         async function searchReport() {
             let startDate, endDate;
-
             switch (currentReportType) {
                 case 0: {
-                    const daily = document.getElementById('dailyDate').value;
-                    if (!daily) { alert('請選擇日期'); return; }
-                    startDate = daily; endDate = daily;
-                    currentDailyDate = daily;
-                    break;
+                    const d = document.getElementById('dailyDate').value;
+                    if (!d) { alert('請選擇日期'); return; }
+                    startDate = endDate = d; currentDailyDate = d; break;
                 }
                 case 1: {
-                    const weekStart = document.getElementById('weeklyStartDate').value;
-                    if (!weekStart) { alert('請選擇週開始日期'); return; }
-                    startDate = weekStart;
-                    const weekEnd = new Date(weekStart);
-                    weekEnd.setDate(weekEnd.getDate() + 6);
-                    endDate = weekEnd.toISOString().substr(0, 10);
-                    break;
+                    const ws = document.getElementById('weeklyStartDate').value;
+                    if (!ws) { alert('請選擇週開始日期'); return; }
+                    startDate = ws;
+                    const we = new Date(ws); we.setDate(we.getDate() + 6);
+                    endDate = we.toISOString().substr(0, 10); break;
                 }
                 case 2: {
-                    const monthly = document.getElementById('monthlyDate').value;
-                    if (!monthly) { alert('請選擇年月'); return; }
-                    const [year, month] = monthly.split('-');
-                    startDate = `${year}-${month}-01`;
-                    const lastDay = new Date(year, month, 0).getDate();
-                    endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
-                    break;
+                    const m = document.getElementById('monthlyDate').value;
+                    if (!m) { alert('請選擇年月'); return; }
+                    const [yr, mo] = m.split('-');
+                    startDate = `${yr}-${mo}-01`;
+                    endDate = `${yr}-${mo}-${new Date(yr, mo, 0).getDate().toString().padStart(2, '0')}`; break;
                 }
                 case 3: {
-                    const yearVal = document.getElementById('yearlyDate').value;
-                    startDate = `${yearVal}-01-01`;
-                    endDate = `${yearVal}-12-31`;
-                    break;
+                    const y = document.getElementById('yearlyDate').value;
+                    startDate = `${y}-01-01`; endDate = `${y}-12-31`; break;
                 }
             }
-
             document.getElementById('loadingDiv').style.display = 'block';
-            document.getElementById('patientInfo').style.display = 'none';
+            document.getElementById('patientStrip').classList.remove('show');
             document.getElementById('reportContent').style.display = 'none';
-
             try {
-                const response = await fetch('/Analysis/GetPatientReport', {
+                const res = await fetch('/Analysis/GetPatientReport', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ reportType: currentReportType, startDate, endDate })
                 });
-                const result = await response.json();
-
-                if (result.success) {
-                    currentReport = result.data;
-                    displayPatientInfo(result.data);
-                    displayReport(result.data);
-                } else {
-                    alert(result.message || '查詢失敗');
-                }
-            } catch (error) {
-                console.error('查詢錯誤:', error);
-                alert('系統錯誤，請稍後再試');
-            } finally {
-                document.getElementById('loadingDiv').style.display = 'none';
-            }
+                const result = await res.json();
+                if (result.success) { currentReport = result.data; showPatientInfo(result.data); displayReport(result.data); }
+                else alert(result.message || '查詢失敗');
+            } catch (e) { console.error(e); alert('系統錯誤，請稍後再試'); }
+            finally { document.getElementById('loadingDiv').style.display = 'none'; }
         }
 
-        function displayPatientInfo(data) {
-            document.getElementById('patientInfo').style.display = 'block';
+        async function navigateDaily(dir) {
+            const d = new Date(currentDailyDate); d.setDate(d.getDate() + dir);
+            currentDailyDate = d.toISOString().substr(0, 10);
+            document.getElementById('dailyDate').value = currentDailyDate;
+            updateDailyNavLabel();
+            document.getElementById('loadingDiv').style.display = 'block';
+            document.getElementById('reportContent').style.display = 'none';
+            try {
+                const res = await fetch('/Analysis/GetPatientReport', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reportType: 0, startDate: currentDailyDate, endDate: currentDailyDate })
+                });
+                const result = await res.json();
+                if (result.success) { currentReport = result.data; displayReport(result.data); }
+                else {
+                    document.getElementById('reportContent').style.display = 'block';
+                    document.getElementById('dailySection').style.display = 'block';
+                    document.getElementById('summarySection').style.display = 'none';
+                    document.getElementById('chartsSection').style.display = 'none';
+                    document.getElementById('trendSection').style.display = 'none';
+                    document.getElementById('dailyTableBody').innerHTML =
+                        '<tr><td colspan="4" style="text-align:center;color:#8fa0b4;padding:2rem;">該日期無健康數據</td></tr>';
+                }
+            } catch (e) { console.error(e); }
+            finally { document.getElementById('loadingDiv').style.display = 'none'; }
+        }
+
+        function updateDailyNavLabel() {
+            const d = new Date(currentDailyDate);
+            document.getElementById('dailyNavDate').textContent =
+                `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function showPatientInfo(data) {
+            document.getElementById('patientStrip').classList.add('show');
             document.getElementById('patientName').textContent = data.patientName;
             document.getElementById('patientGender').textContent = data.patientGender || '未記錄';
             if (data.patientBirthDate) {
@@ -695,484 +944,291 @@
 
         function displayReport(data) {
             document.getElementById('reportContent').style.display = 'block';
-
             if (currentReportType === 0) {
-                document.getElementById('dailyTable').style.display = 'block';
+                document.getElementById('dailySection').style.display = 'block';
+                document.getElementById('trendSection').style.display = 'none';
                 document.getElementById('summarySection').style.display = 'none';
                 document.getElementById('chartsSection').style.display = 'none';
-                if (currentDailyDate) {
-                    const d = new Date(currentDailyDate);
-                    document.getElementById('dailyNavDate').textContent =
-                        `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
-                }
-                displayDailyTable(data);
+                updateDailyNavLabel(); displayDailyTable(data);
             } else {
-                document.getElementById('dailyTable').style.display = 'none';
+                document.getElementById('dailySection').style.display = 'none';
                 document.getElementById('summarySection').style.display = 'block';
                 document.getElementById('chartsSection').style.display = 'block';
-                displayChartReport(data);
+                displayTrendCard(data.trendSummary); displayChartReport(data);
             }
         }
 
         function displayDailyTable(data) {
-            const tbody = document.getElementById('dailyTableBody');
-            tbody.innerHTML = '';
-
-            const stats = data.statistics;
-            const goals = data.goals || {};
-            const records = data.records;
-            const record = records && records.length > 0 ? records[0] : null;
-
-            const sysBPTarget = goals.systolicBPTarget ?? 130;
-            const diaBPTarget = goals.diastolicBPTarget ?? 80;
-            const glucoseTarget = goals.fastingGlucoseTarget ?? 100;
-            const waterTarget = goals.waterTarget ?? 2000;
-
-            const badge = (text, type) => {
-                const colors = {
-                    success: 'background:#4CAF50; color:#fff;',
-                    danger: 'background:#F44336; color:#fff;',
-                    warning: 'background:#FF9800; color:#fff;'
-                };
-                return `<span style="display:inline-block; padding:0.35rem 1rem; border-radius:20px; font-size:0.85rem; font-weight:600; ${colors[type]}">${text}</span>`;
-            };
-
+            const tbody = document.getElementById('dailyTableBody'); tbody.innerHTML = '';
+            const stats = data.statistics, goals = data.goals || {}, record = data.records?.length > 0 ? data.records[0] : null;
+            const sysBP = goals.systolicBPTarget ?? 130, diaBP = goals.diastolicBPTarget ?? 80;
+            const glucose = goals.fastingGlucoseTarget ?? 100, water = goals.waterTarget ?? 2000;
+            const badge = (text, cls) => `<span class="status-badge ${cls}">${text}</span>`;
             const rows = [];
-
             if (stats.avgSystolicBP !== null && stats.avgDiastolicBP !== null) {
-                const isAbnormal = stats.avgSystolicBP > sysBPTarget || stats.avgDiastolicBP > diaBPTarget;
-                rows.push({
-                    name: '❤️ 血壓',
-                    value: `${stats.avgSystolicBP.toFixed(0)} / ${stats.avgDiastolicBP.toFixed(0)} mmHg`,
-                    standard: `≤ ${sysBPTarget}/${diaBPTarget} mmHg`,
-                    status: isAbnormal ? badge('⚠️ 偏高', 'danger') : badge('✓ 正常', 'success'),
-                    isAbnormal
-                });
+                const ab = stats.avgSystolicBP > sysBP || stats.avgDiastolicBP > diaBP;
+                rows.push({ name: '❤️ 血壓', val: `${stats.avgSystolicBP.toFixed(0)}/${stats.avgDiastolicBP.toFixed(0)} mmHg`, std: `≤ ${sysBP}/${diaBP} mmHg`, badge: ab ? badge('⚠️ 偏高', 'badge-danger') : badge('✓ 正常', 'badge-ok'), ab });
             }
-
             if (stats.avgBloodSugar !== null) {
-                const isAbnormal = stats.avgBloodSugar > glucoseTarget;
-                rows.push({
-                    name: '🩸 血糖',
-                    value: `${stats.avgBloodSugar.toFixed(1)} mg/dL`,
-                    standard: `≤ ${glucoseTarget} mg/dL`,
-                    status: isAbnormal ? badge('⚠️ 偏高', 'danger') : badge('✓ 正常', 'success'),
-                    isAbnormal
-                });
+                const ab = stats.avgBloodSugar > glucose;
+                rows.push({ name: '🩸 血糖', val: `${stats.avgBloodSugar.toFixed(1)} mg/dL`, std: `≤ ${glucose} mg/dL`, badge: ab ? badge('⚠️ 偏高', 'badge-danger') : badge('✓ 正常', 'badge-ok'), ab });
             }
-
             if (stats.avgWaterIntake !== null) {
-                const isAbnormal = stats.avgWaterIntake < waterTarget;
-                rows.push({
-                    name: '💧 飲水量',
-                    value: `${stats.avgWaterIntake.toFixed(0)} ml`,
-                    standard: `≥ ${waterTarget} ml`,
-                    status: isAbnormal ? badge('⚠️ 不足', 'danger') : badge('✓ 充足', 'success'),
-                    isAbnormal
-                });
+                const ab = stats.avgWaterIntake < water;
+                rows.push({ name: '💧 飲水量', val: `${stats.avgWaterIntake.toFixed(0)} ml`, std: `≥ ${water} ml`, badge: ab ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok'), ab });
             }
-
             if (stats.avgExerciseDuration !== null) {
-                const isAbnormal = stats.avgExerciseDuration < 30;
-                rows.push({
-                    name: '🏃 運動時間',
-                    value: `${stats.avgExerciseDuration.toFixed(0)} 分鐘`,
-                    standard: '≥ 30 分鐘',
-                    status: isAbnormal ? badge('⚠️ 不足', 'danger') : badge('✓ 充足', 'success'),
-                    isAbnormal
-                });
+                const ab = stats.avgExerciseDuration < 30;
+                rows.push({ name: '🏃 運動時間', val: `${stats.avgExerciseDuration.toFixed(0)} 分鐘`, std: '≥ 30 分鐘', badge: ab ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok'), ab });
             }
+            if (stats.avgCigarettes > 0)
+                rows.push({ name: '🚬 抽菸', val: `${stats.avgCigarettes.toFixed(0)} 支`, std: '0 支', badge: badge('⚠️ 建議戒菸', 'badge-danger'), ab: true });
+            if (stats.avgBetelNut > 0)
+                rows.push({ name: '🌿 檳榔', val: `${stats.avgBetelNut.toFixed(0)} 次`, std: '0 次', badge: badge('⚠️ 建議戒除', 'badge-danger'), ab: true });
 
-            if (stats.avgCigarettes !== null && stats.avgCigarettes > 0) {
-                rows.push({
-                    name: '🚬 抽菸', value: `${stats.avgCigarettes.toFixed(0)} 支`,
-                    standard: '0 支', status: badge('⚠️ 建議戒菸', 'danger'), isAbnormal: true
-                });
-            }
-
-            if (stats.avgBetelNut !== null && stats.avgBetelNut > 0) {
-                rows.push({
-                    name: '🌿 檳榔', value: `${stats.avgBetelNut.toFixed(0)} 次`,
-                    standard: '0 次', status: badge('⚠️ 建議戒除', 'danger'), isAbnormal: true
-                });
-            }
-
-            rows.forEach(row => {
+            rows.forEach(r => {
                 const tr = document.createElement('tr');
-                if (row.isAbnormal) tr.style.background = '#fff5f5';
-                tr.innerHTML = `
-                            <td style="padding:0.75rem;"><strong>${row.name}</strong></td>
-                            <td style="padding:0.75rem; text-align:center;">${row.value}</td>
-                            <td style="padding:0.75rem; text-align:center;">${row.standard}</td>
-                            <td style="padding:0.75rem; text-align:center;">${row.status}</td>
-                        `;
+                if (r.ab) tr.className = 'td-abnormal';
+                tr.innerHTML = `<td><strong>${r.name}</strong></td><td class="td-center">${r.val}</td><td class="td-center">${r.std}</td><td class="td-center">${r.badge}</td>`;
                 tbody.appendChild(tr);
             });
 
             if (record && (record.meals_Breakfast || record.meals_Lunch || record.meals_Dinner)) {
-                let totalVeg = 0, totalProt = 0, totalCarb = 0;
-                [record.meals_Breakfast, record.meals_Lunch, record.meals_Dinner].forEach(meal => {
-                    if (!meal) return;
-                    if (meal.vegetables && !isNaN(parseFloat(meal.vegetables))) totalVeg += parseFloat(meal.vegetables);
-                    if (meal.protein && !isNaN(parseFloat(meal.protein))) totalProt += parseFloat(meal.protein);
-                    if (meal.carbs && !isNaN(parseFloat(meal.carbs))) totalCarb += parseFloat(meal.carbs);
+                let veg = 0, prot = 0, carb = 0;
+                [record.meals_Breakfast, record.meals_Lunch, record.meals_Dinner].forEach(m => {
+                    if (!m) return;
+                    if (!isNaN(parseFloat(m.vegetables))) veg += parseFloat(m.vegetables);
+                    if (!isNaN(parseFloat(m.protein))) prot += parseFloat(m.protein);
+                    if (!isNaN(parseFloat(m.carbs))) carb += parseFloat(m.carbs);
                 });
-                let mealContent = '<div style="line-height:1.8;">';
-                if (totalVeg > 0) mealContent += `<div>🥬 蔬菜: ${totalVeg % 1 === 0 ? totalVeg.toFixed(0) : totalVeg.toFixed(1)} 份</div>`;
-                if (totalProt > 0) mealContent += `<div>🥩 蛋白質: ${totalProt % 1 === 0 ? totalProt.toFixed(0) : totalProt.toFixed(1)} 份</div>`;
-                if (totalCarb > 0) mealContent += `<div>🍚 澱粉: ${totalCarb % 1 === 0 ? totalCarb.toFixed(0) : totalCarb.toFixed(1)} 份</div>`;
-                mealContent += '</div>';
-                const tr = document.createElement('tr');
-                tr.style.background = '#f9fafb';
-                tr.innerHTML = `
-                            <td style="padding:0.75rem; vertical-align:middle;"><strong>🍽️ 今日三餐</strong></td>
-                            <td style="padding:0.75rem; text-align:center; vertical-align:middle;">${mealContent}</td>
-                            <td style="padding:0.75rem; text-align:center; vertical-align:middle; color:#6b7280;">-</td>
-                            <td style="padding:0.75rem; text-align:center; vertical-align:middle; color:#6b7280;">-</td>
-                        `;
+                let mealHtml = '<div style="line-height:1.9;font-size:0.82rem;">';
+                if (veg > 0) mealHtml += `<div>🥬 蔬菜：${fmt(veg)} 份</div>`;
+                if (prot > 0) mealHtml += `<div>🥩 蛋白質：${fmt(prot)} 份</div>`;
+                if (carb > 0) mealHtml += `<div>🍚 澱粉：${fmt(carb)} 份</div>`;
+                mealHtml += '</div>';
+                const tr = document.createElement('tr'); tr.style.background = '#f9fafb';
+                tr.innerHTML = `<td><strong>🍽️ 今日三餐</strong></td><td class="td-center">${mealHtml}</td><td class="td-center" style="color:var(--text-pale);">—</td><td class="td-center" style="color:var(--text-pale);">—</td>`;
                 tbody.appendChild(tr);
             }
-
             if (record && record.beverage) {
-                const tr = document.createElement('tr');
-                tr.style.background = '#f9fafb';
-                tr.innerHTML = `
-                            <td style="padding:0.75rem; vertical-align:middle;"><strong>🥤 飲料</strong></td>
-                            <td style="padding:0.75rem; text-align:center; vertical-align:middle;">${record.beverage}</td>
-                            <td style="padding:0.75rem; text-align:center; vertical-align:middle; color:#6b7280;">-</td>
-                            <td style="padding:0.75rem; text-align:center; vertical-align:middle; color:#6b7280;">-</td>
-                        `;
+                const tr = document.createElement('tr'); tr.style.background = '#f9fafb';
+                tr.innerHTML = `<td><strong>🥤 飲料</strong></td><td class="td-center" style="font-size:0.85rem;">${record.beverage}</td><td class="td-center" style="color:var(--text-pale);">—</td><td class="td-center" style="color:var(--text-pale);">—</td>`;
                 tbody.appendChild(tr);
             }
-
-            if (rows.length === 0 && !record) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">該日期無健康數據</td></tr>';
-            }
+            if (rows.length === 0 && !record)
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#8fa0b4;padding:2rem;">該日期無健康數據</td></tr>';
         }
 
-        // 重置圖表
-        function resetZoom(chartName) {
-            const chart = charts[chartName];
-            if (!chart) return;
-            const range = chartInitRanges[chartName];
-            if (range) {
-                chart.options.scales.x.min = range.min;
-                chart.options.scales.x.max = range.max;
-                chart.update('none');
-            }
-            const slider = document.getElementById(chartName + 'Slider');
-            if (slider) slider.value = 0;
-        }
+        function fmt(n) { return n % 1 === 0 ? n.toFixed(0) : n.toFixed(1); }
 
-        // Slider 滑動圖表
-        function slideChart(chartName, value) {
-            const chart = charts[chartName];
-            if (!chart) return;
-            const labels = chart.data.labels;
-            if (!labels || labels.length === 0) return;
-            const xScale = chart.scales.x;
-            const visibleCount = xScale.max - xScale.min;
-            const totalCount = labels.length - 1;
-            const scrollRange = totalCount - visibleCount;
-            if (scrollRange <= 0) return;
-            const startIdx = Math.round((value / 100) * scrollRange);
-            const endIdx = startIdx + visibleCount;
-            chart.options.scales.x.min = labels[startIdx];
-            chart.options.scales.x.max = labels[Math.min(endIdx, totalCount)];
-            chart.update('none');
-        }
-
-        function displayTrendCard(trendSummary) {
-            const section = document.getElementById('trendCardSection');
+        function displayTrendCard(ts) {
+            const section = document.getElementById('trendSection');
             const itemsDiv = document.getElementById('trendItems');
             const periodLabel = document.getElementById('trendPeriodLabel');
-
-            if (!trendSummary || !trendSummary.items || trendSummary.items.length === 0) {
-                // 沒有上期資料（例如第一週使用者）
-                section.style.display = 'block';
+            section.style.display = 'block';
+            if (!ts || !ts.items || ts.items.length === 0) {
                 periodLabel.textContent = '';
-                itemsDiv.innerHTML = `
-                    <div class="trend-no-prev">
-                        📋 尚無上一期資料可比較，趨勢將在下次查詢時顯示。
-                    </div>`;
+                itemsDiv.innerHTML = `<div class="trend-no-prev">📋 尚無上一期資料可比較，趨勢將在下次查詢時顯示。</div>`;
                 return;
             }
-
-            section.style.display = 'block';
-            periodLabel.textContent = `（與${trendSummary.periodLabel}相比）`;
-
-            itemsDiv.innerHTML = trendSummary.items.map(item => `
-                <div class="trend-item ${item.trendType}">
-                    <div class="trend-item-label">${item.icon} ${item.label}</div>
-                    <div class="trend-item-values">
-                        <span class="trend-current">${item.currentValue}</span>
-                        <span class="trend-diff ${item.trendType}">${item.diffText}</span>
-                    </div>
-                    <div class="trend-prev">前期：${item.prevValue}</div>
-                    <div class="trend-message">${item.message}</div>
-                </div>
-            `).join('');
+            periodLabel.textContent = `（與${ts.periodLabel}相比）`;
+            itemsDiv.innerHTML = ts.items.map(item =>
+                `<div class="trend-item ${item.trendType}">
+                        <div class="trend-item-label">${item.icon} ${item.label}</div>
+                        <div class="trend-item-values"><span class="trend-current">${item.currentValue}</span><span class="trend-diff ${item.trendType}">${item.diffText}</span></div>
+                        <div class="trend-prev">前期：${item.prevValue}</div>
+                        <div class="trend-message">${item.message}</div>
+                    </div>`
+            ).join('');
         }
 
         function displayChartReport(data) {
-            const stats = data.statistics;
-            displayTrendCard(data.trendSummary);
-            const goals = data.goals || {};
-
-            const sysBPTarget = goals.systolicBPTarget ?? 130;
-            const diaBPTarget = goals.diastolicBPTarget ?? 80;
-            const glucoseTarget = goals.fastingGlucoseTarget ?? 100;
-            const waterTarget = goals.waterTarget ?? 2000;
-
+            const stats = data.statistics, goals = data.goals || {};
+            const sysBP = goals.systolicBPTarget ?? 130, diaBP = goals.diastolicBPTarget ?? 80;
+            const glucose = goals.fastingGlucoseTarget ?? 100, water = goals.waterTarget ?? 2000;
             document.getElementById('totalDays').textContent = stats.totalDays;
             document.getElementById('highBPDays').textContent = stats.highBPDays;
             document.getElementById('highBSDays').textContent = stats.highBloodSugarDays;
             document.getElementById('lowWaterDays').textContent = stats.lowWaterDays;
             document.getElementById('lowExerciseDays').textContent = stats.lowExerciseDays;
 
-            const avgSys = stats.avgSystolicBP ?? null;
-            const avgDia = stats.avgDiastolicBP ?? null;
-            const avgBS = stats.avgBloodSugar ?? null;
-            const avgWater = stats.avgWaterIntake ?? null;
-            const avgEx = stats.avgExerciseDuration ?? null;
-            const avgCig = stats.avgCigarettes ?? 0;
-            const avgBetel = stats.avgBetelNut ?? 0;
-            const avgVeg = stats.avgVegetables ?? null;
-            const avgProt = stats.avgProtein ?? null;
-            const avgCarbs = stats.avgCarbs ?? null;
+            const avgSys = stats.avgSystolicBP ?? null,
+                avgDia = stats.avgDiastolicBP ?? null,
+                avgBS = stats.avgBloodSugar ?? null,
+                avgW = stats.avgWaterIntake ?? null,
+                avgEx = stats.avgExerciseDuration ?? null,
+                avgCig = stats.avgCigarettes ?? 0,
+                avgBet = stats.avgBetelNut ?? 0,
+                avgVeg = stats.avgVegetables ?? null,
+                avgProt = stats.avgProtein ?? null,
+                avgCarb = stats.avgCarbs ?? null;
 
-            const bpAbnormal = (avgSys !== null && avgSys > sysBPTarget) || (avgDia !== null && avgDia > diaBPTarget);
-            const bsAbnormal = avgBS !== null && avgBS > glucoseTarget;
-            const waterLow = avgWater !== null && avgWater < waterTarget;
-            const exLow = avgEx !== null && avgEx < 150;
-
-            const badge = (text, type) => {
-                const colors = { success: 'background:#4CAF50; color:#fff;', danger: 'background:#F44336; color:#fff;', warning: 'background:#FF9800; color:#fff;' };
-                return `<span style="display:inline-block; padding:0.35rem 1rem; border-radius:20px; font-size:0.85rem; font-weight:600; ${colors[type]}">${text}</span>`;
-            };
+            const badge = (text, cls) => `<span class="status-badge ${cls}">${text}</span>`;
+            const nd = () => badge('無資料', 'badge-nodata');
 
             document.getElementById('avgTable').innerHTML = `
-                        <tr>
-                            <td>❤️ 血壓</td>
-                            <td style="text-align:center;">${avgSys !== null ? avgSys.toFixed(1) : 'N/A'} / ${avgDia !== null ? avgDia.toFixed(1) : 'N/A'} mmHg</td>
-                            <td style="text-align:center;">≤ ${sysBPTarget}/${diaBPTarget} mmHg</td>
-                            <td style="text-align:center;">${avgSys === null && avgDia === null ? badge('無資料', 'warning') : bpAbnormal ? badge('⚠️ 偏高', 'danger') : badge('✓ 正常', 'success')}</td>
-                        </tr>
-                        <tr>
-                            <td>🩸 血糖</td>
-                            <td style="text-align:center;">${avgBS !== null ? avgBS.toFixed(1) : 'N/A'} mg/dL</td>
-                            <td style="text-align:center;">≤ ${glucoseTarget} mg/dL</td>
-                            <td style="text-align:center;">${avgBS === null ? badge('無資料', 'warning') : bsAbnormal ? badge('⚠️ 偏高', 'danger') : badge('✓ 正常', 'success')}</td>
-                        </tr>
-                        <tr>
-                            <td>💧 飲水量</td>
-                            <td style="text-align:center;">${avgWater !== null ? avgWater.toFixed(0) : 'N/A'} ml</td>
-                            <td style="text-align:center;">≥ ${waterTarget} ml</td>
-                            <td style="text-align:center;">${avgWater === null ? badge('無資料', 'warning') : waterLow ? badge('⚠️ 不足', 'danger') : badge('✓ 充足', 'success')}</td>
-                        </tr>
-                        <tr>
-                            <td>🏃 運動時間</td>
-                            <td style="text-align:center;">${avgEx !== null ? avgEx.toFixed(1) : 'N/A'} 分鐘</td>
-                            <td style="text-align:center;">≥ 150 分鐘/週</td>
-                            <td style="text-align:center;">${avgEx === null ? badge('無資料', 'warning') : exLow ? badge('⚠️ 不足', 'danger') : badge('✓ 充足', 'success')}</td>
-                        </tr>
-                        <tr>
-                            <td>🚬 抽菸 (每日平均)</td>
-                            <td style="text-align:center;">${avgCig.toFixed(1)} 支</td>
-                            <td style="text-align:center;">0 支</td>
-                            <td style="text-align:center;">${avgCig > 0 ? badge('⚠️ 建議戒菸', 'danger') : badge('✓ 良好', 'success')}</td>
-                        </tr>
-                        <tr>
-                            <td>🌿 檳榔 (每日平均)</td>
-                            <td style="text-align:center;">${avgBetel.toFixed(1)} 次</td>
-                            <td style="text-align:center;">0 次</td>
-                            <td style="text-align:center;">${avgBetel > 0 ? badge('⚠️ 建議戒除', 'danger') : badge('✓ 良好', 'success')}</td>
-                        </tr>
-                        <tr>
-                            <td>🥬 蔬菜 (每日平均)</td>
-                            <td style="text-align:center;">${avgVeg !== null ? avgVeg.toFixed(1) : 'N/A'} 份</td>
-                            <td style="text-align:center;">建議 3-5 份</td>
-                            <td style="text-align:center;">${avgVeg === null ? badge('無資料', 'warning') : avgVeg >= 3 ? badge('✓ 充足', 'success') : badge('⚠️ 可增加', 'danger')}</td>
-                        </tr>
-                        <tr>
-                            <td>🥩 蛋白質 (每日平均)</td>
-                            <td style="text-align:center;">${avgProt !== null ? avgProt.toFixed(1) : 'N/A'} 份</td>
-                            <td style="text-align:center;">建議 3-5 份</td>
-                            <td style="text-align:center;">${avgProt === null ? badge('無資料', 'warning') : avgProt >= 3 ? badge('✓ 充足', 'success') : badge('⚠️ 可增加', 'danger')}</td>
-                        </tr>
-                        <tr>
-                            <td>🍚 澱粉 (每日平均)</td>
-                            <td style="text-align:center;">${avgCarbs !== null ? avgCarbs.toFixed(1) : 'N/A'} 份</td>
-                            <td style="text-align:center;">建議 2-4 份</td>
-                            <td style="text-align:center;">${avgCarbs === null ? badge('無資料', 'warning') : (avgCarbs >= 2 && avgCarbs <= 4) ? badge('✓ 適中', 'success') : badge('⚠️ 需調整', 'danger')}</td>
-                        </tr>
-                    `;
+                <tr class="${avgSys !== null && (avgSys > sysBP || avgDia > diaBP) ? 'td-abnormal' : ''}">
+                    <td>❤️ 血壓</td>
+                    <td class="td-center">${avgSys !== null ? `${avgSys.toFixed(1)}/${avgDia.toFixed(1)} mmHg` : 'N/A'}</td>
+                    <td class="td-center">≤ ${sysBP}/${diaBP} mmHg</td>
+                    <td class="td-center">${avgSys === null ? nd() : (avgSys > sysBP || avgDia > diaBP) ? badge('⚠️ 偏高', 'badge-danger') : badge('✓ 正常', 'badge-ok')}</td>
+                </tr>
+                <tr class="${avgBS !== null && avgBS > glucose ? 'td-abnormal' : ''}">
+                    <td>🩸 血糖</td>
+                    <td class="td-center">${avgBS !== null ? `${avgBS.toFixed(1)} mg/dL` : 'N/A'}</td>
+                    <td class="td-center">≤ ${glucose} mg/dL</td>
+                    <td class="td-center">${avgBS === null ? nd() : avgBS > glucose ? badge('⚠️ 偏高', 'badge-danger') : badge('✓ 正常', 'badge-ok')}</td>
+                </tr>
+                <tr class="${avgW !== null && avgW < water ? 'td-abnormal' : ''}">
+                    <td>💧 飲水量</td>
+                    <td class="td-center">${avgW !== null ? `${avgW.toFixed(0)} ml` : 'N/A'}</td>
+                    <td class="td-center">≥ ${water} ml</td>
+                    <td class="td-center">${avgW === null ? nd() : avgW < water ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok')}</td>
+                </tr>
+                <tr class="${avgEx !== null && avgEx < 150 ? 'td-abnormal' : ''}">
+                    <td>🏃 運動時間</td>
+                    <td class="td-center">${avgEx !== null ? `${avgEx.toFixed(1)} 分鐘` : 'N/A'}</td>
+                    <td class="td-center">≥ 150 分鐘/週</td>
+                    <td class="td-center">${avgEx === null ? nd() : avgEx < 150 ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok')}</td>
+                </tr>
+                <tr class="${avgCig > 0 ? 'td-abnormal' : ''}">
+                    <td>🚬 抽菸（每日平均）</td>
+                    <td class="td-center">${avgCig.toFixed(1)} 支</td>
+                    <td class="td-center">0 支</td>
+                    <td class="td-center">${avgCig > 0 ? badge('⚠️ 建議戒菸', 'badge-danger') : badge('✓ 良好', 'badge-ok')}</td>
+                </tr>
+                <tr class="${avgBet > 0 ? 'td-abnormal' : ''}">
+                    <td>🌿 檳榔（每日平均）</td>
+                    <td class="td-center">${avgBet.toFixed(1)} 次</td>
+                    <td class="td-center">0 次</td>
+                    <td class="td-center">${avgBet > 0 ? badge('⚠️ 建議戒除', 'badge-danger') : badge('✓ 良好', 'badge-ok')}</td>
+                </tr>
+                <tr>
+                    <td>🥬 蔬菜（每日平均）</td>
+                    <td class="td-center">${avgVeg !== null ? `${avgVeg.toFixed(1)} 份` : 'N/A'}</td>
+                    <td class="td-center">建議 3–5 份</td>
+                    <td class="td-center">${avgVeg === null ? nd() : avgVeg >= 3 ? badge('✓ 充足', 'badge-ok') : badge('⚠️ 可增加', 'badge-danger')}</td>
+                </tr>
+                <tr>
+                    <td>🥩 蛋白質（每日平均）</td>
+                    <td class="td-center">${avgProt !== null ? `${avgProt.toFixed(1)} 份` : 'N/A'}</td>
+                    <td class="td-center">建議 3–5 份</td>
+                    <td class="td-center">${avgProt === null ? nd() : avgProt >= 3 ? badge('✓ 充足', 'badge-ok') : badge('⚠️ 可增加', 'badge-danger')}</td>
+                </tr>
+                <tr>
+                    <td>🍚 澱粉（每日平均）</td>
+                    <td class="td-center">${avgCarb !== null ? `${avgCarb.toFixed(1)} 份` : 'N/A'}</td>
+                    <td class="td-center">建議 2–4 份</td>
+                    <td class="td-center">${avgCarb === null ? nd() : (avgCarb >= 2 && avgCarb <= 4) ? badge('✓ 適中', 'badge-ok') : badge('⚠️ 需調整', 'badge-danger')}</td>
+                </tr>`;
 
-            drawCharts(data.charts);
-            displayMealRecords(data, currentReportType);
+            drawCharts(data.charts); displayMealSummary(data);
         }
 
-        function displayMealRecords(data, reportType) {
+        function drawCharts(cd) {
+            Object.values(charts).forEach(c => c && c.destroy()); charts = {}; chartRanges = {};
+            const makeChart = (id, cfg, name) => {
+                const el = document.getElementById(id); if (!el) return;
+                charts[name] = new Chart(el.getContext('2d'), cfg);
+                const labels = cfg.data.labels, total = labels.length, visible = Math.min(CHART_VISIBLE, total);
+                let startIdx = 0, endIdx = visible - 1;
+                if (currentReport?.startDate && total > visible) {
+                    const startStr = currentReport.startDate.substring(0, 10), endStr = currentReport.endDate.substring(0, 10);
+                    for (let i = 0; i < labels.length; i++) {
+                        if (parseLabelToDate(labels[i], startStr) >= startStr) { startIdx = i; break; }
+                    }
+                    endIdx = startIdx + visible - 1;
+                    for (let i = labels.length - 1; i >= 0; i--) {
+                        if (parseLabelToDate(labels[i], endStr) <= endStr) { endIdx = i; break; }
+                    }
+                    endIdx = Math.min(endIdx, startIdx + visible - 1);
+                }
+                chartRanges[name] = { min: startIdx, max: endIdx, total };
+                charts[name].options.scales.x.min = labels[startIdx];
+                charts[name].options.scales.x.max = labels[endIdx];
+                charts[name].update('none');
+            };
+            const lineOpts = yLabel => ({
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: true, labels: { font: { size: 11 } } } },
+                scales: {
+                    x: { ticks: { maxTicksLimit: 8, font: { size: 10 } }, grid: { display: false } },
+                    y: { beginAtZero: false, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 } } }
+                }
+            });
+            const barOpts = yLabel => ({
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { maxTicksLimit: 8, font: { size: 10 } }, grid: { display: false } },
+                    y: { beginAtZero: true, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 } } }
+                }
+            });
+            if (cd.bloodPressureData?.length) makeChart('bpChart', { type: 'line', data: { labels: cd.bloodPressureData.map(d => d.date), datasets: [{ label: '收縮壓', data: cd.bloodPressureData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointRadius: 3 }, { label: '舒張壓', data: cd.bloodPressureData.map(d => d.value2), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('mmHg') }, 'bp');
+            if (cd.bloodSugarData?.length) makeChart('bsChart', { type: 'line', data: { labels: cd.bloodSugarData.map(d => d.date), datasets: [{ label: '血糖', data: cd.bloodSugarData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointBackgroundColor: cd.bloodSugarData.map(d => d.isAbnormal ? '#dc2626' : '#16a34a'), pointRadius: 4 }] }, options: lineOpts('mg/dL') }, 'bs');
+            if (cd.waterIntakeData?.length) makeChart('waterChart', { type: 'bar', data: { labels: cd.waterIntakeData.map(d => d.date), datasets: [{ data: cd.waterIntakeData.map(d => d.value), backgroundColor: cd.waterIntakeData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(6,182,212,0.6)'), borderColor: cd.waterIntakeData.map(d => d.isAbnormal ? '#ea580c' : '#0891b2'), borderWidth: 1 }] }, options: barOpts('ml') }, 'water');
+            if (cd.exerciseDurationData?.length) makeChart('exerciseChart', { type: 'bar', data: { labels: cd.exerciseDurationData.map(d => d.date), datasets: [{ data: cd.exerciseDurationData.map(d => d.value), backgroundColor: cd.exerciseDurationData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(16,185,129,0.6)'), borderColor: cd.exerciseDurationData.map(d => d.isAbnormal ? '#ea580c' : '#059669'), borderWidth: 1 }] }, options: barOpts('分鐘') }, 'exercise');
+            if (cd.cigarettesData?.length) makeChart('cigaretteChart', { type: 'line', data: { labels: cd.cigarettesData.map(d => d.date), datasets: [{ label: '抽菸支數', data: cd.cigarettesData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('支') }, 'cigarette');
+            if (cd.betelNutData?.length) makeChart('betelNutChart', { type: 'line', data: { labels: cd.betelNutData.map(d => d.date), datasets: [{ label: '檳榔次數', data: cd.betelNutData.map(d => d.value), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('顆') }, 'betelNut');
+        }
+
+        function navigateChart(name, dir) {
+            const chart = charts[name]; if (!chart) return;
+            const r = chartRanges[name]; if (!r || r.total <= CHART_VISIBLE) return;
+            const labels = chart.data.labels;
+            let newMin = r.min + dir * CHART_STEP, newMax = newMin + CHART_VISIBLE - 1;
+            if (newMin < 0) { newMin = 0; newMax = CHART_VISIBLE - 1; }
+            if (newMax >= r.total) { newMax = r.total - 1; newMin = newMax - CHART_VISIBLE + 1; }
+            if (newMin < 0) newMin = 0;
+            chartRanges[name] = { ...r, min: newMin, max: newMax };
+            chart.options.scales.x.min = labels[newMin];
+            chart.options.scales.x.max = labels[newMax];
+            chart.update('none');
+        }
+
+        function parseLabelToDate(label, referenceDate) {
+            const year = referenceDate.substring(0, 4);
+            if (label.length === 5 && label.includes('/'))
+                return `${year}-${label.split('/')[0].padStart(2, '0')}-${label.split('/')[1].padStart(2, '0')}`;
+            if (label.length === 7 && label.includes('/'))
+                return `${label.split('/')[0]}-${label.split('/')[1].padStart(2, '0')}`;
+            return label;
+        }
+
+        function displayMealSummary(data) {
             const mealDiv = document.getElementById('mealTable');
             let summary;
-            if (reportType === 1) summary = data.charts.weeklyMealSummary;
-            else if (reportType === 2) summary = data.charts.monthlyMealSummary;
-            else if (reportType === 3) summary = data.charts.yearlyMealSummary;
-
-            const periodLabel = reportType === 1 ? '當週' : reportType === 2 ? '當月' : '全年';
-
-            const summaryHtml = summary ? `
-                        <div style="background: #fef3c7; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
-                            <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">📊 ${periodLabel}飲食統計</h4>
-                            <div style="font-size: 0.85rem; color: #78350f; margin-bottom: 0.5rem;">
-                                ※ 平均值以有記錄的 <strong>${summary.daysWithMeals}</strong> 天計算
-                            </div>
-                            <div style="line-height: 1.8;">
-                                <div>🥬 蔬菜: 總計 ${summary.totalVegetables?.toFixed(1) ?? 0} 份 &nbsp;│&nbsp; 每日平均 <strong>${summary.avgVegetables?.toFixed(1) ?? 0} 份</strong></div>
-                                <div>🥩 蛋白質: 總計 ${summary.totalProtein?.toFixed(1) ?? 0} 份 &nbsp;│&nbsp; 每日平均 <strong>${summary.avgProtein?.toFixed(1) ?? 0} 份</strong></div>
-                                <div>🍚 澱粉: 總計 ${summary.totalCarbs?.toFixed(1) ?? 0} 份 &nbsp;│&nbsp; 每日平均 <strong>${summary.avgCarbs?.toFixed(1) ?? 0} 份</strong></div>
-                            </div>
-                        </div>` : '';
-
-            mealDiv.innerHTML = summaryHtml || '<p style="text-align:center; padding:1rem; color:#999;">無三餐記錄</p>';
+            if (currentReportType === 1) summary = data.charts.weeklyMealSummary;
+            else if (currentReportType === 2) summary = data.charts.monthlyMealSummary;
+            else if (currentReportType === 3) summary = data.charts.yearlyMealSummary;
+            const periodLabel = currentReportType === 1 ? '當週' : currentReportType === 2 ? '當月' : '全年';
+            if (!summary || summary.daysWithMeals === 0) {
+                mealDiv.innerHTML = '<p style="text-align:center;padding:1rem;color:#8fa0b4;font-size:0.85rem;">無三餐記錄</p>';
+                return;
+            }
+            mealDiv.innerHTML = `
+                <div class="meal-summary-box">
+                    <div class="meal-summary-title">📊 ${periodLabel}飲食統計</div>
+                    <div class="meal-summary-note">※ 平均值以有記錄的 <strong>${summary.daysWithMeals}</strong> 天計算</div>
+                    <div class="meal-summary-rows">
+                        <div>🥬 蔬菜：總計 ${(summary.totalVegetables ?? 0).toFixed(1)} 份　│　每日平均 <strong>${(summary.avgVegetables ?? 0).toFixed(1)} 份</strong></div>
+                        <div>🥩 蛋白質：總計 ${(summary.totalProtein ?? 0).toFixed(1)} 份　│　每日平均 <strong>${(summary.avgProtein ?? 0).toFixed(1)} 份</strong></div>
+                        <div>🍚 澱粉：總計 ${(summary.totalCarbs ?? 0).toFixed(1)} 份　│　每日平均 <strong>${(summary.avgCarbs ?? 0).toFixed(1)} 份</strong></div>
+                    </div>
+                </div>`;
         }
 
-        function drawCharts(chartData) {
-            Object.values(charts).forEach(chart => { if (chart) chart.destroy(); });
-            charts = {};
-
-            const getInitRange = (data) => {
-                if (!data || data.length === 0) return { min: null, max: null };
-                if (!currentReport?.startDate) return { min: data[0].date, max: data[data.length - 1].date };
-                const start = new Date(currentReport.startDate);
-                const end = new Date(currentReport.endDate);
-                let minLabel = null, maxLabel = null;
-                data.forEach(d => {
-                    const parts = d.date.split('/');
-                    const m = parseInt(parts[0]), day = parseInt(parts[1]);
-                    if (!minLabel && m === start.getMonth() + 1 && day >= start.getDate()) minLabel = d.date;
-                    if (m === end.getMonth() + 1 && day <= end.getDate()) maxLabel = d.date;
-                });
-                return { min: minLabel ?? data[0].date, max: maxLabel ?? data[data.length - 1].date };
-            };
-
-            const zoomCfg = {
-                pan: { enabled: true, mode: 'x' },
-                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
-            };
-
-            if (chartData.bloodPressureData && chartData.bloodPressureData.length > 0) {
-                const { min, max } = getInitRange(chartData.bloodPressureData);
-                charts.bp = new Chart(document.getElementById('bpChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: chartData.bloodPressureData.map(d => d.date),
-                        datasets: [
-                            { label: '收縮壓', data: chartData.bloodPressureData.map(d => d.value), borderColor: 'rgb(220,38,38)', backgroundColor: 'rgba(220,38,38,0.1)', tension: 0.4, fill: true },
-                            { label: '舒張壓', data: chartData.bloodPressureData.map(d => d.value2), borderColor: 'rgb(37,99,235)', backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.4, fill: true }
-                        ]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: '❤️ 血壓趨勢' }, zoom: zoomCfg }, scales: { x: { min, max }, y: { beginAtZero: true, title: { display: true, text: 'mmHg' } } } }
-                });
-                chartInitRanges.bp = { min, max };
-                document.getElementById('bpSlider').value = 0;
-            }
-
-            if (chartData.bloodSugarData && chartData.bloodSugarData.length > 0) {
-                const { min, max } = getInitRange(chartData.bloodSugarData);
-                charts.bs = new Chart(document.getElementById('bsChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: chartData.bloodSugarData.map(d => d.date),
-                        datasets: [{ label: '血糖', data: chartData.bloodSugarData.map(d => d.value), borderColor: 'rgb(220,38,38)', backgroundColor: 'rgba(220,38,38,0.1)', tension: 0.4, fill: true, pointBackgroundColor: chartData.bloodSugarData.map(d => d.isAbnormal ? 'red' : 'green') }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: '🩸 血糖趨勢 (標準值: ≤99 mg/dL)' }, zoom: zoomCfg }, scales: { x: { min, max }, y: { beginAtZero: true, title: { display: true, text: 'mg/dL' } } } }
-                });
-                chartInitRanges.bs = { min, max };
-                document.getElementById('bsSlider').value = 0;
-            }
-
-            if (chartData.waterIntakeData && chartData.waterIntakeData.length > 0) {
-                const { min, max } = getInitRange(chartData.waterIntakeData);
-                charts.water = new Chart(document.getElementById('waterChart').getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: chartData.waterIntakeData.map(d => d.date),
-                        datasets: [{ label: '飲水量 (ml)', data: chartData.waterIntakeData.map(d => d.value), backgroundColor: chartData.waterIntakeData.map(d => d.isAbnormal ? 'rgba(239,108,0,0.6)' : 'rgba(6,182,212,0.6)'), borderColor: chartData.waterIntakeData.map(d => d.isAbnormal ? 'rgb(239,108,0)' : 'rgb(8,145,178)'), borderWidth: 1 }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: '💧 飲水量趨勢 (建議: ≥2000 ml)' }, zoom: zoomCfg }, scales: { x: { min, max }, y: { beginAtZero: true, title: { display: true, text: 'ml' } } } }
-                });
-                chartInitRanges.water = { min, max };
-                document.getElementById('waterSlider').value = 0;
-            }
-
-            if (chartData.exerciseDurationData && chartData.exerciseDurationData.length > 0) {
-                const { min, max } = getInitRange(chartData.exerciseDurationData);
-                charts.exercise = new Chart(document.getElementById('exerciseChart').getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: chartData.exerciseDurationData.map(d => d.date),
-                        datasets: [{ label: '運動時間 (分鐘)', data: chartData.exerciseDurationData.map(d => d.value), backgroundColor: chartData.exerciseDurationData.map(d => d.isAbnormal ? 'rgba(239,108,0,0.6)' : 'rgba(16,185,129,0.6)'), borderColor: chartData.exerciseDurationData.map(d => d.isAbnormal ? 'rgb(239,108,0)' : 'rgb(5,150,105)'), borderWidth: 1 }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: '🏃 運動時間趨勢 (建議: ≥150 分鐘/週)' }, zoom: zoomCfg }, scales: { x: { min, max }, y: { beginAtZero: true, title: { display: true, text: '分鐘' } } } }
-                });
-                chartInitRanges.exercise = { min, max };
-                document.getElementById('exerciseSlider').value = 0;
-            }
-
-            if (chartData.cigarettesData && chartData.cigarettesData.length > 0) {
-                const { min, max } = getInitRange(chartData.cigarettesData);
-                charts.cigarette = new Chart(document.getElementById('cigaretteChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: chartData.cigarettesData.map(d => d.date),
-                        datasets: [{ label: '抽菸支數', data: chartData.cigarettesData.map(d => d.value), borderColor: 'rgb(220,38,38)', backgroundColor: 'rgba(220,38,38,0.1)', tension: 0.4, fill: true, pointBackgroundColor: chartData.cigarettesData.map(d => d.isAbnormal ? 'rgb(220,38,38)' : 'rgb(22,163,74)') }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: '🚬 抽菸趨勢 (建議: 0 支)' }, zoom: zoomCfg }, scales: { x: { min, max }, y: { beginAtZero: true, title: { display: true, text: '支' } } } }
-                });
-                chartInitRanges.cigarette = { min, max };
-                document.getElementById('cigaretteSlider').value = 0;
-            }
-
-            if (chartData.betelNutData && chartData.betelNutData.length > 0) {
-                const { min, max } = getInitRange(chartData.betelNutData);
-                charts.betelNut = new Chart(document.getElementById('betelNutChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: chartData.betelNutData.map(d => d.date),
-                        datasets: [{ label: '檳榔次數', data: chartData.betelNutData.map(d => d.value), borderColor: 'rgb(22,163,74)', backgroundColor: 'rgba(22,163,74,0.1)', tension: 0.4, fill: true, pointBackgroundColor: chartData.betelNutData.map(d => d.isAbnormal ? 'rgb(220,38,38)' : 'rgb(22,163,74)') }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: '🌿 檳榔趨勢 (建議: 0 顆)' }, zoom: zoomCfg }, scales: { x: { min, max }, y: { beginAtZero: true, title: { display: true, text: '顆' } } } }
-                });
-                chartInitRanges.betelNut = { min, max };
-                document.getElementById('betelNutSlider').value = 0;
-            }
-        }
-
-        // 測試傳送週報到 LINE
         async function testWeeklyReport() {
             if (!confirm('確定要傳送上週健康週報到您的 LINE 嗎？\n\n注意：需要先綁定 LINE 帳號才能接收週報。')) return;
-
-            const btn = event.target;
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '📤 傳送中...';
-
+            const btn = event.target.closest('button'), originalHtml = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = '📤 傳送中...';
             try {
-                const response = await fetch('/Analysis/TestWeeklyReport', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const result = await response.json();
+                const res = await fetch('/Analysis/TestWeeklyReport', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const result = await res.json();
                 alert(result.success ? '✅ ' + result.message : '❌ ' + result.message);
-            } catch (error) {
-                alert('❌ 系統錯誤: ' + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
+            } catch (e) { alert('❌ 系統錯誤: ' + e.message); }
+            finally { btn.disabled = false; btn.innerHTML = originalHtml; }
         }
     </script>
 </body>

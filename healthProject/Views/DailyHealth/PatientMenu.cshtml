@@ -1,6 +1,8 @@
 ﻿@{
     ViewData["Title"] = "今日健康資訊";
     Layout = null;
+    var userName = User.FindFirst("FullName")?.Value ?? User.Identity.Name;
+    var isAdmin = User.IsInRole("Admin");
 }
 
 <!DOCTYPE html>
@@ -8,242 +10,312 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
+    <title>今日健康資訊 — 代謝症候群疾病管理與追蹤系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --navy:     #0a2540;
+            --navy-mid: #103a5e;
+            --blue:     #1a6fb5;
+            --blue-lt:  #2589d8;
+            --teal:     #0e8a7a;
+            --bg:       #f4f6f9;
+            --surface:  #ffffff;
+            --border:   #dde3ea;
+            --text:     #1a2635;
+            --text-sub: #5a6a7e;
+            --text-pale:#8fa0b4;
         }
 
-        body {
-            background: linear-gradient(135deg, #e5eef5 0%, #b3e5fc 100%);
-            min-height: 100vh;
-            font-family: 'Microsoft JhengHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            min-height: 100%;
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
         }
 
-        .health-container {
-            min-height: 100vh;
+        /* ── TOP BAR ── */
+        .topbar {
+            background: var(--navy);
+            height: 56px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 2rem;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
         }
 
-        .health-content {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 1000px;
-            width: 100%;
-            padding: 3rem 2rem;
-        }
-
-        /* 頁首 */
-        .page-header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        .page-title {
-            font-size: 2.5rem;
+        .topbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: white;
             font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 0.5rem;
+            font-size: 1rem;
         }
 
-        .page-subtitle {
-            font-size: 1.1rem;
-            color: #06b6d4;
+        .cross {
+            width: 28px; height: 28px;
+            background: var(--blue-lt);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: 900; color: white;
         }
 
-        /* 卡片區 */
-        .menu-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
 
-        .menu-card {
-            background: white;
-            padding: 3rem 2rem;
-            border-radius: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255,255,255,0.75);
+            font-size: 0.82rem;
+        }
+
+        .user-avatar {
+            width: 28px; height: 28px;
+            background: var(--blue-lt);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; color: white;
+        }
+
+        .topbar-back {
+            color: rgba(255,255,255,0.65);
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.8rem;
             text-decoration: none;
-            display: block;
-            border: 3px solid transparent;
+            display: flex; align-items: center; gap: 0.35rem;
+            transition: all 0.2s;
+        }
+        .topbar-back:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
         }
 
-            .menu-card:hover {
-                transform: scale(1.05);
-                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-                text-decoration: none;
-            }
-
-        /* 特定卡片樣式 */
-        .card-new {
-            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
-            border-color: #66BB6A !important;
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(100deg, var(--navy-mid) 0%, var(--blue) 100%);
+            padding: 2rem 2.5rem 1.75rem;
+            position: relative;
+            overflow: hidden;
         }
 
-            .card-new:hover {
-                border-color: #4CAF50 !important;
-            }
-
-        .card-history {
-            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-            border-color: #42A5F5 !important;
+        .hero::after {
+            content: '';
+            position: absolute;
+            right: -60px; top: -60px;
+            width: 240px; height: 240px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+            pointer-events: none;
         }
 
-            .card-history:hover {
-                border-color: #2196F3 !important;
-            }
+        .hero-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 0.4rem;
+        }
 
-        .card-icon {
-            font-size: 4rem;
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .hero-sub {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.55);
+        }
+
+        /* ── CONTENT ── */
+        .content {
+            padding: 2rem 2.5rem;
+            
+        }
+
+        .section-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-pale);
             margin-bottom: 1rem;
         }
 
-        .card-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 0.5rem;
+        /* ── NAV GRID ── */
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
         }
 
-        .card-description {
-            font-size: 1rem;
-            color: #64748b;
-            opacity: 0.9;
-        }
-
-        /* 返回按鈕 */
-        .back-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
-            color: white;
-            padding: 1rem 2rem; 
-            border-radius: 25px;
+        .nav-item {
+            background: var(--surface);
+            padding: 1.5rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
-            text-align: center;
-            white-space: nowrap; 
+            color: var(--text);
+            transition: background 0.15s;
+            position: relative;
+            animation: fadeUp 0.3s ease both;
         }
 
-        .back-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
-            background: linear-gradient(135deg, #607D8B 0%, #546E7A 100%);
-            color: white;
+        .nav-item:nth-child(1) { animation-delay: 0.05s; }
+        .nav-item:nth-child(2) { animation-delay: 0.1s; }
+
+        @@keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-item:hover {
             text-decoration: none;
+            color: var(--text);
         }
 
-        .button-group {
-            text-align: center;
-            margin: 2rem 0;
+        .nav-item:hover .nav-arrow { opacity: 1; transform: translateX(0); }
+
+        .theme-green:hover  { background: #f1f8f1 !important; }
+        .theme-blue:hover   { background: #f0f5fd !important; }
+
+        .nav-item-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
         }
 
-        @@media (max-width: 768px) {
-            .health-container
-
-        {
-            padding: 1rem;
+        .nav-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
         }
 
-        .health-content {
-            padding: 2rem 1.5rem;
+        .theme-green .nav-icon { background: #e8f5e9; color: #2e7d32; }
+        .theme-blue  .nav-icon { background: #e8f1fb; color: var(--blue); }
+
+        .nav-arrow {
+            color: var(--text-pale);
+            font-size: 0.9rem;
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: all 0.2s;
+            margin-top: 2px;
         }
 
-        .page-title {
-            font-size: 1.8rem;
-        }
-
-        .menu-cards {
-            grid-template-columns: 1fr;
-        }
-
-        .back-button {
-            padding: 0.85rem 1.8rem; 
-            font-size: 1rem;
-            width: auto; 
-            max-width: 220px; 
-            display: inline-block;
-        }
-
-        }
-
-        @@media (max-width: 480px) {
-            .health-content
-
-        {
-            padding: 1.5rem 1rem;
-        }
-
-        .page-title {
-            font-size: 1.5rem;
-        }
-
-        .menu-card {
-            padding: 2.5rem 1.5rem;
-        }
-
-        .card-icon {
-            font-size: 3.5rem;
-        }
-
-        .card-title {
-            font-size: 1.3rem;
-        }
-
-        .card-description {
+        .nav-title {
             font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.15rem;
         }
 
+        .nav-desc {
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            line-height: 1.5;
+        }
+
+        /* ── RESPONSIVE ── */
+        @@media (max-width: 768px) {
+            .topbar { padding: 0 1rem; }
+            .topbar-user { display: none; }
+            .hero { padding: 1.5rem 1.25rem; }
+            .content { padding: 1.25rem; }
+            .nav-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <div class="health-container">
-        <div class="health-content">
-            <!-- 頁首 -->
-            <div class="page-header">
-                <h1 class="page-title">📊 今日健康資訊</h1>
-                <p class="page-subtitle">記錄與管理您的每日健康數據</p>
-            </div>
 
-            <!-- 返回按鈕區 -->
-            <div class="button-group">
-                <a href="@Url.Action("Dashboard", "Home")" class="back-button">
-                    ← 返回主選單
-                </a>
-            </div>
-
-            <!-- 功能卡片 -->
-            <div class="menu-cards">
-                <a href="@Url.Action("Create", "DailyHealth")" class="menu-card card-new">
-                    <div class="card-icon">➕</div>
-                    <div class="card-title">新增今日紀錄</div>
-                    <div class="card-description">
-                        記錄您今天的運動、飲食、血壓、血糖等健康資訊
-                    </div>
-                </a>
-
-                <a href="@Url.Action("MyRecords", "DailyHealth")" class="menu-card card-history">
-                    <div class="card-icon">📚</div>
-                    <div class="card-title">查看過去紀錄</div>
-                    <div class="card-description">
-                        查看與修改您過去的健康資訊紀錄
-                    </div>
-                </a>
-            </div>
-        </div>
+<!-- TOP BAR -->
+<header class="topbar">
+    <div class="topbar-logo">
+        <div class="cross">✚</div>
+        代謝症候群疾病管理與追蹤系統
     </div>
+    <div class="topbar-right">
+        <div class="topbar-user">
+            <div class="user-avatar">@(userName?.Length > 0 ? userName[0].ToString() : "用")</div>
+            <span>@userName</span>
+        </div>
+        <a href="@Url.Action("Dashboard", "Home")" class="topbar-back">
+            <i class="bi bi-arrow-left"></i> 返回主選單
+        </a>
+    </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+    <div class="hero-eyebrow">Daily Health</div>
+    <div class="hero-title">
+        <i class="bi bi-activity"></i>
+        今日健康資訊
+    </div>
+    <div class="hero-sub">記錄與管理您的每日健康數據</div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+    <div class="section-label">功能模組</div>
+
+    <div class="nav-grid">
+
+        <a href="@Url.Action("Create", "DailyHealth")" class="nav-item theme-green">
+            <div class="nav-item-header">
+                <div class="nav-icon"><i class="bi bi-plus-circle"></i></div>
+                <i class="bi bi-chevron-right nav-arrow"></i>
+            </div>
+            <div>
+                <div class="nav-title">新增今日紀錄</div>
+                <div class="nav-desc">記錄今天的運動、飲食、血壓、血糖等健康資訊</div>
+            </div>
+        </a>
+
+        <a href="@Url.Action("MyRecords", "DailyHealth")" class="nav-item theme-blue">
+            <div class="nav-item-header">
+                <div class="nav-icon"><i class="bi bi-clock-history"></i></div>
+                <i class="bi bi-chevron-right nav-arrow"></i>
+            </div>
+            <div>
+                <div class="nav-title">查看過去紀錄</div>
+                <div class="nav-desc">查看與修改您過去的健康資訊紀錄</div>
+            </div>
+        </a>
+
+    </div>
+</div>
+
 </body>
 </html>

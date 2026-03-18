@@ -1,6 +1,7 @@
 ﻿@{
-    ViewData["Title"] = "疾病個管系統 - 管理者功能";
+    ViewData["Title"] = "疾病個管系統";
     Layout = null;
+    var userName = User.FindFirst("FullName")?.Value ?? User.Identity.Name;
 }
 
 <!DOCTYPE html>
@@ -8,229 +9,353 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"]</title>
+    <title>疾病個管系統 — 代謝症候群疾病管理與追蹤系統</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --navy:     #0a2540;
+            --navy-mid: #103a5e;
+            --blue:     #1a6fb5;
+            --blue-lt:  #2589d8;
+            --teal:     #0e8a7a;
+            --bg:       #f4f6f9;
+            --surface:  #ffffff;
+            --border:   #dde3ea;
+            --text:     #1a2635;
+            --text-sub: #5a6a7e;
+            --text-pale:#8fa0b4;
         }
 
-        body {
-            background: linear-gradient(135deg, #FFF8E1 0%, #FFE0B2 100%);
-            min-height: 100vh;
-            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-            padding: 2rem;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            min-height: 100%;
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        /* ── TOP BAR ── */
+        .topbar {
+            background: var(--navy);
+            height: 56px;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
         }
 
-        .header {
-            background: linear-gradient(135deg, #FFB74D 0%, #FFA726 100%);
+        .topbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
             color: white;
-            padding: 2rem;
-            border-radius: 20px 20px 0 0;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
-        }
-
-        .header-icon {
-            font-size: 3rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .header-title {
-            font-size: 2rem;
             font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .header-subtitle {
             font-size: 1rem;
-            opacity: 0.95;
         }
 
-        .content {
-            background: white;
-            padding: 3rem 2rem;
-            border-radius: 0 0 20px 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        .cross {
+            width: 28px; height: 28px;
+            background: var(--blue-lt);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: 900; color: white;
         }
 
-        .welcome-box {
-            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
-            border: 2px solid #FFB74D;
-            padding: 1.5rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
-            text-align: center;
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
 
-        .welcome-text {
-            color: #E65100;
-            font-size: 1.1rem;
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255,255,255,0.75);
+            font-size: 0.82rem;
+        }
+
+        .user-avatar {
+            width: 28px; height: 28px;
+            background: var(--blue-lt);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; color: white;
+        }
+
+        .topbar-back {
+            color: rgba(255,255,255,0.65);
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.8rem;
+            text-decoration: none;
+            display: flex; align-items: center; gap: 0.35rem;
+            transition: all 0.2s;
+        }
+        .topbar-back:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+        }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(100deg, var(--navy-mid) 0%, var(--blue) 100%);
+            padding: 2rem 2.5rem 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            right: -60px; top: -60px;
+            width: 240px; height: 240px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+            pointer-events: none;
+        }
+
+        .hero-eyebrow {
+            font-size: 0.7rem;
             font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 0.4rem;
         }
 
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
         }
 
-        .menu-card {
-            background: linear-gradient(135deg, #FFECB3 0%, #FFE082 100%);
-            border: 2px solid #FFB74D;
-            border-radius: 15px;
-            padding: 1.5rem 1rem; 
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: #E65100;
-            box-shadow: 0 4px 10px rgba(255, 152, 0, 0.2);
+        .hero-title i {
+            font-size: 1.2rem;
+            opacity: 0.8;
         }
 
-        .menu-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(255, 152, 0, 0.4);
-            background: linear-gradient(135deg, #FFE082 0%, #FFD54F 100%);
-            text-decoration: none;
-            color: #E65100;
+        .hero-sub {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.55);
         }
 
-        .menu-icon {
-            font-size: 2.5rem;
+        /* ── CONTENT ── */
+        .content {
+            padding: 2rem 2.5rem;
+        }
+
+        .section-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-pale);
             margin-bottom: 1rem;
         }
 
-        .menu-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 0.75rem;
-            color: #E65100;
+        /* ── NAV GRID ── */
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            margin-bottom: 2rem;
         }
 
-        .menu-description {
+        .nav-item {
+            background: var(--surface);
+            padding: 1.5rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            text-decoration: none;
+            color: var(--text);
+            transition: background 0.15s;
+            position: relative;
+            animation: fadeUp 0.3s ease both;
+        }
+
+        .nav-item:nth-child(1) { animation-delay: 0.05s; }
+        .nav-item:nth-child(2) { animation-delay: 0.1s; }
+        .nav-item:nth-child(3) { animation-delay: 0.15s; }
+        .nav-item:nth-child(4) { animation-delay: 0.2s; }
+
+        @@keyframes fadeUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-item:hover {
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .nav-item:hover .nav-arrow { opacity: 1; transform: translateX(0); }
+
+        .theme-blue:hover  { background: #f0f5fd !important; }
+        .theme-teal:hover  { background: #f0faf8 !important; }
+        .theme-indigo:hover { background: #f2f3fe !important; }
+        .theme-green:hover { background: #f1f8f1 !important; }
+
+        .nav-item-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+
+        .nav-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .theme-blue  .nav-icon { background: #e8f1fb; color: var(--blue); }
+        .theme-teal  .nav-icon { background: #e5f5f3; color: var(--teal); }
+        .theme-indigo .nav-icon { background: #eceffe; color: #4a57c8; }
+        .theme-green .nav-icon { background: #e8f5e9; color: #2e7d32; }
+
+        .nav-arrow {
+            color: var(--text-pale);
             font-size: 0.9rem;
-            color: #F57C00;
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: all 0.2s;
+            margin-top: 2px;
+        }
+
+        .nav-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.15rem;
+        }
+
+        .nav-desc {
+            font-size: 0.78rem;
+            color: var(--text-sub);
             line-height: 1.5;
         }
 
-        .back-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #78909C 0%, #607D8B 100%);
-            color: white;
-            padding: 1rem 2.5rem;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(96, 125, 139, 0.3);
-        }
-
-        .back-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(96, 125, 139, 0.4);
-            background: linear-gradient(135deg, #607D8B 0%, #546E7A 100%);
-            color: white;
-            text-decoration: none;
-        }
-
-        .button-group {
-            text-align: center;
-            margin-top: 2rem;
-        }
-
+        /* ── RESPONSIVE ── */
         @@media (max-width: 768px) {
-            body {
-                padding: 1rem;
+            .nav-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
+        }
 
-            .header {
-                padding: 1.5rem;
-            }
-
-            .header-title {
-                font-size: 1.5rem;
-            }
-
-            .content {
-                padding: 2rem 1.5rem;
-            }
-
-            .menu-grid {
+        @@media (max-width: 480px) {
+            .nav-grid {
                 grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-icon">📊</div>
-            <h1 class="header-title">疾病個管系統</h1>
-            <p class="header-subtitle">管理者專屬功能</p>
-        </div>
 
-        <div class="content">
-            <div class="welcome-box">
-                <div class="welcome-text">
-                    👨‍⚕️ 歡迎，@(User.FindFirst("FullName")?.Value ?? User.Identity.Name)
-                </div>
-            </div>
-
-            <div class="menu-grid">
-                <!-- 新增個案 -->
-                <a href="@Url.Action("Create", "CaseManagement")" class="menu-card">
-                    <div class="menu-icon">➕</div>
-                    <h3 class="menu-title">新增個案</h3>
-                    <p class="menu-description">
-                        建立新的個案資料
-                    </p>
-                </a>
-
-                <!-- 新增紀錄表 -->
-                <a href="@Url.Action("CreateRecord", "CaseManagement")" class="menu-card">
-                    <div class="menu-icon">📋</div>
-                    <h3 class="menu-title">新增紀錄表</h3>
-                    <p class="menu-description">
-                        輸入身分證字號<br>
-                        填寫個案管理紀錄
-                    </p>
-                </a>
-
-                <!-- 查看所有紀錄 -->
-                <a href="@Url.Action("ViewAllRecords", "CaseManagement")" class="menu-card">
-                    <div class="menu-icon">🔍</div>
-                    <h3 class="menu-title">查看與編輯個案紀錄</h3>
-                    <p class="menu-description">
-                        搜尋、查看與編輯<br>
-                        所有個案管理紀錄
-                    </p>
-                </a>
-
-                <!-- 查看個案目標值 -->
-                <a href="@Url.Action("ViewTargets", "CaseManagement")" class="menu-card">
-                    <div class="menu-icon">🎯</div>
-                    <h3 class="menu-title">查看個案目標值</h3>
-                    <p class="menu-description">
-                        可查看個案是否達成<br>
-                        每次評估設定的目標值
-                    </p>
-                </a>
-            </div>
-
-            <div class="button-group">
-                <a href="@Url.Action("Dashboard", "Home")" class="back-button">
-                    ← 返回主選單
-                </a>
-            </div>
-        </div>
+<!-- TOP BAR -->
+<header class="topbar">
+    <div class="topbar-logo">
+        <div class="cross">✚</div>
+        代謝症候群疾病管理與追蹤系統
     </div>
+    <div class="topbar-right">
+        <div class="topbar-user">
+            <div class="user-avatar">@(userName?.Length > 0 ? userName[0].ToString() : "醫")</div>
+            <span>@userName</span>
+        </div>
+        <a href="@Url.Action("Dashboard", "Home")" class="topbar-back">
+            <i class="bi bi-arrow-left"></i> 返回主選單
+        </a>
+    </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+    <div class="hero-eyebrow">Disease Management</div>
+    <div class="hero-title">
+        <i class="bi bi-clipboard2-pulse"></i>
+        疾病個管系統
+    </div>
+    <div class="hero-sub">管理者專屬功能 — 個案建立、紀錄管理與目標追蹤</div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+    <div class="section-label">功能模組</div>
+
+    <div class="nav-grid">
+
+        <!-- 新增個案 -->
+        <a href="@Url.Action("Create", "CaseManagement")" class="nav-item theme-blue">
+            <div class="nav-item-header">
+                <div class="nav-icon"><i class="bi bi-person-plus"></i></div>
+                <i class="bi bi-chevron-right nav-arrow"></i>
+            </div>
+            <div>
+                <div class="nav-title">新增個案</div>
+                <div class="nav-desc">建立新的病患個案基本資料</div>
+            </div>
+        </a>
+
+        <!-- 新增紀錄表 -->
+        <a href="@Url.Action("CreateRecord", "CaseManagement")" class="nav-item theme-teal">
+            <div class="nav-item-header">
+                <div class="nav-icon"><i class="bi bi-file-earmark-plus"></i></div>
+                <i class="bi bi-chevron-right nav-arrow"></i>
+            </div>
+            <div>
+                <div class="nav-title">新增紀錄表</div>
+                <div class="nav-desc">輸入身分證字號，填寫個案管理紀錄</div>
+            </div>
+        </a>
+
+        <!-- 查看與編輯個案紀錄 -->
+        <a href="@Url.Action("ViewAllRecords", "CaseManagement")" class="nav-item theme-indigo">
+            <div class="nav-item-header">
+                <div class="nav-icon"><i class="bi bi-search"></i></div>
+                <i class="bi bi-chevron-right nav-arrow"></i>
+            </div>
+            <div>
+                <div class="nav-title">查看與編輯個案紀錄</div>
+                <div class="nav-desc">搜尋、查看與編輯所有個案管理紀錄</div>
+            </div>
+        </a>
+
+        <!-- 查看個案目標值 -->
+        <a href="@Url.Action("ViewTargets", "CaseManagement")" class="nav-item theme-green">
+            <div class="nav-item-header">
+                <div class="nav-icon"><i class="bi bi-bullseye"></i></div>
+                <i class="bi bi-chevron-right nav-arrow"></i>
+            </div>
+            <div>
+                <div class="nav-title">查看個案目標值</div>
+                <div class="nav-desc">查看個案是否達成每次評估設定的目標值</div>
+            </div>
+        </a>
+
+    </div>
+</div>
+
 </body>
 </html>
