@@ -632,51 +632,27 @@
             <div class="meal-section">
                 <div class="meal-title">🌅 早餐</div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">蔬菜 (拳頭)</label>
-                        <select class="form-select" id="breakfast-veg" name="Meals_Breakfast_Vegetables">
-                            <option value="">請選擇</option>
-                            <option value="0">0</option>
-                            <option value="0.5">0.5</option>
-                            <option value="0.75">0.75</option>
-                            <option value="1">1</option>
-                            <option value="1.3">1.3</option>
-                            <option value="1.5">1.5</option>
-                            <option value="2">2</option>
-                            <option value="2.5">2.5</option>
-                            <option value="3">3</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">蛋白質 (拳頭)</label>
-                        <select class="form-select" id="breakfast-protein" name="Meals_Breakfast_Protein">
-                            <option value="">請選擇</option>
-                            <option value="0">0</option>
-                            <option value="0.5">0.5</option>
-                            <option value="0.75">0.75</option>
-                            <option value="1">1</option>
-                            <option value="1.3">1.3</option>
-                            <option value="1.5">1.5</option>
-                            <option value="2">2</option>
-                            <option value="2.5">2.5</option>
-                            <option value="3">3</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">澱粉 (拳頭)</label>
-                        <select class="form-select" id="breakfast-carbs" name="Meals_Breakfast_Carbs">
-                            <option value="">請選擇</option>
-                            <option value="0">0</option>
-                            <option value="0.5">0.5</option>
-                            <option value="0.75">0.75</option>
-                            <option value="1">1</option>
-                            <option value="1.3">1.3</option>
-                            <option value="1.5">1.5</option>
-                            <option value="2">2</option>
-                            <option value="2.5">2.5</option>
-                            <option value="3">3</option>
-                        </select>
-                    </div>
+                        <div class="form-group">
+                            <label class="form-label">蔬菜 (拳頭)</label>
+                            <input type="text" class="form-control meal-input" id="breakfast-veg"
+                                   placeholder="例：1.5" inputmode="decimal"
+                                   oninput="validateMealInput(this)" />
+                            <div class="input-hint" id="breakfast-veg-err" style="color:#ef4444;display:none;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">蛋白質 (拳頭)</label>
+                            <input type="text" class="form-control meal-input" id="breakfast-protein"
+                                   placeholder="例：1.5" inputmode="decimal"
+                                   oninput="validateMealInput(this)" />
+                            <div class="input-hint" id="breakfast-protein-err" style="color:#ef4444;display:none;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">澱粉 (拳頭)</label>
+                            <input type="text" class="form-control meal-input" id="breakfast-carbs"
+                                   placeholder="例：1.5" inputmode="decimal"
+                                   oninput="validateMealInput(this)" />
+                            <div class="input-hint" id="breakfast-carbs-err" style="color:#ef4444;display:none;"></div>
+                        </div>
                 </div>
             </div>
 
@@ -684,51 +660,27 @@
             <div class="meal-section">
                 <div class="meal-title">☀️ 午餐</div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">蔬菜 (拳頭)</label>
-                        <select class="form-select" id="lunch-veg">
-                            <option value="">請選擇</option>
-                            <option value="0">0</option>
-                            <option value="0.5">0.5</option>
-                            <option value="0.75">0.75</option>
-                            <option value="1">1</option>
-                            <option value="1.3">1.3</option>
-                            <option value="1.5">1.5</option>
-                            <option value="2">2</option>
-                            <option value="2.5">2.5</option>
-                            <option value="3">3</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">蛋白質 (拳頭)</label>
-                        <select class="form-select" id="lunch-protein">
-                            <option value="">請選擇</option>
-                            <option value="0">0</option>
-                            <option value="0.5">0.5</option>
-                            <option value="0.75">0.75</option>
-                            <option value="1">1</option>
-                            <option value="1.3">1.3</option>
-                            <option value="1.5">1.5</option>
-                            <option value="2">2</option>
-                            <option value="2.5">2.5</option>
-                            <option value="3">3</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">澱粉 (拳頭)</label>
-                        <select class="form-select" id="lunch-carbs">
-                            <option value="">請選擇</option>
-                            <option value="0">0</option>
-                            <option value="0.5">0.5</option>
-                            <option value="0.75">0.75</option>
-                            <option value="1">1</option>
-                            <option value="1.3">1.3</option>
-                            <option value="1.5">1.5</option>
-                            <option value="2">2</option>
-                            <option value="2.5">2.5</option>
-                            <option value="3">3</option>
-                        </select>
-                    </div>
+                        <div class="form-group">
+                            <label class="form-label">蔬菜 (拳頭)</label>
+                            <input type="text" class="form-control meal-input" id="lunch-veg"
+                                   placeholder="例：1.5" inputmode="decimal"
+                                   oninput="validateMealInput(this)" />
+                            <div class="input-hint" id="lunch-veg-err" style="color:#ef4444;display:none;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">蛋白質 (拳頭)</label>
+                            <input type="text" class="form-control meal-input" id="lunch-protein"
+                                   placeholder="例：1.5" inputmode="decimal"
+                                   oninput="validateMealInput(this)" />
+                            <div class="input-hint" id="lunch-protein-err" style="color:#ef4444;display:none;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">澱粉 (拳頭)</label>
+                            <input type="text" class="form-control meal-input" id="lunch-carbs"
+                                   placeholder="例：1.5" inputmode="decimal"
+                                   oninput="validateMealInput(this)" />
+                            <div class="input-hint" id="lunch-carbs-err" style="color:#ef4444;display:none;"></div>
+                        </div>
                 </div>
             </div>
 
@@ -736,51 +688,27 @@
             <div class="meal-section">
                 <div class="meal-title">🌙 晚餐</div>
                 <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">蔬菜 (拳頭)</label>
-                        <select class="form-select" id="dinner-veg">
-                            <option value="">請選擇</option>
-                            <option value="0">0</option>
-                            <option value="0.5">0.5</option>
-                            <option value="0.75">0.75</option>
-                            <option value="1">1</option>
-                            <option value="1.3">1.3</option>
-                            <option value="1.5">1.5</option>
-                            <option value="2">2</option>
-                            <option value="2.5">2.5</option>
-                            <option value="3">3</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">蛋白質 (拳頭)</label>
-                        <select class="form-select" id="dinner-protein">
-                            <option value="">請選擇</option>
-                            <option value="0">0</option>
-                            <option value="0.5">0.5</option>
-                            <option value="0.75">0.75</option>
-                            <option value="1">1</option>
-                            <option value="1.3">1.3</option>
-                            <option value="1.5">1.5</option>
-                            <option value="2">2</option>
-                            <option value="2.5">2.5</option>
-                            <option value="3">3</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">澱粉 (拳頭)</label>
-                        <select class="form-select" id="dinner-carbs">
-                            <option value="">請選擇</option>
-                            <option value="0">0</option>
-                            <option value="0.5">0.5</option>
-                            <option value="0.75">0.75</option>
-                            <option value="1">1</option>
-                            <option value="1.3">1.3</option>
-                            <option value="1.5">1.5</option>
-                            <option value="2">2</option>
-                            <option value="2.5">2.5</option>
-                            <option value="3">3</option>
-                        </select>
-                    </div>
+                        <div class="form-group">
+                            <label class="form-label">蔬菜 (拳頭)</label>
+                            <input type="text" class="form-control meal-input" id="dinner-veg"
+                                   placeholder="例：1.5" inputmode="decimal"
+                                   oninput="validateMealInput(this)" />
+                            <div class="input-hint" id="dinner-veg-err" style="color:#ef4444;display:none;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">蛋白質 (拳頭)</label>
+                            <input type="text" class="form-control meal-input" id="dinner-protein"
+                                   placeholder="例：1.5" inputmode="decimal"
+                                   oninput="validateMealInput(this)" />
+                            <div class="input-hint" id="dinner-protein-err" style="color:#ef4444;display:none;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">蛋白質 (拳頭)</label>
+                            <input type="text" class="form-control meal-input" id="dinner-carbs"
+                                   placeholder="例：1.5" inputmode="decimal"
+                                   oninput="validateMealInput(this)" />
+                            <div class="input-hint" id="dinner-carbs-err" style="color:#ef4444;display:none;"></div>
+                        </div>
                 </div>
             </div>
 
@@ -865,7 +793,7 @@
             <a href="@Url.Action("Index", "DailyHealth")" class="btn btn-secondary">
                 ← 取消
             </a>
-            <button type="submit" class="btn btn-primary" onclick="return prepareMealData()">
+                <button type="submit" class="btn btn-primary" onclick="return validateAllMeals() && prepareMealData()">
                 @(Model.Id > 0 ? "💾 儲存修改" : "✓ 下一步")
             </button>
         </div>
@@ -904,6 +832,51 @@
         // 更新 hidden field
         document.getElementById('BP_Morning_NotMeasured').value = checked ? 'true' : 'false';
     }
+
+         // 驗證三餐輸入：只允許 0~10，最多小數點後一位
+        function validateMealInput(input) {
+            const errEl = document.getElementById(input.id + '-err');
+            let val = input.value;
+
+            // 只允許數字和一個小數點
+            val = val.replace(/[^0-9.]/g, '');
+            // 只保留第一個小數點
+            const parts = val.split('.');
+            if (parts.length > 2) val = parts[0] + '.' + parts[1];
+            // 小數點後最多一位
+            if (parts.length === 2 && parts[1].length > 1) {
+                val = parts[0] + '.' + parts[1].substring(0, 1);
+            }
+            input.value = val;
+
+            // 範圍驗證
+            if (val === '' || val === '.') {
+                if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+                return;
+            }
+            const num = parseFloat(val);
+            if (isNaN(num) || num < 0 || num > 10) {
+                if (errEl) { errEl.style.display = 'block'; errEl.textContent = '請輸入 0 到 10 之間的數字'; }
+            } else {
+                if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+            }
+        }
+
+        // 表單提交前再做一次整體驗證
+        function validateAllMeals() {
+            const inputs = document.querySelectorAll('.meal-input');
+            for (const input of inputs) {
+                if (input.value === '' || input.value === '.') continue;
+                const num = parseFloat(input.value);
+                if (isNaN(num) || num < 0 || num > 10) {
+                    alert('三餐數值請填入 0 到 10 之間，且最多小數點後一位（例如 1.5）');
+                    input.focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+
 
     // 控制睡前血壓輸入框的啟用/禁用
     function toggleEveningBP(checked) {
@@ -1002,13 +975,11 @@
         }
 
         // 恢復三餐選項
-        function restoreMealSelection(selectId, value) {
-            if (!value) return;
-            const selectElement = document.getElementById(selectId);
-            if (selectElement) {
-                selectElement.value = value;
+            function restoreMealSelection(inputId, value) {
+                if (!value) return;
+                const el = document.getElementById(inputId);
+                if (el) el.value = value;
             }
-        }
 
         // 恢復三餐數據
         @if (Model.Meals_Breakfast != null)

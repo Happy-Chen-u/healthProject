@@ -58,7 +58,7 @@ namespace healthProject.Controllers
             FROM ""HealthEducation""
             WHERE ""Category"" = @Category", conn);
                 sortCmd.Parameters.AddWithValue("@Category", model.Category);
-                var nextSort = (int)(long)await sortCmd.ExecuteScalarAsync();
+                var nextSort = Convert.ToInt32(await sortCmd.ExecuteScalarAsync());
 
                 var cmd = new NpgsqlCommand(@"
             INSERT INTO ""HealthEducation"" (""Title"", ""Content"", ""Category"", ""SortOrder"", ""IsActive"")
