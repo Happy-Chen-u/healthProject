@@ -649,13 +649,26 @@
                     <div class="record-items" style="@(group.Records.Count > 1 ? "display: none;" : "")">
                         @foreach (var record in group.Records)
                         {
-                            <div class="record-item">
-                                <div class="record-time">
-                                    ⏰ @(record.RecordTime?.ToString(@"hh\:mm") ?? "未記錄時間")
-                                    <a href="@Url.Action("Edit", "DailyHealth", new { id = record.Id })" class="btn-icon btn-edit">
-                                        ✏️ 編輯
-                                    </a>
-                                </div>
+                                <div class="record-item">
+                                    <div class="record-time">
+                                        ⏰ @(record.RecordTime?.ToString(@"hh\:mm") ?? "未記錄時間")
+                                        @{
+                                            var editDeadline = DateTime.Today.AddDays(-6);
+                                            var canEdit = group.Date >= editDeadline;
+                                        }
+                                        @if (canEdit)
+                                        {
+                                            <a href="@Url.Action("Edit", "DailyHealth", new { id = record.Id })" class="btn-icon btn-edit">
+                                                ✏️ 編輯
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="btn-icon" style="opacity:0.4; cursor:not-allowed; font-size:0.8rem;" title="僅可編輯近 7 天內的紀錄">
+                                                🔒 已鎖定
+                                            </span>
+                                        }
+                                    </div>
 
                                 <div class="data-grid">
                                     <!-- 血壓 -->

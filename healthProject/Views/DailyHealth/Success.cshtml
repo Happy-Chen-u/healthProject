@@ -9,265 +9,270 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>@ViewData["Title"]</title>
-</head>
-<body>
-<style>
-    .success-container {
-        max-width: 800px;
-        margin: 1rem auto;
-        padding: 0 0.75rem;
-    }
-
-    body {
-        background-color: #e5eef5; 
-        font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-        min-height: 100vh;
-        margin: 0;
-        padding: 0;
-    }
-
-    .success-header {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        padding: 2rem 1.5rem;
-        border-radius: 15px;
-        text-align: center;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-    }
-
-    .success-icon {
-        font-size: 3.5rem;
-        margin-bottom: 1rem;
-        animation: bounce 1s ease;
-    }
-
-    @@keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-20px); }
-    }
-
-    .success-header h1 {
-        margin: 0;
-        font-size: 1.8rem;
-    }
-
-    .feedback-section {
-        display: grid;
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .feedback-card {
-        background: white;
-        border-radius: 15px;
-        padding: 1.25rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        display: flex;
-        align-items: flex-start;
-        gap: 1rem;
-        border-left: 4px solid;
-    }
-
-    .feedback-card.success {
-        border-color: #10b981;
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    }
-
-    .feedback-card.warning {
-        border-color: #f59e0b;
-        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-    }
-
-    .feedback-card.info {
-        border-color: #3b82f6;
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-    }
-
-    .feedback-card.danger {
-        border-color: #ef4444;
-        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-    }
-
-    .feedback-icon {
-        font-size: 2rem;
-        flex-shrink: 0;
-    }
-
-    .feedback-content {
-        flex: 1;
-    }
-
-    .feedback-message {
-        font-size: 1rem;
-        line-height: 1.6;
-        color: #1e293b;
-    }
-
-    .action-buttons {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .btn {
-        padding: 1rem 2rem;
-        border: none;
-        border-radius: 50px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: white;
-        box-sizing: border-box;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
-        color: white;
-        text-decoration: none;
-    }
-
-    .btn-secondary {
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
-    }
-
-    .btn-secondary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
-        color: white;
-        text-decoration: none;
-    }
-
-    @@media (max-width: 768px) {
-        body {
-            font-size: 16px;
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --navy:     #0a2540;
+            --navy-mid: #103a5e;
+            --blue:     #1a6fb5;
+            --blue-lt:  #2589d8;
+            --bg:       #f4f6f9;
+            --surface:  #ffffff;
+            --border:   #dde3ea;
+            --text:     #1a2635;
+            --text-sub: #5a6a7e;
+            --text-pale:#8fa0b4;
         }
 
-        .success-header {
-            padding: 1.5rem 1rem;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', Arial, sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* TOP BAR */
+        .topbar {
+            background: var(--navy);
+            height: 56px;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+        }
+
+        .topbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .cross {
+            width: 28px; height: 28px;
+            background: var(--blue-lt);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: 900; color: white;
+        }
+
+        /* HERO */
+        .hero {
+            background: linear-gradient(100deg, var(--navy-mid) 0%, var(--blue) 100%);
+            padding: 2.5rem 2.5rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            right: -60px; top: -60px;
+            width: 240px; height: 240px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+            pointer-events: none;
         }
 
         .success-icon {
             font-size: 3rem;
+            margin-bottom: 0.75rem;
+            animation: bounce 0.8s ease;
+            display: block;
         }
 
-        .success-header h1 {
+        @@keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-14px); }
+        }
+
+        .hero-title {
             font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.3rem;
         }
 
-        .success-header p {
-            font-size: 0.95rem;
+        .hero-sub {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* MAIN */
+        .main-container {
+            max-width: 720px;
+            margin: 1.75rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* FEEDBACK CARDS */
+        .feedback-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.75rem;
         }
 
         .feedback-card {
-            padding: 1rem;
-            flex-direction: row;
-            gap: 0.75rem;
+            background: var(--surface);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
         }
 
-        .feedback-icon {
-            font-size: 1.75rem;
+        .feedback-card.success { border-left-color: #2e7d32; }
+        .feedback-card.warning { border-left-color: #e67e22; }
+        .feedback-card.info    { border-left-color: var(--blue); }
+        .feedback-card.danger  { border-left-color: #c0392b; }
+
+        .feedback-card.success { background: #f0fdf4; }
+        .feedback-card.warning { background: #fffbeb; }
+        .feedback-card.info    { background: #eff6ff; }
+        .feedback-card.danger  { background: #fef2f2; }
+
+        .feedback-emoji {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+            margin-top: 0.05rem;
         }
 
-        .feedback-message {
-            font-size: 1rem;
+        .feedback-text {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text);
         }
-        .action-buttons {
-            flex-direction: column;
+
+        /* ACTION BUTTONS */
+        .action-row {
+            display: flex;
             gap: 0.75rem;
-        }
-        .btn {
-            width: 100%;
-            font-size: 1.05rem;
-            padding: 0.9rem 1.5rem;
             justify-content: center;
-            text-align: center;
+            flex-wrap: wrap;
         }
-    }
-</style>
 
-<div class="success-container">
-    <div class="success-header">
-        <div class="success-icon">🎉</div>
-        <h1>上傳成功！</h1>
-        <p>您的今日健康資訊已成功記錄</p>
+        .btn-action {
+            padding: 0.65rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--navy);
+            color: white;
+        }
+        .btn-primary:hover { background: var(--navy-mid); color: white; text-decoration: none; }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text-sub);
+            border: 1.5px solid var(--border);
+        }
+        .btn-secondary:hover { background: var(--bg); color: var(--text); text-decoration: none; }
+
+        @@media (max-width: 600px) {
+            .topbar { padding: 0 1rem; }
+            .hero { padding: 2rem 1.25rem 1.75rem; }
+            .main-container { padding: 0 1rem; }
+            .action-row { flex-direction: column; }
+            .btn-action { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-logo">
+        <div class="cross">✚</div>
+        代謝症候群疾病管理與追蹤系統
     </div>
+</header>
 
-    <div class="feedback-section">
+<div class="hero">
+    <span class="success-icon">🎉</span>
+    <div class="hero-title">上傳成功！</div>
+    <div class="hero-sub">您的今日健康資訊已成功記錄</div>
+</div>
+
+<div class="main-container">
+
+    <div class="feedback-list">
+
         @if (!string.IsNullOrEmpty(Model.WaterMessage))
         {
             <div class="feedback-card @Model.WaterStatus">
-                <div class="feedback-icon">💧</div>
-                <div class="feedback-content">
-                    <div class="feedback-message">@Model.WaterMessage</div>
-                </div>
+                <span class="feedback-emoji">💧</span>
+                <div class="feedback-text">@Model.WaterMessage</div>
             </div>
         }
 
         @if (!string.IsNullOrEmpty(Model.ExerciseMessage))
         {
             <div class="feedback-card @Model.ExerciseStatus">
-                <div class="feedback-icon">🏃</div>
-                <div class="feedback-content">
-                    <div class="feedback-message">@Model.ExerciseMessage</div>
-                </div>
+                <span class="feedback-emoji">🏃</span>
+                <div class="feedback-text">@Model.ExerciseMessage</div>
             </div>
         }
 
         @if (!string.IsNullOrEmpty(Model.CigaretteMessage))
         {
             <div class="feedback-card @Model.CigaretteStatus">
-                <div class="feedback-icon">🚭</div>
-                <div class="feedback-content">
-                    <div class="feedback-message">@Model.CigaretteMessage</div>
-                </div>
+                <span class="feedback-emoji">🚭</span>
+                <div class="feedback-text">@Model.CigaretteMessage</div>
             </div>
         }
 
         @if (!string.IsNullOrEmpty(Model.BloodPressureMessage))
         {
             <div class="feedback-card @Model.BloodPressureStatus">
-                <div class="feedback-icon">❤️</div>
-                <div class="feedback-content">
-                    <div class="feedback-message">@Model.BloodPressureMessage</div>
-                </div>
+                <span class="feedback-emoji">❤️</span>
+                <div class="feedback-text">@Model.BloodPressureMessage</div>
             </div>
         }
 
         @if (!string.IsNullOrEmpty(Model.BloodSugarMessage))
         {
             <div class="feedback-card @Model.BloodSugarStatus">
-                <div class="feedback-icon">🩸</div>
-                <div class="feedback-content">
-                    <div class="feedback-message">@Model.BloodSugarMessage</div>
-                </div>
+                <span class="feedback-emoji">🩸</span>
+                <div class="feedback-text">@Model.BloodSugarMessage</div>
             </div>
         }
+
     </div>
 
-    <div class="action-buttons">
-        <a href="@Url.Action("MyRecords", "DailyHealth")" class="btn btn-secondary">
-            📚 查看我的紀錄
+    <div class="action-row">
+        <a href="@Url.Action("MyRecords", "DailyHealth")" class="btn-action btn-secondary">
+            <i class="bi bi-clock-history"></i> 查看我的紀錄
         </a>
-        <a href="@Url.Action("Index", "DailyHealth")" class="btn btn-primary">
-            🏠 回到首頁
+        <a href="@Url.Action("Index", "DailyHealth")" class="btn-action btn-primary">
+            <i class="bi bi-house"></i> 回到首頁
         </a>
     </div>
+
 </div>
+
 </body>
 </html>

@@ -352,6 +352,7 @@ namespace healthProject.Controllers
 
         // 編輯紀錄
         [HttpGet]
+        [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -360,6 +361,14 @@ namespace healthProject.Controllers
             if (record == null || record.UserId != userId)
             {
                 return NotFound();
+            }
+
+            // 只能編輯 7 天內的紀錄（今天往前推 6 天）
+            var editDeadline = DateTime.Today.AddDays(-6);
+            if (record.RecordDate.Date < editDeadline)
+            {
+                TempData["ErrorMessage"] = $"此筆紀錄（{record.RecordDate:yyyy/MM/dd}）已超過編輯期限，只能編輯 {editDeadline:yyyy/MM/dd} 以後的紀錄。";
+                return RedirectToAction("MyRecords");
             }
 
             return View("Create", record);

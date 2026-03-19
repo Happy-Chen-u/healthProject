@@ -3,625 +3,474 @@
     ViewData["Title"] = "確認資料";
     Layout = null;
 }
-
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>@ViewData["Title"]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
-        .confirm-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 1rem;
+        :root {
+            --navy:     #0a2540;
+            --navy-mid: #103a5e;
+            --blue:     #1a6fb5;
+            --blue-lt:  #2589d8;
+            --bg:       #f4f6f9;
+            --surface:  #ffffff;
+            --border:   #dde3ea;
+            --text:     #1a2635;
+            --text-sub: #5a6a7e;
+            --text-pale:#8fa0b4;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            background-color: #e5eef5;
-            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: var(--bg);
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', Arial, sans-serif;
+            color: var(--text);
             min-height: 100vh;
-            margin: 0;
-            padding: 0;
         }
 
-        .confirm-header {
-            background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 15px;
-            text-align: center;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(15, 118, 110, 0.35);
-        }
-
-        .confirm-header h1 {
-            margin: 0;
-            font-size: 1.8rem;
-        }
-
-        .confirm-header p {
-            margin: 0.5rem 0 0 0;
-            opacity: 0.9;
-        }
-
-        .data-section {
-            background: white;
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .section-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #0f766e;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 3px solid #cbd5e1;
+        /* TOP BAR */
+        .topbar {
+            background: var(--navy);
+            height: 56px;
             display: flex;
             align-items: center;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+        }
+        .topbar-logo { display: flex; align-items: center; gap: 0.6rem; color: white; font-weight: 700; font-size: 1rem; }
+        .cross { width: 28px; height: 28px; background: var(--blue-lt); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 900; color: white; }
+
+        /* HERO */
+        .hero {
+            background: linear-gradient(100deg, var(--navy-mid) 0%, var(--blue) 100%);
+            padding: 1.5rem 2rem;
+        }
+        .hero-title { font-size: 1.2rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 0.5rem; }
+        .hero-sub { font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-top: 0.2rem; }
+
+        /* MAIN */
+        .main-container {
+            max-width: 780px;
+            margin: 1.25rem auto;
+            padding: 0 1.25rem;
+        }
+
+        /* WARNING */
+        .warn-box {
+            background: #fef2f2;
+            border: 1.5px solid #fca5a5;
+            border-left: 4px solid #dc2626;
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+        }
+        .warn-title { color: #dc2626; font-weight: 700; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem; }
+        .warn-item { color: #b91c1c; font-weight: 600; padding: 0.2rem 0; }
+        .warn-hint { color: #991b1b; font-size: 0.8rem; margin-top: 0.5rem; background: #fff0f0; padding: 0.5rem 0.75rem; border-radius: 5px; }
+
+        /* CARD */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+        }
+        .card-header {
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0.6rem 1rem;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .card-body { padding: 0.85rem 1rem; }
+
+        /* DATA ROW */
+        .data-row {
+            display: flex;
+            align-items: baseline;
+            padding: 0.35rem 0;
+            border-bottom: 1px solid var(--bg);
+            font-size: 0.88rem;
             gap: 0.5rem;
         }
+        .data-row:last-child { border-bottom: none; }
+        .data-label { color: var(--text-sub); min-width: 90px; flex-shrink: 0; font-size: 0.82rem; }
+        .data-value { color: var(--text); font-weight: 600; }
+        .data-value.empty { color: var(--text-pale); font-weight: 400; font-style: italic; }
+        .data-value.danger { color: #dc2626; }
 
-        .data-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .data-item {
-            padding: 1rem;
-            background: #f8fafc;
-            border-radius: 10px;
-            border-left: 4px solid #0f766e;
-        }
-
-        .data-label {
-            font-size: 0.85rem;
-            color: #64748b;
-            margin-bottom: 0.5rem;
-        }
-
-        .data-value {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #1e293b;
-        }
-
-        .data-value.empty {
-            color: #cbd5e1;
-            font-style: italic;
-        }
-
-        .bp-detail {
+        /* BP GRID */
+        .bp-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .bp-item {
-            background: white;
-            padding: 0.75rem;
-            border-radius: 8px;
-            border-left: 3px solid #5eead4;
-        }
-
-        .bp-label {
-            font-size: 0.8rem;
-            color: #64748b;
-            margin-bottom: 0.25rem;
-        }
-
-        .bp-value {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1e293b;
-        }
-
-        .meal-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .meal-card {
-            background: #fefce8;
-            border: 2px solid #fde047;
-            border-radius: 10px;
-            padding: 1rem;
-        }
-
-        .meal-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #854d0e;
-            margin-bottom: 0.75rem;
-        }
-
-        .meal-detail {
-            font-size: 0.9rem;
-            color: #713f12;
-            line-height: 1.6;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 2rem;
-        }
-
-        .btn {
-            padding: 1rem 2.5rem;
-            border: none;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            justify-content: center;
-            display: flex;
-            align-items: center;
-            text-align: center;
             gap: 0.5rem;
         }
-
-        .btn-confirm {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        .bp-cell {
+            background: var(--bg);
+            border-radius: 7px;
+            padding: 0.6rem 0.75rem;
+            border-left: 3px solid var(--blue-lt);
+        }
+        .bp-cell-label { font-size: 0.72rem; color: var(--text-sub); margin-bottom: 0.2rem; }
+        .bp-cell-val { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+        .bp-cell-val.danger { color: #dc2626; }
+        .bp-avg {
+            margin-top: 0.6rem;
+            background: #eff6ff;
+            border-radius: 7px;
+            padding: 0.5rem 0.85rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--navy);
         }
 
-        .btn-confirm:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        /* MEAL GRID */
+        .meal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.6rem;
         }
-
-        .btn-edit {
-            background: #e2e8f0;
-            color: #475569;
+        .meal-cell {
+            background: #fefce8;
+            border: 1px solid #fde68a;
+            border-radius: 8px;
+            padding: 0.65rem 0.85rem;
         }
+        .meal-cell-title { font-size: 0.82rem; font-weight: 700; color: #92400e; margin-bottom: 0.4rem; }
+        .meal-cell-item { font-size: 0.82rem; color: #78350f; line-height: 1.7; }
 
-        .btn-edit:hover {
-            background: #cbd5e1;
+        /* BUTTONS */
+        .action-row {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-top: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .btn-action {
+            padding: 0.65rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
             text-decoration: none;
-            color: #475569;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.15s;
+        }
+        .btn-confirm { background: var(--navy); color: white; }
+        .btn-confirm:hover { background: var(--navy-mid); color: white; }
+        .btn-edit { background: var(--surface); color: var(--text-sub); border: 1.5px solid var(--border); }
+        .btn-edit:hover { background: var(--bg); color: var(--text); text-decoration: none; }
+
+        @@keyframes shake {
+            0%,100% { transform: translateX(0); }
+            20%,60% { transform: translateX(-4px); }
+            40%,80% { transform: translateX(4px); }
         }
 
-        @@media (max-width: 768px) {
-            .button-group {
-                flex-direction: column-reverse;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center; 
-                text-align: center;
-            }
-
-            .bp-detail {
-                grid-template-columns: 1fr;
-            }
+        @@media (max-width: 600px) {
+            .topbar { padding: 0 1rem; }
+            .hero { padding: 1.25rem; }
+            .main-container { padding: 0 0.85rem; }
+            .bp-grid { grid-template-columns: 1fr 1fr; }
+            .action-row { flex-direction: column-reverse; }
+            .btn-action { width: 100%; justify-content: center; }
         }
     </style>
 </head>
 <body>
-    <div class="confirm-container">
-        <div class="confirm-header">
-            <h1>✓ 請確認您的資料</h1>
-            <p>@Model.RecordDate.ToString("yyyy年MM月dd日")</p>
-        </div>
 
-        <!--  異常值警告區 -->
-        @{
-            var warnings = new List<string>();
-            
-            // 檢查收縮壓
-            var allSystolic = new[] { Model.BP_First_1_Systolic, Model.BP_First_2_Systolic, 
-                                      Model.BP_Second_1_Systolic, Model.BP_Second_2_Systolic }
-                              .Where(v => v.HasValue).Select(v => v.Value);
-            if (allSystolic.Any(v => v > 200))
-                warnings.Add("❌ 收縮壓 >200 mmHg - 請確認是否輸入錯誤!");
-            
-            // 檢查舒張壓
-            var allDiastolic = new[] { Model.BP_First_1_Diastolic, Model.BP_First_2_Diastolic,
-                                       Model.BP_Second_1_Diastolic, Model.BP_Second_2_Diastolic }
-                               .Where(v => v.HasValue).Select(v => v.Value);
-            if (allDiastolic.Any(v => v > 160))
-                warnings.Add("❌ 舒張壓 >160 mmHg - 請確認是否輸入錯誤!");
-            
-            // 檢查血糖
-            if (Model.BloodSugar.HasValue && Model.BloodSugar.Value > 300)
-                warnings.Add("❌ 血糖 >300 mg/dL - 請確認是否輸入錯誤!");
-            
-            // 檢查運動時間
-            if (Model.ExerciseDuration.HasValue && Model.ExerciseDuration.Value > 720)
-                warnings.Add("❌ 運動時間 >720 分鐘 (12小時) - 請確認是否輸入錯誤!");
-            
-            // 檢查飲水量
-            if (Model.WaterIntake.HasValue && Model.WaterIntake.Value > 5000)
-                warnings.Add("❌ 飲水量 >5000 ml - 請確認是否輸入錯誤!");
-            
-            // 檢查抽菸
-            if (Model.Cigarettes.HasValue && Model.Cigarettes.Value > 50)
-                warnings.Add("❌ 抽菸數 >50 支 - 請確認是否輸入錯誤!");
-            
-            // 檢查檳榔
-            if (Model.BetelNut.HasValue && Model.BetelNut.Value > 50)
-                warnings.Add("❌ 嚼檳榔 >50 次 - 請確認是否輸入錯誤!");
-            
-            if (warnings.Any())
+<header class="topbar">
+    <div class="topbar-logo">
+        <div class="cross">✚</div>
+        代謝症候群疾病管理與追蹤系統
+    </div>
+</header>
+
+<div class="hero">
+    <div class="hero-title"><i class="bi bi-check-circle"></i> 請確認您的資料</div>
+    <div class="hero-sub">@Model.RecordDate.ToString("yyyy 年 MM 月 dd 日")</div>
+</div>
+
+<div class="main-container">
+
+    @{
+        var warnings = new List<string>();
+        var allSystolic  = new[] { Model.BP_First_1_Systolic,  Model.BP_First_2_Systolic,
+                                   Model.BP_Second_1_Systolic, Model.BP_Second_2_Systolic }
+                           .Where(v => v.HasValue).Select(v => v.Value);
+        var allDiastolic = new[] { Model.BP_First_1_Diastolic,  Model.BP_First_2_Diastolic,
+                                   Model.BP_Second_1_Diastolic, Model.BP_Second_2_Diastolic }
+                           .Where(v => v.HasValue).Select(v => v.Value);
+        if (allSystolic.Any(v => v > 200))   warnings.Add("收縮壓 >200 mmHg，請確認是否輸入錯誤");
+        if (allDiastolic.Any(v => v > 160))  warnings.Add("舒張壓 >160 mmHg，請確認是否輸入錯誤");
+        if (Model.BloodSugar.HasValue  && Model.BloodSugar.Value > 300)      warnings.Add("血糖 >300 mg/dL，請確認是否輸入錯誤");
+        if (Model.ExerciseDuration.HasValue && Model.ExerciseDuration.Value > 720) warnings.Add("運動時間 >720 分鐘，請確認是否輸入錯誤");
+        if (Model.WaterIntake.HasValue && Model.WaterIntake.Value > 5000)    warnings.Add("飲水量 >5000 ml，請確認是否輸入錯誤");
+        if (Model.Cigarettes.HasValue  && Model.Cigarettes.Value > 50)       warnings.Add("抽菸數 >50 支，請確認是否輸入錯誤");
+        if (Model.BetelNut.HasValue    && Model.BetelNut.Value > 50)         warnings.Add("嚼檳榔 >50 次，請確認是否輸入錯誤");
+    }
+
+    @if (warnings.Any())
+    {
+        <div class="warn-box" style="animation: shake 0.5s;">
+            <div class="warn-title"><i class="bi bi-exclamation-triangle-fill"></i> 數值可能有誤</div>
+            @foreach (var w in warnings)
             {
-                <div style="background: #fee; border: 2px solid #dc2626; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; animation: shake 0.5s;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                        <span style="font-size: 1.5rem;">⚠️</span>
-                        <strong style="color: #dc2626; font-size: 1.1rem;">注意:數值可能有誤!</strong>
-                    </div>
-                    @foreach (var warning in warnings)
+                <div class="warn-item">❌ @w</div>
+            }
+            <div class="warn-hint">如有誤請點擊下方「需要修改」返回修改。</div>
+        </div>
+    }
+
+    <!-- 血壓 -->
+    @if (Model.BP_First_1_Systolic.HasValue || Model.BP_First_1_Diastolic.HasValue ||
+         Model.BP_First_2_Systolic.HasValue || Model.BP_First_2_Diastolic.HasValue ||
+         Model.BP_Second_1_Systolic.HasValue || Model.BP_Second_1_Diastolic.HasValue ||
+         Model.BP_Second_2_Systolic.HasValue || Model.BP_Second_2_Diastolic.HasValue)
+    {
+        <div class="card">
+            <div class="card-header">❤️ 血壓測量</div>
+            <div class="card-body">
+                <div class="bp-grid">
+                    @{
+                        var bpItems = new[]
+                        {
+                            ("上午第一遍", Model.BP_First_1_Systolic,  Model.BP_First_1_Diastolic),
+                            ("上午第二遍", Model.BP_First_2_Systolic,  Model.BP_First_2_Diastolic),
+                            ("睡前第一遍", Model.BP_Second_1_Systolic, Model.BP_Second_1_Diastolic),
+                            ("睡前第二遍", Model.BP_Second_2_Systolic, Model.BP_Second_2_Diastolic),
+                        };
+                    }
+                    @foreach (var (label, sys, dia) in bpItems)
                     {
-                        <div style="color: #dc2626; font-weight: 600; margin: 0.5rem 0; padding-left: 2rem;">
-                            @warning
+                        var isDanger = (sys.HasValue && sys > 200) || (dia.HasValue && dia > 160);
+                        <div class="bp-cell">
+                            <div class="bp-cell-label">@label</div>
+                            @if (sys.HasValue && dia.HasValue)
+                            {
+                                <div class="bp-cell-val @(isDanger ? "danger" : "")">
+                                    @sys.Value.ToString("0") / @dia.Value.ToString("0") <small style="font-weight:400;font-size:0.72rem;">mmHg</small>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="bp-cell-val" style="color:var(--text-pale);font-weight:400;font-size:0.82rem;">未填寫</div>
+                            }
                         </div>
                     }
-                    <div style="color: #991b1b; margin-top: 1rem; padding: 0.75rem; background: #fef2f2; border-radius: 6px;">
-                        💡 <strong>提示:</strong> 如果數值有誤,請點擊下方「有誤,需要修改」按鈕返回修改
-                    </div>
-                </div>
-            }
-        }
-
-        <!-- 血壓測量 -->
-        @if (Model.BP_First_1_Systolic.HasValue || Model.BP_First_1_Diastolic.HasValue || 
-             Model.BP_First_2_Systolic.HasValue || Model.BP_First_2_Diastolic.HasValue ||
-             Model.BP_Second_1_Systolic.HasValue || Model.BP_Second_1_Diastolic.HasValue ||
-             Model.BP_Second_2_Systolic.HasValue || Model.BP_Second_2_Diastolic.HasValue)
-        {
-            <div class="data-section">
-                <div class="section-title">
-                    <span>❤️</span>
-                    <span>血壓測量</span>
-                </div>
-                <div class="bp-detail">
-                    <div class="bp-item">
-                        <div class="bp-label">第一次第一遍</div>
-                        <div class="bp-value @(!Model.BP_First_1_Systolic.HasValue || !Model.BP_First_1_Diastolic.HasValue ? "empty" : "")
-                             @((Model.BP_First_1_Systolic > 200 || Model.BP_First_1_Diastolic > 160) ? "text-danger" : "")">
-                            @if (Model.BP_First_1_Systolic.HasValue && Model.BP_First_1_Diastolic.HasValue)
-                            {
-                                @($"{Model.BP_First_1_Systolic.Value:0}/{Model.BP_First_1_Diastolic.Value:0} mmHg")
-                            }
-                            else
-                            {
-                                <text>未填寫</text>
-                            }
-                        </div>
-                    </div>
-                    <div class="bp-item">
-                        <div class="bp-label">第一次第二遍</div>
-                        <div class="bp-value @(!Model.BP_First_2_Systolic.HasValue || !Model.BP_First_2_Diastolic.HasValue ? "empty" : "")
-                             @((Model.BP_First_2_Systolic > 200 || Model.BP_First_2_Diastolic > 160) ? "text-danger" : "")">
-                            @if (Model.BP_First_2_Systolic.HasValue && Model.BP_First_2_Diastolic.HasValue)
-                            {
-                                @($"{Model.BP_First_2_Systolic.Value:0}/{Model.BP_First_2_Diastolic.Value:0} mmHg")
-                            }
-                            else
-                            {
-                                <text>未填寫</text>
-                            }
-                        </div>
-                    </div>
-                    <div class="bp-item">
-                        <div class="bp-label">第二次第一遍</div>
-                        <div class="bp-value @(!Model.BP_Second_1_Systolic.HasValue || !Model.BP_Second_1_Diastolic.HasValue ? "empty" : "")
-                             @((Model.BP_Second_1_Systolic > 200 || Model.BP_Second_1_Diastolic > 160) ? "text-danger" : "")">
-                            @if (Model.BP_Second_1_Systolic.HasValue && Model.BP_Second_1_Diastolic.HasValue)
-                            {
-                                @($"{Model.BP_Second_1_Systolic.Value:0}/{Model.BP_Second_1_Diastolic.Value:0} mmHg")
-                            }
-                            else
-                            {
-                                <text>未填寫</text>
-                            }
-                        </div>
-                    </div>
-                    <div class="bp-item">
-                        <div class="bp-label">第二次第二遍</div>
-                        <div class="bp-value @(!Model.BP_Second_2_Systolic.HasValue || !Model.BP_Second_2_Diastolic.HasValue ? "empty" : "")
-                             @((Model.BP_Second_2_Systolic > 200 || Model.BP_Second_2_Diastolic > 160) ? "text-danger" : "")">
-                            @if (Model.BP_Second_2_Systolic.HasValue && Model.BP_Second_2_Diastolic.HasValue)
-                            {
-                                @($"{Model.BP_Second_2_Systolic.Value:0}/{Model.BP_Second_2_Diastolic.Value:0} mmHg")
-                            }
-                            else
-                            {
-                                <text>未填寫</text>
-                            }
-                        </div>
-                    </div>
                 </div>
                 @if (Model.AvgSystolicBP.HasValue && Model.AvgDiastolicBP.HasValue)
                 {
-                    <div style="margin-top: 1rem; padding: 1rem; background: #ecfeff; border-radius: 8px; text-align: center;">
-                        <strong style="color: #0f766e;">平均血壓:</strong>
-                        <span style="font-size: 1.2rem; font-weight: 700; color: #115e59;">
-                            @Model.AvgSystolicBP.Value.ToString("0") / @Model.AvgDiastolicBP.Value.ToString("0") mmHg
-                        </span>
+                    <div class="bp-avg">
+                        平均血壓：<strong>@Model.AvgSystolicBP.Value.ToString("0") / @Model.AvgDiastolicBP.Value.ToString("0") mmHg</strong>
                     </div>
                 }
             </div>
-        }
+        </div>
+    }
 
-        <!-- 三餐攝取 -->
-        @if (Model.Meals_Breakfast != null || Model.Meals_Lunch != null || Model.Meals_Dinner != null)
-        {
-            <div class="data-section">
-                <div class="section-title">
-                    <span>🍽️</span>
-                    <span>三餐攝取</span>
-                </div>
+    <!-- 三餐 -->
+    @if (Model.Meals_Breakfast != null || Model.Meals_Lunch != null || Model.Meals_Dinner != null)
+    {
+        <div class="card">
+            <div class="card-header">🍽️ 三餐攝取</div>
+            <div class="card-body">
                 <div class="meal-grid">
                     @if (Model.Meals_Breakfast != null)
                     {
-                        <div class="meal-card">
-                            <div class="meal-title">🌅 早餐</div>
-                            <div class="meal-detail">
-                                @if (!string.IsNullOrEmpty(Model.Meals_Breakfast.Vegetables))
-                                {
-                                    <div>🥬 蔬菜:@Model.Meals_Breakfast.Vegetables</div>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.Meals_Breakfast.Protein))
-                                {
-                                    <div>🥩 蛋白質:@Model.Meals_Breakfast.Protein</div>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.Meals_Breakfast.Carbs))
-                                {
-                                    <div>🍚 澱粉:@Model.Meals_Breakfast.Carbs</div>
-                                }
+                        <div class="meal-cell">
+                            <div class="meal-cell-title">🌅 早餐</div>
+                            <div class="meal-cell-item">
+                                @if (!string.IsNullOrEmpty(Model.Meals_Breakfast.Vegetables))  { <div>🥬 蔬菜：@Model.Meals_Breakfast.Vegetables</div> }
+                                @if (!string.IsNullOrEmpty(Model.Meals_Breakfast.Protein))     { <div>🥩 蛋白質：@Model.Meals_Breakfast.Protein</div> }
+                                @if (!string.IsNullOrEmpty(Model.Meals_Breakfast.Carbs))       { <div>🍚 澱粉：@Model.Meals_Breakfast.Carbs</div> }
                             </div>
                         </div>
                     }
-
                     @if (Model.Meals_Lunch != null)
                     {
-                        <div class="meal-card">
-                            <div class="meal-title">☀️ 午餐</div>
-                            <div class="meal-detail">
-                                @if (!string.IsNullOrEmpty(Model.Meals_Lunch.Vegetables))
-                                {
-                                    <div>🥬 蔬菜:@Model.Meals_Lunch.Vegetables</div>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.Meals_Lunch.Protein))
-                                {
-                                    <div>🥩 蛋白質:@Model.Meals_Lunch.Protein</div>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.Meals_Lunch.Carbs))
-                                {
-                                    <div>🍚 澱粉:@Model.Meals_Lunch.Carbs</div>
-                                }
+                        <div class="meal-cell">
+                            <div class="meal-cell-title">☀️ 午餐</div>
+                            <div class="meal-cell-item">
+                                @if (!string.IsNullOrEmpty(Model.Meals_Lunch.Vegetables)) { <div>🥬 蔬菜：@Model.Meals_Lunch.Vegetables</div> }
+                                @if (!string.IsNullOrEmpty(Model.Meals_Lunch.Protein))    { <div>🥩 蛋白質：@Model.Meals_Lunch.Protein</div> }
+                                @if (!string.IsNullOrEmpty(Model.Meals_Lunch.Carbs))      { <div>🍚 澱粉：@Model.Meals_Lunch.Carbs</div> }
                             </div>
                         </div>
                     }
-
                     @if (Model.Meals_Dinner != null)
                     {
-                        <div class="meal-card">
-                            <div class="meal-title">🌙 晚餐</div>
-                            <div class="meal-detail">
-                                @if (!string.IsNullOrEmpty(Model.Meals_Dinner.Vegetables))
-                                {
-                                    <div>🥬 蔬菜:@Model.Meals_Dinner.Vegetables</div>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.Meals_Dinner.Protein))
-                                {
-                                    <div>🥩 蛋白質:@Model.Meals_Dinner.Protein</div>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.Meals_Dinner.Carbs))
-                                {
-                                    <div>🍚 澱粉:@Model.Meals_Dinner.Carbs</div>
-                                }
+                        <div class="meal-cell">
+                            <div class="meal-cell-title">🌙 晚餐</div>
+                            <div class="meal-cell-item">
+                                @if (!string.IsNullOrEmpty(Model.Meals_Dinner.Vegetables)) { <div>🥬 蔬菜：@Model.Meals_Dinner.Vegetables</div> }
+                                @if (!string.IsNullOrEmpty(Model.Meals_Dinner.Protein))    { <div>🥩 蛋白質：@Model.Meals_Dinner.Protein</div> }
+                                @if (!string.IsNullOrEmpty(Model.Meals_Dinner.Carbs))      { <div>🍚 澱粉：@Model.Meals_Dinner.Carbs</div> }
                             </div>
                         </div>
                     }
                 </div>
             </div>
-        }
+        </div>
+    }
 
-        <!-- 運動資訊 -->
-        @if (!string.IsNullOrEmpty(Model.ExerciseType) || Model.ExerciseDuration.HasValue)
+    <!-- 運動 + 飲品 + 習慣 + 血糖 (合一張卡) -->
+    @{
+        bool hasOther = !string.IsNullOrEmpty(Model.ExerciseType) || Model.ExerciseDuration.HasValue
+                     || Model.WaterIntake.HasValue || !string.IsNullOrEmpty(Model.Beverage)
+                     || Model.Cigarettes.HasValue || Model.BetelNut.HasValue || Model.BloodSugar.HasValue;
+    }
+    @if (hasOther)
+    {
+        <div class="card">
+            <div class="card-header"><i class="bi bi-clipboard-data"></i> 其他健康資訊</div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(Model.ExerciseType) || Model.ExerciseDuration.HasValue)
+                {
+                    <div class="data-row">
+                        <span class="data-label">🏃 運動種類</span>
+                        <span class="data-value @(string.IsNullOrEmpty(Model.ExerciseType) ? "empty" : "")">@(Model.ExerciseType ?? "未填寫")</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">🏃 運動時間</span>
+                        <span class="data-value @(!Model.ExerciseDuration.HasValue ? "empty" : "") @(Model.ExerciseDuration > 720 ? "danger" : "")">
+                            @(Model.ExerciseDuration.HasValue ? $"{Model.ExerciseDuration.Value:0.0} 分鐘" : "未填寫")
+                        </span>
+                    </div>
+                }
+                @if (Model.WaterIntake.HasValue)
+                {
+                    <div class="data-row">
+                        <span class="data-label">💧 飲水量</span>
+                        <span class="data-value @(Model.WaterIntake > 5000 ? "danger" : "")">@Model.WaterIntake.Value.ToString("0") ml</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.Beverage))
+                {
+                    <div class="data-row">
+                        <span class="data-label">🥤 其他飲料</span>
+                        <span class="data-value">@Model.Beverage</span>
+                    </div>
+                }
+                @if (Model.Cigarettes.HasValue)
+                {
+                    <div class="data-row">
+                        <span class="data-label">🚬 抽菸</span>
+                        <span class="data-value @(Model.Cigarettes > 50 ? "danger" : "")">@Model.Cigarettes.Value.ToString("0") 支</span>
+                    </div>
+                }
+                @if (Model.BetelNut.HasValue)
+                {
+                    <div class="data-row">
+                        <span class="data-label">🌿 檳榔</span>
+                        <span class="data-value @(Model.BetelNut > 50 ? "danger" : "")">@Model.BetelNut.Value.ToString("0") 次</span>
+                    </div>
+                }
+                @if (Model.BloodSugar.HasValue)
+                {
+                    <div class="data-row">
+                        <span class="data-label">🩸 血糖</span>
+                        <span class="data-value @(Model.BloodSugar > 300 ? "danger" : "")">@Model.BloodSugar.Value.ToString("0.0") mg/dL</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- 確認表單 -->
+    <form id="confirmForm" asp-controller="DailyHealth"
+          asp-action="@(Model.Id > 0 ? "ConfirmUpdate" : "ConfirmSubmit")" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="UserId" />
+        <input type="hidden" asp-for="RecordDate" value="@Model.RecordDate.ToString("yyyy-MM-ddTHH:mm:ss")" />
+        <input type="hidden" asp-for="RecordTime" value="@Model.RecordTime?.ToString()" />
+        <input type="hidden" asp-for="BP_First_1_Systolic" />
+        <input type="hidden" asp-for="BP_First_1_Diastolic" />
+        <input type="hidden" asp-for="BP_First_2_Systolic" />
+        <input type="hidden" asp-for="BP_First_2_Diastolic" />
+        <input type="hidden" asp-for="BP_Second_1_Systolic" />
+        <input type="hidden" asp-for="BP_Second_1_Diastolic" />
+        <input type="hidden" asp-for="BP_Second_2_Systolic" />
+        <input type="hidden" asp-for="BP_Second_2_Diastolic" />
+        @if (Model.Meals_Breakfast != null)
         {
-            <div class="data-section">
-                <div class="section-title">
-                    <span>🏃</span>
-                    <span>運動資訊</span>
-                </div>
-                <div class="data-grid">
-                    <div class="data-item">
-                        <div class="data-label">運動種類</div>
-                        <div class="data-value @(string.IsNullOrEmpty(Model.ExerciseType) ? "empty" : "")">
-                            @(Model.ExerciseType ?? "未填寫")
-                        </div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-label">運動時間</div>
-                        <div class="data-value @(!Model.ExerciseDuration.HasValue ? "empty" : "") @((Model.ExerciseDuration > 720) ? "text-danger" : "")">
-                            @(Model.ExerciseDuration?.ToString("0.0") ?? "未填寫") @(Model.ExerciseDuration.HasValue ? "分鐘" : "")
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <input type="hidden" name="Meals_Breakfast" value="@System.Text.Json.JsonSerializer.Serialize(Model.Meals_Breakfast)" />
         }
-
-        <!-- 飲品攝取 -->
-        @if (Model.WaterIntake.HasValue || !string.IsNullOrEmpty(Model.Beverage))
+        @if (Model.Meals_Lunch != null)
         {
-            <div class="data-section">
-                <div class="section-title">
-                    <span>💧</span>
-                    <span>飲品攝取</span>
-                </div>
-                <div class="data-grid">
-                    <div class="data-item">
-                        <div class="data-label">水分攝取</div>
-                        <div class="data-value @(!Model.WaterIntake.HasValue ? "empty" : "") @((Model.WaterIntake > 5000) ? "text-danger" : "")">
-                            @(Model.WaterIntake?.ToString("0") ?? "未填寫") @(Model.WaterIntake.HasValue ? "ml" : "")
-                        </div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-label">其他飲料</div>
-                        <div class="data-value @(string.IsNullOrEmpty(Model.Beverage) ? "empty" : "")">
-                            @(Model.Beverage ?? "未填寫")
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <input type="hidden" name="Meals_Lunch" value="@System.Text.Json.JsonSerializer.Serialize(Model.Meals_Lunch)" />
         }
-
-        <!-- 生活習慣 -->
-        @if (Model.Cigarettes.HasValue || Model.BetelNut.HasValue)
+        @if (Model.Meals_Dinner != null)
         {
-            <div class="data-section">
-                <div class="section-title">
-                    <span>🚬</span>
-                    <span>生活習慣</span>
-                </div>
-                <div class="data-grid">
-                    <div class="data-item">
-                        <div class="data-label">抽菸支數</div>
-                        <div class="data-value @(!Model.Cigarettes.HasValue ? "empty" : "") @((Model.Cigarettes > 50) ? "text-danger" : "")">
-                            @(Model.Cigarettes?.ToString("0") ?? "未填寫") @(Model.Cigarettes.HasValue ? "支" : "")
-                        </div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-label">嚼檳榔次數</div>
-                        <div class="data-value @(!Model.BetelNut.HasValue ? "empty" : "") @((Model.BetelNut > 50) ? "text-danger" : "")">
-                            @(Model.BetelNut?.ToString("0") ?? "未填寫") @(Model.BetelNut.HasValue ? "次" : "")
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <input type="hidden" name="Meals_Dinner" value="@System.Text.Json.JsonSerializer.Serialize(Model.Meals_Dinner)" />
         }
+        <input type="hidden" asp-for="ExerciseType" />
+        <input type="hidden" asp-for="ExerciseDuration" />
+        <input type="hidden" asp-for="WaterIntake" />
+        <input type="hidden" asp-for="Beverage" />
+        <input type="hidden" asp-for="Cigarettes" />
+        <input type="hidden" asp-for="BetelNut" />
+        <input type="hidden" asp-for="BloodSugar" />
 
-        <!-- 血糖 -->
-        @if (Model.BloodSugar.HasValue)
-        {
-            <div class="data-section">
-                <div class="section-title">
-                    <span>🩸</span>
-                    <span>血糖</span>
-                </div>
-                <div class="data-item">
-                    <div class="data-label">血糖值</div>
-                    <div class="data-value @((Model.BloodSugar > 300) ? "text-danger" : "")">
-                        @Model.BloodSugar.Value.ToString("0.0") mg/dL
-                    </div>
-                </div>
-            </div>
-        }
+        <div class="action-row">
+            <button type="button" onclick="goBackToEdit()" class="btn-action btn-edit">
+                <i class="bi bi-pencil"></i> 需要修改
+            </button>
+            <button type="submit" class="btn-action btn-confirm">
+                <i class="bi bi-check-lg"></i> 確認上傳
+            </button>
+        </div>
+    </form>
 
-        <!-- 確認表單 -->
-        <form id="confirmForm" asp-controller="DailyHealth" asp-action="@(Model.Id > 0 ? "ConfirmUpdate" : "ConfirmSubmit")" method="post">
-            @Html.AntiForgeryToken()
+</div>
 
-            <!-- 基本資訊 -->
-            <input type="hidden" asp-for="Id" />
-            <input type="hidden" asp-for="UserId" />
+<script>
+    function goBackToEdit() {
+        const form = document.getElementById('confirmForm');
+        const editForm = document.createElement('form');
+        editForm.method = 'GET';
 
-            <!-- 完整的 DateTime 格式 -->
-            <input type="hidden" asp-for="RecordDate" value="@Model.RecordDate.ToString("yyyy-MM-ddTHH:mm:ss")" />
-            <input type="hidden" asp-for="RecordTime" value="@Model.RecordTime?.ToString()" />
-
-            <!-- 血壓 - 8個隱藏欄位 -->
-            <input type="hidden" asp-for="BP_First_1_Systolic" />
-            <input type="hidden" asp-for="BP_First_1_Diastolic" />
-            <input type="hidden" asp-for="BP_First_2_Systolic" />
-            <input type="hidden" asp-for="BP_First_2_Diastolic" />
-            <input type="hidden" asp-for="BP_Second_1_Systolic" />
-            <input type="hidden" asp-for="BP_Second_1_Diastolic" />
-            <input type="hidden" asp-for="BP_Second_2_Systolic" />
-            <input type="hidden" asp-for="BP_Second_2_Diastolic" />
-
-            <!-- 三餐 JSON -->
-            @if (Model.Meals_Breakfast != null)
-            {
-                <input type="hidden" name="Meals_Breakfast" value="@System.Text.Json.JsonSerializer.Serialize(Model.Meals_Breakfast)" />
-            }
-            @if (Model.Meals_Lunch != null)
-            {
-                <input type="hidden" name="Meals_Lunch" value="@System.Text.Json.JsonSerializer.Serialize(Model.Meals_Lunch)" />
-            }
-            @if (Model.Meals_Dinner != null)
-            {
-                <input type="hidden" name="Meals_Dinner" value="@System.Text.Json.JsonSerializer.Serialize(Model.Meals_Dinner)" />
-            }
-
-            <!-- 其他欄位 -->
-            <input type="hidden" asp-for="ExerciseType" />
-            <input type="hidden" asp-for="ExerciseDuration" />
-            <input type="hidden" asp-for="WaterIntake" />
-            <input type="hidden" asp-for="Beverage" />
-            <input type="hidden" asp-for="Cigarettes" />
-            <input type="hidden" asp-for="BetelNut" />
-            <input type="hidden" asp-for="BloodSugar" />
-
-            <div class="button-group">
-                <button type="button" onclick="goBackToEdit()" class="btn btn-edit">
-                    ✏️ 有誤,需要修改
-                </button>
-                <button type="submit" class="btn btn-confirm">
-                    ✓ 確認上傳
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <style>
-        .text-danger {
-            color: #dc2626 !important;
-            font-weight: 700 !important;
-        }
-        
-        @@keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-    </style>
-
-    <script>
-        // 返回編輯頁面並保留資料
-        function goBackToEdit() {
-            const form = document.getElementById('confirmForm');
-            
-            // 建立一個新表單並提交到 Create (GET)
-            const editForm = document.createElement('form');
-            editForm.method = 'GET';
+        if (@Model.Id === 0) {
+            editForm.action = '@Url.Action("Create", "DailyHealth")';
+            form.querySelectorAll('input[type="hidden"]').forEach(input => {
+                if (input.name && input.name !== '__RequestVerificationToken' && input.value) {
+                    const el = document.createElement('input');
+                    el.type = 'hidden';
+                    el.name = input.name;
+                    el.value = input.value;
+                    editForm.appendChild(el);
+                }
+            });
+        } else {
             editForm.action = '@Url.Action("Edit", "DailyHealth", new { id = Model.Id })';
-            
-            // 如果 Id 是 0 (新增),則導向 Create 並帶所有參數
-            if (@Model.Id === 0) {
-                editForm.action = '@Url.Action("Create", "DailyHealth")';
-                
-                // 複製所有隱藏欄位
-                const inputs = form.querySelectorAll('input[type="hidden"]');
-                inputs.forEach(input => {
-                    if (input.name && input.name !== '__RequestVerificationToken' && input.value) {
-                        const newInput = document.createElement('input');
-                        newInput.type = 'hidden';
-                        newInput.name = input.name;
-                        newInput.value = input.value;
-                        editForm.appendChild(newInput);
-                    }
-                });
-            }
-            
-            document.body.appendChild(editForm);
-            editForm.submit();
         }
-    </script>
+
+        document.body.appendChild(editForm);
+        editForm.submit();
+    }
+</script>
 </body>
 </html>

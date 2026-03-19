@@ -146,7 +146,7 @@ namespace healthProject.Controllers
         // 啟用 / 停用（AJAX）
         // ========================================
         [HttpPost]
-        public async Task<IActionResult> ToggleActive(int id)
+        public async Task<IActionResult> ToggleActive([FromBody] int id)
         {
             try
             {
@@ -176,7 +176,7 @@ namespace healthProject.Controllers
         // 刪除（AJAX）
         // ========================================
         [HttpPost]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete([FromBody] int id)
         {
             try
             {
