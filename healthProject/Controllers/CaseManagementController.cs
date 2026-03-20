@@ -57,6 +57,14 @@ namespace healthProject.Controllers
                 return View(viewModel);
             }
 
+            // 新增密碼強度驗證（在身分證驗證後面加）
+            if (!IsValidDefaultPassword(viewModel.DefaultPassword))
+            {
+                ModelState.AddModelError("DefaultPassword",
+                    "預設密碼需至少 7 碼，且須包含大寫英文、小寫英文、數字、特殊符號（不含 + - < > % ^ & #）中的任意三種");
+                return View(viewModel);
+            }
+
             // 驗證電話號碼格式(必須是10碼數字)
             if (!System.Text.RegularExpressions.Regex.IsMatch(viewModel.PhoneNumber, @"^\d{10}$"))
             {
@@ -67,20 +75,21 @@ namespace healthProject.Controllers
             try
             {
                 // 組合密碼:特殊符號 + 身分證字號
-                string defaultPassword = viewModel.SpecialSymbol + viewModel.IDNumber;
+                string defaultPassword = viewModel.DefaultPassword;
 
                 var model = new UserDBModel
                 {
-                    SpecialSymbol = viewModel.SpecialSymbol,
+                    SpecialSymbol = null,
                     IDNumber = viewModel.IDNumber,
                     Username = viewModel.IDNumber,
-                    PasswordHash = defaultPassword,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(defaultPassword),
                     Role = "Patient",
                     FullName = viewModel.FullName,
                     PhoneNumber = viewModel.PhoneNumber,
                     CreatedDate = DateTime.Now,
                     IsActive = true,
                     IsFirstLogin = true,
+                    Email = viewModel.Email,
                     LineUserId = null
                 };
 
@@ -91,16 +100,16 @@ namespace healthProject.Controllers
                 {
                     conn.Open();
                     string sql = @"
-        INSERT INTO public.""Users"" 
-        (""SpecialSymbol"", ""IDNumber"", ""Username"", ""PasswordHash"", ""Role"", ""FullName"", 
-         ""CreatedDate"", ""IsActive"", ""PhoneNumber"", ""IsFirstLogin"", ""LineUserId"")
-        VALUES 
-        (@specialsymbol, @idnumber, @username, @passwordhash, @role, @fullname, 
-         @createddate, @isactive, @phonenumber, @isfirstlogin, @lineuserid);";
+    INSERT INTO public.""Users"" 
+    (""SpecialSymbol"", ""IDNumber"", ""Username"", ""PasswordHash"", ""Role"", ""FullName"", 
+     ""CreatedDate"", ""IsActive"", ""PhoneNumber"", ""IsFirstLogin"", ""LineUserId"", ""Email"")
+    VALUES 
+    (@specialsymbol, @idnumber, @username, @passwordhash, @role, @fullname, 
+     @createddate, @isactive, @phonenumber, @isfirstlogin, @lineuserid, @email);";
 
                     using (var cmd = new NpgsqlCommand(sql, conn))
                     {
-                        cmd.Parameters.AddWithValue("@specialsymbol", model.SpecialSymbol);
+                        cmd.Parameters.AddWithValue("@specialsymbol", (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@idnumber", model.IDNumber);
                         cmd.Parameters.AddWithValue("@username", model.Username);
                         cmd.Parameters.AddWithValue("@passwordhash", model.PasswordHash);
@@ -111,12 +120,13 @@ namespace healthProject.Controllers
                         cmd.Parameters.AddWithValue("@phonenumber", model.PhoneNumber);
                         cmd.Parameters.AddWithValue("@isfirstlogin", model.IsFirstLogin);
                         cmd.Parameters.AddWithValue("@lineuserid", (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@email", viewModel.Email ?? (object)DBNull.Value);
 
                         cmd.ExecuteNonQuery();
                     }
                 }
 
-                TempData["SuccessMessage"] = $"✅ 已成功新增個案:{model.FullName}(身分證字號:{model.IDNumber})!預設密碼為 {defaultPassword}。";
+                TempData["SuccessMessage"] = $"✅ 已成功新增個案：{model.FullName}（身分證字號：{model.IDNumber}）！預設密碼為 {defaultPassword}，請告知病患。";
                 return RedirectToAction("Create");
             }
             catch (Exception ex)
@@ -2751,7 +2761,27 @@ namespace healthProject.Controllers
             return trackingCandidates.Where(r => r.Is722Tracking).ToList();
         }
 
-        
+        private bool IsValidDefaultPassword(string password)
+        {
+            if (string.IsNullOrEmpty(password) || password.Length < 7) return false;
+
+            // 不允許的特殊符號
+            var forbidden = new[] { '+', '-', '<', '>', '%', '^', '&', '#' };
+            if (password.Any(c => forbidden.Contains(c))) return false;
+
+            bool hasUpper = password.Any(char.IsUpper);
+            bool hasLower = password.Any(char.IsLower);
+            bool hasDigit = password.Any(char.IsDigit);
+            // 特殊符號：非字母、非數字、非禁用符號
+            bool hasSpecial = password.Any(c => !char.IsLetterOrDigit(c) && !forbidden.Contains(c));
+
+            int typeCount = (hasUpper ? 1 : 0) + (hasLower ? 1 : 0)
+                          + (hasDigit ? 1 : 0) + (hasSpecial ? 1 : 0);
+
+            return typeCount >= 3;
+        }
+
+
         // 取得最近一次未填寫原因
         private async Task<string> GetLatestMissedReasonAsync(int userId, string connStr)
         {
@@ -2773,6 +2803,24 @@ namespace healthProject.Controllers
             var result = await cmd.ExecuteScalarAsync();
 
             return result != null && result != DBNull.Value ? result.ToString() : "";
+        }
+
+        private bool IsValidPassword(string password)
+        {
+            if (string.IsNullOrEmpty(password) || password.Length < 7) return false;
+
+            var forbidden = new[] { '+', '-', '<', '>', '%', '^', '&', '#' };
+            if (password.Any(c => forbidden.Contains(c))) return false;
+
+            bool hasUpper = password.Any(char.IsUpper);
+            bool hasLower = password.Any(char.IsLower);
+            bool hasDigit = password.Any(char.IsDigit);
+            bool hasSpecial = password.Any(c => !char.IsLetterOrDigit(c) && !forbidden.Contains(c));
+
+            int typeCount = (hasUpper ? 1 : 0) + (hasLower ? 1 : 0)
+                          + (hasDigit ? 1 : 0) + (hasSpecial ? 1 : 0);
+
+            return typeCount >= 3;
         }
 
     }

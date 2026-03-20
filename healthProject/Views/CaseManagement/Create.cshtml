@@ -498,14 +498,17 @@
                     <div class="form-row">
 
                         <div class="field">
-                            <label asp-for="SpecialSymbol" class="field-label">
-                                特殊符號 <span class="required">*</span>
-                            </label>
-                            <input asp-for="SpecialSymbol" class="field-input"
-                                   placeholder="請輸入 1 個特殊符號" maxlength="1" required />
-                            <span asp-validation-for="SpecialSymbol" class="field-error"></span>
-                        </div>
-
+    <label asp-for="DefaultPassword" class="field-label">
+        預設密碼 <span class="required">*</span>
+    </label>
+    <input asp-for="DefaultPassword" id="DefaultPassword" class="field-input"
+           placeholder="請輸入預設密碼" required
+           autocomplete="new-password" />
+    <div style="font-size:0.75rem; color:var(--text-pale); margin-top:0.3rem;">
+        至少 7 碼，須包含大寫、小寫、數字、特殊符號中任意三種（不含 + - &lt; &gt; % ^ &amp; #）
+    </div>
+    <span asp-validation-for="DefaultPassword" class="field-error"></span>
+</div>
                         <div class="field">
                             <label asp-for="IDNumber" class="field-label">
                                 身分證字號 <span class="required">*</span>
@@ -532,7 +535,14 @@
                                    placeholder="請輸入 10 碼電話號碼" required />
                             <span asp-validation-for="PhoneNumber" class="field-error"></span>
                         </div>
-
+                        <div class="field">
+    <label asp-for="Email" class="field-label">
+        Email <span class="required">*</span>
+    </label>
+    <input asp-for="Email" id="Email" class="field-input" type="email"
+           placeholder="請輸入 Email" required />
+    <span asp-validation-for="Email" class="field-error"></span>
+</div>
                     </div>
                 </div>
             </div>
@@ -575,27 +585,28 @@
         const cancelBtn = document.getElementById('cancelBtn');
         const idInput = document.getElementById('IDNumber');
         const phoneInput = document.getElementById('PhoneNumber');
-        const symbolInput = document.querySelector('[name="SpecialSymbol"]');
+        //const symbolInput = document.querySelector('[name="SpecialSymbol"]');
         const nameInput = document.getElementById('FullName');
 
-        function validateID(v) { return /^[A-Z][12]\d{8}$/.test(v); }
-        function validatePhone(v) { return /^\d{10}$/.test(v); }
+        function validateID(v) { return /^[A-Z][12]\d{8}$/.test(v.trim()); }
+function validatePhone(v) { return /^\d{10}$/.test(v.trim()); }
 
         submitBtn.addEventListener('click', function () {
             if (!form.checkValidity()) { form.reportValidity(); return; }
 
-            if (!validateID(idInput.value)) {
-                idInput.classList.add('error'); idInput.focus();
-                alert('身分證格式有誤\n正確格式：第一碼英文大寫，第二碼為 1 或 2，共 10 碼');
-                return;
-            }
-            if (!validatePhone(phoneInput.value)) {
-                phoneInput.classList.add('error'); phoneInput.focus();
-                alert('電話號碼格式有誤\n請輸入 10 碼數字');
-                return;
-            }
+            if (!validateID(idInput.value.trim())) {
+    idInput.classList.add('error'); idInput.focus();
+    alert('身分證格式有誤\n正確格式：第一碼英文大寫，第二碼為 1 或 2，共 10 碼');
+    return;
+}
+if (!validatePhone(phoneInput.value.trim())) {
+    phoneInput.classList.add('error'); phoneInput.focus();
+    alert('電話號碼格式有誤\n請輸入 10 碼數字');
+    return;
+}
 
-            confirmMsg.innerHTML = `確認特殊符號 <strong>${symbolInput.value}</strong> 與給予個案 <strong>${nameInput.value}</strong> 的特殊符號相同？`;
+            const pwdInput = document.getElementById('DefaultPassword');
+            confirmMsg.innerHTML = `確認要新增個案 <strong>${nameInput.value}</strong>（${idInput.value}）？<br><br>預設密碼：<strong style="letter-spacing:0.05em;">${pwdInput.value}</strong><br><span style="font-size:0.82rem;color:#5a6a7e;">請記下密碼後告知病患。</span>`;
             modal.classList.add('open');
         });
 

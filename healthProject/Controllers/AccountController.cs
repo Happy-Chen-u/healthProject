@@ -250,11 +250,22 @@ namespace healthProject.Controllers
             {
                 return View(model);
             }
+            if (!IsValidPassword(model.NewPassword))
+            {
+                ModelState.AddModelError("NewPassword", "密碼需至少 7 碼，且須包含大寫英文、小寫英文、數字、特殊符號（不含 + - < > % ^ & #）中的任意三種");
+                return View(model);
+            }
 
             // 檢查新密碼是否與舊密碼相同
             if (model.OldPassword == model.NewPassword)
             {
                 ModelState.AddModelError("NewPassword", "您輸入的新密碼與舊密碼相同,請更改");
+                return View(model);
+            }
+
+            if (!IsValidPassword(model.NewPassword))
+            {
+                ModelState.AddModelError("NewPassword", "新密碼需至少 7 碼，且須包含大寫英文、小寫英文、數字、特殊符號（不含 + - < > % ^ & #）中的任意三種");
                 return View(model);
             }
 
@@ -288,6 +299,54 @@ namespace healthProject.Controllers
             }
         }
 
+        // OTP 驗證頁面 - 重設密碼用
+        [HttpGet]
+        public IActionResult VerifyResetOtp()
+        {
+            if (TempData["ResetEmail"] is string email)
+                ViewBag.MaskedEmail = email;
+            return View();
+        }
+
+        // OTP 驗證處理 - 重設密碼用
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult VerifyResetOtp(string otp)
+        {
+            var stored = HttpContext.Session.GetString("ResetOtp");
+            var expiry = HttpContext.Session.GetString("ResetOtpExpiry");
+            var idNumber = HttpContext.Session.GetString("ResetIDNumber");
+
+            if (string.IsNullOrEmpty(stored) || string.IsNullOrEmpty(idNumber))
+            {
+                ModelState.AddModelError("", "驗證工作階段已失效，請重新操作");
+                return View();
+            }
+
+            if (DateTime.Now > DateTime.Parse(expiry))
+            {
+                HttpContext.Session.Remove("ResetOtp");
+                HttpContext.Session.Remove("ResetOtpExpiry");
+                HttpContext.Session.Remove("ResetIDNumber");
+                ModelState.AddModelError("", "驗證碼已過期，請重新申請");
+                return View();
+            }
+
+            if (otp != stored)
+            {
+                ModelState.AddModelError("", "驗證碼錯誤，請重新輸入");
+                return View();
+            }
+
+            // 驗證成功，清除 Session 並帶去改密碼
+            HttpContext.Session.Remove("ResetOtp");
+            HttpContext.Session.Remove("ResetOtpExpiry");
+            TempData["ResetUser"] = idNumber;
+            HttpContext.Session.Remove("ResetIDNumber");
+
+            return RedirectToAction("ResetPassword");
+        }
+
         // 忘記密碼頁面
         [HttpGet]
         public IActionResult ForgotPassword()
@@ -300,48 +359,50 @@ namespace healthProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
         {
-            _logger.LogInformation($"Received ForgotPassword request - IDNumber: {model.IDNumber}, FullName: {model.FullName}, PhoneNumber: {model.PhoneNumber}");
-
-            if (!ModelState.IsValid)
-            {
-                _logger.LogWarning("ModelState is invalid in ForgotPassword");
-                return View(model);
-            }
+            if (!ModelState.IsValid) return View(model);
 
             try
             {
-                var query = "SELECT * FROM public.\"Users\" WHERE \"IDNumber\" = @IDNumber AND \"FullName\" = @FullName AND \"PhoneNumber\" = @PhoneNumber";
-                using (var conn = new NpgsqlConnection(_configuration.GetConnectionString("DefaultConnection")))
-                {
-                    await conn.OpenAsync();
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@IDNumber", model.IDNumber);
-                        cmd.Parameters.AddWithValue("@FullName", model.FullName);
-                        cmd.Parameters.AddWithValue("@PhoneNumber", model.PhoneNumber);
+                var connStr = _configuration.GetConnectionString("DefaultConnection");
+                await using var conn = new NpgsqlConnection(connStr);
+                await conn.OpenAsync();
 
-                        using (var reader = await cmd.ExecuteReaderAsync())
-                        {
-                            if (await reader.ReadAsync())
-                            {
-                                _logger.LogInformation($"User found with IDNumber: {model.IDNumber}, redirecting to ResetPassword");
-                                TempData["ResetUser"] = model.IDNumber;
-                                return RedirectToAction("ResetPassword");
-                            }
-                            else
-                            {
-                                _logger.LogWarning($"No user found for IDNumber: {model.IDNumber}");
-                                ModelState.AddModelError(string.Empty, "查無此使用者，請確認資料是否正確");
-                                return View(model);
-                            }
-                        }
-                    }
+                await using var cmd = new NpgsqlCommand(@"
+    SELECT ""Id"", ""IDNumber"", ""Email"" FROM ""Users""
+    WHERE ""Username"" = @Username AND ""Email"" = @Email AND ""IsActive"" = true
+    LIMIT 1", conn);
+                cmd.Parameters.AddWithValue("@Username", model.Username);
+                cmd.Parameters.AddWithValue("@Email", model.Email);
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                if (!await reader.ReadAsync())
+                {
+                    // 故意不告知是否存在，避免帳號枚舉攻擊
+                    TempData["ResetEmail"] = MaskEmail(model.Email);
+                    return RedirectToAction("VerifyResetOtp");
                 }
+
+                var userId = reader.GetInt32(0);
+                var idNumber = reader.GetString(1);
+                var email = reader.GetString(2);
+                await reader.CloseAsync();
+
+                var otp = GenerateOtp();
+                HttpContext.Session.SetString("ResetOtp", otp);
+                HttpContext.Session.SetString("ResetOtpExpiry", DateTime.Now.AddMinutes(5).ToString("o"));
+                HttpContext.Session.SetString("ResetIDNumber", idNumber);
+
+                _logger.LogInformation($"準備寄送 OTP 到 Email: {email}");
+                await SendOtpEmailAsync(email, otp);
+                _logger.LogInformation($"OTP 寄送成功");
+
+                TempData["ResetEmail"] = MaskEmail(email);
+                return RedirectToAction("VerifyResetOtp");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "忘記密碼處理失敗");
-                ModelState.AddModelError(string.Empty, "系統發生錯誤，請稍後再試");
+                ModelState.AddModelError("", "系統發生錯誤，請稍後再試");
                 return View(model);
             }
         }
@@ -376,6 +437,11 @@ namespace healthProject.Controllers
             {
                 return View(model);
             }
+            if (!IsValidPassword(model.Password))
+            {
+                ModelState.AddModelError("Password", "密碼需至少 7 碼，且須包含大寫英文、小寫英文、數字、特殊符號（不含 + - < > % ^ & #）中的任意三種");
+                return View(model);
+            }
 
             try
             {
@@ -385,7 +451,7 @@ namespace healthProject.Controllers
                     await conn.OpenAsync();
                     using (var cmd = new NpgsqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@PasswordHash", model.Password);
+                        cmd.Parameters.AddWithValue("@PasswordHash", HashPassword(model.Password));
                         cmd.Parameters.AddWithValue("@IDNumber", model.IDNumber);
                         var rowsAffected = await cmd.ExecuteNonQueryAsync();
 
@@ -548,6 +614,23 @@ namespace healthProject.Controllers
             }
         }
 
+        private bool IsValidPassword(string password)
+        {
+            if (string.IsNullOrEmpty(password) || password.Length < 7) return false;
+
+            var forbidden = new[] { '+', '-', '<', '>', '%', '^', '&', '#' };
+            if (password.Any(c => forbidden.Contains(c))) return false;
+
+            bool hasUpper = password.Any(char.IsUpper);
+            bool hasLower = password.Any(char.IsLower);
+            bool hasDigit = password.Any(char.IsDigit);
+            bool hasSpecial = password.Any(c => !char.IsLetterOrDigit(c) && !forbidden.Contains(c));
+
+            int typeCount = (hasUpper ? 1 : 0) + (hasLower ? 1 : 0)
+                          + (hasDigit ? 1 : 0) + (hasSpecial ? 1 : 0);
+
+            return typeCount >= 3;
+        }
         private string GenerateOtp()
         {
             Random random = new Random();
@@ -614,6 +697,48 @@ namespace healthProject.Controllers
         private string HashPassword(string password)
         {
             return BCrypt.Net.BCrypt.HashPassword(password);
+        }
+
+        private async Task SendOtpEmailAsync(string toEmail, string otp)
+        {
+            var host = _configuration["EmailSettings:SmtpHost"];
+            var port = int.Parse(_configuration["EmailSettings:SmtpPort"]);
+            var sender = _configuration["EmailSettings:SenderEmail"];
+            var password = _configuration["EmailSettings:SenderPassword"];
+            var name = _configuration["EmailSettings:SenderName"];
+
+            var message = new MimeKit.MimeMessage();
+            message.From.Add(new MimeKit.MailboxAddress(name, sender));
+            message.To.Add(new MimeKit.MailboxAddress("", toEmail));
+            message.Subject = "【代謝症候群管理系統】密碼重設驗證碼";
+            message.Body = new MimeKit.TextPart("html")
+            {
+                Text = $@"
+        <div style='font-family:sans-serif;max-width:480px;margin:auto;'>
+            <h2 style='color:#0a2540;'>密碼重設驗證碼</h2>
+            <p>您好，您正在進行密碼重設。</p>
+            <div style='font-size:2rem;font-weight:700;letter-spacing:0.3em;
+                        background:#f4f6f9;padding:1rem 2rem;border-radius:8px;
+                        text-align:center;color:#1a6fb5;margin:1.5rem 0;'>
+                {otp}
+            </div>
+            <p>此驗證碼於 <strong>5 分鐘內</strong>有效，請勿告知他人。</p>
+            <p style='color:#8fa0b4;font-size:0.85rem;'>若您未申請密碼重設，請忽略此信。</p>
+        </div>"
+            };
+
+            using var smtp = new MailKit.Net.Smtp.SmtpClient();
+            await smtp.ConnectAsync(host, port, MailKit.Security.SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(sender, password);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
+        }
+
+        private string MaskEmail(string email)
+        {
+            var at = email.IndexOf('@');
+            if (at <= 1) return email;
+            return email[0] + new string('*', at - 1) + email[at..];
         }
     }
 }

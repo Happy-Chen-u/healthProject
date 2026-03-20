@@ -1,5 +1,6 @@
 ﻿using healthProject.Models;
 using Npgsql;
+using System.Text;
 using System.Text.Json;
 
 namespace healthProject.Services
@@ -69,32 +70,44 @@ namespace healthProject.Services
 
         // 發送週報給單一使用者 
         public async Task SendWeeklyReportToUserAsync(
-            UserDBModel user,
-            DateTime startDate,
-            DateTime endDate)
+    UserDBModel user,
+    DateTime startDate,
+    DateTime endDate)
         {
             try
             {
-                _logger.LogInformation($"📄 開始為 {user.FullName} 產生週報");
-
                 // 1. 產生分析資料
                 var analysis = await GenerateAnalysisAsync(
                     user.Id, user.FullName, user.IDNumber,
                     ReportType.Weekly, startDate, endDate);
-
                 // 2. 產生 PDF
                 var pdfBytes = _reportService.GeneratePdfReport(analysis);
-                _logger.LogInformation($"✅ PDF 產生完成,大小: {pdfBytes.Length / 1024}KB");
-
                 // 3. 儲存到資料庫並取得下載連結
                 var reportId = await SaveWeeklyReportAsync(user.Id, startDate, endDate, pdfBytes);
-
-                // 4. 產生下載連結(使用你的網站域名)
+                // 4. 產生下載連結
                 var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://你的網域.com";
                 var downloadUrl = $"{baseUrl}/Analysis/DownloadWeeklyReport?reportId={reportId}";
-
                 // 5. 傳送 LINE 訊息
                 await SendLineNotificationAsync(user, startDate, endDate, downloadUrl);
+
+                // 6. ← 加在這裡：週報衛教推播
+                try
+                {
+                    using var http = new HttpClient();
+                    var payload = JsonSerializer.Serialize(new
+                    {
+                        lineUserId = user.LineUserId,
+                        userId = user.Id
+                    });
+                    await http.PostAsync(
+                        "http://localhost:3000/api/send-weekly-education",
+                        new StringContent(payload, Encoding.UTF8, "application/json"));
+                    _logger.LogInformation($"📚 已發送週報衛教給 {user.FullName}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "週報衛教推播失敗，不影響主流程");
+                }
 
                 _logger.LogInformation($"🎉 週報已成功傳送: {user.FullName}");
             }
