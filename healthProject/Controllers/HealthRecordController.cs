@@ -483,19 +483,24 @@ namespace healthProject.Controllers
 
                 var records = await GetUserRecordsAsync(patient.Id);
 
-                // 日期篩選
-                if (!string.IsNullOrEmpty(request.startDate) || !string.IsNullOrEmpty(request.endDate))
+                // ✅ 如果沒有指定日期，預設只載入最近 30 天
+                if (string.IsNullOrEmpty(request.startDate) && string.IsNullOrEmpty(request.endDate))
                 {
-                    DateTime? start = string.IsNullOrEmpty(request.startDate) ? null : DateTime.Parse(request.startDate);
-                    DateTime? end = string.IsNullOrEmpty(request.endDate) ? null : DateTime.Parse(request.endDate);
-
-                    if (start.HasValue)
+                    var defaultStart = DateTime.Today.AddDays(-30);
+                    records = records.Where(r => r.RecordDate >= defaultStart).ToList();
+                }
+                else
+                {
+                    // 有指定日期才做篩選
+                    if (!string.IsNullOrEmpty(request.startDate))
                     {
-                        records = records.Where(r => r.RecordDate >= start.Value).ToList();
+                        var start = DateTime.Parse(request.startDate);
+                        records = records.Where(r => r.RecordDate >= start).ToList();
                     }
-                    if (end.HasValue)
+                    if (!string.IsNullOrEmpty(request.endDate))
                     {
-                        records = records.Where(r => r.RecordDate <= end.Value).ToList();
+                        var end = DateTime.Parse(request.endDate);
+                        records = records.Where(r => r.RecordDate <= end).ToList();
                     }
                 }
 
