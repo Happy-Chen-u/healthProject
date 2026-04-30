@@ -16,10 +16,11 @@ builder.Services.AddDistributedMemoryCache();
 // ✅ 加入 Session 支援 (只保留一個,刪除重複的)
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromHours(24); // Session 有效期 24 小時
+    options.IdleTimeout = TimeSpan.FromHours(24);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;  
+    options.Cookie.SameSite = SameSiteMode.None;             
 });
 
 // 加入驗證服務
@@ -32,7 +33,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromHours(12);
         options.SlidingExpiration = true;
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;  
+        options.Cookie.SameSite = SameSiteMode.None;              
     });
 
 // ========================================

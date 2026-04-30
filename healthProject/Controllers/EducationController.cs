@@ -19,10 +19,11 @@ namespace healthProject.Controllers
         // ========================================
         // 列表（含分類篩選）
         // ========================================
-        public async Task<IActionResult> Index(string category = "")
+        public async Task<IActionResult> Index(string category = "", string search = "")
         {
-            var items = await GetEducationListAsync(category);
+            var items = await GetEducationListAsync(category, search);
             ViewBag.Category = category;
+            ViewBag.Search = search;
             ViewBag.Categories = await GetCategoriesAsync();
             return View(items);
         }
@@ -246,20 +247,23 @@ namespace healthProject.Controllers
         // ========================================
         // 資料庫輔助方法
         // ========================================
-        private async Task<List<HealthEducationModel>> GetEducationListAsync(string category)
+        private async Task<List<HealthEducationModel>> GetEducationListAsync(string category, string search = "")
         {
             var list = new List<HealthEducationModel>();
             var connStr = _configuration.GetConnectionString("DefaultConnection");
             await using var conn = new NpgsqlConnection(connStr);
             await conn.OpenAsync();
 
-            var sql = string.IsNullOrEmpty(category)
-                ? @"SELECT * FROM ""HealthEducation"" ORDER BY ""Category"" ASC, ""SortOrder"" ASC"
-                : @"SELECT * FROM ""HealthEducation"" WHERE ""Category"" = @Category ORDER BY ""SortOrder"" ASC";
+            var conditions = new List<string>();
+            if (!string.IsNullOrEmpty(category)) conditions.Add(@"""Category"" = @Category");
+            if (!string.IsNullOrEmpty(search)) conditions.Add(@"(""Title"" ILIKE @Search OR ""Content"" ILIKE @Search)");
+
+            var where = conditions.Count > 0 ? "WHERE " + string.Join(" AND ", conditions) : "";
+            var sql = $@"SELECT * FROM ""HealthEducation"" {where} ORDER BY ""Category"" ASC, ""SortOrder"" ASC";
 
             await using var cmd = new NpgsqlCommand(sql, conn);
-            if (!string.IsNullOrEmpty(category))
-                cmd.Parameters.AddWithValue("@Category", category);
+            if (!string.IsNullOrEmpty(category)) cmd.Parameters.AddWithValue("@Category", category);
+            if (!string.IsNullOrEmpty(search)) cmd.Parameters.AddWithValue("@Search", $"%{search}%");
 
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
@@ -276,7 +280,6 @@ namespace healthProject.Controllers
                     UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
                 });
             }
-
             return list;
         }
 

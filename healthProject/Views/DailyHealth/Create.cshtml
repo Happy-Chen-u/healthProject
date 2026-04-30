@@ -907,72 +907,85 @@
     // ----------------------------------------------------
     document.addEventListener('DOMContentLoaded', function() {
         // 限制只能輸入數字的函數
-        const bpInputs = document.querySelectorAll('input[asp-for^="BP_"]');
-        bpInputs.forEach(input => {
-            input.addEventListener('keypress', function(e) {
-                if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') {
+            // 血壓：只能數字，防貼上
+            document.querySelectorAll('.morning-bp-input, .evening-bp-input').forEach(input => {
+                input.addEventListener('keypress', e => {
+                    if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key))
+                        e.preventDefault();
+                });
+                input.addEventListener('paste', e => {
                     e.preventDefault();
-                }
+                    const text = e.clipboardData.getData('text');
+                    if (/^\d+$/.test(text)) input.value = text;
+                });
+                input.addEventListener('input', () => {
+                    input.value = input.value.replace(/[^0-9]/g, '');
+                });
             });
-            input.addEventListener('paste', function(e) {
-                e.preventDefault();
-                const pastedData = e.clipboardData.getData('text');
-                if (/^\d+$/.test(pastedData)) {
-                    this.value = pastedData;
-                }
-            });
-        });
 
-        const exerciseDurationInput = document.querySelector('input[asp-for="ExerciseDuration"]');
-        if (exerciseDurationInput) {
-            exerciseDurationInput.addEventListener('keypress', function(e) {
-                if (!/[0-9.]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') {
+            // 運動時間：只能數字和一個小數點
+            const exerciseDurationInput = document.querySelector('input[name="ExerciseDuration"]');
+            if (exerciseDurationInput) {
+                exerciseDurationInput.addEventListener('keypress', e => {
+                    if (!/[0-9.]/.test(e.key) && !['Backspace', 'Delete', 'Tab'].includes(e.key)) e.preventDefault();
+                    if (e.key === '.' && exerciseDurationInput.value.includes('.')) e.preventDefault();
+                });
+                exerciseDurationInput.addEventListener('input', () => {
+                    exerciseDurationInput.value = exerciseDurationInput.value.replace(/[^0-9.]/g, '');
+                });
+                exerciseDurationInput.addEventListener('paste', e => {
                     e.preventDefault();
-                }
-                if (e.key === '.' && this.value.includes('.')) {
+                    const text = e.clipboardData.getData('text');
+                    if (/^\d*\.?\d*$/.test(text)) exerciseDurationInput.value = text;
+                });
+            }
+
+            // 飲水量、抽菸、檳榔：只能整數
+            ['WaterIntake', 'Cigarettes', 'BetelNut'].forEach(name => {
+                const el = document.querySelector(`input[name="${name}"]`);
+                if (!el) return;
+                el.addEventListener('keypress', e => {
+                    if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab'].includes(e.key)) e.preventDefault();
+                });
+                el.addEventListener('input', () => {
+                    el.value = el.value.replace(/[^0-9]/g, '');
+                });
+                el.addEventListener('paste', e => {
                     e.preventDefault();
-                }
+                    const text = e.clipboardData.getData('text');
+                    if (/^\d+$/.test(text)) el.value = text;
+                });
             });
-        }
-        
-        const waterInput = document.querySelector('input[asp-for="WaterIntake"]');
-        if (waterInput) {
-             waterInput.addEventListener('keypress', function(e) {
-                if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') {
+
+            // 血糖：數字和一個小數點
+            const bloodSugarInput = document.querySelector('input[name="BloodSugar"]');
+            if (bloodSugarInput) {
+                bloodSugarInput.addEventListener('keypress', e => {
+                    if (!/[0-9.]/.test(e.key) && !['Backspace', 'Delete', 'Tab'].includes(e.key)) e.preventDefault();
+                    if (e.key === '.' && bloodSugarInput.value.includes('.')) e.preventDefault();
+                });
+                bloodSugarInput.addEventListener('input', () => {
+                    bloodSugarInput.value = bloodSugarInput.value.replace(/[^0-9.]/g, '');
+                });
+                bloodSugarInput.addEventListener('paste', e => {
                     e.preventDefault();
-                }
-            });
-        }
-        
-        const cigarettesInput = document.querySelector('input[asp-for="Cigarettes"]');
-        if (cigarettesInput) {
-            cigarettesInput.addEventListener('keypress', function(e) {
-                if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') {
+                    const text = e.clipboardData.getData('text');
+                    if (/^\d*\.?\d*$/.test(text)) bloodSugarInput.value = text;
+                });
+            }
+
+            // 運動種類：只能中文和英文
+            const exerciseTypeInput = document.querySelector('input[name="ExerciseType"]');
+            if (exerciseTypeInput) {
+                exerciseTypeInput.addEventListener('input', () => {
+                    exerciseTypeInput.value = exerciseTypeInput.value.replace(/[^\u4e00-\u9fa5a-zA-Z\s]/g, '');
+                });
+                exerciseTypeInput.addEventListener('paste', e => {
                     e.preventDefault();
-                }
-            });
-        }
-        
-        const betelNutInput = document.querySelector('input[asp-for="BetelNut"]');
-        if (betelNutInput) {
-            betelNutInput.addEventListener('keypress', function(e) {
-                if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') {
-                    e.preventDefault();
-                }
-            });
-        }
-        
-        const bloodSugarInput = document.querySelector('input[asp-for="BloodSugar"]');
-        if (bloodSugarInput) {
-            bloodSugarInput.addEventListener('keypress', function(e) {
-                if (!/[0-9.]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') {
-                    e.preventDefault();
-                }
-                if (e.key === '.' && this.value.includes('.')) {
-                    e.preventDefault();
-                }
-            });
-        }
+                    const text = e.clipboardData.getData('text');
+                    exerciseTypeInput.value = text.replace(/[^\u4e00-\u9fa5a-zA-Z\s]/g, '');
+                });
+            }
 
         // 恢復三餐選項
             function restoreMealSelection(inputId, value) {

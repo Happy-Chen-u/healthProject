@@ -562,6 +562,24 @@
                     @emoji @cat（@count）
                 </a>
             }
+            <form method="get" action="@Url.Action("Index")"
+                  style="margin-left:auto; display:flex; gap:0.4rem; align-items:center;">
+                <input type="hidden" name="category" value="@currentCategory" />
+                <input type="text" name="search" value="@ViewBag.Search"
+                       placeholder="搜尋標題或內容..."
+                       style="border:1px solid var(--border); border-radius:6px; padding:0.3rem 0.7rem;
+                  font-size:0.82rem; outline:none; width:200px;" />
+                <button type="submit"
+                        style="background:var(--blue); color:white; border:none; border-radius:6px;
+                   padding:0.3rem 0.85rem; font-size:0.82rem; cursor:pointer;">
+                    <i class="bi bi-search"></i>
+                </button>
+                @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+                {
+                    <a href="@Url.Action("Index", new { category = currentCategory })"
+                       style="color:var(--text-sub); font-size:0.8rem; text-decoration:none;">✕ 清除</a>
+                }
+            </form>
         </div>
 
         <!-- 表格 -->
