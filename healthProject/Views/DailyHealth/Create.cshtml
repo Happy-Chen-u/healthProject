@@ -9,851 +9,875 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>@ViewData["Title"]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
 <body>
-<style>
-    .form-container {
-        max-width: 800px;
-        margin: 1rem auto; 
-        padding: 0 0.75rem; 
-    }
-
-    body {
-        background-color: #e5eef5;
-        font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
-        min-height: 100vh;
-        margin: 0;
-        padding: 0;
-    }
-
-    .form-header {
-        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-        color: white;
-        padding: 1.5rem 1rem;
-        border-radius: 15px;
-        text-align: center;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
-    }
-
-    .form-header h1 {
-        margin: 0;
-        font-size: 1.5rem;
-    }
-
-    .form-header p {
-        margin: 0.5rem 0 0 0;
-        opacity: 0.9;
-    }
-
-    .form-section {
-        background: white;
-        border-radius: 15px;
-        padding: 1.25rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .section-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #06b6d4;
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.75rem;
-        border-bottom: 3px solid #e2e8f0;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .form-row {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    @@media (min-width: 768px) {
-        .form-row {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .form-label {
-        display: block;
-        font-weight: 600;
-        color: #1e293b;
-        margin-bottom: 0.5rem;
-        font-size: 0.95rem;
-    }
-
-    .form-control, .form-select {
-        width: 100%;
-        padding: 0.75rem;
-        border: 2px solid #e2e8f0;
-        border-radius: 10px;
-        font-size: 1rem;
-        font-family: inherit;
-        transition: all 0.3s ease;
-        background-color: white;
-        box-sizing: border-box;
-    }
-
-    .form-control:focus, .form-select:focus {
-        outline: none;
-        border-color: #06b6d4;
-        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
-    }
-
-    /* 鎖定樣式 */
-    .form-control:disabled, .form-select:disabled {
-        background-color: #f0f0f0;
-        color: #94a3b8;
-        cursor: not-allowed;
-        border-color: #cbd5e1;
-    }
-
-    input[type="checkbox"]:disabled {
-        cursor: not-allowed;
-        opacity: 0.5;
-    }
-
-    .input-hint {
-        font-size: 0.85rem;
-        color: #64748b;
-        margin-top: 0.25rem;
-    }
-
-    .bp-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-    }
-
-    .bp-item {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .bp-label {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #475569;
-    }
-
-    .meal-section {
-        padding: 1.5rem;
-        background: #f8fafc;
-        border-radius: 10px;
-        margin-bottom: 1rem;
-    }
-
-    .meal-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #0891b2;
-        margin-bottom: 1rem;
-    }
-
-    .button-group {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        margin-top: 2rem;
-    }
-
-    .btn {
-        padding: 1rem 2.5rem;
-        border: none;
-        border-radius: 50px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        text-align: center; 
-        gap: 0.5rem;
-        box-sizing: border-box;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-        color: white;
-        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
-    }
-
-    .btn-secondary {
-        background: #e2e8f0;
-        color: #475569;
-    }
-
-    .btn-secondary:hover {
-        background: #cbd5e1;
-        text-decoration: none;
-        color: #475569;
-    }
-
-    .alert-info {
-        background: #E3F2FD;
-        border: 2px solid #42A5F5;
-        color: #1565C0;
-        padding: 1rem;
-        border-radius: 10px;
-        margin-bottom: 1rem;
-        font-weight: 600;
-    }
-
-    .alert-danger {
-        background: #ffebee;
-        border: 2px solid #ef5350;
-        color: #c62828;
-        padding: 1rem;
-        border-radius: 10px;
-        margin-bottom: 1rem;
-    }
-
-    /* 鎖定提示訊息樣式 */
-    .locked-notice {
-        background: #FFF3E0;
-        border: 2px solid #FF9800;
-        border-radius: 10px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        color: #E65100;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    @@media (max-width: 768px) {
-        body {
-            font-size: 16px; 
+    <style>
+        :root {
+            --navy: #0a2540;
+            --navy-mid: #103a5e;
+            --blue: #1a6fb5;
+            --blue-lt: #2589d8;
+            --bg: #f4f6f9;
+            --surface: #ffffff;
+            --border: #dde3ea;
+            --text: #1a2635;
+            --text-sub: #5a6a7e;
+            --text-pale: #8fa0b4;
+            --danger: #c0392b;
+            --success: #2e7d32;
+            --warning-bg: #fff8e1;
+            --warning-border: #f59e0b;
         }
 
-        .form-header h1{
-            font-size: 1.5rem;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        .section-title {
-            font-size: 1.15rem;
+        html, body {
+            min-height: 100%;
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
         }
 
-        .form-label {
+        /* ── TOP BAR ── */
+        .topbar {
+            background: var(--navy);
+            height: 56px;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+        }
+
+        .topbar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: white;
+            font-weight: 700;
             font-size: 1rem;
         }
 
-        .form-control, .form-select {
-            font-size: 1.05rem;
-            padding: 0.85rem; 
+        .cross {
+            width: 28px;
+            height: 28px;
+            background: var(--blue-lt);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 900;
+            color: white;
         }
 
-        .bp-grid,
-        div[style*="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))"] {
-            grid-template-columns: 1fr !important;
-        }
-
-        .button-group {
-            flex-direction: column;
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
             gap: 0.75rem;
         }
 
-        .btn {
+        .topbar-back {
+            color: rgba(255,255,255,0.65);
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.8rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+        }
+
+            .topbar-back:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
+                text-decoration: none;
+            }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(100deg, var(--navy-mid) 0%, var(--blue) 100%);
+            padding: 2rem 2.5rem 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .hero::after {
+                content: '';
+                position: absolute;
+                right: -60px;
+                top: -60px;
+                width: 240px;
+                height: 240px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.04);
+                pointer-events: none;
+            }
+
+        .hero-eyebrow {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 0.4rem;
+        }
+
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .hero-sub {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.55);
+        }
+
+        /* ── CONTENT ── */
+        .form-container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 1.5rem 2.5rem;
+        }
+
+        /* ── ALERTS ── */
+        .alert {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.83rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .alert-info {
+            background: #e8f0fb;
+            border: 1px solid #b8d0f5;
+            color: #1a4a8a;
+        }
+
+        .alert-danger {
+            background: #fdecea;
+            border: 1px solid #f5c6c2;
+            color: var(--danger);
+        }
+
+        /* ── FORM CARD ── */
+        .form-section {
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            overflow: hidden;
+            margin-bottom: 1.25rem;
+        }
+
+        .section-title {
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-sub);
+        }
+
+            .section-title i {
+                color: var(--blue);
+                font-size: 0.95rem;
+            }
+
+        .section-body {
+            padding: 1.25rem;
+        }
+
+        /* ── FORM FIELDS ── */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .field-label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 0.4rem;
+        }
+
+            .field-label .required {
+                color: var(--danger);
+                margin-left: 0.2rem;
+            }
+
+        .form-control, .form-select {
             width: 100%;
-            justify-content: center;
-            font-size: 1.05rem;
-            text-align: center;
+            padding: 0.72rem 0.9rem;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--surface);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
         }
 
-        div[style*="background: linear-gradient(135deg, #FFF9C4"] {
-            padding: 1rem !important;
+            .form-control:focus, .form-select:focus {
+                border-color: var(--blue-lt);
+                box-shadow: 0 0 0 3px rgba(37,137,216,0.12);
+            }
+
+            .form-control:disabled, .form-select:disabled {
+                background-color: var(--bg);
+                color: var(--text-pale);
+                cursor: not-allowed;
+                border-color: var(--border);
+            }
+
+        .field-hint {
+            font-size: 0.75rem;
+            color: var(--text-pale);
+            margin-top: 0.3rem;
         }
 
-        div[style*="background: linear-gradient(135deg, #E1BEE7"] {
-            padding: 1rem !important;
+        .field-error {
+            font-size: 0.75rem;
+            color: var(--danger);
+            margin-top: 0.3rem;
         }
 
-        .meal-title {
-            font-size: 1.15rem; 
+        /* ── BP BLOCKS ── */
+        .bp-block {
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
         }
-    }
-</style>
 
-<div class="form-container">
-    <div class="form-header">
-        <h1>📝 @ViewData["Title"]</h1>
-        <p>@DateTime.Today.ToString("yyyy年MM月dd日")</p>
+        .bp-block-morning {
+            background: #fffbeb;
+            border-color: #fcd34d;
+        }
+
+        .bp-block-evening {
+            background: #f5f3ff;
+            border-color: #c4b5fd;
+        }
+
+        .bp-block-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .bp-block-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .bp-block-morning .bp-block-title {
+            color: #92400e;
+        }
+
+        .bp-block-evening .bp-block-title {
+            color: #4c1d95;
+        }
+
+        .bp-sub-block {
+            background: rgba(255,255,255,0.75);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .bp-sub-title {
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .bp-block-morning .bp-sub-title {
+            color: #b45309;
+        }
+
+        .bp-block-evening .bp-sub-title {
+            color: #5b21b6;
+        }
+
+        .bp-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .bp-hint {
+            margin-top: 0.5rem;
+            padding: 0.4rem 0.75rem;
+            background: rgba(255,255,255,0.8);
+            border-radius: 6px;
+            font-size: 0.78rem;
+        }
+
+        .bp-block-morning .bp-hint {
+            color: #b45309;
+        }
+
+        .bp-block-evening .bp-hint {
+            color: #5b21b6;
+        }
+
+        .not-measured-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.35rem 0.8rem;
+            border-radius: 6px;
+            border: 1px solid #fcd34d;
+            background: rgba(255,255,255,0.8);
+            cursor: pointer;
+        }
+
+        .bp-block-evening .not-measured-label {
+            border-color: #c4b5fd;
+        }
+
+        .locked-notice {
+            background: #fff8e1;
+            border: 1px solid var(--warning-border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            color: #92400e;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        /* ── MEAL SECTION ── */
+        .meal-block {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .meal-block-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--navy-mid);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* ── BP INFO BOX ── */
+        .info-box {
+            background: #e8f0fb;
+            border-left: 3px solid var(--blue);
+            border-radius: 6px;
+            padding: 0.85rem 1rem;
+            font-size: 0.82rem;
+            color: var(--navy-mid);
+            margin-bottom: 1rem;
+        }
+
+            .info-box strong {
+                color: var(--navy);
+            }
+
+        .standard-box {
+            background: #f0f4ff;
+            border-left: 3px solid var(--blue-lt);
+            border-radius: 6px;
+            padding: 0.85rem 1rem;
+            font-size: 0.82rem;
+            color: var(--navy-mid);
+            margin-top: 0.75rem;
+        }
+
+        /* ── BUTTONS ── */
+        .btn-row {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.5rem 0 1.5rem 0;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 0.65rem 1.75rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: background 0.15s;
+            font-family: inherit;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--navy);
+            color: white;
+        }
+
+            .btn-primary:hover {
+                background: var(--navy-mid);
+                color: white;
+            }
+
+        .btn-secondary {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            color: var(--text-sub);
+        }
+
+            .btn-secondary:hover {
+                background: var(--bg);
+                color: var(--text-sub);
+                text-decoration: none;
+            }
+
+        @@media (max-width: 768px) {
+            .topbar {
+                padding: 0 1rem;
+            }
+
+            .hero {
+                padding: 1.5rem 1.25rem;
+            }
+
+            .form-container {
+                padding: 1rem;
+            }
+
+            .form-row, .bp-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-row {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+        <div class="topbar-logo">
+            <div class="cross">✚</div>
+            代謝症候群疾病管理與追蹤系統
+        </div>
+        <div class="topbar-right">
+            <a href="@Url.Action("Index", "DailyHealth")" class="topbar-back">
+                <i class="bi bi-arrow-left"></i> 返回選單
+            </a>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-eyebrow">Daily Health Record</div>
+        <div class="hero-title">
+            <i class="bi bi-pencil-square"></i>
+            @ViewData["Title"]
+        </div>
+        <div class="hero-sub">@DateTime.Today.ToString("yyyy年MM月dd日")</div>
     </div>
 
-    <form asp-action="@(Model.Id > 0 ? "Edit" : "Create")" method="post">
-        @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="Id" />
-        <input type="hidden" asp-for="UserId" />
+    <!-- CONTENT -->
+    <div class="form-container">
 
-        @if (TempData["InfoMessage"] != null)
-        {
-            <div class="alert-info">
-                @TempData["InfoMessage"]
-            </div>
-        }
+        <form asp-action="@(Model.Id > 0 ? "Edit" : "Create")" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="UserId" />
 
-        @if (!ViewData.ModelState.IsValid)
-        {
-            <div class="alert-danger">
-                <div asp-validation-summary="All"></div>
-            </div>
-        }
-
-        @if (TempData["BPWarnings"] != null)
-        {
-            var bpMessages = TempData["BPWarnings"].ToString().Split('\n');
-            var hasErrors = bpMessages.Any(m => m.StartsWith("🔴"));
-
-            <div class="@(hasErrors ? "alert-danger" : "alert-info")">
-                @foreach (var msg in bpMessages)
-                {
-                    <p style="margin: 0;">@msg</p>
-                }
-            </div>
-        }
-
-        <!-- 血壓測量區塊 -->
-        <div class="form-section">
-            <div class="section-title">
-                <span>❤️</span>
-                <span>血壓測量 (mmHg)</span>
-            </div>
-
-            <!--  鎖定提示訊息 - 移到血壓區塊內 -->
-            @if (Model.IsMorningCompletedToday || Model.IsEveningCompletedToday)
+            @if (TempData["InfoMessage"] != null)
             {
-                <div class="locked-notice">
-                    <span style="font-size: 1.2rem;">🔒</span>
-                    <div>
-                        @if (Model.IsMorningCompletedToday && Model.IsEveningCompletedToday)
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill"></i> @TempData["InfoMessage"]
+                </div>
+            }
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <div asp-validation-summary="All"></div>
+                </div>
+            }
+            @if (TempData["BPWarnings"] != null)
+            {
+                var bpMessages = TempData["BPWarnings"].ToString().Split('\n');
+                var hasErrors = bpMessages.Any(m => m.StartsWith("🔴"));
+                <div class="alert @(hasErrors ? "alert-danger" : "alert-info")">
+                    <i class="bi bi-@(hasErrors ? "exclamation" : "info")-circle-fill"></i>
+                    <div>@foreach (var msg in bpMessages)
                         {
-                            <div>今日的上午血壓與睡前血壓已完成記錄，無法再次勾選「尚未測量」。</div>
-                        }
-                        else if (Model.IsMorningCompletedToday)
-                        {
-                            <div>今日的上午血壓已完成記錄，無法再次勾選「尚未測量」。</div>
-                        }
-                        else if (Model.IsEveningCompletedToday)
-                        {
-                            <div>今日的睡前血壓已完成記錄，無法再次勾選「尚未測量」。</div>
-                        }
-                        <div style="margin-top: 0.25rem; font-size: 0.9rem;">若要修改血壓數值，請前往「我的紀錄」頁面編輯。</div>
-                    </div>
+                            <p style="margin:0;">@msg</p>
+                        }</div>
                 </div>
             }
 
-            <!-- 測量說明 -->
-            <div style="background: #E3F2FD; border-left: 4px solid #1976D2; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                <strong style="color: #1565C0;">📍 測量時間說明:</strong>
-                <div style="margin-top: 0.5rem; color: #1976D2; font-size: 0.9rem;">
-                    • <strong>上午</strong>: 起床後 1 小時內,早餐前<br>
-                    • <strong>睡前</strong>: 睡覺前 1 小時內<br>
-                    • 每次測量間隔 1-2 分鐘,取兩遍的平均值
+            <!-- 血壓 -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-heart-pulse-fill"></i>
+                    血壓測量 (mmHg)
                 </div>
-            </div>
+                <div class="section-body">
 
-            <!-- Hidden fields for checkboxes -->
-            <input type="hidden" id="BP_Morning_NotMeasured" name="BP_Morning_NotMeasured" value="false" />
-            <input type="hidden" id="BP_Evening_NotMeasured" name="BP_Evening_NotMeasured" value="false" />
-
-            <!-- 第一次 (上午) -->
-            <div style="background: linear-gradient(135deg, #FFF9C4 0%, #FFF59D 100%); padding: 1.5rem; border-radius: 15px; margin-bottom: 1.5rem; border: 2px solid #FBC02D;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="font-size: 1.5rem;">🌅</span>
-                        <h4 style="margin: 0; color: #F57C00; font-weight: 700;">第一次 (上午)</h4>
-                    </div>
-                    <!-- 尚未測量 checkbox - 根據完成狀態決定是否鎖定 -->
-                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
-
-                            <label style="display: flex; align-items: center; gap: 0.5rem;
-                                          cursor: @(Model.IsMorningCompletedToday ? "not-allowed" : "pointer");
-                                          background: rgba(255,255,255,0.8);
-                                          padding: 0.5rem 1rem;
-                                          border-radius: 8px;
-                                          border: 2px solid #FFB300;
-                                          @(Model.IsMorningCompletedToday ? "opacity: 0.6;" : "")">
-
-                                <input type="checkbox"
-                                       id="morning_not_measured"
-                                       onchange="toggleMorningBP(this.checked)"
-                                       style="width: 18px; height: 18px;
-                                              cursor: @(Model.IsMorningCompletedToday ? "not-allowed" : "pointer");"
-                                       @(Model.IsMorningCompletedToday ? "disabled" : "")>
-
-                                <span style="color: #E65100; font-weight: 600;">尚未測量</span>
-                            </label>
-
-                            @* 🔒 鎖定原因提示 *@
-                            @if (Model.IsMorningCompletedToday)
-                            {
-                                <div style="font-size: 0.8rem; color: #BF360C; font-weight: 600; text-align: right;">
-                                    已完成今日上午血壓，<br />
-                                    若要修改請至「我的紀錄」
-                                </div>
-                            }
+                    @if (Model.IsMorningCompletedToday || Model.IsEveningCompletedToday)
+                    {
+                        <div class="locked-notice">
+                            <i class="bi bi-lock-fill"></i>
+                            <div>
+                                @if (Model.IsMorningCompletedToday && Model.IsEveningCompletedToday)
+                                {
+                                    <div>今日上午血壓與睡前血壓已完成記錄，無法再次勾選「尚未測量」。</div>
+                                }
+                                else if (Model.IsMorningCompletedToday)
+                                {
+                                    <div>今日上午血壓已完成記錄，無法再次勾選「尚未測量」。</div>
+                                }
+                                else if (Model.IsEveningCompletedToday)
+                                {
+                                    <div>今日睡前血壓已完成記錄，無法再次勾選「尚未測量」。</div>
+                                }
+                                <div style="margin-top:0.25rem; font-weight:400;">若要修改，請前往「我的紀錄」頁面編輯。</div>
+                            </div>
                         </div>
-                </div>
-
-                <!-- 第一遍 -->
-                <div style="background: rgba(255, 255, 255, 0.7); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; border: 2px solid #FFB300;">
-                    <div style="font-weight: 600; color: #E65100; margin-bottom: 0.75rem; font-size: 1.05rem;">
-                        📍 第一遍
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                        <div>
-                            <label style="display: block; font-weight: 500; color: #E65100; margin-bottom: 0.5rem;">
-                                收縮壓 (上壓)
-                            </label>
-                            <input asp-for="BP_First_1_Systolic" 
-                                   type="number" 
-                                   class="form-control morning-bp-input"
-                                   placeholder="例: 120" 
-                                   min="30" 
-                                   max="250" 
-                                   step="1"
-                                   style="padding: 0.75rem; border: 2px solid #FFB300; border-radius: 10px; font-size: 1rem; text-align: center;" />
-                            <span asp-validation-for="BP_First_1_Systolic" class="text-danger"></span>
-                        </div>
-                        <div>
-                            <label style="display: block; font-weight: 500; color: #E65100; margin-bottom: 0.5rem;">
-                                舒張壓 (下壓)
-                            </label>
-                            <input asp-for="BP_First_1_Diastolic" 
-                                   type="number" 
-                                   class="form-control morning-bp-input"
-                                   placeholder="例: 80" 
-                                   min="10" 
-                                   max="150" 
-                                   step="1"
-                                   style="padding: 0.75rem; border: 2px solid #FFB300; border-radius: 10px; font-size: 1rem; text-align: center;" />
-                            <span asp-validation-for="BP_First_1_Diastolic" class="text-danger"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 第二遍 -->
-                <div style="background: rgba(255, 255, 255, 0.7); padding: 1rem; border-radius: 10px; border: 2px solid #FFD54F;">
-                    <div style="font-weight: 600; color: #E65100; margin-bottom: 0.75rem; font-size: 1.05rem;">
-                        📍 第二遍
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                        <div>
-                            <label style="display: block; font-weight: 500; color: #E65100; margin-bottom: 0.5rem;">
-                                收縮壓 (上壓)
-                            </label>
-                            <input asp-for="BP_First_2_Systolic" 
-                                   type="number" 
-                                   class="form-control morning-bp-input"
-                                   placeholder="例: 118" 
-                                   min="30" 
-                                   max="250" 
-                                   step="1"
-                                   style="padding: 0.75rem; border: 2px solid #FFD54F; border-radius: 10px; font-size: 1rem; text-align: center;" />
-                            <span asp-validation-for="BP_First_2_Systolic" class="text-danger"></span>
-                        </div>
-                        <div>
-                            <label style="display: block; font-weight: 500; color: #E65100; margin-bottom: 0.5rem;">
-                                舒張壓 (下壓)
-                            </label>
-                            <input asp-for="BP_First_2_Diastolic" 
-                                   type="number" 
-                                   class="form-control morning-bp-input"
-                                   placeholder="例: 78" 
-                                   min="10" 
-                                   max="150" 
-                                   step="1"
-                                   style="padding: 0.75rem; border: 2px solid #FFD54F; border-radius: 10px; font-size: 1rem; text-align: center;" />
-                            <span asp-validation-for="BP_First_2_Diastolic" class="text-danger"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; font-size: 0.85rem; color: #E65100;">
-                    💡若填第一遍,請記得填第二遍
-                </div>
-            </div>
-
-            <!-- 第二次 (睡前) -->
-            <div style="background: linear-gradient(135deg, #E1BEE7 0%, #CE93D8 100%); padding: 1.5rem; border-radius: 15px; margin-bottom: 1rem; border: 2px solid #9C27B0;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="font-size: 1.5rem;">🌙</span>
-                        <h4 style="margin: 0; color: #6A1B9A; font-weight: 700;">第二次 (睡前)</h4>
-                    </div>
-                    <!-- 尚未測量 checkbox - 根據完成狀態決定是否鎖定 -->
-                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
-
-                            <label style="display: flex; align-items: center; gap: 0.5rem;
-                                          cursor: @(Model.IsEveningCompletedToday ? "not-allowed" : "pointer");
-                                          background: rgba(255,255,255,0.8);
-                                          padding: 0.5rem 1rem;
-                                          border-radius: 8px;
-                                          border: 2px solid #FFB300;
-                                          @(Model.IsEveningCompletedToday ? "opacity: 0.6;" : "")">
-
-                                <input type="checkbox"
-                                       id="evening_not_measured"
-                                       onchange="toggleEveningBP(this.checked)"
-                                       style="width: 18px; height: 18px;
-                                              cursor: @(Model.IsEveningCompletedToday ? "not-allowed" : "pointer");"
-                                       @(Model.IsEveningCompletedToday ? "disabled" : "")>
-
-                                <span style="color: #E65100; font-weight: 600;">尚未測量</span>
-                            </label>
-
-                            @* 🔒 睡前鎖定原因提示 *@
-                            @if (Model.IsEveningCompletedToday)
-                            {
-                                <div style="font-size: 0.8rem; color: #6B21AB; font-weight: 600; text-align: right;">
-                                    已完成今日睡前血壓，<br />
-                                    若要修改請至「我的紀錄」
-                                </div>
-                            }
-                        </div>
-                </div>
-
-                <!-- 第一遍 -->
-                <div style="background: rgba(255, 255, 255, 0.7); padding: 1rem; border-radius: 10px; margin-bottom: 1rem; border: 2px solid #AB47BC;">
-                    <div style="font-weight: 600; color: #4A148C; margin-bottom: 0.75rem; font-size: 1.05rem;">
-                        📍 第一遍
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                        <div>
-                            <label style="display: block; font-weight: 500; color: #4A148C; margin-bottom: 0.5rem;">
-                                收縮壓 (上壓)
-                            </label>
-                            <input asp-for="BP_Second_1_Systolic" 
-                                   type="number" 
-                                   class="form-control evening-bp-input"
-                                   placeholder="例: 115" 
-                                   min="30" 
-                                   max="250" 
-                                   step="1"
-                                   style="padding: 0.75rem; border: 2px solid #AB47BC; border-radius: 10px; font-size: 1rem; text-align: center;" />
-                            <span asp-validation-for="BP_Second_1_Systolic" class="text-danger"></span>
-                        </div>
-                        <div>
-                            <label style="display: block; font-weight: 500; color: #4A148C; margin-bottom: 0.5rem;">
-                                舒張壓 (下壓)
-                            </label>
-                            <input asp-for="BP_Second_1_Diastolic" 
-                                   type="number" 
-                                   class="form-control evening-bp-input"
-                                   placeholder="例: 75" 
-                                   min="10" 
-                                   max="150" 
-                                   step="1"
-                                   style="padding: 0.75rem; border: 2px solid #AB47BC; border-radius: 10px; font-size: 1rem; text-align: center;" />
-                            <span asp-validation-for="BP_Second_1_Diastolic" class="text-danger"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 第二遍 -->
-                <div style="background: rgba(255, 255, 255, 0.7); padding: 1rem; border-radius: 10px; border: 2px solid #CE93D8;">
-                    <div style="font-weight: 600; color: #4A148C; margin-bottom: 0.75rem; font-size: 1.05rem;">
-                        📍 第二遍
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                        <div>
-                            <label style="display: block; font-weight: 500; color: #4A148C; margin-bottom: 0.5rem;">
-                                收縮壓 (上壓)
-                            </label>
-                            <input asp-for="BP_Second_2_Systolic" 
-                                   type="number" 
-                                   class="form-control evening-bp-input"
-                                   placeholder="例: 117" 
-                                   min="30" 
-                                   max="250" 
-                                   step="1"
-                                   style="padding: 0.75rem; border: 2px solid #CE93D8; border-radius: 10px; font-size: 1rem; text-align: center;" />
-                            <span asp-validation-for="BP_Second_2_Systolic" class="text-danger"></span>
-                        </div>
-                        <div>
-                            <label style="display: block; font-weight: 500; color: #4A148C; margin-bottom: 0.5rem;">
-                                舒張壓 (下壓)
-                            </label>
-                            <input asp-for="BP_Second_2_Diastolic" 
-                                   type="number" 
-                                   class="form-control evening-bp-input"
-                                   placeholder="例: 77" 
-                                   min="10" 
-                                   max="150" 
-                                   step="1"
-                                   style="padding: 0.75rem; border: 2px solid #CE93D8; border-radius: 10px; font-size: 1rem; text-align: center;" />
-                            <span asp-validation-for="BP_Second_2_Diastolic" class="text-danger"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="margin-top: 0.75rem; padding: 0.5rem; background: rgba(255, 255, 255, 0.8); border-radius: 8px; font-size: 0.85rem; color: #4A148C;">
-                    💡 若填第一遍,請記得填第二遍
-                </div>
-            </div>
-
-            <!-- 總說明 -->
-            <div class="input-hint" style="background: #F3E5F5; padding: 1rem; border-radius: 10px; border-left: 4px solid #9C27B0;">
-                <strong style="color: #6A1B9A;">📋 血壓標準值:</strong>
-                <ul style="margin: 0.5rem 0 0 1.5rem; color: #4A148C;">
-                    <li>正常血壓: 收縮壓 &lt; 120 mmHg、舒張壓 &lt; 80 mmHg</li>
-                    <li>高血壓前期: 收縮壓 120-139 mmHg 或 舒張壓 80-89 mmHg</li>
-                    <li>高血壓: 收縮壓 ≥ 140 mmHg 或 舒張壓 ≥ 90 mmHg</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- 三餐選擇 -->
-        <div class="form-section">
-            <div class="section-title">
-                <span>🍽️</span>
-                <span>三餐攝取</span>
-            </div>
-
-            <!-- 早餐 -->
-            <div class="meal-section">
-                    <div class="meal-title">🌅 早餐 <span style="font-size:0.75rem; font-weight:400; color:#64748b;">（只能填數字，最多小數點後一位，0~10）</span></div>
-                <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">蔬菜 (拳頭)</label>
-                            <input type="text" class="form-control meal-input" id="breakfast-veg"
-                                   placeholder="例：1.5" inputmode="decimal"
-                                   oninput="validateMealInput(this)" />
-                            <div class="input-hint" id="breakfast-veg-err" style="color:#ef4444;display:none;"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">蛋白質 (拳頭)</label>
-                            <input type="text" class="form-control meal-input" id="breakfast-protein"
-                                   placeholder="例：1.5" inputmode="decimal"
-                                   oninput="validateMealInput(this)" />
-                            <div class="input-hint" id="breakfast-protein-err" style="color:#ef4444;display:none;"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">澱粉 (拳頭)</label>
-                            <input type="text" class="form-control meal-input" id="breakfast-carbs"
-                                   placeholder="例：1.5" inputmode="decimal"
-                                   oninput="validateMealInput(this)" />
-                            <div class="input-hint" id="breakfast-carbs-err" style="color:#ef4444;display:none;"></div>
-                        </div>
-                </div>
-            </div>
-
-            <!-- 午餐 -->
-            <div class="meal-section">
-                    <div class="meal-title">☀️ 午餐 <span style="font-size:0.75rem; font-weight:400; color:#64748b;">（只能填數字，最多小數點後一位，0~10）</span></div>
-                <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">蔬菜 (拳頭)</label>
-                            <input type="text" class="form-control meal-input" id="lunch-veg"
-                                   placeholder="例：1.5" inputmode="decimal"
-                                   oninput="validateMealInput(this)" />
-                            <div class="input-hint" id="lunch-veg-err" style="color:#ef4444;display:none;"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">蛋白質 (拳頭)</label>
-                            <input type="text" class="form-control meal-input" id="lunch-protein"
-                                   placeholder="例：1.5" inputmode="decimal"
-                                   oninput="validateMealInput(this)" />
-                            <div class="input-hint" id="lunch-protein-err" style="color:#ef4444;display:none;"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">澱粉 (拳頭)</label>
-                            <input type="text" class="form-control meal-input" id="lunch-carbs"
-                                   placeholder="例：1.5" inputmode="decimal"
-                                   oninput="validateMealInput(this)" />
-                            <div class="input-hint" id="lunch-carbs-err" style="color:#ef4444;display:none;"></div>
-                        </div>
-                </div>
-            </div>
-
-            <!-- 晚餐 -->
-            <div class="meal-section">
-                    <div class="meal-title">🌙 晚餐 <span style="font-size:0.75rem; font-weight:400; color:#64748b;">（只能填數字，最多小數點後一位，0~10）</span></div>
-                <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">蔬菜 (拳頭)</label>
-                            <input type="text" class="form-control meal-input" id="dinner-veg"
-                                   placeholder="例：1.5" inputmode="decimal"
-                                   oninput="validateMealInput(this)" />
-                            <div class="input-hint" id="dinner-veg-err" style="color:#ef4444;display:none;"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">蛋白質 (拳頭)</label>
-                            <input type="text" class="form-control meal-input" id="dinner-protein"
-                                   placeholder="例：1.5" inputmode="decimal"
-                                   oninput="validateMealInput(this)" />
-                            <div class="input-hint" id="dinner-protein-err" style="color:#ef4444;display:none;"></div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">蛋白質 (拳頭)</label>
-                            <input type="text" class="form-control meal-input" id="dinner-carbs"
-                                   placeholder="例：1.5" inputmode="decimal"
-                                   oninput="validateMealInput(this)" />
-                            <div class="input-hint" id="dinner-carbs-err" style="color:#ef4444;display:none;"></div>
-                        </div>
-                </div>
-            </div>
-
-            <!-- Hidden fields for MealSelection JSON -->
-            <input type="hidden" id="Meals_Breakfast_Json" name="Meals_Breakfast" />
-            <input type="hidden" id="Meals_Lunch_Json" name="Meals_Lunch" />
-            <input type="hidden" id="Meals_Dinner_Json" name="Meals_Dinner" />
-        </div>
-
-        <!-- 運動資訊 -->
-        <div class="form-section">
-            <div class="section-title">
-                <span>🏃</span>
-                <span>運動資訊</span>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label" asp-for="ExerciseType">運動種類</label>
-                    <input asp-for="ExerciseType" class="form-control" placeholder="例如：慢跑、游泳、騎腳踏車" />
-                </div>
-                <div class="form-group">
-                    <label class="form-label" asp-for="ExerciseDuration">運動時間 (分鐘)</label>
-                    <input asp-for="ExerciseDuration" type="number" step="0.1" class="form-control" placeholder="0" />
-                    <div class="input-hint">建議每日運動至少 150 分鐘</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 飲食資訊 -->
-        <div class="form-section">
-            <div class="section-title">
-                <span>💧</span>
-                <span>飲品攝取</span>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label" asp-for="WaterIntake">水分攝取 (ml)</label>
-                    <input asp-for="WaterIntake" type="number" class="form-control" placeholder="0" />
-                    <div class="input-hint">建議每日飲水 2000 ml</div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" asp-for="Beverage">其他飲料</label>
-                    <input asp-for="Beverage" class="form-control" placeholder="例如:咖啡、茶、果汁" />
-                </div>
-            </div>
-        </div>
-
-        <!-- 生活習慣 -->
-        <div class="form-section">
-            <div class="section-title">
-                <span>🚬</span>
-                <span>生活習慣</span>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label" asp-for="Cigarettes">抽菸支數</label>
-                    <input asp-for="Cigarettes" type="number" class="form-control" placeholder="0" />
-                    <div class="input-hint">建議戒菸以維護健康</div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" asp-for="BetelNut">嚼檳榔次數</label>
-                    <input asp-for="BetelNut" type="number" class="form-control" placeholder="0" />
-                    <div class="input-hint">建議戒除檳榔以維護健康</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 生理數值 -->
-        <div class="form-section">
-            <div class="section-title">
-                <span>🩸</span>
-                <span>血糖</span>
-            </div>
-            <div class="form-group">
-                <label class="form-label" asp-for="BloodSugar">血糖 (mg/dL)</label>
-                <input asp-for="BloodSugar" type="number" step="0.1" class="form-control" placeholder="0" />
-                <div class="input-hint">正常值：70-99 mg/dL</div>
-            </div>
-        </div>
-
-        <div class="button-group">
-            <a href="@Url.Action("Index", "DailyHealth")" class="btn btn-secondary">
-                ← 取消
-            </a>
-                <button type="submit" class="btn btn-primary" onclick="return validateAllMeals() && prepareMealData()">
-                @(Model.Id > 0 ? "💾 儲存修改" : "✓ 下一步")
-            </button>
-        </div>
-    </form>
-</div>
-
-<script>
-    // ----------------------------------------------------
-    // 血壓鎖定/解鎖函數 (根據後端傳來的完成狀態)
-    // ----------------------------------------------------
-    
-    // 判斷上午血壓是否已完成（從後端傳來）
-    const isMorningCompleted = @Json.Serialize(Model.IsMorningCompletedToday);
-    const isEveningCompleted = @Json.Serialize(Model.IsEveningCompletedToday);
-
-    // 控制上午血壓輸入框的啟用/禁用
-    function toggleMorningBP(checked) {
-        const inputs = document.querySelectorAll('.morning-bp-input');
-        inputs.forEach(input => {
-            // 🔒 如果已完成，則無論 checkbox 狀態都鎖定
-            if (isMorningCompleted) {
-                input.disabled = true;
-                input.style.backgroundColor = '#f0f0f0';
-            } else {
-                input.disabled = checked;
-                if (checked) {
-                    input.value = '';
-                    input.style.backgroundColor = '#f0f0f0';
-                } else {
-                    if (!input.value) {
-                        input.style.backgroundColor = 'white';
                     }
-                }
-            }
-        });
-        // 更新 hidden field
-        document.getElementById('BP_Morning_NotMeasured').value = checked ? 'true' : 'false';
-    }
 
-         // 驗證三餐輸入：只允許 0~10，最多小數點後一位
+                    <div class="info-box">
+                        <strong>📍 測量時間說明</strong><br>
+                        • <strong>上午</strong>：起床後 1 小時內，早餐前&nbsp;&nbsp;
+                        • <strong>睡前</strong>：睡覺前 1 小時內<br>
+                        • 每次測量間隔 1-2 分鐘，取兩遍的平均值
+                    </div>
+
+                    <input type="hidden" id="BP_Morning_NotMeasured" name="BP_Morning_NotMeasured" value="false" />
+                    <input type="hidden" id="BP_Evening_NotMeasured" name="BP_Evening_NotMeasured" value="false" />
+
+                    <!-- 上午 -->
+                    <div class="bp-block bp-block-morning">
+                        <div class="bp-block-header">
+                            <div class="bp-block-title">
+                                <i class="bi bi-sunrise-fill"></i> 第一次（上午）
+                            </div>
+                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.25rem;">
+                                <label class="not-measured-label"
+                                       style="@(Model.IsMorningCompletedToday ? "opacity:0.5; cursor:not-allowed;" : "")">
+                                    <input type="checkbox" id="morning_not_measured"
+                                           onchange="toggleMorningBP(this.checked)"
+                                           style="width:16px; height:16px;"
+                                    @(Model.IsMorningCompletedToday ? "disabled" : "")>
+                                    尚未測量
+                                </label>
+                                @if (Model.IsMorningCompletedToday)
+                                {
+                                    <div style="font-size:0.73rem; color:#92400e;">
+                                        已完成今日上午血壓，若要修改請至「我的紀錄」
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="bp-sub-block">
+                            <div class="bp-sub-title">📍 第一遍</div>
+                            <div class="bp-grid">
+                                <div>
+                                    <label class="field-label">收縮壓（上壓）</label>
+                                    <input asp-for="BP_First_1_Systolic" type="number" class="form-control morning-bp-input" placeholder="例：120" min="30" max="250" step="1" />
+                                    <span asp-validation-for="BP_First_1_Systolic" class="field-error"></span>
+                                </div>
+                                <div>
+                                    <label class="field-label">舒張壓（下壓）</label>
+                                    <input asp-for="BP_First_1_Diastolic" type="number" class="form-control morning-bp-input" placeholder="例：80" min="10" max="150" step="1" />
+                                    <span asp-validation-for="BP_First_1_Diastolic" class="field-error"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bp-sub-block">
+                            <div class="bp-sub-title">📍 第二遍</div>
+                            <div class="bp-grid">
+                                <div>
+                                    <label class="field-label">收縮壓（上壓）</label>
+                                    <input asp-for="BP_First_2_Systolic" type="number" class="form-control morning-bp-input" placeholder="例：118" min="30" max="250" step="1" />
+                                    <span asp-validation-for="BP_First_2_Systolic" class="field-error"></span>
+                                </div>
+                                <div>
+                                    <label class="field-label">舒張壓（下壓）</label>
+                                    <input asp-for="BP_First_2_Diastolic" type="number" class="form-control morning-bp-input" placeholder="例：78" min="10" max="150" step="1" />
+                                    <span asp-validation-for="BP_First_2_Diastolic" class="field-error"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bp-hint">💡 若填第一遍，請記得填第二遍</div>
+                    </div>
+
+                    <!-- 睡前 -->
+                    <div class="bp-block bp-block-evening">
+                        <div class="bp-block-header">
+                            <div class="bp-block-title">
+                                <i class="bi bi-moon-stars-fill"></i> 第二次（睡前）
+                            </div>
+                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.25rem;">
+                                <label class="not-measured-label"
+                                       style="@(Model.IsEveningCompletedToday ? "opacity:0.5; cursor:not-allowed;" : "") border-color:#c4b5fd;">
+                                    <input type="checkbox" id="evening_not_measured"
+                                           onchange="toggleEveningBP(this.checked)"
+                                           style="width:16px; height:16px;"
+                                    @(Model.IsEveningCompletedToday ? "disabled" : "")>
+                                    尚未測量
+                                </label>
+                                @if (Model.IsEveningCompletedToday)
+                                {
+                                    <div style="font-size:0.73rem; color:#4c1d95;">
+                                        已完成今日睡前血壓，若要修改請至「我的紀錄」
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="bp-sub-block">
+                            <div class="bp-sub-title">📍 第一遍</div>
+                            <div class="bp-grid">
+                                <div>
+                                    <label class="field-label">收縮壓（上壓）</label>
+                                    <input asp-for="BP_Second_1_Systolic" type="number" class="form-control evening-bp-input" placeholder="例：115" min="30" max="250" step="1" />
+                                    <span asp-validation-for="BP_Second_1_Systolic" class="field-error"></span>
+                                </div>
+                                <div>
+                                    <label class="field-label">舒張壓（下壓）</label>
+                                    <input asp-for="BP_Second_1_Diastolic" type="number" class="form-control evening-bp-input" placeholder="例：75" min="10" max="150" step="1" />
+                                    <span asp-validation-for="BP_Second_1_Diastolic" class="field-error"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bp-sub-block">
+                            <div class="bp-sub-title">📍 第二遍</div>
+                            <div class="bp-grid">
+                                <div>
+                                    <label class="field-label">收縮壓（上壓）</label>
+                                    <input asp-for="BP_Second_2_Systolic" type="number" class="form-control evening-bp-input" placeholder="例：117" min="30" max="250" step="1" />
+                                    <span asp-validation-for="BP_Second_2_Systolic" class="field-error"></span>
+                                </div>
+                                <div>
+                                    <label class="field-label">舒張壓（下壓）</label>
+                                    <input asp-for="BP_Second_2_Diastolic" type="number" class="form-control evening-bp-input" placeholder="例：77" min="10" max="150" step="1" />
+                                    <span asp-validation-for="BP_Second_2_Diastolic" class="field-error"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bp-hint">💡 若填第一遍，請記得填第二遍</div>
+                    </div>
+
+                    <div class="standard-box">
+                        <strong>📋 血壓標準值</strong>
+                        <ul style="margin: 0.4rem 0 0 1.2rem; line-height: 1.8;">
+                            <li>正常血壓：收縮壓 &lt; 120 mmHg、舒張壓 &lt; 80 mmHg</li>
+                            <li>高血壓前期：收縮壓 120–139 mmHg 或舒張壓 80–89 mmHg</li>
+                            <li>高血壓：收縮壓 ≥ 140 mmHg 或舒張壓 ≥ 90 mmHg</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 三餐 -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-egg-fried"></i>
+                    三餐攝取
+                    <span style="font-size:0.75rem; font-weight:400; color:var(--text-pale); margin-left:0.5rem;">0~10，最多小數點後一位</span>
+                </div>
+                <div class="section-body">
+                    @foreach (var meal in new[] { ("breakfast", "🌅 早餐"), ("lunch", "☀️ 午餐"), ("dinner", "🌙 晚餐") })
+                    {
+                        <div class="meal-block">
+                            <div class="meal-block-title">@meal.Item2</div>
+                            <div class="form-row" style="grid-template-columns: repeat(3,1fr);">
+                                @foreach (var item in new[] { ("veg", "蔬菜"), ("protein", "蛋白質"), ("carbs", "澱粉") })
+                                {
+                                    <div>
+                                        <label class="field-label">@item.Item2（拳頭）</label>
+                                        <input type="text" class="form-control meal-input"
+                                               id="@meal.Item1-@item.Item1"
+                                               placeholder="例：1.5" inputmode="decimal"
+                                               oninput="validateMealInput(this)" />
+                                        <div class="field-error" id="@meal.Item1-@item.Item1-err" style="display:none;"></div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    <input type="hidden" id="Meals_Breakfast_Json" name="Meals_Breakfast" />
+                    <input type="hidden" id="Meals_Lunch_Json" name="Meals_Lunch" />
+                    <input type="hidden" id="Meals_Dinner_Json" name="Meals_Dinner" />
+                </div>
+            </div>
+
+            <!-- 運動 -->
+            <div class="form-section">
+                <div class="section-title"><i class="bi bi-bicycle"></i> 運動資訊</div>
+                <div class="section-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="field-label" asp-for="ExerciseType">運動種類</label>
+                            <input asp-for="ExerciseType" class="form-control" placeholder="例如：慢跑、游泳、騎腳踏車" />
+                        </div>
+                        <div class="form-group">
+                            <label class="field-label" asp-for="ExerciseDuration">運動時間（分鐘）</label>
+                            <input asp-for="ExerciseDuration" type="number" step="0.1" class="form-control" placeholder="0" />
+                            <div class="field-hint">建議每日運動至少 30 分鐘</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 飲品 -->
+            <div class="form-section">
+                <div class="section-title"><i class="bi bi-droplet-fill"></i> 飲品攝取</div>
+                <div class="section-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="field-label" asp-for="WaterIntake">水分攝取（ml）</label>
+                            <input asp-for="WaterIntake" type="number" class="form-control" placeholder="0" />
+                            <div class="field-hint">建議每日飲水 2000 ml</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="field-label" asp-for="Beverage">其他飲料</label>
+                            <input asp-for="Beverage" class="form-control" placeholder="例如：咖啡、茶、果汁" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生活習慣 -->
+            <div class="form-section">
+                <div class="section-title"><i class="bi bi-lungs-fill"></i> 生活習慣</div>
+                <div class="section-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="field-label" asp-for="Cigarettes">抽菸支數</label>
+                            <input asp-for="Cigarettes" type="number" class="form-control" placeholder="0" />
+                            <div class="field-hint">建議戒菸以維護健康</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="field-label" asp-for="BetelNut">嚼檳榔次數</label>
+                            <input asp-for="BetelNut" type="number" class="form-control" placeholder="0" />
+                            <div class="field-hint">建議戒除檳榔以維護健康</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 血糖 -->
+            <div class="form-section">
+                <div class="section-title"><i class="bi bi-droplet-half"></i> 血糖</div>
+                <div class="section-body">
+                    <div class="form-group" style="max-width:320px;">
+                        <label class="field-label" asp-for="BloodSugar">血糖（mg/dL）</label>
+                        <input asp-for="BloodSugar" type="number" step="0.1" class="form-control" placeholder="0" />
+                        <div class="field-hint">正常值：70–99 mg/dL</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-row">
+                <a href="@Url.Action("Index", "DailyHealth")" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> 取消
+                </a>
+                <button type="submit" class="btn btn-primary" onclick="return validateAllMeals() && prepareMealData()">
+                    <i class="bi bi-@(Model.Id > 0 ? "floppy" : "check-lg")"></i>
+                    @(Model.Id > 0 ? "儲存修改" : "下一步")
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const isMorningCompleted = @Json.Serialize(Model.IsMorningCompletedToday);
+        const isEveningCompleted = @Json.Serialize(Model.IsEveningCompletedToday);
+
+        function toggleMorningBP(checked) {
+            document.querySelectorAll('.morning-bp-input').forEach(input => {
+                if (isMorningCompleted) { input.disabled = true; input.style.backgroundColor = 'var(--bg)'; }
+                else {
+                    input.disabled = checked;
+                    input.style.backgroundColor = checked ? 'var(--bg)' : 'var(--surface)';
+                    if (checked) input.value = '';
+                }
+            });
+            document.getElementById('BP_Morning_NotMeasured').value = checked ? 'true' : 'false';
+        }
+
+        function toggleEveningBP(checked) {
+            document.querySelectorAll('.evening-bp-input').forEach(input => {
+                if (isEveningCompleted) { input.disabled = true; input.style.backgroundColor = 'var(--bg)'; }
+                else {
+                    input.disabled = checked;
+                    input.style.backgroundColor = checked ? 'var(--bg)' : 'var(--surface)';
+                    if (checked) input.value = '';
+                }
+            });
+            document.getElementById('BP_Evening_NotMeasured').value = checked ? 'true' : 'false';
+        }
+
         function validateMealInput(input) {
             const errEl = document.getElementById(input.id + '-err');
-            let val = input.value;
-
-            // 只允許數字和一個小數點
-            val = val.replace(/[^0-9.]/g, '');
-            // 只保留第一個小數點
+            let val = input.value.replace(/[^0-9.]/g, '');
             const parts = val.split('.');
             if (parts.length > 2) val = parts[0] + '.' + parts[1];
-            // 小數點後最多一位
-            if (parts.length === 2 && parts[1].length > 1) {
-                val = parts[0] + '.' + parts[1].substring(0, 1);
-            }
+            if (parts.length === 2 && parts[1].length > 1) val = parts[0] + '.' + parts[1].substring(0, 1);
             input.value = val;
-
-            // 範圍驗證
-            if (val === '' || val === '.') {
-                if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
-                return;
-            }
+            if (val === '' || val === '.') { if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; } return; }
             const num = parseFloat(val);
             if (isNaN(num) || num < 0 || num > 10) {
                 if (errEl) { errEl.style.display = 'block'; errEl.textContent = '請輸入 0 到 10 之間的數字'; }
@@ -862,243 +886,105 @@
             }
         }
 
-        // 表單提交前再做一次整體驗證
         function validateAllMeals() {
-            const inputs = document.querySelectorAll('.meal-input');
-            for (const input of inputs) {
+            for (const input of document.querySelectorAll('.meal-input')) {
                 if (input.value === '' || input.value === '.') continue;
                 const num = parseFloat(input.value);
                 if (isNaN(num) || num < 0 || num > 10) {
-                    alert('三餐數值請填入 0 到 10 之間，且最多小數點後一位（例如 1.5）');
-                    input.focus();
-                    return false;
+                    alert('三餐數值請填入 0 到 10 之間，且最多小數點後一位');
+                    input.focus(); return false;
                 }
             }
             return true;
         }
 
+        function prepareMealData() {
+            const serialize = (vegId, proId, carbId, hidId) => {
+                const v = document.getElementById(vegId)?.value;
+                const p = document.getElementById(proId)?.value;
+                const c = document.getElementById(carbId)?.value;
+                document.getElementById(hidId).value = (v || p || c)
+                    ? JSON.stringify({ Vegetables: v, Protein: p, Carbs: c }) : '';
+            };
+            serialize('breakfast-veg', 'breakfast-protein', 'breakfast-carbs', 'Meals_Breakfast_Json');
+            serialize('lunch-veg', 'lunch-protein', 'lunch-carbs', 'Meals_Lunch_Json');
+            serialize('dinner-veg', 'dinner-protein', 'dinner-carbs', 'Meals_Dinner_Json');
+            return true;
+        }
 
-    // 控制睡前血壓輸入框的啟用/禁用
-    function toggleEveningBP(checked) {
-        const inputs = document.querySelectorAll('.evening-bp-input');
-        inputs.forEach(input => {
-            // 🔒 如果已完成，則無論 checkbox 狀態都鎖定
-            if (isEveningCompleted) {
-                input.disabled = true;
-                input.style.backgroundColor = '#f0f0f0';
-            } else {
-                input.disabled = checked;
-                if (checked) {
-                    input.value = '';
-                    input.style.backgroundColor = '#f0f0f0';
-                } else {
-                    if (!input.value) {
-                        input.style.backgroundColor = 'white';
-                    }
-                }
-            }
-        });
-        // 更新 hidden field
-        document.getElementById('BP_Evening_NotMeasured').value = checked ? 'true' : 'false';
-    }
-
-    // ----------------------------------------------------
-    // 頁面載入與初始化邏輯
-    // ----------------------------------------------------
-    document.addEventListener('DOMContentLoaded', function() {
-        // 限制只能輸入數字的函數
-            // 血壓：只能數字，防貼上
+        document.addEventListener('DOMContentLoaded', function () {
+            // 血壓只能整數
             document.querySelectorAll('.morning-bp-input, .evening-bp-input').forEach(input => {
-                input.addEventListener('keypress', e => {
-                    if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key))
-                        e.preventDefault();
-                });
+                input.addEventListener('input', () => { input.value = input.value.replace(/[^0-9]/g, ''); });
                 input.addEventListener('paste', e => {
                     e.preventDefault();
-                    const text = e.clipboardData.getData('text');
-                    if (/^\d+$/.test(text)) input.value = text;
-                });
-                input.addEventListener('input', () => {
-                    input.value = input.value.replace(/[^0-9]/g, '');
+                    const t = e.clipboardData.getData('text');
+                    if (/^\d+$/.test(t)) input.value = t;
                 });
             });
 
-            // 運動時間：只能數字和一個小數點
-            const exerciseDurationInput = document.querySelector('input[name="ExerciseDuration"]');
-            if (exerciseDurationInput) {
-                exerciseDurationInput.addEventListener('keypress', e => {
-                    if (!/[0-9.]/.test(e.key) && !['Backspace', 'Delete', 'Tab'].includes(e.key)) e.preventDefault();
-                    if (e.key === '.' && exerciseDurationInput.value.includes('.')) e.preventDefault();
-                });
-                exerciseDurationInput.addEventListener('input', () => {
-                    exerciseDurationInput.value = exerciseDurationInput.value.replace(/[^0-9.]/g, '');
-                });
-                exerciseDurationInput.addEventListener('paste', e => {
-                    e.preventDefault();
-                    const text = e.clipboardData.getData('text');
-                    if (/^\d*\.?\d*$/.test(text)) exerciseDurationInput.value = text;
-                });
+            // 初始化血壓狀態
+            const mc = document.getElementById('morning_not_measured');
+            if (mc) {
+        @if (Model.BP_Morning_NotMeasured.HasValue && Model.BP_Morning_NotMeasured.Value)
+        {
+            <text>mc.checked = true;</text>
+        }
+                    if (isMorningCompleted) {
+                    document.querySelectorAll('.morning-bp-input').forEach(i => { i.disabled = true; i.style.backgroundColor = 'var(--bg)'; });
+                } else { toggleMorningBP(mc.checked); }
+            }
+            const ec = document.getElementById('evening_not_measured');
+            if (ec) {
+        @if (Model.BP_Evening_NotMeasured.HasValue && Model.BP_Evening_NotMeasured.Value)
+        {
+            <text>ec.checked = true;</text>
+        }
+                    if (isEveningCompleted) {
+                    document.querySelectorAll('.evening-bp-input').forEach(i => { i.disabled = true; i.style.backgroundColor = 'var(--bg)'; });
+                } else { toggleEveningBP(ec.checked); }
             }
 
-            // 飲水量、抽菸、檳榔：只能整數
-            ['WaterIntake', 'Cigarettes', 'BetelNut'].forEach(name => {
-                const el = document.querySelector(`input[name="${name}"]`);
-                if (!el) return;
-                el.addEventListener('keypress', e => {
-                    if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab'].includes(e.key)) e.preventDefault();
-                });
-                el.addEventListener('input', () => {
-                    el.value = el.value.replace(/[^0-9]/g, '');
-                });
-                el.addEventListener('paste', e => {
-                    e.preventDefault();
-                    const text = e.clipboardData.getData('text');
-                    if (/^\d+$/.test(text)) el.value = text;
-                });
-            });
-
-            // 血糖：數字和一個小數點
-            const bloodSugarInput = document.querySelector('input[name="BloodSugar"]');
-            if (bloodSugarInput) {
-                bloodSugarInput.addEventListener('keypress', e => {
-                    if (!/[0-9.]/.test(e.key) && !['Backspace', 'Delete', 'Tab'].includes(e.key)) e.preventDefault();
-                    if (e.key === '.' && bloodSugarInput.value.includes('.')) e.preventDefault();
-                });
-                bloodSugarInput.addEventListener('input', () => {
-                    bloodSugarInput.value = bloodSugarInput.value.replace(/[^0-9.]/g, '');
-                });
-                bloodSugarInput.addEventListener('paste', e => {
-                    e.preventDefault();
-                    const text = e.clipboardData.getData('text');
-                    if (/^\d*\.?\d*$/.test(text)) bloodSugarInput.value = text;
-                });
-            }
-
-            // 運動種類：只能中文和英文
-            const exerciseTypeInput = document.querySelector('input[name="ExerciseType"]');
-            if (exerciseTypeInput) {
-                exerciseTypeInput.addEventListener('input', () => {
-                    exerciseTypeInput.value = exerciseTypeInput.value.replace(/[^\u4e00-\u9fa5a-zA-Z\s]/g, '');
-                });
-                exerciseTypeInput.addEventListener('paste', e => {
-                    e.preventDefault();
-                    const text = e.clipboardData.getData('text');
-                    exerciseTypeInput.value = text.replace(/[^\u4e00-\u9fa5a-zA-Z\s]/g, '');
-                });
-            }
-
-        // 恢復三餐選項
-            function restoreMealSelection(inputId, value) {
-                if (!value) return;
-                const el = document.getElementById(inputId);
-                if (el) el.value = value;
-            }
-
-        // 恢復三餐數據
+            // 恢復三餐資料
         @if (Model.Meals_Breakfast != null)
         {
             <text>
-            const breakfast = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Breakfast));
-            if (breakfast.Vegetables) restoreMealSelection('breakfast-veg', breakfast.Vegetables);
-            if (breakfast.Protein) restoreMealSelection('breakfast-protein', breakfast.Protein);
-            if (breakfast.Carbs) restoreMealSelection('breakfast-carbs', breakfast.Carbs);
+                        const bf = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Breakfast));
+                        if (bf.Vegetables) document.getElementById('breakfast-veg').value = bf.Vegetables;
+                        if (bf.Protein) document.getElementById('breakfast-protein').value = bf.Protein;
+                        if (bf.Carbs) document.getElementById('breakfast-carbs').value = bf.Carbs;
             </text>
         }
-
         @if (Model.Meals_Lunch != null)
         {
             <text>
-            const lunch = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Lunch));
-            if (lunch.Vegetables) restoreMealSelection('lunch-veg', lunch.Vegetables);
-            if (lunch.Protein) restoreMealSelection('lunch-protein', lunch.Protein);
-            if (lunch.Carbs) restoreMealSelection('lunch-carbs', lunch.Carbs);
+                        const lc = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Lunch));
+                        if (lc.Vegetables) document.getElementById('lunch-veg').value = lc.Vegetables;
+                        if (lc.Protein) document.getElementById('lunch-protein').value = lc.Protein;
+                        if (lc.Carbs) document.getElementById('lunch-carbs').value = lc.Carbs;
             </text>
         }
-
         @if (Model.Meals_Dinner != null)
         {
             <text>
-            const dinner = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Dinner));
-            if (dinner.Vegetables) restoreMealSelection('dinner-veg', dinner.Vegetables);
-            if (dinner.Protein) restoreMealSelection('dinner-protein', dinner.Protein);
-            if (dinner.Carbs) restoreMealSelection('dinner-carbs', dinner.Carbs);
+                        const dn = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Meals_Dinner));
+                        if (dn.Vegetables) document.getElementById('dinner-veg').value = dn.Vegetables;
+                        if (dn.Protein) document.getElementById('dinner-protein').value = dn.Protein;
+                        if (dn.Carbs) document.getElementById('dinner-carbs').value = dn.Carbs;
             </text>
         }
 
-        // 🔒 恢復上午血壓的 checkbox 和鎖定狀態
-        const morningCheckbox = document.getElementById('morning_not_measured');
-        if (morningCheckbox) {
-            @if (Model.BP_Morning_NotMeasured.HasValue && Model.BP_Morning_NotMeasured.Value)
-            {
-                <text>
-                morningCheckbox.checked = true;
-                </text>
-            }
-            // 🔒 初始化：如果已完成則鎖定輸入框
-            if (isMorningCompleted) {
-                const inputs = document.querySelectorAll('.morning-bp-input');
-                inputs.forEach(input => {
-                    input.disabled = true;
-                    input.style.backgroundColor = '#f0f0f0';
+                // 其他欄位輸入限制（整數）
+                ['WaterIntake', 'Cigarettes', 'BetelNut'].forEach(name => {
+                    const el = document.querySelector(`input[name="${name}"]`);
+                    if (!el) return;
+                    el.addEventListener('input', () => { el.value = el.value.replace(/[^0-9]/g, ''); });
                 });
-            } else {
-                toggleMorningBP(morningCheckbox.checked);
-            }
-        }
+        });
+    </script>
 
-        // 🔒 恢復睡前血壓的 checkbox 和鎖定狀態
-        const eveningCheckbox = document.getElementById('evening_not_measured');
-        if (eveningCheckbox) {
-            @if (Model.BP_Evening_NotMeasured.HasValue && Model.BP_Evening_NotMeasured.Value)
-            {
-                <text>
-                eveningCheckbox.checked = true;
-                </text>
-            }
-            // 🔒 初始化：如果已完成則鎖定輸入框
-            if (isEveningCompleted) {
-                const inputs = document.querySelectorAll('.evening-bp-input');
-                inputs.forEach(input => {
-                    input.disabled = true;
-                    input.style.backgroundColor = '#f0f0f0';
-                });
-            } else {
-                toggleEveningBP(eveningCheckbox.checked);
-            }
-        }
-    });
-
-    // ----------------------------------------------------
-    // 提交前準備數據
-    // ----------------------------------------------------
-    function prepareMealData() {
-        const serializeMeal = (vegId, proteinId, carbsId, hiddenId) => {
-            const veg = document.getElementById(vegId)?.value;
-            const protein = document.getElementById(proteinId)?.value;
-            const carbs = document.getElementById(carbsId)?.value;
-
-            if (veg || protein || carbs) {
-                const meal = {
-                    Vegetables: veg,
-                    Protein: protein,
-                    Carbs: carbs
-                };
-                document.getElementById(hiddenId).value = JSON.stringify(meal);
-            } else {
-                document.getElementById(hiddenId).value = '';
-            }
-        };
-
-        serializeMeal('breakfast-veg', 'breakfast-protein', 'breakfast-carbs', 'Meals_Breakfast_Json');
-        serializeMeal('lunch-veg', 'lunch-protein', 'lunch-carbs', 'Meals_Lunch_Json');
-        serializeMeal('dinner-veg', 'dinner-protein', 'dinner-carbs', 'Meals_Dinner_Json');
-
-        return true;
+    @section Scripts {
+        <partial name="_ValidationScriptsPartial" />
     }
-</script>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
 </body>
 </html>
