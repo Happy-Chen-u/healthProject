@@ -799,6 +799,17 @@
             </div>
 
             <!-- 圖表 -->
+            <!-- 圖表展開按鈕 -->
+            <div id="chartToggleBar" style="display:none; margin-bottom:1rem;">
+                <button onclick="toggleCharts()" id="chartToggleBtn"
+                        style="width:100%; padding:0.65rem; background:var(--surface);
+                   border:1.5px solid var(--border); border-radius:8px;
+                   font-size:0.85rem; font-weight:600; color:var(--text-sub);
+                   cursor:pointer; font-family:inherit; display:flex;
+                   align-items:center; justify-content:center; gap:0.5rem;">
+                    <i class="bi bi-bar-chart-line"></i> 展開趨勢圖表
+                </button>
+            </div>
             <div id="chartsSection" style="display:none;">
                 <div class="charts-grid">
                     <div class="card"><div class="card-title"><i class="bi bi-heart-pulse"></i> 血壓趨勢</div><div class="chart-wrap"><button class="chart-nav-btn" onclick="navigateChart('bp',-1)">‹</button><div class="chart-inner"><canvas id="bpChart" style="max-height:180px;"></canvas></div><button class="chart-nav-btn" onclick="navigateChart('bp',1)">›</button></div></div>
@@ -953,7 +964,7 @@
             } else {
                 document.getElementById('dailySection').style.display = 'none';
                 document.getElementById('summarySection').style.display = 'block';
-                document.getElementById('chartsSection').style.display = 'block';
+                document.getElementById('chartsSection').style.display = 'none'; // 預設隱藏
                 displayTrendCard(data.trendSummary); displayChartReport(data);
             }
         }
@@ -1122,7 +1133,13 @@
                     <td class="td-center">${avgCarb === null ? nd() : (avgCarb >= 2 && avgCarb <= 4) ? badge('✓ 適中', 'badge-ok') : badge('⚠️ 需調整', 'badge-danger')}</td>
                 </tr>`;
 
-            drawCharts(data.charts); displayMealSummary(data);
+            chartsLoaded = false;
+            document.getElementById('chartToggleBar').style.display = 'block';
+
+            // 電腦版（螢幕寬度 > 900px）自動展開圖表
+            if (window.innerWidth > 900) {
+                toggleCharts();
+            }
         }
 
         function drawCharts(cd) {
@@ -1229,6 +1246,24 @@
                 alert(result.success ? '✅ ' + result.message : '❌ ' + result.message);
             } catch (e) { alert('❌ 系統錯誤: ' + e.message); }
             finally { btn.disabled = false; btn.innerHTML = originalHtml; }
+        }
+        let chartsLoaded = false;
+        function toggleCharts() {
+            const section = document.getElementById('chartsSection');
+            const btn = document.getElementById('chartToggleBtn');
+            const isHidden = section.style.display === 'none';
+            if (isHidden) {
+                section.style.display = 'block';
+                btn.innerHTML = '<i class="bi bi-chevron-up"></i> 收起趨勢圖表';
+                if (!chartsLoaded && currentReport) {
+                    drawCharts(currentReport.charts);
+                    displayMealSummary(currentReport);
+                    chartsLoaded = true;
+                }
+            } else {
+                section.style.display = 'none';
+                btn.innerHTML = '<i class="bi bi-bar-chart-line"></i> 展開趨勢圖表';
+            }
         }
     </script>
 </body>

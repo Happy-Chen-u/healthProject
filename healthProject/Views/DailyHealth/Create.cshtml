@@ -738,7 +738,7 @@
                     <span style="font-size:0.75rem; font-weight:400; color:var(--text-pale); margin-left:0.5rem;">0~10，最多小數點後一位</span>
                 </div>
                 <div class="section-body">
-                    @foreach (var meal in new[] { ("breakfast", "🌅 早餐"), ("lunch", "☀️ 午餐"), ("dinner", "🌙 晚餐") })
+                    @foreach (var meal in new[] { ("breakfast", "🌅 早餐 (單位為拳頭)"), ("lunch", "☀️ 午餐 (單位為拳頭)"), ("dinner", "🌙 晚餐 (單位為拳頭)") })
                     {
                         <div class="meal-block">
                             <div class="meal-block-title">@meal.Item2</div>
@@ -746,7 +746,7 @@
                                 @foreach (var item in new[] { ("veg", "蔬菜"), ("protein", "蛋白質"), ("carbs", "澱粉") })
                                 {
                                     <div>
-                                        <label class="field-label">@item.Item2（拳頭）</label>
+                                        <label class="field-label">@item.Item2</label>
                                         <input type="text" class="form-control meal-input"
                                                id="@meal.Item1-@item.Item1"
                                                placeholder="例：1.5" inputmode="decimal"
