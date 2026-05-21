@@ -1375,64 +1375,77 @@
 
                 let startIdx = 0, endIdx = Math.min(CHART_VISIBLE - 1, total - 1);
 
-                if (currentReport?.startDate && currentReport?.endDate) {
+                if (currentReport?.startDate && currentReport?.endDate && total > 0) {
                     const start = currentReport.startDate.substring(0, 10);
                     const end = currentReport.endDate.substring(0, 10);
 
-                    // 找第一個 >= startDate 的 label
-                    let foundStart = false;
+                    // 找第一個 >= startDate 的 label（查詢開始日）
+                    let queryStartIdx = -1;
                     for (let i = 0; i < labels.length; i++) {
-                        if (labels[i] >= start) {
-                            startIdx = i;
-                            foundStart = true;
-                            break;
-                        }
+                        if (labels[i] >= start) { queryStartIdx = i; break; }
                     }
 
-                    // 找最後一個 <= endDate 的 label
-                    let foundEnd = false;
+                    // 找最後一個 <= endDate 的 label（查詢結束日）
+                    let queryEndIdx = -1;
                     for (let i = labels.length - 1; i >= 0; i--) {
-                        if (labels[i] <= end) {
-                            endIdx = i;
-                            foundEnd = true;
-                            break;
-                        }
+                        if (labels[i] <= end) { queryEndIdx = i; break; }
                     }
 
-                    // 如果選的範圍內完全沒有資料，顯示空白（鎖在 start/end 範圍）
-                    if (!foundStart || !foundEnd || startIdx > endIdx) {
-                        charts[name].options.scales.x.min = start;
-                        charts[name].options.scales.x.max = end;
-                        chartRanges[name] = { min: 0, max: 0, total };
-                        charts[name].update('none');
-                        return;
-                    }
-                    // 如果範圍內資料超過 CHART_VISIBLE，只顯示前 CHART_VISIBLE 筆
-                    else if (endIdx - startIdx + 1 > CHART_VISIBLE) {
-                        endIdx = startIdx + CHART_VISIBLE - 1;
+                    if (queryStartIdx >= 0 && queryEndIdx >= 0 && queryStartIdx <= queryEndIdx) {
+                        const rangeCount = queryEndIdx - queryStartIdx + 1;
+
+                        if (rangeCount >= CHART_VISIBLE) {
+                            // 查詢範圍超過視窗：從開始日顯示 CHART_VISIBLE 格
+                            startIdx = queryStartIdx;
+                            endIdx = startIdx + CHART_VISIBLE - 1;
+                        } else {
+                            // 查詢範圍在視窗內：只顯示查詢範圍，不往外延伸
+                            startIdx = queryStartIdx;
+                            endIdx = queryEndIdx;
+                        }
                     }
                 }
 
-                    const visibleEnd = endIdx;
-                    chartRanges[name] = { min: startIdx, max: visibleEnd, total };
-                    charts[name].options.scales.x.min = labels[startIdx];
-                    charts[name].options.scales.x.max = labels[visibleEnd];
-                    charts[name].update('none');
-                };  // ← 這裡才是關掉 makeChart
+                chartRanges[name] = { min: startIdx, max: endIdx, total };
+                charts[name].options.scales.x.min = labels[startIdx];
+                charts[name].options.scales.x.max = labels[endIdx];
+                charts[name].update('none');
+            };
 
             const lineOpts = yLabel => ({
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: true, labels: { font: { size: 11 } } } },
-                scales: {
-                    x: { ticks: { maxTicksLimit: 8, font: { size: 10 } }, grid: { display: false } },
-                    y: { beginAtZero: false, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 } } }
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: true, labels: { font: { size: 11 } } } },
+    scales: {
+        x: {
+            ticks: {
+                maxTicksLimit: 8,
+                font: { size: 10 },
+                // 只顯示 MM-dd，去掉年份
+                callback: function(val, index) {
+                    const label = this.getLabelForValue(val);
+                    return label ? label.substring(5) : '';
                 }
-            });
+            },
+            grid: { display: false }
+        },
+        y: { beginAtZero: false, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 } } }
+    }
+});
             const barOpts = yLabel => ({
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: { ticks: { maxTicksLimit: 8, font: { size: 10 } }, grid: { display: false } },
+                    x: {
+                        ticks: {
+                            maxTicksLimit: 8,
+                            font: { size: 10 },
+                            callback: function (val, index) {
+                                const label = this.getLabelForValue(val);
+                                return label ? label.substring(5) : '';
+                            }
+                        },
+                        grid: { display: false }
+                    },
                     y: { beginAtZero: true, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 } } }
                 }
             });

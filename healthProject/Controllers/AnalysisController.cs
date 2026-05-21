@@ -412,7 +412,7 @@ namespace healthProject.Controllers
             }
             else
             {
-                charts = GenerateChartData(aggregatedRecords, reportType, goals);  // ← 改用 aggregatedRecords
+                charts = GenerateChartData(chartAggregatedRecords, reportType, goals);
                 charts.WeeklyMealSummary = CalculateMealStatistics(aggregatedRecords);
                 charts.MonthlyMealSummary = CalculateMealStatistics(aggregatedRecords);
             }
