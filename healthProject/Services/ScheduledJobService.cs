@@ -70,9 +70,10 @@ namespace healthProject.Services
 
         // 發送週報給單一使用者 
         public async Task SendWeeklyReportToUserAsync(
-    UserDBModel user,
-    DateTime startDate,
-    DateTime endDate)
+            UserDBModel user,
+            DateTime startDate,
+            DateTime endDate,
+            string baseUrl = null)
         {
             try
             {
@@ -85,12 +86,12 @@ namespace healthProject.Services
                 // 3. 儲存到資料庫並取得下載連結
                 var reportId = await SaveWeeklyReportAsync(user.Id, startDate, endDate, pdfBytes);
                 // 4. 產生下載連結
-                var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://你的網域.com";
-                var downloadUrl = $"{baseUrl}/Analysis/DownloadWeeklyReport?reportId={reportId}";
+                var finalBaseUrl = baseUrl ?? _configuration["AppSettings:BaseUrl"] ?? "https://localhost:7041";
+                var downloadUrl = $"{finalBaseUrl}/Analysis/DownloadWeeklyReport?reportId={reportId}";
                 // 5. 傳送 LINE 訊息
                 await SendLineNotificationAsync(user, startDate, endDate, downloadUrl);
 
-                // 6. ← 加在這裡：週報衛教推播
+                // 6. 週報衛教推播
                 try
                 {
                     using var http = new HttpClient();

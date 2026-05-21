@@ -99,6 +99,38 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// 應用程式啟動後自動抓 ngrok 網址
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    Task.Run(async () =>
+    {
+        try
+        {
+            await Task.Delay(2000); // 等 ngrok 啟動
+            using var http = new HttpClient();
+            var res = await http.GetStringAsync("http://localhost:4040/api/tunnels");
+            var json = System.Text.Json.JsonDocument.Parse(res);
+            var tunnels = json.RootElement.GetProperty("tunnels");
+            if (tunnels.GetArrayLength() > 0)
+            {
+                var url = tunnels[0].GetProperty("public_url").GetString();
+                if (!string.IsNullOrEmpty(url))
+                {
+                    var config = app.Services.GetRequiredService<IConfiguration>();
+                    ((IConfigurationRoot)config)["AppSettings:BaseUrl"] = url;
+                    Console.WriteLine($"✅ ngrok 網址已自動設定: {url}");
+                }
+            }
+        }
+        catch
+        {
+            Console.WriteLine("⚠️ 無法取得 ngrok 網址，使用 appsettings.json 設定");
+        }
+    });
+});
+
+app.Run();
+
 app.Run();
 
 // ========================================
@@ -121,3 +153,4 @@ public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter
                httpContext.User.IsInRole("Admin");
     }
 }
+

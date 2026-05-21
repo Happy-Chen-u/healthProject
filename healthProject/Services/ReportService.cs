@@ -97,6 +97,9 @@ namespace healthProject.Services
                 column.Item().Element(c => ComposeBasicInfo(c, analysis));
                 column.Item().Element(c => ComposeStatistics(c, analysis));
 
+                if (analysis.TrendSummary?.Items?.Any() == true)
+                    column.Item().Element(c => ComposeTrendSummary(c, analysis));
+
                 if (analysis.Charts.BloodPressureData.Any())
                     column.Item().Element(c => ComposeBloodPressureChart(c, analysis));
 
@@ -537,6 +540,60 @@ namespace healthProject.Services
                     {
                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(record.Date);
                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(record.Meals ?? "無記錄");
+                    }
+                });
+            });
+        }
+        // ========================================
+        // 📈 健康趨勢提醒
+        // ========================================
+        private void ComposeTrendSummary(IContainer container, AnalysisViewModel analysis)
+        {
+            var trend = analysis.TrendSummary;
+            if (trend == null || !trend.Items.Any()) return;
+
+            container.Column(column =>
+            {
+                column.Item().PaddingBottom(5)
+                    .Text($"健康趨勢提醒（與{trend.PeriodLabel}相比）")
+                    .FontSize(14).Bold();
+
+                column.Item().Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.RelativeColumn(2); // 項目
+                        columns.RelativeColumn(2); // 本期
+                        columns.RelativeColumn(2); // 前期
+                        columns.RelativeColumn(2); // 變化
+                        columns.RelativeColumn(3); // 說明
+                    });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(5).Text("項目").Bold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(5).Text("本期").Bold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(5).Text("前期").Bold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(5).Text("變化").Bold();
+                        header.Cell().Background(Colors.Blue.Lighten3).Padding(5).Text("說明").Bold();
+                    });
+
+                    foreach (var item in trend.Items)
+                    {
+                        var diffColor = item.TrendType == "good" ? Colors.Green.Medium
+                                      : item.TrendType == "warn" ? Colors.Orange.Medium
+                                      : Colors.Red.Medium;
+
+                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
+                            .Text($"{item.Label}");
+                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
+                            .Text(item.CurrentValue);
+                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
+                            .Text(item.PrevValue);
+                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
+                            .Text(item.DiffText).FontColor(diffColor);
+                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
+                            .Text(item.Message).FontSize(10);
                     }
                 });
             });

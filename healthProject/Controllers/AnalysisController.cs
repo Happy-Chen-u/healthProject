@@ -229,6 +229,77 @@ namespace healthProject.Controllers
             }
         }
 
+
+        // ========================================
+        // 📥 病患下載自己的分析 PDF（不需傳 userId）
+        // ========================================
+        [HttpPost]
+        public async Task<IActionResult> DownloadAnalysisPdf([FromBody] ReportRequest request)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var user = await GetUserByIdAsync(userId);
+
+                if (user == null)
+                    return Json(new { success = false, message = "找不到使用者資料" });
+
+                var analysis = await GenerateAnalysisAsync(
+                    userId,
+                    user.FullName,
+                    user.IDNumber,
+                    request.ReportType,
+                    request.StartDate,
+                    request.EndDate
+                );
+
+                var pdfBytes = _reportService.GeneratePdfReport(analysis);
+                var fileName = $"健康報表_{user.FullName}_{request.StartDate:yyyy-MM-dd}_{request.EndDate:yyyy-MM-dd}.pdf";
+
+                return File(pdfBytes, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "下載分析 PDF 失敗");
+                return BadRequest("產生 PDF 失敗");
+            }
+        }
+
+        // ========================================
+        // 📥 管理員下載病患分析 PDF
+        // ========================================
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> DownloadAdminAnalysisPdf([FromBody] AdminReportRequest request)
+        {
+            try
+            {
+                var patient = await GetPatientByIdNumberAsync(request.IDNumber);
+
+                if (patient == null)
+                    return Json(new { success = false, message = "查無此病患" });
+
+                var analysis = await GenerateAnalysisAsync(
+                    patient.Id,
+                    patient.FullName,
+                    patient.IDNumber,
+                    request.ReportType,
+                    request.StartDate,
+                    request.EndDate
+                );
+
+                var pdfBytes = _reportService.GeneratePdfReport(analysis);
+                var fileName = $"健康報表_{patient.FullName}_{request.StartDate:yyyy-MM-dd}_{request.EndDate:yyyy-MM-dd}.pdf";
+
+                return File(pdfBytes, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "下載管理員分析 PDF 失敗");
+                return BadRequest("產生 PDF 失敗");
+            }
+        }
+
         // ========================================
         // 🔍 產生分析報表 (年報表特殊處理)
         // ========================================
@@ -341,8 +412,7 @@ namespace healthProject.Controllers
             }
             else
             {
-                charts = GenerateChartData(chartAggregatedRecords, reportType, goals);
-                // 三餐摘要仍用原始範圍
+                charts = GenerateChartData(aggregatedRecords, reportType, goals);  // ← 改用 aggregatedRecords
                 charts.WeeklyMealSummary = CalculateMealStatistics(aggregatedRecords);
                 charts.MonthlyMealSummary = CalculateMealStatistics(aggregatedRecords);
             }
@@ -807,8 +877,8 @@ namespace healthProject.Controllers
 
                 // 5️ 呼叫服務產生週報 PDF 並傳 LINE
                 var scheduledJobService = HttpContext.RequestServices.GetRequiredService<ScheduledJobService>();
-                await scheduledJobService.SendWeeklyReportToUserAsync(user, lastMonday, lastSunday);
-
+                var baseUrl = _configuration["AppSettings:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+                await scheduledJobService.SendWeeklyReportToUserAsync(user, lastMonday, lastSunday, baseUrl);
                 return Json(new
                 {
                     success = true,
@@ -1180,12 +1250,13 @@ WHERE ""Id"" = @UserId";
             return reportType switch
             {
                 ReportType.Daily => date.ToString("HH:mm"),
-                ReportType.Weekly => date.ToString("MM/dd"),
-                ReportType.Monthly => date.ToString("MM/dd"),
-                ReportType.Yearly => date.ToString("yyyy/MM"),
-                _ => date.ToString("MM/dd")
+                ReportType.Weekly => date.ToString("yyyy-MM-dd"),   
+                ReportType.Monthly => date.ToString("yyyy-MM-dd"),  
+                ReportType.Yearly => date.ToString("yyyy-MM"),      
+                _ => date.ToString("yyyy-MM-dd")
             };
         }
+        
 
         // ========================================
         // 🗄️ 資料庫查詢
@@ -1407,6 +1478,149 @@ WHERE ""Id"" = @UserId";
             }
 
             return model;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GenerateAnalysisPdfLink([FromBody] ReportRequest request)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var user = await GetUserByIdAsync(userId);
+                if (user == null)
+                    return Json(new { success = false, message = "找不到使用者資料" });
+
+                var analysis = await GenerateAnalysisAsync(
+                    userId, user.FullName, user.IDNumber,
+                    request.ReportType, request.StartDate, request.EndDate);
+
+                var pdfBytes = _reportService.GeneratePdfReport(analysis);
+
+                // 存到資料庫
+                var reportId = Guid.NewGuid().ToString("N");
+                var connStr = _configuration.GetConnectionString("DefaultConnection");
+                await using var conn = new NpgsqlConnection(connStr);
+                await conn.OpenAsync();
+
+                var insertQuery = @"
+            INSERT INTO ""WeeklyReports"" 
+            (""Id"", ""UserId"", ""StartDate"", ""EndDate"", ""PdfData"", ""ExpiresAt"")
+            VALUES (@Id, @UserId, @StartDate, @EndDate, @PdfData, @ExpiresAt)";
+                await using var cmd = new NpgsqlCommand(insertQuery, conn);
+                cmd.Parameters.AddWithValue("@Id", reportId);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                cmd.Parameters.AddWithValue("@StartDate", request.StartDate);
+                cmd.Parameters.AddWithValue("@EndDate", request.EndDate);
+                cmd.Parameters.AddWithValue("@PdfData", pdfBytes);
+                cmd.Parameters.AddWithValue("@ExpiresAt", DateTime.Now.AddDays(7));
+                await cmd.ExecuteNonQueryAsync();
+
+                var baseUrl = _configuration["AppSettings:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+                var downloadUrl = $"{baseUrl}/Analysis/DownloadWeeklyReport?reportId={reportId}";
+
+                return Json(new { success = true, url = downloadUrl });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "產生分析PDF連結失敗");
+                return Json(new { success = false, message = "產生失敗" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> StartGenerateAnalysisPdf([FromBody] ReportRequest request)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var user = await GetUserByIdAsync(userId);
+                if (user == null)
+                    return Json(new { success = false, message = "找不到使用者資料" });
+
+                var reportId = Guid.NewGuid().ToString("N");
+                var connStr = _configuration.GetConnectionString("DefaultConnection");
+                await using var conn = new NpgsqlConnection(connStr);
+                await conn.OpenAsync();
+
+                var insertQuery = @"
+                    INSERT INTO ""WeeklyReports"" 
+                    (""Id"", ""UserId"", ""StartDate"", ""EndDate"", ""PdfData"", ""ExpiresAt"", ""IsVerified"")
+                    VALUES (@Id, @UserId, @StartDate, @EndDate, @PdfData, @ExpiresAt, false)";
+                await using var cmd = new NpgsqlCommand(insertQuery, conn);
+                cmd.Parameters.AddWithValue("@Id", reportId);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                cmd.Parameters.AddWithValue("@StartDate", request.StartDate);
+                cmd.Parameters.AddWithValue("@EndDate", request.EndDate);
+                cmd.Parameters.AddWithValue("@PdfData", Array.Empty<byte>());
+                cmd.Parameters.AddWithValue("@ExpiresAt", DateTime.Now.AddDays(7));
+                await cmd.ExecuteNonQueryAsync();
+
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var analysis = await GenerateAnalysisAsync(
+                            userId, user.FullName, user.IDNumber,
+                            request.ReportType, request.StartDate, request.EndDate);
+                        var pdfBytes = _reportService.GeneratePdfReport(analysis);
+
+                        var connStr2 = _configuration.GetConnectionString("DefaultConnection");
+                        await using var conn2 = new NpgsqlConnection(connStr2);
+                        await conn2.OpenAsync();
+                        var updateQuery = @"
+                    UPDATE ""WeeklyReports"" 
+                    SET ""PdfData"" = @PdfData, ""IsVerified"" = true
+                    WHERE ""Id"" = @Id";
+                        await using var cmd2 = new NpgsqlCommand(updateQuery, conn2);
+                        cmd2.Parameters.AddWithValue("@PdfData", pdfBytes);
+                        cmd2.Parameters.AddWithValue("@Id", reportId);
+                        await cmd2.ExecuteNonQueryAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "背景產生PDF失敗");
+                    }
+                });
+
+                return Json(new { success = true, reportId });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "啟動PDF產生失敗");
+                return Json(new { success = false, message = "系統錯誤" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckPdfReady(string reportId)
+        {
+            try
+            {
+                var connStr = _configuration.GetConnectionString("DefaultConnection");
+                await using var conn = new NpgsqlConnection(connStr);
+                await conn.OpenAsync();
+
+                var query = @"
+                    SELECT ""IsVerified"", octet_length(""PdfData"") as size
+                    FROM ""WeeklyReports"" WHERE ""Id"" = @Id";
+                await using var cmd = new NpgsqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@Id", reportId);
+                await using var reader = await cmd.ExecuteReaderAsync();
+
+                if (!await reader.ReadAsync())
+                    return Json(new { ready = false });
+
+                var isReady = reader.GetBoolean(0) && reader.GetInt64(1) > 0;
+                var baseUrl = _configuration["AppSettings:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+                var downloadUrl = $"{baseUrl}/Analysis/DownloadWeeklyReport?reportId={reportId}";
+
+                return Json(new { ready = isReady, url = downloadUrl });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "查詢PDF狀態失敗");
+                return Json(new { ready = false });
+            }
         }
     }
 

@@ -1082,27 +1082,45 @@
                     const end = currentReport.endDate.substring(0, 10);
 
                     // 找第一個 >= startDate 的 label
+                    let foundStart = false;
                     for (let i = 0; i < labels.length; i++) {
-                        // label 格式可能是 MM/dd 或 yyyy/MM，需轉換比對
-                        const labelDate = parseLabelToDate(labels[i], start);
-                        if (labelDate >= start) { startIdx = i; break; }
+                        if (labels[i] >= start) {
+                            startIdx = i;
+                            foundStart = true;
+                            break;
+                        }
                     }
 
                     // 找最後一個 <= endDate 的 label
-                    endIdx = startIdx + CHART_VISIBLE - 1;
+                    let foundEnd = false;
                     for (let i = labels.length - 1; i >= 0; i--) {
-                        const labelDate = parseLabelToDate(labels[i], end);
-                        if (labelDate <= end) { endIdx = i; break; }
+                        if (labels[i] <= end) {
+                            endIdx = i;
+                            foundEnd = true;
+                            break;
+                        }
+                    }
+
+                    // 如果選的範圍內完全沒有資料，顯示空白（鎖在 start/end 範圍）
+                    if (!foundStart || !foundEnd || startIdx > endIdx) {
+                        charts[name].options.scales.x.min = start;
+                        charts[name].options.scales.x.max = end;
+                        chartRanges[name] = { min: 0, max: 0, total };
+                        charts[name].update('none');
+                        return;
+                    }
+                    // 如果範圍內資料超過 CHART_VISIBLE，只顯示前 CHART_VISIBLE 筆
+                    else if (endIdx - startIdx + 1 > CHART_VISIBLE) {
+                        endIdx = startIdx + CHART_VISIBLE - 1;
                     }
                 }
 
-                const visibleEnd = Math.min(endIdx, startIdx + CHART_VISIBLE - 1);
-                chartRanges[name] = { min: startIdx, max: visibleEnd, total };
-
-                charts[name].options.scales.x.min = labels[startIdx];
-                charts[name].options.scales.x.max = labels[visibleEnd];
-                charts[name].update('none');
-            };
+                    const visibleEnd = endIdx;
+                    chartRanges[name] = { min: startIdx, max: visibleEnd, total };
+                    charts[name].options.scales.x.min = labels[startIdx];
+                    charts[name].options.scales.x.max = labels[visibleEnd];
+                    charts[name].update('none');
+                };  // ← 這裡才是關掉 makeChart
 
         const lineOpts = (title, yLabel) => ({
             responsive: true, maintainAspectRatio: false,
@@ -1215,15 +1233,7 @@
     }
 
         function parseLabelToDate(label, referenceDate) {
-            // label 可能是 MM/dd（週/月報表）或 yyyy/MM（年報表）
-            const year = referenceDate.substring(0, 4);
-            if (label.length === 5 && label.includes('/')) {
-                // MM/dd → yyyy-MM-dd
-                return `${year}-${label.replace('/', '-')}`;
-            } else if (label.length === 7 && label.includes('/')) {
-                // yyyy/MM → yyyy-MM
-                return label.replace('/', '-');
-            }
+            // label 現在直接就是 yyyy-MM-dd 或 yyyy-MM，不需要轉換
             return label;
         }
 

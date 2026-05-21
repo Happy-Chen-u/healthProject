@@ -642,6 +642,94 @@
                 padding: 0 1rem;
             }
         }
+
+        /* ── 手機/超時提示 ── */
+        .mobile-notice {
+            display: none;
+            background: #fff;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+            .mobile-notice.show {
+                display: block;
+            }
+
+        .mobile-notice-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .mobile-notice-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.4rem;
+        }
+
+        .mobile-notice-desc {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            margin-bottom: 1.25rem;
+            line-height: 1.6;
+        }
+
+        .mobile-notice-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+
+        .btn-dl-pdf {
+            padding: 0.7rem 1.25rem;
+            background: var(--navy);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.88rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            transition: background 0.15s;
+        }
+
+            .btn-dl-pdf:hover {
+                background: var(--navy-mid);
+            }
+
+            .btn-dl-pdf:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+
+        .btn-dl-outline {
+            padding: 0.7rem 1.25rem;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-sub);
+            font-size: 0.88rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+            .btn-dl-outline:hover {
+                background: var(--bg);
+            }
     </style>
 </head>
 <body>
@@ -652,6 +740,10 @@
             代謝症候群疾病管理與追蹤系統
         </div>
         <div class="topbar-right">
+            <button class="topbar-btn" id="topbarPdfBtn"
+                    onclick="downloadAnalysisPdf()" style="display:none;">
+                <i class="bi bi-file-earmark-pdf"></i> 下載報表
+            </button>
             <button class="topbar-btn" onclick="testWeeklyReport()">
                 <i class="bi bi-send"></i> 傳送週報到 LINE
             </button>
@@ -711,6 +803,25 @@
         <div id="loadingDiv" class="loading">
             <div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;"></div>
             <p class="mt-2" style="font-size:0.88rem;">正在產生報表...</p>
+        </div>
+
+        <!-- 手機/超時提示區 -->
+        <div id="mobileNotice" class="mobile-notice">
+            <div class="mobile-notice-icon">📱</div>
+            <div class="mobile-notice-title">圖表載入需要較長時間</div>
+            <div class="mobile-notice-desc">
+                手機或平板裝置上，圖表可能無法順利載入。<br>
+                建議使用電腦開啟以獲得最佳體驗，<br>
+                或直接下載 PDF 報表查看完整內容。
+            </div>
+            <div class="mobile-notice-btns">
+                <button class="btn-dl-pdf" id="noticePdfBtn" onclick="downloadAnalysisPdf()">
+                    <i class="bi bi-file-earmark-pdf"></i> 下載 PDF 報表
+                </button>
+                <button class="btn-dl-outline" onclick="forceShowCharts()">
+                    <i class="bi bi-display"></i> 仍要嘗試載入圖表
+                </button>
+            </div>
         </div>
 
         <div id="patientStrip" class="patient-strip">
@@ -828,8 +939,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        let currentReportType = 1, currentReport = null, charts = {}, chartRanges = {}, currentDailyDate = null;
+        let currentReportType = 1, currentReport = null, charts = {},
+            chartRanges = {}, currentDailyDate = null;
+        let renderTimeoutId = null;
         const CHART_VISIBLE = 10, CHART_STEP = 3;
+
+        // 裝置偵測
+        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+                         || window.innerWidth <= 768;
 
         document.addEventListener('DOMContentLoaded', () => { initYearSelect(); setDefaultDates(); });
 
@@ -859,11 +976,33 @@
             document.getElementById('patientStrip').classList.remove('show');
             document.getElementById('reportContent').style.display = 'none';
             document.getElementById('loadingDiv').style.display = 'none';
+            document.getElementById('mobileNotice').classList.remove('show');        // ← 加這行
+            document.getElementById('topbarPdfBtn').style.display = 'none';          // ← 加這行
+            clearRenderTimeout();
             setDefaultDates(); currentReport = null;
             Object.values(charts).forEach(c => c && c.destroy()); charts = {}; chartRanges = {};
         }
 
         async function searchReport() {
+        // 每次搜尋前重置所有狀態
+        document.getElementById('mobileNotice').classList.remove('show');
+        document.getElementById('reportContent').style.display = 'none';
+        document.getElementById('patientStrip').classList.remove('show');
+        currentReport = null;
+        Object.values(charts).forEach(c => c && c.destroy());
+        charts = {}; chartRanges = {};
+        chartsLoaded = false;
+        clearRenderTimeout();
+        // 重置提示區的按鈕（避免還顯示上次的下載連結）
+        const btnsDiv = document.querySelector('#mobileNotice .mobile-notice-btns');
+        if (btnsDiv) btnsDiv.innerHTML = `
+            <button class="btn-dl-pdf" id="noticePdfBtn" onclick="downloadAnalysisPdf()">
+                <i class="bi bi-file-earmark-pdf"></i> 下載 PDF 報表
+            </button>
+            <button class="btn-dl-outline" onclick="forceShowCharts()">
+                <i class="bi bi-display"></i> 仍要嘗試載入圖表
+            </button>`;
+
             let startDate, endDate;
             switch (currentReportType) {
                 case 0: {
@@ -894,17 +1033,34 @@
             document.getElementById('patientStrip').classList.remove('show');
             document.getElementById('reportContent').style.display = 'none';
             try {
+                // 6秒後還在loading就顯示提示，但繼續等API回應
+                const loadingTimeout = setTimeout(() => {
+                    document.getElementById('loadingDiv').style.display = 'none';
+                    document.getElementById('mobileNotice').classList.add('show');
+                    document.getElementById('topbarPdfBtn').style.display = 'flex';
+                    document.getElementById('mobileNotice').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 6000);
+
                 const res = await fetch('/Analysis/GetPatientReport', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ reportType: currentReportType, startDate, endDate })
                 });
+                clearTimeout(loadingTimeout);
                 const result = await res.json();
-                if (result.success) { currentReport = result.data; showPatientInfo(result.data); displayReport(result.data); }
-                else alert(result.message || '查詢失敗');
+                if (result.success) {
+                    currentReport = result.data;  // ← 一定要存，這樣超時後按下載才有資料
+                    showPatientInfo(result.data);
+                    // 如果提示已顯示就不再 displayReport，避免畫面跳動
+                    if (!document.getElementById('mobileNotice').classList.contains('show')) {
+                        displayReport(result.data);
+                    }
+                } else {
+                    alert(result.message || '查詢失敗');
+                }
             } catch (e) { console.error(e); alert('系統錯誤，請稍後再試'); }
-            finally { document.getElementById('loadingDiv').style.display = 'none'; }
-        }
+                finally { document.getElementById('loadingDiv').style.display = 'none'; }
+            }
 
         async function navigateDaily(dir) {
             const d = new Date(currentDailyDate); d.setDate(d.getDate() + dir);
@@ -955,17 +1111,61 @@
 
         function displayReport(data) {
             document.getElementById('reportContent').style.display = 'block';
+            document.getElementById('mobileNotice').classList.remove('show');
+            clearRenderTimeout();
+
             if (currentReportType === 0) {
                 document.getElementById('dailySection').style.display = 'block';
                 document.getElementById('trendSection').style.display = 'none';
                 document.getElementById('summarySection').style.display = 'none';
                 document.getElementById('chartsSection').style.display = 'none';
-                updateDailyNavLabel(); displayDailyTable(data);
+                document.getElementById('chartToggleBar').style.display = 'none';
+                updateDailyNavLabel();
+                displayDailyTable(data);
             } else {
                 document.getElementById('dailySection').style.display = 'none';
                 document.getElementById('summarySection').style.display = 'block';
-                document.getElementById('chartsSection').style.display = 'none'; // 預設隱藏
-                displayTrendCard(data.trendSummary); displayChartReport(data);
+                document.getElementById('chartsSection').style.display = 'none';
+                displayTrendCard(data.trendSummary);
+                displayChartReport(data);
+
+                // 不再判斷 isMobile，改成設超時
+                chartsLoaded = false;
+                document.getElementById('chartToggleBar').style.display = 'block';
+                document.getElementById('topbarPdfBtn').style.display = 'flex';
+
+                renderTimeoutId = setTimeout(() => {
+                    if (!chartsLoaded) {
+                        showMobileNotice();
+                    }
+                }, 8000);
+
+                if (window.innerWidth > 900) {
+                    toggleCharts();
+                }
+            }
+        }
+
+        function showMobileNotice() {
+            clearRenderTimeout();
+            document.getElementById('mobileNotice').classList.add('show');
+            document.getElementById('chartToggleBar').style.display = 'none';
+            document.getElementById('topbarPdfBtn').style.display = 'flex';
+            // 捲動到提示區
+            document.getElementById('mobileNotice').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function forceShowCharts() {
+            document.getElementById('mobileNotice').classList.remove('show');
+            chartsLoaded = false;
+            document.getElementById('chartToggleBar').style.display = 'block';
+            if (currentReport) toggleCharts();
+        }
+
+        function clearRenderTimeout() {
+            if (renderTimeoutId) {
+                clearTimeout(renderTimeoutId);
+                renderTimeoutId = null;
             }
         }
 
@@ -1133,13 +1333,6 @@
                     <td class="td-center">${avgCarb === null ? nd() : (avgCarb >= 2 && avgCarb <= 4) ? badge('✓ 適中', 'badge-ok') : badge('⚠️ 需調整', 'badge-danger')}</td>
                 </tr>`;
 
-            chartsLoaded = false;
-            document.getElementById('chartToggleBar').style.display = 'block';
-
-            // 電腦版（螢幕寬度 > 900px）自動展開圖表
-            if (window.innerWidth > 900) {
-                toggleCharts();
-            }
         }
 
         function drawCharts(cd) {
@@ -1147,24 +1340,55 @@
             const makeChart = (id, cfg, name) => {
                 const el = document.getElementById(id); if (!el) return;
                 charts[name] = new Chart(el.getContext('2d'), cfg);
-                const labels = cfg.data.labels, total = labels.length, visible = Math.min(CHART_VISIBLE, total);
-                let startIdx = 0, endIdx = visible - 1;
-                if (currentReport?.startDate && total > visible) {
-                    const startStr = currentReport.startDate.substring(0, 10), endStr = currentReport.endDate.substring(0, 10);
+                const labels = cfg.data.labels, total = labels.length;
+
+                let startIdx = 0, endIdx = Math.min(CHART_VISIBLE - 1, total - 1);
+
+                if (currentReport?.startDate && currentReport?.endDate) {
+                    const start = currentReport.startDate.substring(0, 10);
+                    const end = currentReport.endDate.substring(0, 10);
+
+                    // 找第一個 >= startDate 的 label
+                    let foundStart = false;
                     for (let i = 0; i < labels.length; i++) {
-                        if (parseLabelToDate(labels[i], startStr) >= startStr) { startIdx = i; break; }
+                        if (labels[i] >= start) {
+                            startIdx = i;
+                            foundStart = true;
+                            break;
+                        }
                     }
-                    endIdx = startIdx + visible - 1;
+
+                    // 找最後一個 <= endDate 的 label
+                    let foundEnd = false;
                     for (let i = labels.length - 1; i >= 0; i--) {
-                        if (parseLabelToDate(labels[i], endStr) <= endStr) { endIdx = i; break; }
+                        if (labels[i] <= end) {
+                            endIdx = i;
+                            foundEnd = true;
+                            break;
+                        }
                     }
-                    endIdx = Math.min(endIdx, startIdx + visible - 1);
+
+                    // 如果選的範圍內完全沒有資料，顯示空白（鎖在 start/end 範圍）
+                    if (!foundStart || !foundEnd || startIdx > endIdx) {
+                        charts[name].options.scales.x.min = start;
+                        charts[name].options.scales.x.max = end;
+                        chartRanges[name] = { min: 0, max: 0, total };
+                        charts[name].update('none');
+                        return;
+                    }
+                    // 如果範圍內資料超過 CHART_VISIBLE，只顯示前 CHART_VISIBLE 筆
+                    else if (endIdx - startIdx + 1 > CHART_VISIBLE) {
+                        endIdx = startIdx + CHART_VISIBLE - 1;
+                    }
                 }
-                chartRanges[name] = { min: startIdx, max: endIdx, total };
-                charts[name].options.scales.x.min = labels[startIdx];
-                charts[name].options.scales.x.max = labels[endIdx];
-                charts[name].update('none');
-            };
+
+                    const visibleEnd = endIdx;
+                    chartRanges[name] = { min: startIdx, max: visibleEnd, total };
+                    charts[name].options.scales.x.min = labels[startIdx];
+                    charts[name].options.scales.x.max = labels[visibleEnd];
+                    charts[name].update('none');
+                };  // ← 這裡才是關掉 makeChart
+
             const lineOpts = yLabel => ({
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: true, labels: { font: { size: 11 } } } },
@@ -1204,11 +1428,7 @@
         }
 
         function parseLabelToDate(label, referenceDate) {
-            const year = referenceDate.substring(0, 4);
-            if (label.length === 5 && label.includes('/'))
-                return `${year}-${label.split('/')[0].padStart(2, '0')}-${label.split('/')[1].padStart(2, '0')}`;
-            if (label.length === 7 && label.includes('/'))
-                return `${label.split('/')[0]}-${label.split('/')[1].padStart(2, '0')}`;
+            // label 現在直接就是 yyyy-MM-dd 或 yyyy-MM，不需要轉換
             return label;
         }
 
@@ -1248,6 +1468,7 @@
             finally { btn.disabled = false; btn.innerHTML = originalHtml; }
         }
         let chartsLoaded = false;
+
         function toggleCharts() {
             const section = document.getElementById('chartsSection');
             const btn = document.getElementById('chartToggleBtn');
@@ -1259,10 +1480,81 @@
                     drawCharts(currentReport.charts);
                     displayMealSummary(currentReport);
                     chartsLoaded = true;
+                    clearRenderTimeout(); // 渲染成功，清除超時計時器
                 }
             } else {
                 section.style.display = 'none';
                 btn.innerHTML = '<i class="bi bi-bar-chart-line"></i> 展開趨勢圖表';
+            }
+        }
+
+        async function downloadAnalysisPdf() {
+            let startDate, endDate;
+            switch (currentReportType) {
+                case 0: startDate = endDate = document.getElementById('dailyDate').value; break;
+                case 1: {
+                    const ws = document.getElementById('weeklyStartDate').value;
+                    if (!ws) { alert('請先選擇日期'); return; }
+                    startDate = ws;
+                    const we = new Date(ws); we.setDate(we.getDate() + 6);
+                    endDate = we.toISOString().substr(0, 10); break;
+                }
+                case 2: {
+                    const m = document.getElementById('monthlyDate').value;
+                    if (!m) { alert('請先選擇日期'); return; }
+                    const [yr, mo] = m.split('-');
+                    startDate = `${yr}-${mo}-01`;
+                    endDate = `${yr}-${mo}-${new Date(yr, mo, 0).getDate().toString().padStart(2, '0')}`; break;
+                }
+                case 3: {
+                    const y = document.getElementById('yearlyDate').value;
+                    startDate = `${y}-01-01`; endDate = `${y}-12-31`; break;
+                }
+            }
+            if (!startDate) { alert('請先選擇日期'); return; }
+
+            const btn1 = document.getElementById('noticePdfBtn');
+            const btn2 = document.getElementById('topbarPdfBtn');
+            const setLoading = (loading) => {
+                [btn1, btn2].forEach(b => { if (b) b.disabled = loading; });
+                if (btn1) btn1.innerHTML = loading
+                    ? '<i class="bi bi-hourglass-split"></i> 產生中...'
+                    : '<i class="bi bi-file-earmark-pdf"></i> 下載 PDF 報表';
+                if (btn2) btn2.innerHTML = loading
+                    ? '<i class="bi bi-hourglass-split"></i> 產生中...'
+                    : '<i class="bi bi-file-earmark-pdf"></i> 下載報表';
+            };
+
+            setLoading(true);
+            try {
+                const res = await fetch('/Analysis/GenerateAnalysisPdfLink', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reportType: currentReportType, startDate, endDate })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    // 顯示下載連結
+                    const noticeDiv = document.getElementById('mobileNotice');
+                    const btnsDiv = noticeDiv.querySelector('.mobile-notice-btns');
+                    btnsDiv.innerHTML = `
+                        <a href="${result.url}" target="_blank" class="btn-dl-pdf" style="text-decoration:none;">
+                            <i class="bi bi-file-earmark-pdf"></i> 點此下載 PDF 報表
+                        </a>
+                        <p style="font-size:0.75rem;color:var(--text-pale);margin-top:0.5rem;">連結 7 天內有效</p>
+                        <button class="btn-dl-outline" onclick="forceShowCharts()">
+                            <i class="bi bi-display"></i> 仍要嘗試載入圖表
+                        </button>`;
+                    noticeDiv.classList.add('show');
+                    noticeDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    alert(result.message || '產生失敗，請稍後再試');
+                }
+            } catch (e) {
+                alert('產生失敗，請稍後再試');
+                console.error(e);
+            } finally {
+                setLoading(false);
             }
         }
     </script>
