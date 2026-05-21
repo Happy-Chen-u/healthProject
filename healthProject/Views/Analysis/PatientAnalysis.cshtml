@@ -1192,10 +1192,10 @@
                 const ab = stats.avgExerciseDuration < 30;
                 rows.push({ name: '🏃 運動時間', val: `${stats.avgExerciseDuration.toFixed(0)} 分鐘`, std: '≥ 30 分鐘', badge: ab ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok'), ab });
             }
-            if (stats.avgCigarettes > 0)
-                rows.push({ name: '🚬 抽菸', val: `${stats.avgCigarettes.toFixed(0)} 支`, std: '0 支', badge: badge('⚠️ 建議戒菸', 'badge-danger'), ab: true });
-            if (stats.avgBetelNut > 0)
-                rows.push({ name: '🌿 檳榔', val: `${stats.avgBetelNut.toFixed(0)} 次`, std: '0 次', badge: badge('⚠️ 建議戒除', 'badge-danger'), ab: true });
+            if (stats.avgCigarettes !== null && stats.avgCigarettes !== undefined)
+                rows.push({ name: '🚬 抽菸', val: `${stats.avgCigarettes.toFixed(0)} 支`, std: '0 支', badge: stats.avgCigarettes > 0 ? badge('⚠️ 建議戒菸', 'badge-danger') : badge('✓ 良好', 'badge-ok'), ab: stats.avgCigarettes > 0 });
+            if (stats.avgBetelNut !== null && stats.avgBetelNut !== undefined)
+                rows.push({ name: '🌿 檳榔', val: `${stats.avgBetelNut.toFixed(0)} 次`, std: '0 次', badge: stats.avgBetelNut > 0 ? badge('⚠️ 建議戒除', 'badge-danger') : badge('✓ 良好', 'badge-ok'), ab: stats.avgBetelNut > 0 });
 
             rows.forEach(r => {
                 const tr = document.createElement('tr');
@@ -1268,8 +1268,8 @@
                 avgBS = stats.avgBloodSugar ?? null,
                 avgW = stats.avgWaterIntake ?? null,
                 avgEx = stats.avgExerciseDuration ?? null,
-                avgCig = stats.avgCigarettes ?? 0,
-                avgBet = stats.avgBetelNut ?? 0,
+                avgCig = stats.avgCigarettes ?? null,
+                avgBet = stats.avgBetelNut ?? null,
                 avgVeg = stats.avgVegetables ?? null,
                 avgProt = stats.avgProtein ?? null,
                 avgCarb = stats.avgCarbs ?? null;
@@ -1302,18 +1302,18 @@
                     <td class="td-center">≥ 150 分鐘/週</td>
                     <td class="td-center">${avgEx === null ? nd() : avgEx < 150 ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok')}</td>
                 </tr>
-                <tr class="${avgCig > 0 ? 'td-abnormal' : ''}">
-                    <td>🚬 抽菸（每日平均）</td>
-                    <td class="td-center">${avgCig.toFixed(1)} 支</td>
-                    <td class="td-center">0 支</td>
-                    <td class="td-center">${avgCig > 0 ? badge('⚠️ 建議戒菸', 'badge-danger') : badge('✓ 良好', 'badge-ok')}</td>
-                </tr>
-                <tr class="${avgBet > 0 ? 'td-abnormal' : ''}">
-                    <td>🌿 檳榔（每日平均）</td>
-                    <td class="td-center">${avgBet.toFixed(1)} 次</td>
-                    <td class="td-center">0 次</td>
-                    <td class="td-center">${avgBet > 0 ? badge('⚠️ 建議戒除', 'badge-danger') : badge('✓ 良好', 'badge-ok')}</td>
-                </tr>
+        <tr class="${avgCig !== null && avgCig > 0 ? 'td-abnormal' : ''}">
+            <td>🚬 抽菸（每日平均）</td>
+            <td class="td-center">${avgCig !== null ? `${avgCig.toFixed(1)} 支` : 'N/A'}</td>
+            <td class="td-center">0 支</td>
+            <td class="td-center">${avgCig === null ? nd() : avgCig > 0 ? badge('⚠️ 建議戒菸', 'badge-danger') : badge('✓ 良好', 'badge-ok')}</td>
+        </tr>
+        <tr class="${avgBet !== null && avgBet > 0 ? 'td-abnormal' : ''}">
+            <td>🌿 檳榔（每日平均）</td>
+            <td class="td-center">${avgBet !== null ? `${avgBet.toFixed(1)} 次` : 'N/A'}</td>
+            <td class="td-center">0 次</td>
+            <td class="td-center">${avgBet === null ? nd() : avgBet > 0 ? badge('⚠️ 建議戒除', 'badge-danger') : badge('✓ 良好', 'badge-ok')}</td>
+        </tr>
                 <tr>
                     <td>🥬 蔬菜（每日平均）</td>
                     <td class="td-center">${avgVeg !== null ? `${avgVeg.toFixed(1)} 份` : 'N/A'}</td>

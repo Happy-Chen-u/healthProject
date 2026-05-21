@@ -925,68 +925,70 @@ WHERE ""Id"" = @UserId";
         // 📈 計算統計數據
         // ========================================
         private AnalysisStatistics CalculateStatistics(List<HealthRecordViewModel> records, PatientGoals goals)
-        {
-            if (!records.Any())
-                return new AnalysisStatistics { TotalDays = 0 };
+{
+    if (!records.Any())
+        return new AnalysisStatistics { TotalDays = 0 };
 
-            var bpRecords = records.Where(r =>
-                r.BP_First_1_Systolic.HasValue || r.BP_First_1_Diastolic.HasValue).ToList();
+    var bpRecords = records.Where(r =>
+        r.BP_First_1_Systolic.HasValue || r.BP_First_1_Diastolic.HasValue).ToList();
 
-            var mealStats = CalculateMealStatistics(records);
-            var totalCigs = records.Where(r => r.Cigarettes.HasValue).Sum(r => r.Cigarettes.Value);
-            var totalBetel = records.Where(r => r.BetelNut.HasValue).Sum(r => r.BetelNut.Value);
+    var mealStats = CalculateMealStatistics(records);
+    var totalCigs = records.Where(r => r.Cigarettes.HasValue).Sum(r => r.Cigarettes.Value);
+    var totalBetel = records.Where(r => r.BetelNut.HasValue).Sum(r => r.BetelNut.Value);
 
-            // ✅ 使用個人化目標值
-            decimal sysBPLimit = goals?.SystolicBPTarget ?? 130;
-            decimal diaBPLimit = goals?.DiastolicBPTarget ?? 80;
-            decimal glucoseLimit = goals?.FastingGlucoseTarget ?? 100;
-            decimal waterLimit = goals?.WaterTarget ?? 2000;
+    // ✅ 這兩行要在 return 之前宣告
+    var smokingRecords = records.Where(r => r.Cigarettes.HasValue).ToList();
+    var betelRecords = records.Where(r => r.BetelNut.HasValue).ToList();
 
-            return new AnalysisStatistics
-            {
-                TotalDays = records.Count,
+    decimal sysBPLimit = goals?.SystolicBPTarget ?? 130;
+    decimal diaBPLimit = goals?.DiastolicBPTarget ?? 80;
+    decimal glucoseLimit = goals?.FastingGlucoseTarget ?? 100;
+    decimal waterLimit = goals?.WaterTarget ?? 2000;
 
-                AvgSystolicBP = bpRecords.Any(r => r.BP_First_1_Systolic.HasValue)
-                    ? bpRecords.Where(r => r.BP_First_1_Systolic.HasValue).Average(r => r.BP_First_1_Systolic.Value) : null,
-                AvgDiastolicBP = bpRecords.Any(r => r.BP_First_1_Diastolic.HasValue)
-                    ? bpRecords.Where(r => r.BP_First_1_Diastolic.HasValue).Average(r => r.BP_First_1_Diastolic.Value) : null,
+    return new AnalysisStatistics
+    {
+        TotalDays = records.Count,
 
-                AvgBloodSugar = records.Any(r => r.BloodSugar.HasValue)
-                    ? records.Where(r => r.BloodSugar.HasValue).Average(r => r.BloodSugar.Value) : null,
+        AvgSystolicBP = bpRecords.Any(r => r.BP_First_1_Systolic.HasValue)
+            ? bpRecords.Where(r => r.BP_First_1_Systolic.HasValue).Average(r => r.BP_First_1_Systolic.Value) : null,
+        AvgDiastolicBP = bpRecords.Any(r => r.BP_First_1_Diastolic.HasValue)
+            ? bpRecords.Where(r => r.BP_First_1_Diastolic.HasValue).Average(r => r.BP_First_1_Diastolic.Value) : null,
 
-                AvgWaterIntake = records.Any(r => r.WaterIntake.HasValue)
-                    ? records.Where(r => r.WaterIntake.HasValue).Average(r => r.WaterIntake.Value) : null,
+        AvgBloodSugar = records.Any(r => r.BloodSugar.HasValue)
+            ? records.Where(r => r.BloodSugar.HasValue).Average(r => r.BloodSugar.Value) : null,
 
-                AvgExerciseDuration = records.Any(r => r.ExerciseDuration.HasValue)
-                    ? records.Where(r => r.ExerciseDuration.HasValue).Average(r => r.ExerciseDuration.Value) : null,
+        AvgWaterIntake = records.Any(r => r.WaterIntake.HasValue)
+            ? records.Where(r => r.WaterIntake.HasValue).Average(r => r.WaterIntake.Value) : null,
 
-                TotalCigarettes = totalCigs,
-                AvgCigarettes = records.Count > 0 ? totalCigs / records.Count : 0,
-                SmokingDays = records.Count(r => r.Cigarettes.HasValue && r.Cigarettes.Value > 0),
+        AvgExerciseDuration = records.Any(r => r.ExerciseDuration.HasValue)
+            ? records.Where(r => r.ExerciseDuration.HasValue).Average(r => r.ExerciseDuration.Value) : null,
 
-                TotalBetelNut = totalBetel,
-                AvgBetelNut = records.Count > 0 ? totalBetel / records.Count : 0,
-                BetelNutDays = records.Count(r => r.BetelNut.HasValue && r.BetelNut.Value > 0),
+        TotalCigarettes = totalCigs,
+        AvgCigarettes = smokingRecords.Any() ? totalCigs / smokingRecords.Count : (decimal?)null,
+        SmokingDays = records.Count(r => r.Cigarettes.HasValue && r.Cigarettes.Value > 0),
 
-                AvgVegetables = mealStats.AvgVegetables,
-                AvgProtein = mealStats.AvgProtein,
-                AvgCarbs = mealStats.AvgCarbs,
+        TotalBetelNut = totalBetel,
+        AvgBetelNut = betelRecords.Any() ? totalBetel / betelRecords.Count : (decimal?)null,
+        BetelNutDays = records.Count(r => r.BetelNut.HasValue && r.BetelNut.Value > 0),
 
-                // ✅ 用個人目標值判斷異常天數
-                HighBPDays = records.Count(r =>
-                    (r.BP_First_1_Systolic.HasValue && r.BP_First_1_Systolic.Value > sysBPLimit) ||
-                    (r.BP_First_1_Diastolic.HasValue && r.BP_First_1_Diastolic.Value > diaBPLimit)),
+        AvgVegetables = mealStats.AvgVegetables,
+        AvgProtein = mealStats.AvgProtein,
+        AvgCarbs = mealStats.AvgCarbs,
 
-                HighBloodSugarDays = records.Count(r =>
-                    r.BloodSugar.HasValue && r.BloodSugar.Value > glucoseLimit),
+        HighBPDays = records.Count(r =>
+            (r.BP_First_1_Systolic.HasValue && r.BP_First_1_Systolic.Value > sysBPLimit) ||
+            (r.BP_First_1_Diastolic.HasValue && r.BP_First_1_Diastolic.Value > diaBPLimit)),
 
-                LowWaterDays = records.Count(r =>
-                    r.WaterIntake.HasValue && r.WaterIntake.Value < waterLimit),
+        HighBloodSugarDays = records.Count(r =>
+            r.BloodSugar.HasValue && r.BloodSugar.Value > glucoseLimit),
 
-                LowExerciseDays = records.Count(r =>
-                    r.ExerciseDuration.HasValue && r.ExerciseDuration.Value < 150)
-            };
-        }
+        LowWaterDays = records.Count(r =>
+            r.WaterIntake.HasValue && r.WaterIntake.Value < waterLimit),
+
+        LowExerciseDays = records.Count(r =>
+            r.ExerciseDuration.HasValue && r.ExerciseDuration.Value < 150)
+    };
+}
 
         //  計算三餐統計
         private MealSummary CalculateMealStatistics(List<HealthRecordViewModel> records)
