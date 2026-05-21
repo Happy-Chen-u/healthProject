@@ -405,6 +405,37 @@
         }
 
         .meal-summary-rows { font-size: 0.82rem; line-height: 1.9; }
+
+        /* 修正圖表在窄視窗突出問題 */
+        .chart-wrap {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .chart-inner {
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            max-width: 100% !important;
+        }
+
+        @@media (max-width: 600px) {
+            .topbar {
+                padding: 0 0.75rem;
+                gap: 0.4rem;
+            }
+
+            .topbar-btn, .topbar-back {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.72rem;
+            }
+                /* 隱藏按鈕文字，只留圖示 */
+                .topbar-btn span, .topbar-back span {
+                    display: none;
+                }
+        }
     </style>
 </head>
 <body>
