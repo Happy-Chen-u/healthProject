@@ -67,7 +67,6 @@
         }
 
         .topbar-back {
-            margin-left: auto;
             color: rgba(255,255,255,0.65);
             background: none;
             border: 1px solid rgba(255,255,255,0.15);
@@ -79,6 +78,34 @@
             transition: all 0.2s;
         }
         .topbar-back:hover { background: rgba(255,255,255,0.1); color: white; text-decoration: none; }
+
+        .topbar-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .topbar-btn {
+            color: rgba(255,255,255,0.65);
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 0.3rem 0.85rem;
+            font-size: 0.8rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+            .topbar-btn:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
+            }
 
         /* ── HERO ── */
         .hero {
@@ -446,9 +473,22 @@
         <div class="cross">✚</div>
         代謝症候群疾病管理與追蹤系統
     </div>
-    <a href="@Url.Action("Dashboard", "Home")" class="topbar-back">
-        <i class="bi bi-arrow-left"></i> 返回主選單
-    </a>
+
+    <div class="topbar-actions">
+        <button type="button" class="topbar-btn" id="adminDownloadPdfBtn"
+                onclick="downloadAdminPdf()" style="display:none;">
+            <i class="bi bi-download"></i><span> 下載 PDF</span>
+        </button>
+
+        <button type="button" class="topbar-btn" id="adminLinePdfBtn"
+                onclick="sendAdminPdfToLine(this)" style="display:none;">
+            <i class="bi bi-send"></i><span> 傳到我的 LINE</span>
+        </button>
+
+        <a href="@Url.Action("Dashboard", "Home")" class="topbar-back">
+            <i class="bi bi-arrow-left"></i><span> 返回主選單</span>
+        </a>
+    </div>
 </header>
 
 <!-- HERO -->
@@ -747,11 +787,15 @@
         });
     }
 
-    function clearResults() {
+     function clearResults() {
         document.getElementById('patientStrip').classList.remove('show');
         document.getElementById('reportContent').style.display = 'none';
         document.getElementById('loadingDiv').style.display = 'none';
         document.getElementById('idNumber').value = '';
+
+        document.getElementById('adminDownloadPdfBtn').style.display = 'none';
+        document.getElementById('adminLinePdfBtn').style.display = 'none';
+
         setDefaultDates();
         currentReport = null;
         Object.values(charts).forEach(c => c && c.destroy());
@@ -815,6 +859,9 @@
                 currentReport = result.data;
                 showPatientInfo(result.data);
                 displayReport(result.data);
+
+                document.getElementById('adminDownloadPdfBtn').style.display = 'flex';
+                document.getElementById('adminLinePdfBtn').style.display = 'flex';
             } else {
                 alert(result.message || '查詢失敗');
             }
@@ -1239,6 +1286,130 @@
                 </div>
             </div>`;
     }
+
+        function buildAdminReportPayload() {
+            const idNumber = document.getElementById('idNumber').value.trim();
+
+            if (!idNumber) {
+                alert('請先輸入病患身分證字號');
+                return null;
+            }
+
+            if (!/^[A-Z][12]\d{8}$/.test(idNumber)) {
+                alert('身分證格式錯誤\n正確格式: A123456789');
+                return null;
+            }
+
+            let startDate, endDate;
+
+            switch (currentReportType) {
+                case 0: {
+                    const d = document.getElementById('dailyDate').value;
+                    if (!d) { alert('請先選擇日期'); return null; }
+                    startDate = endDate = d;
+                    break;
+                }
+                case 1: {
+                    const ws = document.getElementById('weeklyStartDate').value;
+                    if (!ws) { alert('請先選擇週開始日期'); return null; }
+                    startDate = ws;
+                    const we = new Date(ws);
+                    we.setDate(we.getDate() + 6);
+                    endDate = we.toISOString().substr(0, 10);
+                    break;
+                }
+                case 2: {
+                    const m = document.getElementById('monthlyDate').value;
+                    if (!m) { alert('請先選擇年月'); return null; }
+                    const [yr, mo] = m.split('-');
+                    startDate = `${yr}-${mo}-01`;
+                    endDate = `${yr}-${mo}-${new Date(yr, mo, 0).getDate().toString().padStart(2, '0')}`;
+                    break;
+                }
+                case 3: {
+                    const y = document.getElementById('yearlyDate').value;
+                    if (!y) { alert('請先選擇年份'); return null; }
+                    startDate = `${y}-01-01`;
+                    endDate = `${y}-12-31`;
+                    break;
+                }
+            }
+
+            return {
+                idNumber,
+                reportType: currentReportType,
+                startDate,
+                endDate
+            };
+        }
+         // 下載 PDF
+         async function downloadAdminPdf() {
+            const payload = buildAdminReportPayload();
+            if (!payload) return;
+
+            try {
+                const res = await fetch('/Analysis/DownloadAdminAnalysisPdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `健康報表_${payload.idNumber}_${payload.startDate}_${payload.endDate}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+
+                a.remove();
+                window.URL.revokeObjectURL(url);
+
+            } catch (e) {
+                console.error(e);
+                alert('❌ PDF 下載失敗，請稍後再試。');
+            }
+        }
+
+            //傳到管理者的 LINE
+            async function sendAdminPdfToLine(btn) {
+            const payload = buildAdminReportPayload();
+            if (!payload) return;
+
+            if (!confirm('確定要將此病患的 PDF 報表傳送到您的 LINE 嗎？')) return;
+
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i><span> 傳送中...</span>';
+
+            try {
+                const res = await fetch('/Analysis/SendAdminAnalysisPdfToLine', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                const result = await res.json();
+
+                alert(result.success
+                    ? '✅ ' + result.message
+                    : '❌ ' + (result.message || '傳送失敗，請稍後再試'));
+
+            } catch (e) {
+                console.error(e);
+                alert('❌ 系統暫時無法傳送 PDF 報表，請稍後再試。');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
 </script>
 </body>
 </html>

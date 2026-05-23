@@ -1553,6 +1553,87 @@ WHERE ""Id"" = @UserId";
         }
 
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        public async Task<IActionResult> SendAdminAnalysisPdfToLine([FromBody] AdminReportRequest request)
+        {
+            try
+            {
+                var adminIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(adminIdClaim))
+                    return Json(new { success = false, message = "無法取得管理員資訊,請重新登入" });
+
+                var adminId = int.Parse(adminIdClaim);
+                var admin = await GetUserByIdAsync(adminId);
+
+                if (admin == null)
+                    return Json(new { success = false, message = "找不到管理員資料" });
+
+                if (string.IsNullOrEmpty(admin.LineUserId))
+                    return Json(new { success = false, message = "您的管理員帳號尚未綁定 LINE，無法接收 PDF 報表" });
+
+                var patient = await GetPatientByIdNumberAsync(request.IDNumber);
+                if (patient == null)
+                    return Json(new { success = false, message = "查無此病患" });
+
+                var baseUrl = _configuration["AppSettings:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+                var scopeFactory = HttpContext.RequestServices.GetRequiredService<IServiceScopeFactory>();
+
+                var capturedAdmin = admin;
+                var capturedPatient = patient;
+                var capturedStartDate = request.StartDate;
+                var capturedEndDate = request.EndDate;
+                var capturedBaseUrl = baseUrl;
+                var capturedLogger = _logger;
+
+                _ = Task.Run(async () =>
+                {
+                    using var scope = scopeFactory.CreateScope();
+
+                    try
+                    {
+                        var scheduledJobService = scope.ServiceProvider.GetRequiredService<ScheduledJobService>();
+
+                        var reportUser = new UserDBModel
+                        {
+                            Id = capturedPatient.Id,
+                            FullName = capturedPatient.FullName,
+                            IDNumber = capturedPatient.IDNumber,
+
+                            // 重點：報表資料用病患，LINE 接收者用管理員
+                            LineUserId = capturedAdmin.LineUserId
+                        };
+
+                        await scheduledJobService.SendWeeklyReportToUserAsync(
+                            reportUser,
+                            capturedStartDate,
+                            capturedEndDate,
+                            capturedBaseUrl
+                        );
+
+                        capturedLogger.LogInformation(
+                            $"管理員已接收病患 PDF 報表: 管理員={capturedAdmin.FullName}, 病患={capturedPatient.FullName}, 期間={capturedStartDate:yyyy-MM-dd} ~ {capturedEndDate:yyyy-MM-dd}");
+                    }
+                    catch (Exception ex)
+                    {
+                        capturedLogger.LogError(ex, "管理員背景接收病患 PDF 報表失敗");
+                    }
+                });
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"PDF 報表產生中，完成後會傳送到您的 LINE。\n\n病患: {patient.FullName}\n期間: {request.StartDate:yyyy-MM-dd} ~ {request.EndDate:yyyy-MM-dd}"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "管理員啟動接收病患 PDF 報表失敗");
+                return Json(new { success = false, message = $"啟動失敗: {ex.Message}" });
+            }
+        }
+
+
         [HttpPost]
         public async Task<IActionResult> StartGenerateAnalysisPdf([FromBody] ReportRequest request)
         {
