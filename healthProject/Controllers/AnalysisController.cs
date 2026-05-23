@@ -1483,51 +1483,75 @@ WHERE ""Id"" = @UserId";
         }
 
         [HttpPost]
-        public async Task<IActionResult> GenerateAnalysisPdfLink([FromBody] ReportRequest request)
+        public async Task<IActionResult> SendAnalysisPdfToLine([FromBody] ReportRequest request)
         {
+            _logger.LogInformation(
+            "收到 SendAnalysisPdfToLine 請求: UserAgent={UserAgent}, Start={StartDate}, End={EndDate}",
+            Request.Headers.UserAgent.ToString(),
+            request.StartDate,
+            request.EndDate
+            );
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim))
+                    return Json(new { success = false, message = "無法取得使用者資訊,請重新登入" });
+
+                var userId = int.Parse(userIdClaim);
                 var user = await GetUserByIdAsync(userId);
+
                 if (user == null)
                     return Json(new { success = false, message = "找不到使用者資料" });
 
-                var analysis = await GenerateAnalysisAsync(
-                    userId, user.FullName, user.IDNumber,
-                    request.ReportType, request.StartDate, request.EndDate);
-
-                var pdfBytes = _reportService.GeneratePdfReport(analysis);
-
-                // 存到資料庫
-                var reportId = Guid.NewGuid().ToString("N");
-                var connStr = _configuration.GetConnectionString("DefaultConnection");
-                await using var conn = new NpgsqlConnection(connStr);
-                await conn.OpenAsync();
-
-                var insertQuery = @"
-            INSERT INTO ""WeeklyReports"" 
-            (""Id"", ""UserId"", ""StartDate"", ""EndDate"", ""PdfData"", ""ExpiresAt"")
-            VALUES (@Id, @UserId, @StartDate, @EndDate, @PdfData, @ExpiresAt)";
-                await using var cmd = new NpgsqlCommand(insertQuery, conn);
-                cmd.Parameters.AddWithValue("@Id", reportId);
-                cmd.Parameters.AddWithValue("@UserId", userId);
-                cmd.Parameters.AddWithValue("@StartDate", request.StartDate);
-                cmd.Parameters.AddWithValue("@EndDate", request.EndDate);
-                cmd.Parameters.AddWithValue("@PdfData", pdfBytes);
-                cmd.Parameters.AddWithValue("@ExpiresAt", DateTime.Now.AddDays(7));
-                await cmd.ExecuteNonQueryAsync();
+                if (string.IsNullOrEmpty(user.LineUserId))
+                    return Json(new { success = false, message = "您尚未綁定 LINE 帳號,無法傳送 PDF 報表" });
 
                 var baseUrl = _configuration["AppSettings:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
-                var downloadUrl = $"{baseUrl}/Analysis/DownloadWeeklyReport?reportId={reportId}";
+                var scopeFactory = HttpContext.RequestServices.GetRequiredService<IServiceScopeFactory>();
 
-                return Json(new { success = true, url = downloadUrl });
+                var capturedUser = user;
+                var capturedStartDate = request.StartDate;
+                var capturedEndDate = request.EndDate;
+                var capturedBaseUrl = baseUrl;
+                var capturedLogger = _logger;
+
+                _ = Task.Run(async () =>
+                {
+                    using var scope = scopeFactory.CreateScope();
+
+                    try
+                    {
+                        var scheduledJobService = scope.ServiceProvider.GetRequiredService<ScheduledJobService>();
+
+                        await scheduledJobService.SendWeeklyReportToUserAsync(
+                            capturedUser,
+                            capturedStartDate,
+                            capturedEndDate,
+                            capturedBaseUrl
+                        );
+
+                        capturedLogger.LogInformation(
+                            $"PDF 報表已傳送到 LINE: {capturedUser.FullName} ({capturedStartDate:yyyy-MM-dd} ~ {capturedEndDate:yyyy-MM-dd})");
+                    }
+                    catch (Exception ex)
+                    {
+                        capturedLogger.LogError(ex, "背景傳送 PDF 報表到 LINE 失敗");
+                    }
+                });
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"PDF 報表產生中,完成後會傳送到 LINE。\n\n期間: {request.StartDate:yyyy-MM-dd} ~ {request.EndDate:yyyy-MM-dd}"
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "產生分析PDF連結失敗");
-                return Json(new { success = false, message = "產生失敗" });
+                _logger.LogError(ex, "啟動傳送 PDF 報表到 LINE 失敗");
+                return Json(new { success = false, message = $"啟動失敗: {ex.Message}" });
             }
         }
+
 
         [HttpPost]
         public async Task<IActionResult> StartGenerateAnalysisPdf([FromBody] ReportRequest request)

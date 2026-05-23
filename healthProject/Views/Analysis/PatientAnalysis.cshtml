@@ -771,7 +771,7 @@
             代謝症候群疾病管理與追蹤系統
         </div>
         <div class="topbar-right">
-            <button class="topbar-btn" id="topbarPdfBtn"
+            <button type="button" class="topbar-btn" id="topbarPdfBtn"
                     onclick="downloadAnalysisPdf()" style="display:none;">
                 <i class="bi bi-file-earmark-pdf"></i> 下載報表
             </button>
@@ -846,7 +846,7 @@
                 或直接下載 PDF 報表查看完整內容。
             </div>
             <div class="mobile-notice-btns">
-                <button class="btn-dl-pdf" id="noticePdfBtn" onclick="downloadAnalysisPdf()">
+                <button type="button" class="btn-dl-pdf" id="noticePdfBtn" onclick="downloadAnalysisPdf()">
                     <i class="bi bi-file-earmark-pdf"></i> 下載 PDF 報表
                 </button>
                 <button class="btn-dl-outline" onclick="forceShowCharts()">
@@ -1027,7 +1027,7 @@
         // 重置提示區的按鈕（避免還顯示上次的下載連結）
         const btnsDiv = document.querySelector('#mobileNotice .mobile-notice-btns');
         if (btnsDiv) btnsDiv.innerHTML = `
-            <button class="btn-dl-pdf" id="noticePdfBtn" onclick="downloadAnalysisPdf()">
+                <button type="button" class="btn-dl-pdf" id="noticePdfBtn" onclick="downloadAnalysisPdf()">
                 <i class="bi bi-file-earmark-pdf"></i> 下載 PDF 報表
             </button>
             <button class="btn-dl-outline" onclick="forceShowCharts()">
@@ -1533,72 +1533,74 @@
         }
 
         async function downloadAnalysisPdf() {
+            if (!confirm('確定要傳送 PDF 報表到您的 LINE 嗎？')) return;
+
             let startDate, endDate;
+
             switch (currentReportType) {
-                case 0: startDate = endDate = document.getElementById('dailyDate').value; break;
+                case 0: {
+                    const d = document.getElementById('dailyDate').value;
+                    if (!d) { alert('請先選擇日期'); return; }
+                    startDate = endDate = d;
+                    break;
+                }
                 case 1: {
                     const ws = document.getElementById('weeklyStartDate').value;
-                    if (!ws) { alert('請先選擇日期'); return; }
+                    if (!ws) { alert('請先選擇週開始日期'); return; }
                     startDate = ws;
-                    const we = new Date(ws); we.setDate(we.getDate() + 6);
-                    endDate = we.toISOString().substr(0, 10); break;
+                    const we = new Date(ws);
+                    we.setDate(we.getDate() + 6);
+                    endDate = we.toISOString().substr(0, 10);
+                    break;
                 }
                 case 2: {
                     const m = document.getElementById('monthlyDate').value;
-                    if (!m) { alert('請先選擇日期'); return; }
+                    if (!m) { alert('請先選擇年月'); return; }
                     const [yr, mo] = m.split('-');
                     startDate = `${yr}-${mo}-01`;
-                    endDate = `${yr}-${mo}-${new Date(yr, mo, 0).getDate().toString().padStart(2, '0')}`; break;
+                    endDate = `${yr}-${mo}-${new Date(yr, mo, 0).getDate().toString().padStart(2, '0')}`;
+                    break;
                 }
                 case 3: {
                     const y = document.getElementById('yearlyDate').value;
-                    startDate = `${y}-01-01`; endDate = `${y}-12-31`; break;
+                    if (!y) { alert('請先選擇年份'); return; }
+                    startDate = `${y}-01-01`;
+                    endDate = `${y}-12-31`;
+                    break;
                 }
             }
-            if (!startDate) { alert('請先選擇日期'); return; }
 
-            const btn1 = document.getElementById('noticePdfBtn');
-            const btn2 = document.getElementById('topbarPdfBtn');
-            const setLoading = (loading) => {
-                [btn1, btn2].forEach(b => { if (b) b.disabled = loading; });
-                if (btn1) btn1.innerHTML = loading
-                    ? '<i class="bi bi-hourglass-split"></i> 產生中...'
-                    : '<i class="bi bi-file-earmark-pdf"></i> 下載 PDF 報表';
-                if (btn2) btn2.innerHTML = loading
-                    ? '<i class="bi bi-hourglass-split"></i> 產生中...'
-                    : '<i class="bi bi-file-earmark-pdf"></i> 下載報表';
-            };
+            const btn = event.target.closest('button');
+            const originalHtml = btn.innerHTML;
 
-            setLoading(true);
+            btn.disabled = true;
+            btn.innerHTML = '📤 傳送中...';
+
             try {
-                const res = await fetch('/Analysis/GenerateAnalysisPdfLink', {
+                const apiUrl = window.location.origin + '/Analysis/SendAnalysisPdfToLine';
+
+                const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ reportType: currentReportType, startDate, endDate })
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        reportType: currentReportType,
+                        startDate,
+                        endDate
+                    })
                 });
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
                 const result = await res.json();
-                if (result.success) {
-                    // 顯示下載連結
-                    const noticeDiv = document.getElementById('mobileNotice');
-                    const btnsDiv = noticeDiv.querySelector('.mobile-notice-btns');
-                    btnsDiv.innerHTML = `
-                        <a href="${result.url}" target="_blank" class="btn-dl-pdf" style="text-decoration:none;">
-                            <i class="bi bi-file-earmark-pdf"></i> 點此下載 PDF 報表
-                        </a>
-                        <p style="font-size:0.75rem;color:var(--text-pale);margin-top:0.5rem;">連結 7 天內有效</p>
-                        <button class="btn-dl-outline" onclick="forceShowCharts()">
-                            <i class="bi bi-display"></i> 仍要嘗試載入圖表
-                        </button>`;
-                    noticeDiv.classList.add('show');
-                    noticeDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                } else {
-                    alert(result.message || '產生失敗，請稍後再試');
-                }
+
+                alert(result.success
+                    ? '✅ 已收到您的申請，PDF 報表完成後會傳送到 LINE，請稍候查看。'
+                    : '❌ ' + (result.message || '傳送失敗，請稍後再試'));
+
             } catch (e) {
-                alert('產生失敗，請稍後再試');
                 console.error(e);
-            } finally {
-                setLoading(false);
+                alert('❌ 系統暫時無法傳送 PDF 報表，請稍後再試。');
             }
         }
     </script>
