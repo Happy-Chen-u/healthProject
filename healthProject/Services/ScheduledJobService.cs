@@ -73,14 +73,15 @@ namespace healthProject.Services
             UserDBModel user,
             DateTime startDate,
             DateTime endDate,
-            string baseUrl = null)
+            string baseUrl = null,
+            ReportType reportType = ReportType.Weekly)
         {
             try
             {
                 // 1. 產生分析資料
                 var analysis = await GenerateAnalysisAsync(
                     user.Id, user.FullName, user.IDNumber,
-                    ReportType.Weekly, startDate, endDate);
+                    reportType, startDate, endDate);
                 // 2. 產生 PDF
                 var pdfBytes = _reportService.GeneratePdfReport(analysis);
                 // 3. 儲存到資料庫並取得下載連結
@@ -89,8 +90,7 @@ namespace healthProject.Services
                 var finalBaseUrl = baseUrl ?? _configuration["AppSettings:BaseUrl"] ?? "https://localhost:7041";
                 var downloadUrl = $"{finalBaseUrl}/Analysis/DownloadWeeklyReport?reportId={reportId}";
                 // 5. 傳送 LINE 訊息
-                await SendLineNotificationAsync(user, startDate, endDate, downloadUrl);
-
+                await SendLineNotificationAsync(user, startDate, endDate, downloadUrl, reportType);
                 // 6. 週報衛教推播
                 try
                 {
@@ -422,23 +422,34 @@ namespace healthProject.Services
             public int MissedDays { get; set; }
         }
 
+
         // 傳送 LINE 通知
         private async Task SendLineNotificationAsync(
             UserDBModel user,
             DateTime startDate,
             DateTime endDate,
-            string downloadUrl)
+            string downloadUrl,
+            ReportType reportType)
         {
             var token = _configuration["Line:ChannelAccessToken"];
             if (string.IsNullOrEmpty(token))
                 throw new Exception("LINE Channel Access Token 未設定");
 
+            var reportTypeText = reportType switch
+            {
+                ReportType.Daily => "日報",
+                ReportType.Weekly => "週報",
+                ReportType.Monthly => "月報",
+                ReportType.Yearly => "年報",
+                _ => "健康報表"
+            };
+
             var message = $@"📊 【代謝症候群管理系統】
 
 您好 {user.FullName},
 
-本週健康報表已產生完成!
-📅 期間: {startDate:MM/dd} ~ {endDate:MM/dd}
+{reportTypeText}已產生完成!
+📅 期間: {startDate:yyyy/MM/dd} ~ {endDate:yyyy/MM/dd}
 
 📥 請點擊下方連結下載報表:
 {downloadUrl}

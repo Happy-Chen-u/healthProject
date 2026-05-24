@@ -1512,6 +1512,7 @@ WHERE ""Id"" = @UserId";
                 var capturedUser = user;
                 var capturedStartDate = request.StartDate;
                 var capturedEndDate = request.EndDate;
+                var capturedReportType = request.ReportType;
                 var capturedBaseUrl = baseUrl;
                 var capturedLogger = _logger;
 
@@ -1527,7 +1528,8 @@ WHERE ""Id"" = @UserId";
                             capturedUser,
                             capturedStartDate,
                             capturedEndDate,
-                            capturedBaseUrl
+                            capturedBaseUrl,
+                            capturedReportType
                         );
 
                         capturedLogger.LogInformation(
@@ -1579,10 +1581,11 @@ WHERE ""Id"" = @UserId";
                 var baseUrl = _configuration["AppSettings:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
                 var scopeFactory = HttpContext.RequestServices.GetRequiredService<IServiceScopeFactory>();
 
-                var capturedAdmin = admin;
                 var capturedPatient = patient;
+                var capturedAdmin = admin;
                 var capturedStartDate = request.StartDate;
                 var capturedEndDate = request.EndDate;
+                var capturedReportType = request.ReportType;
                 var capturedBaseUrl = baseUrl;
                 var capturedLogger = _logger;
 
@@ -1608,7 +1611,8 @@ WHERE ""Id"" = @UserId";
                             reportUser,
                             capturedStartDate,
                             capturedEndDate,
-                            capturedBaseUrl
+                            capturedBaseUrl,
+                            capturedReportType
                         );
 
                         capturedLogger.LogInformation(
