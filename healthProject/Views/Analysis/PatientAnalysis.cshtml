@@ -1368,69 +1368,104 @@
 
         function drawCharts(cd) {
             Object.values(charts).forEach(c => c && c.destroy()); charts = {}; chartRanges = {};
+
             const makeChart = (id, cfg, name) => {
                 const el = document.getElementById(id); if (!el) return;
+
+                // 先清除舊的無資料提示
+                const wrapper = el.closest('.chart-wrap');
+                if (wrapper) {
+                    const old = wrapper.querySelector('.no-data-overlay');
+                    if (old) old.remove();
+                    wrapper.style.position = '';
+                }
+
                 charts[name] = new Chart(el.getContext('2d'), cfg);
                 const labels = cfg.data.labels, total = labels.length;
-
                 let startIdx = 0, endIdx = Math.min(CHART_VISIBLE - 1, total - 1);
+                let hasDataInRange = false;
 
                 if (currentReport?.startDate && currentReport?.endDate && total > 0) {
                     const start = currentReport.startDate.substring(0, 10);
                     const end = currentReport.endDate.substring(0, 10);
 
-                    // 找第一個 >= startDate 的 label（查詢開始日）
                     let queryStartIdx = -1;
                     for (let i = 0; i < labels.length; i++) {
                         if (labels[i] >= start) { queryStartIdx = i; break; }
                     }
-
-                    // 找最後一個 <= endDate 的 label（查詢結束日）
                     let queryEndIdx = -1;
                     for (let i = labels.length - 1; i >= 0; i--) {
                         if (labels[i] <= end) { queryEndIdx = i; break; }
                     }
 
                     if (queryStartIdx >= 0 && queryEndIdx >= 0 && queryStartIdx <= queryEndIdx) {
+                        // 查詢範圍內有資料
+                        hasDataInRange = true;
                         const rangeCount = queryEndIdx - queryStartIdx + 1;
-
-                        if (rangeCount >= CHART_VISIBLE) {
-                            // 查詢範圍超過視窗：從開始日顯示 CHART_VISIBLE 格
-                            startIdx = queryStartIdx;
-                            endIdx = startIdx + CHART_VISIBLE - 1;
-                        } else {
-                            // 查詢範圍在視窗內：只顯示查詢範圍，不往外延伸
-                            startIdx = queryStartIdx;
-                            endIdx = queryEndIdx;
-                        }
+                        startIdx = queryStartIdx;
+                        endIdx = rangeCount >= CHART_VISIBLE
+                            ? startIdx + CHART_VISIBLE - 1
+                            : queryEndIdx;
+                    } else {
+                        // 查詢範圍內無資料
+                        hasDataInRange = false;
+                        let nearestIdx = 0;
+                        if (queryEndIdx >= 0) nearestIdx = queryEndIdx;
+                        else if (queryStartIdx >= 0) nearestIdx = queryStartIdx;
+                        startIdx = nearestIdx;
+                        endIdx = Math.min(total - 1, nearestIdx + CHART_VISIBLE - 1);
                     }
                 }
 
+                // 只設定一次
                 chartRanges[name] = { min: startIdx, max: endIdx, total };
-                charts[name].options.scales.x.min = labels[startIdx];
-                charts[name].options.scales.x.max = labels[endIdx];
+
+                if (!hasDataInRange && currentReport?.startDate) {
+                    charts[name].options.scales.x.min = currentReport.startDate.substring(0, 10);
+                    charts[name].options.scales.x.max = currentReport.endDate.substring(0, 10);
+                } else {
+                    charts[name].options.scales.x.min = labels[startIdx];
+                    charts[name].options.scales.x.max = labels[endIdx];
+                }
                 charts[name].update('none');
+
+                // 無資料時加上提示浮層
+                if (!hasDataInRange && wrapper) {
+                    wrapper.style.position = 'relative';
+                    const overlay = document.createElement('div');
+                    overlay.className = 'no-data-overlay';
+                    overlay.style.cssText = `
+                        position:absolute; top:50%; left:50%;
+                        transform:translate(-50%,-50%);
+                        background:rgba(244,246,249,0.92);
+                        border:1px dashed #dde3ea; border-radius:8px;
+                        padding:0.5rem 1.25rem; font-size:0.82rem;
+                        color:#8fa0b4; white-space:nowrap; pointer-events:none; z-index:10;
+                    `;
+                    overlay.textContent = '當期無資料';
+                    wrapper.appendChild(overlay);
+                }
             };
 
             const lineOpts = yLabel => ({
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: true, labels: { font: { size: 11 } } } },
-    scales: {
-        x: {
-            ticks: {
-                maxTicksLimit: 8,
-                font: { size: 10 },
-                // 只顯示 MM-dd，去掉年份
-                callback: function(val, index) {
-                    const label = this.getLabelForValue(val);
-                    return label ? label.substring(5) : '';
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: true, labels: { font: { size: 11 } } } },
+                scales: {
+                    x: {
+                        ticks: {
+                            maxTicksLimit: 8,
+                            font: { size: 10 },
+                            callback: function (val, index) {
+                                const label = this.getLabelForValue(val);
+                                return label ? label.substring(5) : '';
+                            }
+                        },
+                        grid: { display: false }
+                    },
+                    y: { beginAtZero: false, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 } } }
                 }
-            },
-            grid: { display: false }
-        },
-        y: { beginAtZero: false, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 } } }
-    }
-});
+            });
+
             const barOpts = yLabel => ({
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
@@ -1449,6 +1484,7 @@
                     y: { beginAtZero: true, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 } } }
                 }
             });
+
             if (cd.bloodPressureData?.length) makeChart('bpChart', { type: 'line', data: { labels: cd.bloodPressureData.map(d => d.date), datasets: [{ label: '收縮壓', data: cd.bloodPressureData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointRadius: 3 }, { label: '舒張壓', data: cd.bloodPressureData.map(d => d.value2), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('mmHg') }, 'bp');
             if (cd.bloodSugarData?.length) makeChart('bsChart', { type: 'line', data: { labels: cd.bloodSugarData.map(d => d.date), datasets: [{ label: '血糖', data: cd.bloodSugarData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointBackgroundColor: cd.bloodSugarData.map(d => d.isAbnormal ? '#dc2626' : '#16a34a'), pointRadius: 4 }] }, options: lineOpts('mg/dL') }, 'bs');
             if (cd.waterIntakeData?.length) makeChart('waterChart', { type: 'bar', data: { labels: cd.waterIntakeData.map(d => d.date), datasets: [{ data: cd.waterIntakeData.map(d => d.value), backgroundColor: cd.waterIntakeData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(6,182,212,0.6)'), borderColor: cd.waterIntakeData.map(d => d.isAbnormal ? '#ea580c' : '#0891b2'), borderWidth: 1 }] }, options: barOpts('ml') }, 'water');
@@ -1459,16 +1495,71 @@
 
         function navigateChart(name, dir) {
             const chart = charts[name]; if (!chart) return;
-            const r = chartRanges[name]; if (!r || r.total <= CHART_VISIBLE) return;
+            const r = chartRanges[name]; if (!r) return;
             const labels = chart.data.labels;
-            let newMin = r.min + dir * CHART_STEP, newMax = newMin + CHART_VISIBLE - 1;
-            if (newMin < 0) { newMin = 0; newMax = CHART_VISIBLE - 1; }
-            if (newMax >= r.total) { newMax = r.total - 1; newMin = newMax - CHART_VISIBLE + 1; }
-            if (newMin < 0) newMin = 0;
+
+            if (dir < 0 && r.min === 0) {
+                showChartEdgeNotice(name, '已無更早的資料');
+                return;
+            }
+            if (dir > 0 && r.max >= r.total - 1) {
+                showChartEdgeNotice(name, '已無更新的資料');
+                return;
+            }
+
+            let newMin = r.min + dir * CHART_STEP;
+            let newMax = newMin + CHART_VISIBLE - 1;
+            if (newMin < 0) { newMin = 0; newMax = Math.min(CHART_VISIBLE - 1, r.total - 1); }
+            if (newMax >= r.total) { newMax = r.total - 1; newMin = Math.max(0, newMax - CHART_VISIBLE + 1); }
+
             chartRanges[name] = { ...r, min: newMin, max: newMax };
+
+            // 翻頁後改回用 label 控制 x 軸（離開「空白查詢期間」模式）
             chart.options.scales.x.min = labels[newMin];
             chart.options.scales.x.max = labels[newMax];
             chart.update('none');
+
+            // 移除「當期無資料」提示
+            const canvasId = {
+                bp: 'bpChart', bs: 'bsChart', water: 'waterChart',
+                exercise: 'exerciseChart', cigarette: 'cigaretteChart', betelNut: 'betelNutChart'
+            }[name];
+            const canvas = document.getElementById(canvasId);
+            if (canvas) {
+                const wrapper = canvas.closest('.chart-wrap');
+                if (wrapper) {
+                    const overlay = wrapper.querySelector('.no-data-overlay');
+                    if (overlay) overlay.remove();
+                }
+            }
+        }
+
+        function showChartEdgeNotice(name, msg) {
+            const canvasId = {
+                bp: 'bpChart', bs: 'bsChart', water: 'waterChart',
+                exercise: 'exerciseChart', cigarette: 'cigaretteChart', betelNut: 'betelNutChart'
+            }[name];
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const wrapper = canvas.closest('.chart-wrap');
+            if (!wrapper) return;
+
+            // 避免重複顯示
+            if (wrapper.querySelector('.edge-notice')) return;
+            wrapper.style.position = 'relative';
+            const notice = document.createElement('div');
+            notice.className = 'edge-notice';
+            notice.style.cssText = `
+                position:absolute; bottom:8px; left:50%;
+                transform:translateX(-50%);
+                background:rgba(26,38,53,0.75); color:white;
+                border-radius:6px; padding:0.3rem 0.85rem;
+                font-size:0.78rem; pointer-events:none; z-index:10;
+                white-space:nowrap;
+            `;
+            notice.textContent = msg;
+            wrapper.appendChild(notice);
+            setTimeout(() => notice.remove(), 2000);
         }
 
         function parseLabelToDate(label, referenceDate) {
