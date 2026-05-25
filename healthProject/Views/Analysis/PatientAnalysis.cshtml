@@ -771,12 +771,14 @@
             代謝症候群疾病管理與追蹤系統
         </div>
         <div class="topbar-right">
-            <button type="button" class="topbar-btn" id="topbarPdfBtn"
-                    onclick="downloadAnalysisPdf()" style="display:none;">
-                <i class="bi bi-file-earmark-pdf"></i> 下載報表
+            <button type="button" class="topbar-btn" id="patientDownloadPdfBtn"
+                    onclick="downloadPatientPdf(this)" style="display:none;">
+                <i class="bi bi-download"></i><span> 下載 PDF</span>
             </button>
-            <button class="topbar-btn" onclick="testWeeklyReport()">
-                <i class="bi bi-send"></i><span> 傳送週報到 LINE</span>
+
+            <button type="button" class="topbar-btn" id="patientLinePdfBtn"
+                    onclick="sendPatientPdfToLine(this)" style="display:none;">
+                <i class="bi bi-send"></i><span> 傳送報表至 LINE</span>
             </button>
             <a href="@Url.Action("Dashboard", "Home")" class="topbar-btn">
                 <i class="bi bi-arrow-left"></i><span> 返回主選單</span>
@@ -846,8 +848,8 @@
                 或直接下載 PDF 報表查看完整內容。
             </div>
             <div class="mobile-notice-btns">
-                <button type="button" class="btn-dl-pdf" id="noticePdfBtn" onclick="downloadAnalysisPdf()">
-                    <i class="bi bi-file-earmark-pdf"></i> 下載 PDF 報表
+                <button type="button" class="btn-dl-pdf" id="noticePdfBtn" onclick="sendPatientPdfToLine(this)">
+                    <i class="bi bi-send"></i> 傳送報表至 LINE
                 </button>
                 <button class="btn-dl-outline" onclick="forceShowCharts()">
                     <i class="bi bi-display"></i> 仍要嘗試載入圖表
@@ -970,730 +972,820 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        let currentReportType = 1, currentReport = null, charts = {},
-            chartRanges = {}, currentDailyDate = null;
-        let renderTimeoutId = null;
-        const CHART_VISIBLE = 10, CHART_STEP = 3;
+                let currentReportType = 1, currentReport = null, charts = {},
+                    chartRanges = {}, currentDailyDate = null;
+                let renderTimeoutId = null;
+                const CHART_VISIBLE = 10, CHART_STEP = 3;
 
-        // 裝置偵測
-        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
-                         || window.innerWidth <= 768;
+                // 裝置偵測
+                const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+                                 || window.innerWidth <= 768;
 
-        document.addEventListener('DOMContentLoaded', () => { initYearSelect(); setDefaultDates(); });
+                document.addEventListener('DOMContentLoaded', () => { initYearSelect(); setDefaultDates(); });
 
-        function initYearSelect() {
-            const sel = document.getElementById('yearlyDate'), yr = new Date().getFullYear();
-            for (let y = yr; y >= yr - 10; y--) {
-                const o = document.createElement('option');
-                o.value = y; o.textContent = y + ' 年'; sel.appendChild(o);
-            }
-        }
-
-        function setDefaultDates() {
-            const t = new Date();
-            document.getElementById('dailyDate').valueAsDate = t;
-            const lm = new Date(t); lm.setDate(t.getDate() - t.getDay() - 6);
-            document.getElementById('weeklyStartDate').valueAsDate = lm;
-            document.getElementById('monthlyDate').value = t.toISOString().substr(0, 7);
-        }
-
-        function selectReportType(type) {
-            currentReportType = type;
-            document.querySelectorAll('.report-tab').forEach((t, i) => t.classList.toggle('active', i === type));
-            document.querySelectorAll('.date-panel').forEach((p, i) => p.style.display = i === type ? 'block' : 'none');
-        }
-
-        function clearResults() {
-            document.getElementById('patientStrip').classList.remove('show');
-            document.getElementById('reportContent').style.display = 'none';
-            document.getElementById('loadingDiv').style.display = 'none';
-            document.getElementById('mobileNotice').classList.remove('show');        // ← 加這行
-            document.getElementById('topbarPdfBtn').style.display = 'none';          // ← 加這行
-            clearRenderTimeout();
-            setDefaultDates(); currentReport = null;
-            Object.values(charts).forEach(c => c && c.destroy()); charts = {}; chartRanges = {};
-        }
-
-        async function searchReport() {
-        // 每次搜尋前重置所有狀態
-        document.getElementById('mobileNotice').classList.remove('show');
-        document.getElementById('reportContent').style.display = 'none';
-        document.getElementById('patientStrip').classList.remove('show');
-        currentReport = null;
-        Object.values(charts).forEach(c => c && c.destroy());
-        charts = {}; chartRanges = {};
-        chartsLoaded = false;
-        clearRenderTimeout();
-        // 重置提示區的按鈕（避免還顯示上次的下載連結）
-        const btnsDiv = document.querySelector('#mobileNotice .mobile-notice-btns');
-        if (btnsDiv) btnsDiv.innerHTML = `
-                <button type="button" class="btn-dl-pdf" id="noticePdfBtn" onclick="downloadAnalysisPdf()">
-                <i class="bi bi-file-earmark-pdf"></i> 下載 PDF 報表
-            </button>
-            <button class="btn-dl-outline" onclick="forceShowCharts()">
-                <i class="bi bi-display"></i> 仍要嘗試載入圖表
-            </button>`;
-
-            let startDate, endDate;
-            switch (currentReportType) {
-                case 0: {
-                    const d = document.getElementById('dailyDate').value;
-                    if (!d) { alert('請選擇日期'); return; }
-                    startDate = endDate = d; currentDailyDate = d; break;
+                function initYearSelect() {
+                    const sel = document.getElementById('yearlyDate'), yr = new Date().getFullYear();
+                    for (let y = yr; y >= yr - 10; y--) {
+                        const o = document.createElement('option');
+                        o.value = y; o.textContent = y + ' 年'; sel.appendChild(o);
+                    }
                 }
-                case 1: {
-                    const ws = document.getElementById('weeklyStartDate').value;
-                    if (!ws) { alert('請選擇週開始日期'); return; }
-                    startDate = ws;
-                    const we = new Date(ws); we.setDate(we.getDate() + 6);
-                    endDate = we.toISOString().substr(0, 10); break;
+
+                function setDefaultDates() {
+                    const t = new Date();
+                    document.getElementById('dailyDate').valueAsDate = t;
+                    const lm = new Date(t); lm.setDate(t.getDate() - t.getDay() - 6);
+                    document.getElementById('weeklyStartDate').valueAsDate = lm;
+                    document.getElementById('monthlyDate').value = t.toISOString().substr(0, 7);
                 }
-                case 2: {
-                    const m = document.getElementById('monthlyDate').value;
-                    if (!m) { alert('請選擇年月'); return; }
-                    const [yr, mo] = m.split('-');
-                    startDate = `${yr}-${mo}-01`;
-                    endDate = `${yr}-${mo}-${new Date(yr, mo, 0).getDate().toString().padStart(2, '0')}`; break;
+
+                function selectReportType(type) {
+                    currentReportType = type;
+                    document.querySelectorAll('.report-tab').forEach((t, i) => t.classList.toggle('active', i === type));
+                    document.querySelectorAll('.date-panel').forEach((p, i) => p.style.display = i === type ? 'block' : 'none');
                 }
-                case 3: {
-                    const y = document.getElementById('yearlyDate').value;
-                    startDate = `${y}-01-01`; endDate = `${y}-12-31`; break;
-                }
-            }
-            document.getElementById('loadingDiv').style.display = 'block';
-            document.getElementById('patientStrip').classList.remove('show');
-            document.getElementById('reportContent').style.display = 'none';
-            try {
-                // 6秒後還在loading就顯示提示，但繼續等API回應
-                const loadingTimeout = setTimeout(() => {
+
+                function clearResults() {
+                    document.getElementById('patientStrip').classList.remove('show');
+                    document.getElementById('reportContent').style.display = 'none';
                     document.getElementById('loadingDiv').style.display = 'none';
-                    document.getElementById('mobileNotice').classList.add('show');
-                    document.getElementById('topbarPdfBtn').style.display = 'flex';
-                    document.getElementById('mobileNotice').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 6000);
-
-                const res = await fetch('/Analysis/GetPatientReport', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ reportType: currentReportType, startDate, endDate })
-                });
-                clearTimeout(loadingTimeout);
-                const result = await res.json();
-                if (result.success) {
-                    currentReport = result.data;  // ← 一定要存，這樣超時後按下載才有資料
-                    showPatientInfo(result.data);
-                    // 如果提示已顯示就不再 displayReport，避免畫面跳動
-                    if (!document.getElementById('mobileNotice').classList.contains('show')) {
-                        displayReport(result.data);
-                    }
-                } else {
-                    alert(result.message || '查詢失敗');
+                    document.getElementById('mobileNotice').classList.remove('show');
+                    document.getElementById('patientDownloadPdfBtn').style.display = 'none';
+                    document.getElementById('patientLinePdfBtn').style.display = 'none';
+                    clearRenderTimeout();
+                    setDefaultDates(); currentReport = null;
+                    Object.values(charts).forEach(c => c && c.destroy()); charts = {}; chartRanges = {};
                 }
-            } catch (e) { console.error(e); alert('系統錯誤，請稍後再試'); }
-                finally { document.getElementById('loadingDiv').style.display = 'none'; }
-            }
 
-        async function navigateDaily(dir) {
-            const d = new Date(currentDailyDate); d.setDate(d.getDate() + dir);
-            currentDailyDate = d.toISOString().substr(0, 10);
-            document.getElementById('dailyDate').value = currentDailyDate;
-            updateDailyNavLabel();
-            document.getElementById('loadingDiv').style.display = 'block';
-            document.getElementById('reportContent').style.display = 'none';
-            try {
-                const res = await fetch('/Analysis/GetPatientReport', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ reportType: 0, startDate: currentDailyDate, endDate: currentDailyDate })
-                });
-                const result = await res.json();
-                if (result.success) { currentReport = result.data; displayReport(result.data); }
-                else {
-                    document.getElementById('reportContent').style.display = 'block';
-                    document.getElementById('dailySection').style.display = 'block';
-                    document.getElementById('summarySection').style.display = 'none';
-                    document.getElementById('chartsSection').style.display = 'none';
-                    document.getElementById('trendSection').style.display = 'none';
-                    document.getElementById('dailyTableBody').innerHTML =
-                        '<tr><td colspan="4" style="text-align:center;color:#8fa0b4;padding:2rem;">該日期無健康數據</td></tr>';
-                }
-            } catch (e) { console.error(e); }
-            finally { document.getElementById('loadingDiv').style.display = 'none'; }
-        }
-
-        function updateDailyNavLabel() {
-            const d = new Date(currentDailyDate);
-            document.getElementById('dailyNavDate').textContent =
-                `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
-        }
-
-        function showPatientInfo(data) {
-            document.getElementById('patientStrip').classList.add('show');
-            document.getElementById('patientName').textContent = data.patientName;
-            document.getElementById('patientGender').textContent = data.patientGender || '未記錄';
-            if (data.patientBirthDate) {
-                const d = new Date(data.patientBirthDate);
-                document.getElementById('patientBirth').textContent =
-                    `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
-            } else {
-                document.getElementById('patientBirth').textContent = '未記錄';
-            }
-        }
-
-        function displayReport(data) {
-            document.getElementById('reportContent').style.display = 'block';
-            document.getElementById('mobileNotice').classList.remove('show');
-            clearRenderTimeout();
-
-            if (currentReportType === 0) {
-                document.getElementById('dailySection').style.display = 'block';
-                document.getElementById('trendSection').style.display = 'none';
-                document.getElementById('summarySection').style.display = 'none';
-                document.getElementById('chartsSection').style.display = 'none';
-                document.getElementById('chartToggleBar').style.display = 'none';
-                updateDailyNavLabel();
-                displayDailyTable(data);
-            } else {
-                document.getElementById('dailySection').style.display = 'none';
-                document.getElementById('summarySection').style.display = 'block';
-                document.getElementById('chartsSection').style.display = 'none';
-                displayTrendCard(data.trendSummary);
-                displayChartReport(data);
-
-                // 不再判斷 isMobile，改成設超時
+                async function searchReport() {
+                // 每次搜尋前重置所有狀態
+                document.getElementById('mobileNotice').classList.remove('show');
+                document.getElementById('reportContent').style.display = 'none';
+                document.getElementById('patientStrip').classList.remove('show');
+                currentReport = null;
+                Object.values(charts).forEach(c => c && c.destroy());
+                charts = {}; chartRanges = {};
                 chartsLoaded = false;
-                document.getElementById('chartToggleBar').style.display = 'block';
-                document.getElementById('topbarPdfBtn').style.display = 'flex';
+                clearRenderTimeout();
+                // 重置提示區的按鈕（避免還顯示上次的下載連結）
+                const btnsDiv = document.querySelector('#mobileNotice .mobile-notice-btns');
+                if (btnsDiv) btnsDiv.innerHTML = `
+                    <button type="button" class="btn-dl-pdf" id="noticePdfBtn" onclick="sendPatientPdfToLine(this)">
+                        <i class="bi bi-send"></i> 傳送報表至 LINE
+                    </button>
+                    <button class="btn-dl-outline" onclick="forceShowCharts()">
+                        <i class="bi bi-display"></i> 仍要嘗試載入圖表
+                    </button>`;
 
-                renderTimeoutId = setTimeout(() => {
-                    if (!chartsLoaded) {
-                        showMobileNotice();
+                    let startDate, endDate;
+                    switch (currentReportType) {
+                        case 0: {
+                            const d = document.getElementById('dailyDate').value;
+                            if (!d) { alert('請選擇日期'); return; }
+                            startDate = endDate = d; currentDailyDate = d; break;
+                        }
+                        case 1: {
+                            const ws = document.getElementById('weeklyStartDate').value;
+                            if (!ws) { alert('請選擇週開始日期'); return; }
+                            startDate = ws;
+                            const we = new Date(ws); we.setDate(we.getDate() + 6);
+                            endDate = we.toISOString().substr(0, 10); break;
+                        }
+                        case 2: {
+                            const m = document.getElementById('monthlyDate').value;
+                            if (!m) { alert('請選擇年月'); return; }
+                            const [yr, mo] = m.split('-');
+                            startDate = `${yr}-${mo}-01`;
+                            endDate = `${yr}-${mo}-${new Date(yr, mo, 0).getDate().toString().padStart(2, '0')}`; break;
+                        }
+                        case 3: {
+                            const y = document.getElementById('yearlyDate').value;
+                            startDate = `${y}-01-01`; endDate = `${y}-12-31`; break;
+                        }
                     }
-                }, 8000);
+                    document.getElementById('loadingDiv').style.display = 'block';
+                    document.getElementById('patientStrip').classList.remove('show');
+                    document.getElementById('reportContent').style.display = 'none';
+                    try {
+                        // 6秒後還在loading就顯示提示，但繼續等API回應
+                        const loadingTimeout = setTimeout(() => {
+                            document.getElementById('loadingDiv').style.display = 'none';
+                            document.getElementById('mobileNotice').classList.add('show');
+                            document.getElementById('patientDownloadPdfBtn').style.display = 'flex';
+                            document.getElementById('patientLinePdfBtn').style.display = 'flex';                    document.getElementById('mobileNotice').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 6000);
 
-                if (window.innerWidth > 900) {
-                    toggleCharts();
-                }
-            }
-        }
+                        const res = await fetch('/Analysis/GetPatientReport', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ reportType: currentReportType, startDate, endDate })
+                        });
+                        clearTimeout(loadingTimeout);
+                        const result = await res.json();
+                        if (result.success) {
+                            currentReport = result.data;  // ← 一定要存，這樣超時後按下載才有資料
+                            showPatientInfo(result.data);
+                            // 如果提示已顯示就不再 displayReport，避免畫面跳動
+                            if (!document.getElementById('mobileNotice').classList.contains('show')) {
+                                displayReport(result.data);
+                            }
+                        } else {
+                            alert(result.message || '查詢失敗');
+                        }
+                    } catch (e) { console.error(e); alert('系統錯誤，請稍後再試'); }
+                        finally { document.getElementById('loadingDiv').style.display = 'none'; }
+                    }
 
-        function showMobileNotice() {
-            clearRenderTimeout();
-            document.getElementById('mobileNotice').classList.add('show');
-            document.getElementById('chartToggleBar').style.display = 'none';
-            document.getElementById('topbarPdfBtn').style.display = 'flex';
-            // 捲動到提示區
-            document.getElementById('mobileNotice').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        function forceShowCharts() {
-            document.getElementById('mobileNotice').classList.remove('show');
-            chartsLoaded = false;
-            document.getElementById('chartToggleBar').style.display = 'block';
-            if (currentReport) toggleCharts();
-        }
-
-        function clearRenderTimeout() {
-            if (renderTimeoutId) {
-                clearTimeout(renderTimeoutId);
-                renderTimeoutId = null;
-            }
-        }
-
-        function displayDailyTable(data) {
-            const tbody = document.getElementById('dailyTableBody'); tbody.innerHTML = '';
-            const stats = data.statistics, goals = data.goals || {}, record = data.records?.length > 0 ? data.records[0] : null;
-            const sysBP = goals.systolicBPTarget ?? 130, diaBP = goals.diastolicBPTarget ?? 80;
-            const glucose = goals.fastingGlucoseTarget ?? 100, water = goals.waterTarget ?? 2000;
-            const badge = (text, cls) => `<span class="status-badge ${cls}">${text}</span>`;
-            const rows = [];
-            if (stats.avgSystolicBP !== null && stats.avgDiastolicBP !== null) {
-                const ab = stats.avgSystolicBP > sysBP || stats.avgDiastolicBP > diaBP;
-                rows.push({ name: '❤️ 血壓', val: `${stats.avgSystolicBP.toFixed(0)}/${stats.avgDiastolicBP.toFixed(0)} mmHg`, std: `≤ ${sysBP}/${diaBP} mmHg`, badge: ab ? badge('⚠️ 偏高', 'badge-danger') : badge('✓ 正常', 'badge-ok'), ab });
-            }
-            if (stats.avgBloodSugar !== null) {
-                const ab = stats.avgBloodSugar > glucose;
-                rows.push({ name: '🩸 血糖', val: `${stats.avgBloodSugar.toFixed(1)} mg/dL`, std: `≤ ${glucose} mg/dL`, badge: ab ? badge('⚠️ 偏高', 'badge-danger') : badge('✓ 正常', 'badge-ok'), ab });
-            }
-            if (stats.avgWaterIntake !== null) {
-                const ab = stats.avgWaterIntake < water;
-                rows.push({ name: '💧 飲水量', val: `${stats.avgWaterIntake.toFixed(0)} ml`, std: `≥ ${water} ml`, badge: ab ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok'), ab });
-            }
-            if (stats.avgExerciseDuration !== null) {
-                const ab = stats.avgExerciseDuration < 30;
-                rows.push({ name: '🏃 運動時間', val: `${stats.avgExerciseDuration.toFixed(0)} 分鐘`, std: '≥ 30 分鐘', badge: ab ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok'), ab });
-            }
-            if (stats.avgCigarettes !== null && stats.avgCigarettes !== undefined)
-                rows.push({ name: '🚬 抽菸', val: `${stats.avgCigarettes.toFixed(0)} 支`, std: '0 支', badge: stats.avgCigarettes > 0 ? badge('⚠️ 建議戒菸', 'badge-danger') : badge('✓ 良好', 'badge-ok'), ab: stats.avgCigarettes > 0 });
-            if (stats.avgBetelNut !== null && stats.avgBetelNut !== undefined)
-                rows.push({ name: '🌿 檳榔', val: `${stats.avgBetelNut.toFixed(0)} 次`, std: '0 次', badge: stats.avgBetelNut > 0 ? badge('⚠️ 建議戒除', 'badge-danger') : badge('✓ 良好', 'badge-ok'), ab: stats.avgBetelNut > 0 });
-
-            rows.forEach(r => {
-                const tr = document.createElement('tr');
-                if (r.ab) tr.className = 'td-abnormal';
-                tr.innerHTML = `<td><strong>${r.name}</strong></td><td class="td-center">${r.val}</td><td class="td-center">${r.std}</td><td class="td-center">${r.badge}</td>`;
-                tbody.appendChild(tr);
-            });
-
-            if (record && (record.meals_Breakfast || record.meals_Lunch || record.meals_Dinner)) {
-                let veg = 0, prot = 0, carb = 0;
-                [record.meals_Breakfast, record.meals_Lunch, record.meals_Dinner].forEach(m => {
-                    if (!m) return;
-                    if (!isNaN(parseFloat(m.vegetables))) veg += parseFloat(m.vegetables);
-                    if (!isNaN(parseFloat(m.protein))) prot += parseFloat(m.protein);
-                    if (!isNaN(parseFloat(m.carbs))) carb += parseFloat(m.carbs);
-                });
-                let mealHtml = '<div style="line-height:1.9;font-size:0.82rem;">';
-                if (veg > 0) mealHtml += `<div>🥬 蔬菜：${fmt(veg)} 份</div>`;
-                if (prot > 0) mealHtml += `<div>🥩 蛋白質：${fmt(prot)} 份</div>`;
-                if (carb > 0) mealHtml += `<div>🍚 澱粉：${fmt(carb)} 份</div>`;
-                mealHtml += '</div>';
-                const tr = document.createElement('tr'); tr.style.background = '#f9fafb';
-                tr.innerHTML = `<td><strong>🍽️ 今日三餐</strong></td><td class="td-center">${mealHtml}</td><td class="td-center" style="color:var(--text-pale);">—</td><td class="td-center" style="color:var(--text-pale);">—</td>`;
-                tbody.appendChild(tr);
-            }
-            if (record && record.beverage) {
-                const tr = document.createElement('tr'); tr.style.background = '#f9fafb';
-                tr.innerHTML = `<td><strong>🥤 飲料</strong></td><td class="td-center" style="font-size:0.85rem;">${record.beverage}</td><td class="td-center" style="color:var(--text-pale);">—</td><td class="td-center" style="color:var(--text-pale);">—</td>`;
-                tbody.appendChild(tr);
-            }
-            if (rows.length === 0 && !record)
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#8fa0b4;padding:2rem;">該日期無健康數據</td></tr>';
-        }
-
-        function fmt(n) { return n % 1 === 0 ? n.toFixed(0) : n.toFixed(1); }
-
-        function displayTrendCard(ts) {
-            const section = document.getElementById('trendSection');
-            const itemsDiv = document.getElementById('trendItems');
-            const periodLabel = document.getElementById('trendPeriodLabel');
-            section.style.display = 'block';
-            if (!ts || !ts.items || ts.items.length === 0) {
-                periodLabel.textContent = '';
-                itemsDiv.innerHTML = `<div class="trend-no-prev">📋 尚無上一期資料可比較，趨勢將在下次查詢時顯示。</div>`;
-                return;
-            }
-            periodLabel.textContent = `（與${ts.periodLabel}相比）`;
-            itemsDiv.innerHTML = ts.items.map(item =>
-                `<div class="trend-item ${item.trendType}">
-                        <div class="trend-item-label">${item.icon} ${item.label}</div>
-                        <div class="trend-item-values"><span class="trend-current">${item.currentValue}</span><span class="trend-diff ${item.trendType}">${item.diffText}</span></div>
-                        <div class="trend-prev">前期：${item.prevValue}</div>
-                        <div class="trend-message">${item.message}</div>
-                    </div>`
-            ).join('');
-        }
-
-        function displayChartReport(data) {
-            const stats = data.statistics, goals = data.goals || {};
-            const sysBP = goals.systolicBPTarget ?? 130, diaBP = goals.diastolicBPTarget ?? 80;
-            const glucose = goals.fastingGlucoseTarget ?? 100, water = goals.waterTarget ?? 2000;
-            document.getElementById('totalDays').textContent = stats.totalDays;
-            document.getElementById('highBPDays').textContent = stats.highBPDays;
-            document.getElementById('highBSDays').textContent = stats.highBloodSugarDays;
-            document.getElementById('lowWaterDays').textContent = stats.lowWaterDays;
-            document.getElementById('lowExerciseDays').textContent = stats.lowExerciseDays;
-
-            const avgSys = stats.avgSystolicBP ?? null,
-                avgDia = stats.avgDiastolicBP ?? null,
-                avgBS = stats.avgBloodSugar ?? null,
-                avgW = stats.avgWaterIntake ?? null,
-                avgEx = stats.avgExerciseDuration ?? null,
-                avgCig = stats.avgCigarettes ?? null,
-                avgBet = stats.avgBetelNut ?? null,
-                avgVeg = stats.avgVegetables ?? null,
-                avgProt = stats.avgProtein ?? null,
-                avgCarb = stats.avgCarbs ?? null;
-
-            const badge = (text, cls) => `<span class="status-badge ${cls}">${text}</span>`;
-            const nd = () => badge('無資料', 'badge-nodata');
-
-            document.getElementById('avgTable').innerHTML = `
-                <tr class="${avgSys !== null && (avgSys > sysBP || avgDia > diaBP) ? 'td-abnormal' : ''}">
-                    <td>❤️ 血壓</td>
-                    <td class="td-center">${avgSys !== null ? `${avgSys.toFixed(1)}/${avgDia.toFixed(1)} mmHg` : 'N/A'}</td>
-                    <td class="td-center">≤ ${sysBP}/${diaBP} mmHg</td>
-                    <td class="td-center">${avgSys === null ? nd() : (avgSys > sysBP || avgDia > diaBP) ? badge('⚠️ 偏高', 'badge-danger') : badge('✓ 正常', 'badge-ok')}</td>
-                </tr>
-                <tr class="${avgBS !== null && avgBS > glucose ? 'td-abnormal' : ''}">
-                    <td>🩸 血糖</td>
-                    <td class="td-center">${avgBS !== null ? `${avgBS.toFixed(1)} mg/dL` : 'N/A'}</td>
-                    <td class="td-center">≤ ${glucose} mg/dL</td>
-                    <td class="td-center">${avgBS === null ? nd() : avgBS > glucose ? badge('⚠️ 偏高', 'badge-danger') : badge('✓ 正常', 'badge-ok')}</td>
-                </tr>
-                <tr class="${avgW !== null && avgW < water ? 'td-abnormal' : ''}">
-                    <td>💧 飲水量</td>
-                    <td class="td-center">${avgW !== null ? `${avgW.toFixed(0)} ml` : 'N/A'}</td>
-                    <td class="td-center">≥ ${water} ml</td>
-                    <td class="td-center">${avgW === null ? nd() : avgW < water ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok')}</td>
-                </tr>
-                <tr class="${avgEx !== null && avgEx < 150 ? 'td-abnormal' : ''}">
-                    <td>🏃 運動時間</td>
-                    <td class="td-center">${avgEx !== null ? `${avgEx.toFixed(1)} 分鐘` : 'N/A'}</td>
-                    <td class="td-center">≥ 150 分鐘/週</td>
-                    <td class="td-center">${avgEx === null ? nd() : avgEx < 150 ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok')}</td>
-                </tr>
-        <tr class="${avgCig !== null && avgCig > 0 ? 'td-abnormal' : ''}">
-            <td>🚬 抽菸（每日平均）</td>
-            <td class="td-center">${avgCig !== null ? `${avgCig.toFixed(1)} 支` : 'N/A'}</td>
-            <td class="td-center">0 支</td>
-            <td class="td-center">${avgCig === null ? nd() : avgCig > 0 ? badge('⚠️ 建議戒菸', 'badge-danger') : badge('✓ 良好', 'badge-ok')}</td>
-        </tr>
-        <tr class="${avgBet !== null && avgBet > 0 ? 'td-abnormal' : ''}">
-            <td>🌿 檳榔（每日平均）</td>
-            <td class="td-center">${avgBet !== null ? `${avgBet.toFixed(1)} 次` : 'N/A'}</td>
-            <td class="td-center">0 次</td>
-            <td class="td-center">${avgBet === null ? nd() : avgBet > 0 ? badge('⚠️ 建議戒除', 'badge-danger') : badge('✓ 良好', 'badge-ok')}</td>
-        </tr>
-                <tr>
-                    <td>🥬 蔬菜（每日平均）</td>
-                    <td class="td-center">${avgVeg !== null ? `${avgVeg.toFixed(1)} 份` : 'N/A'}</td>
-                    <td class="td-center">建議 3–5 份</td>
-                    <td class="td-center">${avgVeg === null ? nd() : avgVeg >= 3 ? badge('✓ 充足', 'badge-ok') : badge('⚠️ 可增加', 'badge-danger')}</td>
-                </tr>
-                <tr>
-                    <td>🥩 蛋白質（每日平均）</td>
-                    <td class="td-center">${avgProt !== null ? `${avgProt.toFixed(1)} 份` : 'N/A'}</td>
-                    <td class="td-center">建議 3–5 份</td>
-                    <td class="td-center">${avgProt === null ? nd() : avgProt >= 3 ? badge('✓ 充足', 'badge-ok') : badge('⚠️ 可增加', 'badge-danger')}</td>
-                </tr>
-                <tr>
-                    <td>🍚 澱粉（每日平均）</td>
-                    <td class="td-center">${avgCarb !== null ? `${avgCarb.toFixed(1)} 份` : 'N/A'}</td>
-                    <td class="td-center">建議 2–4 份</td>
-                    <td class="td-center">${avgCarb === null ? nd() : (avgCarb >= 2 && avgCarb <= 4) ? badge('✓ 適中', 'badge-ok') : badge('⚠️ 需調整', 'badge-danger')}</td>
-                </tr>`;
-
-        }
-
-        function drawCharts(cd) {
-            Object.values(charts).forEach(c => c && c.destroy()); charts = {}; chartRanges = {};
-
-            const makeChart = (id, cfg, name) => {
-                const el = document.getElementById(id); if (!el) return;
-
-                // 先清除舊的無資料提示
-                const wrapper = el.closest('.chart-wrap');
-                if (wrapper) {
-                    const old = wrapper.querySelector('.no-data-overlay');
-                    if (old) old.remove();
-                    wrapper.style.position = '';
+                async function navigateDaily(dir) {
+                    const d = new Date(currentDailyDate); d.setDate(d.getDate() + dir);
+                    currentDailyDate = d.toISOString().substr(0, 10);
+                    document.getElementById('dailyDate').value = currentDailyDate;
+                    updateDailyNavLabel();
+                    document.getElementById('loadingDiv').style.display = 'block';
+                    document.getElementById('reportContent').style.display = 'none';
+                    try {
+                        const res = await fetch('/Analysis/GetPatientReport', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ reportType: 0, startDate: currentDailyDate, endDate: currentDailyDate })
+                        });
+                        const result = await res.json();
+                        if (result.success) { currentReport = result.data; displayReport(result.data); }
+                        else {
+                            document.getElementById('reportContent').style.display = 'block';
+                            document.getElementById('dailySection').style.display = 'block';
+                            document.getElementById('summarySection').style.display = 'none';
+                            document.getElementById('chartsSection').style.display = 'none';
+                            document.getElementById('trendSection').style.display = 'none';
+                            document.getElementById('dailyTableBody').innerHTML =
+                                '<tr><td colspan="4" style="text-align:center;color:#8fa0b4;padding:2rem;">該日期無健康數據</td></tr>';
+                        }
+                    } catch (e) { console.error(e); }
+                    finally { document.getElementById('loadingDiv').style.display = 'none'; }
                 }
 
-                charts[name] = new Chart(el.getContext('2d'), cfg);
-                const labels = cfg.data.labels, total = labels.length;
-                let startIdx = 0, endIdx = Math.min(CHART_VISIBLE - 1, total - 1);
-                let hasDataInRange = false;
+                function updateDailyNavLabel() {
+                    const d = new Date(currentDailyDate);
+                    document.getElementById('dailyNavDate').textContent =
+                        `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+                }
 
-                if (currentReport?.startDate && currentReport?.endDate && total > 0) {
-                    const start = currentReport.startDate.substring(0, 10);
-                    const end = currentReport.endDate.substring(0, 10);
-
-                    let queryStartIdx = -1;
-                    for (let i = 0; i < labels.length; i++) {
-                        if (labels[i] >= start) { queryStartIdx = i; break; }
-                    }
-                    let queryEndIdx = -1;
-                    for (let i = labels.length - 1; i >= 0; i--) {
-                        if (labels[i] <= end) { queryEndIdx = i; break; }
-                    }
-
-                    if (queryStartIdx >= 0 && queryEndIdx >= 0 && queryStartIdx <= queryEndIdx) {
-                        // 查詢範圍內有資料
-                        hasDataInRange = true;
-                        const rangeCount = queryEndIdx - queryStartIdx + 1;
-                        startIdx = queryStartIdx;
-                        endIdx = rangeCount >= CHART_VISIBLE
-                            ? startIdx + CHART_VISIBLE - 1
-                            : queryEndIdx;
+                function showPatientInfo(data) {
+                    document.getElementById('patientStrip').classList.add('show');
+                    document.getElementById('patientName').textContent = data.patientName;
+                    document.getElementById('patientGender').textContent = data.patientGender || '未記錄';
+                    if (data.patientBirthDate) {
+                        const d = new Date(data.patientBirthDate);
+                        document.getElementById('patientBirth').textContent =
+                            `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
                     } else {
-                        // 查詢範圍內無資料
-                        hasDataInRange = false;
-                        let nearestIdx = 0;
-                        if (queryEndIdx >= 0) nearestIdx = queryEndIdx;
-                        else if (queryStartIdx >= 0) nearestIdx = queryStartIdx;
-                        startIdx = nearestIdx;
-                        endIdx = Math.min(total - 1, nearestIdx + CHART_VISIBLE - 1);
+                        document.getElementById('patientBirth').textContent = '未記錄';
                     }
                 }
 
-                // 只設定一次
-                chartRanges[name] = { min: startIdx, max: endIdx, total };
+                function displayReport(data) {
+                    document.getElementById('reportContent').style.display = 'block';
+                    document.getElementById('mobileNotice').classList.remove('show');
+                    document.getElementById('patientDownloadPdfBtn').style.display = 'flex';
+                    document.getElementById('patientLinePdfBtn').style.display = 'flex';
+                    clearRenderTimeout();
 
-                if (!hasDataInRange && currentReport?.startDate) {
-                    charts[name].options.scales.x.min = currentReport.startDate.substring(0, 10);
-                    charts[name].options.scales.x.max = currentReport.endDate.substring(0, 10);
-                } else {
-                    charts[name].options.scales.x.min = labels[startIdx];
-                    charts[name].options.scales.x.max = labels[endIdx];
+                    if (currentReportType === 0) {
+                        document.getElementById('dailySection').style.display = 'block';
+                        document.getElementById('trendSection').style.display = 'none';
+                        document.getElementById('summarySection').style.display = 'none';
+                        document.getElementById('chartsSection').style.display = 'none';
+                        document.getElementById('chartToggleBar').style.display = 'none';
+                        updateDailyNavLabel();
+                        displayDailyTable(data);
+                    } else {
+                        document.getElementById('dailySection').style.display = 'none';
+                        document.getElementById('summarySection').style.display = 'block';
+                        document.getElementById('chartsSection').style.display = 'none';
+                        displayTrendCard(data.trendSummary);
+                        displayChartReport(data);
+
+                        chartsLoaded = false;
+                        document.getElementById('chartToggleBar').style.display = 'block';
+                        document.getElementById('patientDownloadPdfBtn').style.display = 'flex';
+                        document.getElementById('patientLinePdfBtn').style.display = 'flex';
+
+
+                        if (window.innerWidth > 900) {
+                            toggleCharts();
+                        }
+                    }
                 }
-                charts[name].update('none');
 
-                // 無資料時加上提示浮層
-                if (!hasDataInRange && wrapper) {
+                function showMobileNotice() {
+                    if (chartsLoaded) return;
+
+                    const chartsSection = document.getElementById('chartsSection');
+                    if (chartsSection && chartsSection.style.display === 'block') return;
+
+                    clearRenderTimeout();
+                    document.getElementById('mobileNotice').classList.add('show');
+                    document.getElementById('chartToggleBar').style.display = 'none';
+                    document.getElementById('patientDownloadPdfBtn').style.display = 'flex';
+                    document.getElementById('patientLinePdfBtn').style.display = 'flex';
+                    document.getElementById('mobileNotice').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                function forceShowCharts() {
+                    document.getElementById('mobileNotice').classList.remove('show');
+                    chartsLoaded = false;
+                    document.getElementById('chartToggleBar').style.display = 'block';
+                    if (currentReport) toggleCharts();
+                }
+
+                function clearRenderTimeout() {
+                    if (renderTimeoutId) {
+                        clearTimeout(renderTimeoutId);
+                        renderTimeoutId = null;
+                    }
+                }
+
+                function displayDailyTable(data) {
+                    const tbody = document.getElementById('dailyTableBody'); tbody.innerHTML = '';
+                    const stats = data.statistics, goals = data.goals || {}, record = data.records?.length > 0 ? data.records[0] : null;
+                    const sysBP = goals.systolicBPTarget ?? 130, diaBP = goals.diastolicBPTarget ?? 80;
+                    const glucose = goals.fastingGlucoseTarget ?? 100, water = goals.waterTarget ?? 2000;
+                    const badge = (text, cls) => `<span class="status-badge ${cls}">${text}</span>`;
+                    const rows = [];
+                    if (stats.avgSystolicBP !== null && stats.avgDiastolicBP !== null) {
+                        const ab = stats.avgSystolicBP > sysBP || stats.avgDiastolicBP > diaBP;
+                        rows.push({ name: '❤️ 血壓', val: `${stats.avgSystolicBP.toFixed(0)}/${stats.avgDiastolicBP.toFixed(0)} mmHg`, std: `≤ ${sysBP}/${diaBP} mmHg`, badge: ab ? badge('⚠️ 偏高', 'badge-danger') : badge('✓ 正常', 'badge-ok'), ab });
+                    }
+                    if (stats.avgBloodSugar !== null) {
+                        const ab = stats.avgBloodSugar > glucose;
+                        rows.push({ name: '🩸 血糖', val: `${stats.avgBloodSugar.toFixed(1)} mg/dL`, std: `≤ ${glucose} mg/dL`, badge: ab ? badge('⚠️ 偏高', 'badge-danger') : badge('✓ 正常', 'badge-ok'), ab });
+                    }
+                    if (stats.avgWaterIntake !== null) {
+                        const ab = stats.avgWaterIntake < water;
+                        rows.push({ name: '💧 飲水量', val: `${stats.avgWaterIntake.toFixed(0)} ml`, std: `≥ ${water} ml`, badge: ab ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok'), ab });
+                    }
+                    if (stats.avgExerciseDuration !== null) {
+                        const ab = stats.avgExerciseDuration < 30;
+                        rows.push({ name: '🏃 運動時間', val: `${stats.avgExerciseDuration.toFixed(0)} 分鐘`, std: '≥ 30 分鐘', badge: ab ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok'), ab });
+                    }
+                    if (stats.avgCigarettes !== null && stats.avgCigarettes !== undefined)
+                        rows.push({ name: '🚬 抽菸', val: `${stats.avgCigarettes.toFixed(0)} 支`, std: '0 支', badge: stats.avgCigarettes > 0 ? badge('⚠️ 建議戒菸', 'badge-danger') : badge('✓ 良好', 'badge-ok'), ab: stats.avgCigarettes > 0 });
+                    if (stats.avgBetelNut !== null && stats.avgBetelNut !== undefined)
+                        rows.push({ name: '🌿 檳榔', val: `${stats.avgBetelNut.toFixed(0)} 次`, std: '0 次', badge: stats.avgBetelNut > 0 ? badge('⚠️ 建議戒除', 'badge-danger') : badge('✓ 良好', 'badge-ok'), ab: stats.avgBetelNut > 0 });
+
+                    rows.forEach(r => {
+                        const tr = document.createElement('tr');
+                        if (r.ab) tr.className = 'td-abnormal';
+                        tr.innerHTML = `<td><strong>${r.name}</strong></td><td class="td-center">${r.val}</td><td class="td-center">${r.std}</td><td class="td-center">${r.badge}</td>`;
+                        tbody.appendChild(tr);
+                    });
+
+                    if (record && (record.meals_Breakfast || record.meals_Lunch || record.meals_Dinner)) {
+                        let veg = 0, prot = 0, carb = 0;
+                        [record.meals_Breakfast, record.meals_Lunch, record.meals_Dinner].forEach(m => {
+                            if (!m) return;
+                            if (!isNaN(parseFloat(m.vegetables))) veg += parseFloat(m.vegetables);
+                            if (!isNaN(parseFloat(m.protein))) prot += parseFloat(m.protein);
+                            if (!isNaN(parseFloat(m.carbs))) carb += parseFloat(m.carbs);
+                        });
+                        let mealHtml = '<div style="line-height:1.9;font-size:0.82rem;">';
+                        if (veg > 0) mealHtml += `<div>🥬 蔬菜：${fmt(veg)} 份</div>`;
+                        if (prot > 0) mealHtml += `<div>🥩 蛋白質：${fmt(prot)} 份</div>`;
+                        if (carb > 0) mealHtml += `<div>🍚 澱粉：${fmt(carb)} 份</div>`;
+                        mealHtml += '</div>';
+                        const tr = document.createElement('tr'); tr.style.background = '#f9fafb';
+                        tr.innerHTML = `<td><strong>🍽️ 今日三餐</strong></td><td class="td-center">${mealHtml}</td><td class="td-center" style="color:var(--text-pale);">—</td><td class="td-center" style="color:var(--text-pale);">—</td>`;
+                        tbody.appendChild(tr);
+                    }
+                    if (record && record.beverage) {
+                        const tr = document.createElement('tr'); tr.style.background = '#f9fafb';
+                        tr.innerHTML = `<td><strong>🥤 飲料</strong></td><td class="td-center" style="font-size:0.85rem;">${record.beverage}</td><td class="td-center" style="color:var(--text-pale);">—</td><td class="td-center" style="color:var(--text-pale);">—</td>`;
+                        tbody.appendChild(tr);
+                    }
+                    if (rows.length === 0 && !record)
+                        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#8fa0b4;padding:2rem;">該日期無健康數據</td></tr>';
+                }
+
+                function fmt(n) { return n % 1 === 0 ? n.toFixed(0) : n.toFixed(1); }
+
+                function displayTrendCard(ts) {
+                    const section = document.getElementById('trendSection');
+                    const itemsDiv = document.getElementById('trendItems');
+                    const periodLabel = document.getElementById('trendPeriodLabel');
+                    section.style.display = 'block';
+                    if (!ts || !ts.items || ts.items.length === 0) {
+                        periodLabel.textContent = '';
+                        itemsDiv.innerHTML = `<div class="trend-no-prev">📋 尚無上一期資料可比較，趨勢將在下次查詢時顯示。</div>`;
+                        return;
+                    }
+                    periodLabel.textContent = `（與${ts.periodLabel}相比）`;
+                    itemsDiv.innerHTML = ts.items.map(item =>
+                        `<div class="trend-item ${item.trendType}">
+                                <div class="trend-item-label">${item.icon} ${item.label}</div>
+                                <div class="trend-item-values"><span class="trend-current">${item.currentValue}</span><span class="trend-diff ${item.trendType}">${item.diffText}</span></div>
+                                <div class="trend-prev">前期：${item.prevValue}</div>
+                                <div class="trend-message">${item.message}</div>
+                            </div>`
+                    ).join('');
+                }
+
+                function displayChartReport(data) {
+                    const stats = data.statistics, goals = data.goals || {};
+                    const sysBP = goals.systolicBPTarget ?? 130, diaBP = goals.diastolicBPTarget ?? 80;
+                    const glucose = goals.fastingGlucoseTarget ?? 100, water = goals.waterTarget ?? 2000;
+                    document.getElementById('totalDays').textContent = stats.totalDays;
+                    document.getElementById('highBPDays').textContent = stats.highBPDays;
+                    document.getElementById('highBSDays').textContent = stats.highBloodSugarDays;
+                    document.getElementById('lowWaterDays').textContent = stats.lowWaterDays;
+                    document.getElementById('lowExerciseDays').textContent = stats.lowExerciseDays;
+
+                    const avgSys = stats.avgSystolicBP ?? null,
+                        avgDia = stats.avgDiastolicBP ?? null,
+                        avgBS = stats.avgBloodSugar ?? null,
+                        avgW = stats.avgWaterIntake ?? null,
+                        avgEx = stats.avgExerciseDuration ?? null,
+                        avgCig = stats.avgCigarettes ?? null,
+                        avgBet = stats.avgBetelNut ?? null,
+                        avgVeg = stats.avgVegetables ?? null,
+                        avgProt = stats.avgProtein ?? null,
+                        avgCarb = stats.avgCarbs ?? null;
+
+                    const badge = (text, cls) => `<span class="status-badge ${cls}">${text}</span>`;
+                    const nd = () => badge('無資料', 'badge-nodata');
+
+                    document.getElementById('avgTable').innerHTML = `
+                        <tr class="${avgSys !== null && (avgSys > sysBP || avgDia > diaBP) ? 'td-abnormal' : ''}">
+                            <td>❤️ 血壓</td>
+                            <td class="td-center">${avgSys !== null ? `${avgSys.toFixed(1)}/${avgDia.toFixed(1)} mmHg` : 'N/A'}</td>
+                            <td class="td-center">≤ ${sysBP}/${diaBP} mmHg</td>
+                            <td class="td-center">${avgSys === null ? nd() : (avgSys > sysBP || avgDia > diaBP) ? badge('⚠️ 偏高', 'badge-danger') : badge('✓ 正常', 'badge-ok')}</td>
+                        </tr>
+                        <tr class="${avgBS !== null && avgBS > glucose ? 'td-abnormal' : ''}">
+                            <td>🩸 血糖</td>
+                            <td class="td-center">${avgBS !== null ? `${avgBS.toFixed(1)} mg/dL` : 'N/A'}</td>
+                            <td class="td-center">≤ ${glucose} mg/dL</td>
+                            <td class="td-center">${avgBS === null ? nd() : avgBS > glucose ? badge('⚠️ 偏高', 'badge-danger') : badge('✓ 正常', 'badge-ok')}</td>
+                        </tr>
+                        <tr class="${avgW !== null && avgW < water ? 'td-abnormal' : ''}">
+                            <td>💧 飲水量</td>
+                            <td class="td-center">${avgW !== null ? `${avgW.toFixed(0)} ml` : 'N/A'}</td>
+                            <td class="td-center">≥ ${water} ml</td>
+                            <td class="td-center">${avgW === null ? nd() : avgW < water ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok')}</td>
+                        </tr>
+                        <tr class="${avgEx !== null && avgEx < 150 ? 'td-abnormal' : ''}">
+                            <td>🏃 運動時間</td>
+                            <td class="td-center">${avgEx !== null ? `${avgEx.toFixed(1)} 分鐘` : 'N/A'}</td>
+                            <td class="td-center">≥ 150 分鐘/週</td>
+                            <td class="td-center">${avgEx === null ? nd() : avgEx < 150 ? badge('⚠️ 不足', 'badge-danger') : badge('✓ 充足', 'badge-ok')}</td>
+                        </tr>
+                <tr class="${avgCig !== null && avgCig > 0 ? 'td-abnormal' : ''}">
+                    <td>🚬 抽菸（每日平均）</td>
+                    <td class="td-center">${avgCig !== null ? `${avgCig.toFixed(1)} 支` : 'N/A'}</td>
+                    <td class="td-center">0 支</td>
+                    <td class="td-center">${avgCig === null ? nd() : avgCig > 0 ? badge('⚠️ 建議戒菸', 'badge-danger') : badge('✓ 良好', 'badge-ok')}</td>
+                </tr>
+                <tr class="${avgBet !== null && avgBet > 0 ? 'td-abnormal' : ''}">
+                    <td>🌿 檳榔（每日平均）</td>
+                    <td class="td-center">${avgBet !== null ? `${avgBet.toFixed(1)} 次` : 'N/A'}</td>
+                    <td class="td-center">0 次</td>
+                    <td class="td-center">${avgBet === null ? nd() : avgBet > 0 ? badge('⚠️ 建議戒除', 'badge-danger') : badge('✓ 良好', 'badge-ok')}</td>
+                </tr>
+                        <tr>
+                            <td>🥬 蔬菜（每日平均）</td>
+                            <td class="td-center">${avgVeg !== null ? `${avgVeg.toFixed(1)} 份` : 'N/A'}</td>
+                            <td class="td-center">建議 3–5 份</td>
+                            <td class="td-center">${avgVeg === null ? nd() : avgVeg >= 3 ? badge('✓ 充足', 'badge-ok') : badge('⚠️ 可增加', 'badge-danger')}</td>
+                        </tr>
+                        <tr>
+                            <td>🥩 蛋白質（每日平均）</td>
+                            <td class="td-center">${avgProt !== null ? `${avgProt.toFixed(1)} 份` : 'N/A'}</td>
+                            <td class="td-center">建議 3–5 份</td>
+                            <td class="td-center">${avgProt === null ? nd() : avgProt >= 3 ? badge('✓ 充足', 'badge-ok') : badge('⚠️ 可增加', 'badge-danger')}</td>
+                        </tr>
+                        <tr>
+                            <td>🍚 澱粉（每日平均）</td>
+                            <td class="td-center">${avgCarb !== null ? `${avgCarb.toFixed(1)} 份` : 'N/A'}</td>
+                            <td class="td-center">建議 2–4 份</td>
+                            <td class="td-center">${avgCarb === null ? nd() : (avgCarb >= 2 && avgCarb <= 4) ? badge('✓ 適中', 'badge-ok') : badge('⚠️ 需調整', 'badge-danger')}</td>
+                        </tr>`;
+
+                }
+
+                function drawCharts(cd) {
+                    Object.values(charts).forEach(c => c && c.destroy()); charts = {}; chartRanges = {};
+
+                    const makeChart = (id, cfg, name) => {
+                        const el = document.getElementById(id); if (!el) return;
+
+                        // 先清除舊的無資料提示
+                        const wrapper = el.closest('.chart-wrap');
+                        if (wrapper) {
+                            const old = wrapper.querySelector('.no-data-overlay');
+                            if (old) old.remove();
+                            wrapper.style.position = '';
+                        }
+
+                        charts[name] = new Chart(el.getContext('2d'), cfg);
+                        const labels = cfg.data.labels, total = labels.length;
+                        let startIdx = 0, endIdx = Math.min(CHART_VISIBLE - 1, total - 1);
+                        let hasDataInRange = false;
+
+                        if (currentReport?.startDate && currentReport?.endDate && total > 0) {
+                            const start = currentReport.startDate.substring(0, 10);
+                            const end = currentReport.endDate.substring(0, 10);
+
+                            let queryStartIdx = -1;
+                            for (let i = 0; i < labels.length; i++) {
+                                if (labels[i] >= start) { queryStartIdx = i; break; }
+                            }
+                            let queryEndIdx = -1;
+                            for (let i = labels.length - 1; i >= 0; i--) {
+                                if (labels[i] <= end) { queryEndIdx = i; break; }
+                            }
+
+                            if (queryStartIdx >= 0 && queryEndIdx >= 0 && queryStartIdx <= queryEndIdx) {
+                                // 查詢範圍內有資料
+                                hasDataInRange = true;
+                                const rangeCount = queryEndIdx - queryStartIdx + 1;
+                                startIdx = queryStartIdx;
+                                endIdx = rangeCount >= CHART_VISIBLE
+                                    ? startIdx + CHART_VISIBLE - 1
+                                    : queryEndIdx;
+                            } else {
+                                // 查詢範圍內無資料
+                                hasDataInRange = false;
+                                let nearestIdx = 0;
+                                if (queryEndIdx >= 0) nearestIdx = queryEndIdx;
+                                else if (queryStartIdx >= 0) nearestIdx = queryStartIdx;
+                                startIdx = nearestIdx;
+                                endIdx = Math.min(total - 1, nearestIdx + CHART_VISIBLE - 1);
+                            }
+                        }
+
+                        // 只設定一次
+                        chartRanges[name] = { min: startIdx, max: endIdx, total };
+
+                        if (!hasDataInRange && currentReport?.startDate) {
+                            charts[name].options.scales.x.min = currentReport.startDate.substring(0, 10);
+                            charts[name].options.scales.x.max = currentReport.endDate.substring(0, 10);
+                        } else {
+                            charts[name].options.scales.x.min = labels[startIdx];
+                            charts[name].options.scales.x.max = labels[endIdx];
+                        }
+                        charts[name].update('none');
+
+                        // 無資料時加上提示浮層
+                        if (!hasDataInRange && wrapper) {
+                            wrapper.style.position = 'relative';
+                            const overlay = document.createElement('div');
+                            overlay.className = 'no-data-overlay';
+                            overlay.style.cssText = `
+                                        position:absolute; top:50%; left:50%;
+                                        transform:translate(-50%,-50%);
+                                        background:rgba(244,246,249,0.92);
+                                        border:1px dashed #dde3ea; border-radius:8px;
+                                        padding:0.5rem 1.25rem; font-size:0.82rem;
+                                        color:#8fa0b4; white-space:nowrap; pointer-events:none; z-index:10;
+                                    `;
+                            overlay.textContent = '當期無資料';
+                            wrapper.appendChild(overlay);
+                        }
+                    };
+
+                    const lineOpts = yLabel => ({
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: true, labels: { font: { size: 11 } } } },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    maxTicksLimit: 8,
+                                    font: { size: 10 },
+                                    callback: function (val, index) {
+                                        const label = this.getLabelForValue(val);
+                                        return label ? label.substring(5) : '';
+                                    }
+                                },
+                                grid: { display: false }
+                            },
+                            y: { beginAtZero: false, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 } } }
+                        }
+                    });
+
+                    const barOpts = yLabel => ({
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    maxTicksLimit: 8,
+                                    font: { size: 10 },
+                                    callback: function (val, index) {
+                                        const label = this.getLabelForValue(val);
+                                        return label ? label.substring(5) : '';
+                                    }
+                                },
+                                grid: { display: false }
+                            },
+                            y: { beginAtZero: true, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 } } }
+                        }
+                    });
+
+                    if (cd.bloodPressureData?.length) makeChart('bpChart', { type: 'line', data: { labels: cd.bloodPressureData.map(d => d.date), datasets: [{ label: '收縮壓', data: cd.bloodPressureData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointRadius: 3 }, { label: '舒張壓', data: cd.bloodPressureData.map(d => d.value2), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('mmHg') }, 'bp');
+                    if (cd.bloodSugarData?.length) makeChart('bsChart', { type: 'line', data: { labels: cd.bloodSugarData.map(d => d.date), datasets: [{ label: '血糖', data: cd.bloodSugarData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointBackgroundColor: cd.bloodSugarData.map(d => d.isAbnormal ? '#dc2626' : '#16a34a'), pointRadius: 4 }] }, options: lineOpts('mg/dL') }, 'bs');
+                    if (cd.waterIntakeData?.length) makeChart('waterChart', { type: 'bar', data: { labels: cd.waterIntakeData.map(d => d.date), datasets: [{ data: cd.waterIntakeData.map(d => d.value), backgroundColor: cd.waterIntakeData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(6,182,212,0.6)'), borderColor: cd.waterIntakeData.map(d => d.isAbnormal ? '#ea580c' : '#0891b2'), borderWidth: 1 }] }, options: barOpts('ml') }, 'water');
+                    if (cd.exerciseDurationData?.length) makeChart('exerciseChart', { type: 'bar', data: { labels: cd.exerciseDurationData.map(d => d.date), datasets: [{ data: cd.exerciseDurationData.map(d => d.value), backgroundColor: cd.exerciseDurationData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(16,185,129,0.6)'), borderColor: cd.exerciseDurationData.map(d => d.isAbnormal ? '#ea580c' : '#059669'), borderWidth: 1 }] }, options: barOpts('分鐘') }, 'exercise');
+                    if (cd.cigarettesData?.length) makeChart('cigaretteChart', { type: 'line', data: { labels: cd.cigarettesData.map(d => d.date), datasets: [{ label: '抽菸支數', data: cd.cigarettesData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('支') }, 'cigarette');
+                    if (cd.betelNutData?.length) makeChart('betelNutChart', { type: 'line', data: { labels: cd.betelNutData.map(d => d.date), datasets: [{ label: '檳榔次數', data: cd.betelNutData.map(d => d.value), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('顆') }, 'betelNut');
+                }
+
+                function parseLabelToDate(label, referenceDate) {
+                    // label 現在直接就是 yyyy-MM-dd 或 yyyy-MM，不需要轉換
+                    return label;
+                }
+
+                // ── 圖表箭頭導航 ─────────────────────────────────
+                function navigateChart(name, dir) {
+                    const chart = charts[name]; if (!chart) return;
+                    const r = chartRanges[name]; if (!r) return;
+                    const labels = chart.data.labels;
+
+                    if (dir < 0 && r.min === 0) {
+                        showChartEdgeNotice(name, '已無更早的資料');
+                        return;
+                    }
+                    if (dir > 0 && r.max >= r.total - 1) {
+                        showChartEdgeNotice(name, '已無更新的資料');
+                        return;
+                    }
+
+                    let newMin = r.min + dir * CHART_STEP;
+                    let newMax = newMin + CHART_VISIBLE - 1;
+                    if (newMin < 0) { newMin = 0; newMax = Math.min(CHART_VISIBLE - 1, r.total - 1); }
+                    if (newMax >= r.total) { newMax = r.total - 1; newMin = Math.max(0, newMax - CHART_VISIBLE + 1); }
+
+                    chartRanges[name] = { ...r, min: newMin, max: newMax };
+
+                    // 翻頁後改回用 label 控制 x 軸（離開「空白查詢期間」模式）
+                    chart.options.scales.x.min = labels[newMin];
+                    chart.options.scales.x.max = labels[newMax];
+                    chart.update('none');
+
+                    // 移除「當期無資料」提示
+                    const canvasId = {
+                        bp: 'bpChart', bs: 'bsChart', water: 'waterChart',
+                        exercise: 'exerciseChart', cigarette: 'cigaretteChart', betelNut: 'betelNutChart'
+                    }[name];
+                    const canvas = document.getElementById(canvasId);
+                    if (canvas) {
+                        const wrapper = canvas.closest('.chart-wrap');
+                        if (wrapper) {
+                            const overlay = wrapper.querySelector('.no-data-overlay');
+                            if (overlay) overlay.remove();
+                        }
+                    }
+                }
+
+                function showChartEdgeNotice(name, msg) {
+                    const canvasId = {
+                        bp: 'bpChart', bs: 'bsChart', water: 'waterChart',
+                        exercise: 'exerciseChart', cigarette: 'cigaretteChart', betelNut: 'betelNutChart'
+                    }[name];
+                    const canvas = document.getElementById(canvasId);
+                    if (!canvas) return;
+                    const wrapper = canvas.closest('.chart-wrap');
+                    if (!wrapper) return;
+
+                    // 避免重複顯示
+                    if (wrapper.querySelector('.edge-notice')) return;
                     wrapper.style.position = 'relative';
-                    const overlay = document.createElement('div');
-                    overlay.className = 'no-data-overlay';
-                    overlay.style.cssText = `
-                        position:absolute; top:50%; left:50%;
-                        transform:translate(-50%,-50%);
-                        background:rgba(244,246,249,0.92);
-                        border:1px dashed #dde3ea; border-radius:8px;
-                        padding:0.5rem 1.25rem; font-size:0.82rem;
-                        color:#8fa0b4; white-space:nowrap; pointer-events:none; z-index:10;
-                    `;
-                    overlay.textContent = '當期無資料';
-                    wrapper.appendChild(overlay);
+                    const notice = document.createElement('div');
+                    notice.className = 'edge-notice';
+                    notice.style.cssText = `
+                                position:absolute; bottom:8px; left:50%;
+                                transform:translateX(-50%);
+                                background:rgba(26,38,53,0.75); color:white;
+                                border-radius:6px; padding:0.3rem 0.85rem;
+                                font-size:0.78rem; pointer-events:none; z-index:10;
+                                white-space:nowrap;
+                            `;
+                    notice.textContent = msg;
+                    wrapper.appendChild(notice);
+                    setTimeout(() => notice.remove(), 2000);
                 }
-            };
 
-            const lineOpts = yLabel => ({
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: true, labels: { font: { size: 11 } } } },
-                scales: {
-                    x: {
-                        ticks: {
-                            maxTicksLimit: 8,
-                            font: { size: 10 },
-                            callback: function (val, index) {
-                                const label = this.getLabelForValue(val);
-                                return label ? label.substring(5) : '';
-                            }
-                        },
-                        grid: { display: false }
-                    },
-                    y: { beginAtZero: false, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 } } }
+
+                function displayMealSummary(data) {
+                    const mealDiv = document.getElementById('mealTable');
+                    let summary;
+                    if (currentReportType === 1) summary = data.charts.weeklyMealSummary;
+                    else if (currentReportType === 2) summary = data.charts.monthlyMealSummary;
+                    else if (currentReportType === 3) summary = data.charts.yearlyMealSummary;
+                    const periodLabel = currentReportType === 1 ? '當週' : currentReportType === 2 ? '當月' : '全年';
+                    if (!summary || summary.daysWithMeals === 0) {
+                        mealDiv.innerHTML = '<p style="text-align:center;padding:1rem;color:#8fa0b4;font-size:0.85rem;">無三餐記錄</p>';
+                        return;
+                    }
+                    mealDiv.innerHTML = `
+                        <div class="meal-summary-box">
+                            <div class="meal-summary-title">📊 ${periodLabel}飲食統計</div>
+                            <div class="meal-summary-note">※ 平均值以有記錄的 <strong>${summary.daysWithMeals}</strong> 天計算</div>
+                            <div class="meal-summary-rows">
+                                <div>🥬 蔬菜：總計 ${(summary.totalVegetables ?? 0).toFixed(1)} 份　│　每日平均 <strong>${(summary.avgVegetables ?? 0).toFixed(1)} 份</strong></div>
+                                <div>🥩 蛋白質：總計 ${(summary.totalProtein ?? 0).toFixed(1)} 份　│　每日平均 <strong>${(summary.avgProtein ?? 0).toFixed(1)} 份</strong></div>
+                                <div>🍚 澱粉：總計 ${(summary.totalCarbs ?? 0).toFixed(1)} 份　│　每日平均 <strong>${(summary.avgCarbs ?? 0).toFixed(1)} 份</strong></div>
+                            </div>
+                        </div>`;
                 }
-            });
 
-            const barOpts = yLabel => ({
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: {
-                        ticks: {
-                            maxTicksLimit: 8,
-                            font: { size: 10 },
-                            callback: function (val, index) {
-                                const label = this.getLabelForValue(val);
-                                return label ? label.substring(5) : '';
-                            }
-                        },
-                        grid: { display: false }
-                    },
-                    y: { beginAtZero: true, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 } } }
+                async function testWeeklyReport() {
+                    if (!confirm('確定要傳送上週健康週報到您的 LINE 嗎？\n\n注意：需要先綁定 LINE 帳號才能接收週報。')) return;
+                    const btn = event.target.closest('button'),
+                    originalHtml = btn.innerHTML;
+                    btn.disabled = true; btn.innerHTML = '📤 傳送中...';
+                    try {
+                        const res = await fetch('/Analysis/TestWeeklyReport', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        const result = await res.json();
+                        alert(result.success ? '✅ ' + result.message : '❌ ' + result.message);
+                    } catch (e) { alert('❌ 系統錯誤: ' + e.message); }
+                    finally { btn.disabled = false; btn.innerHTML = originalHtml; }
                 }
-            });
+                let chartsLoaded = false;
 
-            if (cd.bloodPressureData?.length) makeChart('bpChart', { type: 'line', data: { labels: cd.bloodPressureData.map(d => d.date), datasets: [{ label: '收縮壓', data: cd.bloodPressureData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointRadius: 3 }, { label: '舒張壓', data: cd.bloodPressureData.map(d => d.value2), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('mmHg') }, 'bp');
-            if (cd.bloodSugarData?.length) makeChart('bsChart', { type: 'line', data: { labels: cd.bloodSugarData.map(d => d.date), datasets: [{ label: '血糖', data: cd.bloodSugarData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointBackgroundColor: cd.bloodSugarData.map(d => d.isAbnormal ? '#dc2626' : '#16a34a'), pointRadius: 4 }] }, options: lineOpts('mg/dL') }, 'bs');
-            if (cd.waterIntakeData?.length) makeChart('waterChart', { type: 'bar', data: { labels: cd.waterIntakeData.map(d => d.date), datasets: [{ data: cd.waterIntakeData.map(d => d.value), backgroundColor: cd.waterIntakeData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(6,182,212,0.6)'), borderColor: cd.waterIntakeData.map(d => d.isAbnormal ? '#ea580c' : '#0891b2'), borderWidth: 1 }] }, options: barOpts('ml') }, 'water');
-            if (cd.exerciseDurationData?.length) makeChart('exerciseChart', { type: 'bar', data: { labels: cd.exerciseDurationData.map(d => d.date), datasets: [{ data: cd.exerciseDurationData.map(d => d.value), backgroundColor: cd.exerciseDurationData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(16,185,129,0.6)'), borderColor: cd.exerciseDurationData.map(d => d.isAbnormal ? '#ea580c' : '#059669'), borderWidth: 1 }] }, options: barOpts('分鐘') }, 'exercise');
-            if (cd.cigarettesData?.length) makeChart('cigaretteChart', { type: 'line', data: { labels: cd.cigarettesData.map(d => d.date), datasets: [{ label: '抽菸支數', data: cd.cigarettesData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('支') }, 'cigarette');
-            if (cd.betelNutData?.length) makeChart('betelNutChart', { type: 'line', data: { labels: cd.betelNutData.map(d => d.date), datasets: [{ label: '檳榔次數', data: cd.betelNutData.map(d => d.value), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('顆') }, 'betelNut');
-        }
-
-        function navigateChart(name, dir) {
-            const chart = charts[name]; if (!chart) return;
-            const r = chartRanges[name]; if (!r) return;
-            const labels = chart.data.labels;
-
-            if (dir < 0 && r.min === 0) {
-                showChartEdgeNotice(name, '已無更早的資料');
-                return;
-            }
-            if (dir > 0 && r.max >= r.total - 1) {
-                showChartEdgeNotice(name, '已無更新的資料');
-                return;
-            }
-
-            let newMin = r.min + dir * CHART_STEP;
-            let newMax = newMin + CHART_VISIBLE - 1;
-            if (newMin < 0) { newMin = 0; newMax = Math.min(CHART_VISIBLE - 1, r.total - 1); }
-            if (newMax >= r.total) { newMax = r.total - 1; newMin = Math.max(0, newMax - CHART_VISIBLE + 1); }
-
-            chartRanges[name] = { ...r, min: newMin, max: newMax };
-
-            // 翻頁後改回用 label 控制 x 軸（離開「空白查詢期間」模式）
-            chart.options.scales.x.min = labels[newMin];
-            chart.options.scales.x.max = labels[newMax];
-            chart.update('none');
-
-            // 移除「當期無資料」提示
-            const canvasId = {
-                bp: 'bpChart', bs: 'bsChart', water: 'waterChart',
-                exercise: 'exerciseChart', cigarette: 'cigaretteChart', betelNut: 'betelNutChart'
-            }[name];
-            const canvas = document.getElementById(canvasId);
-            if (canvas) {
-                const wrapper = canvas.closest('.chart-wrap');
-                if (wrapper) {
-                    const overlay = wrapper.querySelector('.no-data-overlay');
-                    if (overlay) overlay.remove();
+                function toggleCharts() {
+                    const section = document.getElementById('chartsSection');
+                    const btn = document.getElementById('chartToggleBtn');
+                    const isHidden = section.style.display === 'none';
+                    if (isHidden) {
+                        section.style.display = 'block';
+                        btn.innerHTML = '<i class="bi bi-chevron-up"></i> 收起趨勢圖表';
+                        if (!chartsLoaded && currentReport) {
+                            drawCharts(currentReport.charts);
+                            displayMealSummary(currentReport);
+                            chartsLoaded = true;
+                            clearRenderTimeout(); // 渲染成功，清除超時計時器
+                        }
+                    } else {
+                        section.style.display = 'none';
+                        btn.innerHTML = '<i class="bi bi-bar-chart-line"></i> 展開趨勢圖表';
+                    }
                 }
-            }
-        }
 
-        function showChartEdgeNotice(name, msg) {
-            const canvasId = {
-                bp: 'bpChart', bs: 'bsChart', water: 'waterChart',
-                exercise: 'exerciseChart', cigarette: 'cigaretteChart', betelNut: 'betelNutChart'
-            }[name];
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-            const wrapper = canvas.closest('.chart-wrap');
-            if (!wrapper) return;
+                function buildPatientReportPayload() {
+                    let startDate, endDate;
 
-            // 避免重複顯示
-            if (wrapper.querySelector('.edge-notice')) return;
-            wrapper.style.position = 'relative';
-            const notice = document.createElement('div');
-            notice.className = 'edge-notice';
-            notice.style.cssText = `
-                position:absolute; bottom:8px; left:50%;
-                transform:translateX(-50%);
-                background:rgba(26,38,53,0.75); color:white;
-                border-radius:6px; padding:0.3rem 0.85rem;
-                font-size:0.78rem; pointer-events:none; z-index:10;
-                white-space:nowrap;
-            `;
-            notice.textContent = msg;
-            wrapper.appendChild(notice);
-            setTimeout(() => notice.remove(), 2000);
-        }
+                    switch (currentReportType) {
+                        case 0: {
+                            const d = document.getElementById('dailyDate').value;
+                            if (!d) { alert('請先選擇日期'); return null; }
+                            startDate = endDate = d;
+                            break;
+                        }
+                        case 1: {
+                            const ws = document.getElementById('weeklyStartDate').value;
+                            if (!ws) { alert('請先選擇週開始日期'); return null; }
+                            startDate = ws;
+                            const we = new Date(ws);
+                            we.setDate(we.getDate() + 6);
+                            endDate = we.toISOString().substr(0, 10);
+                            break;
+                        }
+                        case 2: {
+                            const m = document.getElementById('monthlyDate').value;
+                            if (!m) { alert('請先選擇年月'); return null; }
+                            const [yr, mo] = m.split('-');
+                            startDate = `${yr}-${mo}-01`;
+                            endDate = `${yr}-${mo}-${new Date(yr, mo, 0).getDate().toString().padStart(2, '0')}`;
+                            break;
+                        }
+                        case 3: {
+                            const y = document.getElementById('yearlyDate').value;
+                            if (!y) { alert('請先選擇年份'); return null; }
+                            startDate = `${y}-01-01`;
+                            endDate = `${y}-12-31`;
+                            break;
+                        }
+                    }
 
-        function parseLabelToDate(label, referenceDate) {
-            // label 現在直接就是 yyyy-MM-dd 或 yyyy-MM，不需要轉換
-            return label;
-        }
-
-        function displayMealSummary(data) {
-            const mealDiv = document.getElementById('mealTable');
-            let summary;
-            if (currentReportType === 1) summary = data.charts.weeklyMealSummary;
-            else if (currentReportType === 2) summary = data.charts.monthlyMealSummary;
-            else if (currentReportType === 3) summary = data.charts.yearlyMealSummary;
-            const periodLabel = currentReportType === 1 ? '當週' : currentReportType === 2 ? '當月' : '全年';
-            if (!summary || summary.daysWithMeals === 0) {
-                mealDiv.innerHTML = '<p style="text-align:center;padding:1rem;color:#8fa0b4;font-size:0.85rem;">無三餐記錄</p>';
-                return;
-            }
-            mealDiv.innerHTML = `
-                <div class="meal-summary-box">
-                    <div class="meal-summary-title">📊 ${periodLabel}飲食統計</div>
-                    <div class="meal-summary-note">※ 平均值以有記錄的 <strong>${summary.daysWithMeals}</strong> 天計算</div>
-                    <div class="meal-summary-rows">
-                        <div>🥬 蔬菜：總計 ${(summary.totalVegetables ?? 0).toFixed(1)} 份　│　每日平均 <strong>${(summary.avgVegetables ?? 0).toFixed(1)} 份</strong></div>
-                        <div>🥩 蛋白質：總計 ${(summary.totalProtein ?? 0).toFixed(1)} 份　│　每日平均 <strong>${(summary.avgProtein ?? 0).toFixed(1)} 份</strong></div>
-                        <div>🍚 澱粉：總計 ${(summary.totalCarbs ?? 0).toFixed(1)} 份　│　每日平均 <strong>${(summary.avgCarbs ?? 0).toFixed(1)} 份</strong></div>
-                    </div>
-                </div>`;
-        }
-
-        async function testWeeklyReport() {
-            if (!confirm('確定要傳送上週健康週報到您的 LINE 嗎？\n\n注意：需要先綁定 LINE 帳號才能接收週報。')) return;
-            const btn = event.target.closest('button'), originalHtml = btn.innerHTML;
-            btn.disabled = true; btn.innerHTML = '📤 傳送中...';
-            try {
-                const res = await fetch('/Analysis/TestWeeklyReport', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const result = await res.json();
-                alert(result.success ? '✅ ' + result.message : '❌ ' + result.message);
-            } catch (e) { alert('❌ 系統錯誤: ' + e.message); }
-            finally { btn.disabled = false; btn.innerHTML = originalHtml; }
-        }
-        let chartsLoaded = false;
-
-        function toggleCharts() {
-            const section = document.getElementById('chartsSection');
-            const btn = document.getElementById('chartToggleBtn');
-            const isHidden = section.style.display === 'none';
-            if (isHidden) {
-                section.style.display = 'block';
-                btn.innerHTML = '<i class="bi bi-chevron-up"></i> 收起趨勢圖表';
-                if (!chartsLoaded && currentReport) {
-                    drawCharts(currentReport.charts);
-                    displayMealSummary(currentReport);
-                    chartsLoaded = true;
-                    clearRenderTimeout(); // 渲染成功，清除超時計時器
-                }
-            } else {
-                section.style.display = 'none';
-                btn.innerHTML = '<i class="bi bi-bar-chart-line"></i> 展開趨勢圖表';
-            }
-        }
-
-        async function downloadAnalysisPdf() {
-            if (!confirm('確定要傳送 PDF 報表到您的 LINE 嗎？')) return;
-
-            let startDate, endDate;
-
-            switch (currentReportType) {
-                case 0: {
-                    const d = document.getElementById('dailyDate').value;
-                    if (!d) { alert('請先選擇日期'); return; }
-                    startDate = endDate = d;
-                    break;
-                }
-                case 1: {
-                    const ws = document.getElementById('weeklyStartDate').value;
-                    if (!ws) { alert('請先選擇週開始日期'); return; }
-                    startDate = ws;
-                    const we = new Date(ws);
-                    we.setDate(we.getDate() + 6);
-                    endDate = we.toISOString().substr(0, 10);
-                    break;
-                }
-                case 2: {
-                    const m = document.getElementById('monthlyDate').value;
-                    if (!m) { alert('請先選擇年月'); return; }
-                    const [yr, mo] = m.split('-');
-                    startDate = `${yr}-${mo}-01`;
-                    endDate = `${yr}-${mo}-${new Date(yr, mo, 0).getDate().toString().padStart(2, '0')}`;
-                    break;
-                }
-                case 3: {
-                    const y = document.getElementById('yearlyDate').value;
-                    if (!y) { alert('請先選擇年份'); return; }
-                    startDate = `${y}-01-01`;
-                    endDate = `${y}-12-31`;
-                    break;
-                }
-            }
-
-            const btn = event.target.closest('button');
-            const originalHtml = btn.innerHTML;
-
-            btn.disabled = true;
-            btn.innerHTML = '📤 傳送中...';
-
-            try {
-                const apiUrl = window.location.origin + '/Analysis/SendAnalysisPdfToLine';
-
-                const res = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({
+                    return {
                         reportType: currentReportType,
                         startDate,
                         endDate
-                    })
-                });
+                    };
+                }
 
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                //下載pdf
+                async function downloadPatientPdf(btn) {
+                    const payload = buildPatientReportPayload();
+                    if (!payload) return;
 
-                const result = await res.json();
+                    const originalHtml = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="bi bi-hourglass-split"></i><span> 下載中...</span>';
 
-                alert(result.success
-                    ? '✅ 已收到您的申請，PDF 報表完成後會傳送到 LINE，請稍候查看。'
-                    : '❌ ' + (result.message || '傳送失敗，請稍後再試'));
+                    try {
+                        const res = await fetch('/Analysis/DownloadAnalysisPdf', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify(payload)
+                        });
 
-            } catch (e) {
-                console.error(e);
-                alert('❌ 系統暫時無法傳送 PDF 報表，請稍後再試。');
-            }
-        }
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                        const blob = await res.blob();
+                        const url = window.URL.createObjectURL(blob);
+
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `健康報表_${payload.startDate}_${payload.endDate}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+                    } catch (e) {
+                        console.error(e);
+                        alert('❌ PDF 下載失敗，請稍後再試。');
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
+                }
+
+                async function sendPatientPdfToLine(btn) {
+                    if (!confirm('確定要傳送 PDF 報表到您的 LINE 嗎？')) return;
+
+                    let startDate, endDate;
+
+                    switch (currentReportType) {
+                        case 0: {
+                            const d = document.getElementById('dailyDate').value;
+                            if (!d) { alert('請先選擇日期'); return; }
+                            startDate = endDate = d;
+                            break;
+                        }
+                        case 1: {
+                            const ws = document.getElementById('weeklyStartDate').value;
+                            if (!ws) { alert('請先選擇週開始日期'); return; }
+                            startDate = ws;
+                            const we = new Date(ws);
+                            we.setDate(we.getDate() + 6);
+                            endDate = we.toISOString().substr(0, 10);
+                            break;
+                        }
+                        case 2: {
+                            const m = document.getElementById('monthlyDate').value;
+                            if (!m) { alert('請先選擇年月'); return; }
+                            const [yr, mo] = m.split('-');
+                            startDate = `${yr}-${mo}-01`;
+                            endDate = `${yr}-${mo}-${new Date(yr, mo, 0).getDate().toString().padStart(2, '0')}`;
+                            break;
+                        }
+                        case 3: {
+                            const y = document.getElementById('yearlyDate').value;
+                            if (!y) { alert('請先選擇年份'); return; }
+                            startDate = `${y}-01-01`;
+                            endDate = `${y}-12-31`;
+                            break;
+                        }
+                    }
+
+                    const originalHtml = btn.innerHTML;
+
+                    btn.disabled = true;
+                    btn.innerHTML = '📤 傳送中...';
+
+                    try {
+                        const apiUrl = window.location.origin + '/Analysis/SendAnalysisPdfToLine';
+
+                        const res = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({
+                                reportType: currentReportType,
+                                startDate,
+                                endDate
+                            })
+                        });
+
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                        const result = await res.json();
+
+                        alert(result.success
+                            ? '✅ 已收到您的申請，PDF 報表完成後會傳送到 LINE，請稍候查看。'
+                            : '❌ ' + (result.message || '傳送失敗，請稍後再試'));
+
+                        } catch (e) {
+                            console.error(e);
+                            alert('❌ 系統暫時無法傳送 PDF 報表，請稍後再試。');
+                        } finally {
+                            btn.disabled = false;
+                            btn.innerHTML = originalHtml;
+                        }
+                }
     </script>
 </body>
 </html>
