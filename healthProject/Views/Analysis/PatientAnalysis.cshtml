@@ -455,24 +455,8 @@
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
         }
-            /* 欄寬：項目22%、平均值26%、標準值32%、狀態20% */
-            .data-table col.col-name {
-                width: 22%;
-            }
-
-            .data-table col.col-val {
-                width: 26%;
-            }
-
-            .data-table col.col-std {
-                width: 32%;
-            }
-
-            .data-table col.col-status {
-                width: 20%;
-            }
+            
 
             .data-table th {
                 background: var(--bg);
@@ -881,18 +865,12 @@
                     <div class="card-title"><i class="bi bi-calendar-day"></i> 當日健康數據</div>
                     <div class="table-responsive">
                         <table class="data-table">
-                            <colgroup>
-                                <col class="col-name">
-                                <col class="col-val">
-                                <col class="col-std">
-                                <col class="col-status">
-                            </colgroup>
                             <thead>
                                 <tr>
-                                    <th>項目</th>
-                                    <th>數值</th>
-                                    <th>標準值</th>
-                                    <th>狀態</th>
+                                    <th style="width:30%;">項目</th>
+                                    <th class="td-center" style="width:25%;">數值</th>
+                                    <th class="td-center" style="width:25%;">標準值</th>
+                                    <th class="td-center" style="width:20%;">狀態</th>
                                 </tr>
                             </thead>
                             <tbody id="dailyTableBody"></tbody>
@@ -921,19 +899,13 @@
                         <div class="summary-num-cell"><div class="summary-num-val val-warn" id="lowExerciseDays">0</div><div class="summary-num-label">運動不足天數</div></div>
                     </div>
                     <div class="table-responsive">
-                        <table class="data-table">
-                            <colgroup>
-                                <col class="col-name">
-                                <col class="col-val">
-                                <col class="col-std">
-                                <col class="col-status">
-                            </colgroup>
+                        <table class="data-table">                         
                             <thead>
                                 <tr>
-                                    <th>項目</th>
-                                    <th>平均值</th>
-                                    <th>標準值</th>
-                                    <th>狀態</th>
+                                    <th style="width:30%;">項目</th>
+                                    <th class="td-center" style="width:25%;">數值</th>
+                                    <th class="td-center" style="width:25%;">標準值</th>
+                                    <th class="td-center" style="width:20%;">狀態</th>
                                 </tr>
                             </thead>
                             <tbody id="avgTable"></tbody>
