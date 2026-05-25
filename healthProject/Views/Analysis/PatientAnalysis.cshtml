@@ -914,18 +914,7 @@
                 </div>
             </div>
 
-            <!-- 圖表 -->
-            <!-- 圖表展開按鈕 -->
-            <div id="chartToggleBar" style="display:none; margin-bottom:1rem;">
-                <button onclick="toggleCharts()" id="chartToggleBtn"
-                        style="width:100%; padding:0.65rem; background:var(--surface);
-                   border:1.5px solid var(--border); border-radius:8px;
-                   font-size:0.85rem; font-weight:600; color:var(--text-sub);
-                   cursor:pointer; font-family:inherit; display:flex;
-                   align-items:center; justify-content:center; gap:0.5rem;">
-                    <i class="bi bi-bar-chart-line"></i> 展開趨勢圖表
-                </button>
-            </div>
+            <!-- 圖表 -->          
             <div id="chartsSection" style="display:none;">
                 <div class="charts-grid">
                     <div class="card"><div class="card-title"><i class="bi bi-heart-pulse"></i> 血壓趨勢</div><div class="chart-wrap"><button class="chart-nav-btn" onclick="navigateChart('bp',-1)">‹</button><div class="chart-inner"><canvas id="bpChart" style="max-height:180px;"></canvas></div><button class="chart-nav-btn" onclick="navigateChart('bp',1)">›</button></div></div>
@@ -1087,8 +1076,7 @@
                             document.getElementById('reportContent').style.display = 'block';
                             document.getElementById('dailySection').style.display = 'block';
                             document.getElementById('summarySection').style.display = 'none';
-                            document.getElementById('chartsSection').style.display = 'none';
-                            document.getElementById('trendSection').style.display = 'none';
+                            document.getElementById('chartsSection').style.display = 'none';                            
                             document.getElementById('dailyTableBody').innerHTML =
                                 '<tr><td colspan="4" style="text-align:center;color:#8fa0b4;padding:2rem;">該日期無健康數據</td></tr>';
                         }
@@ -1127,7 +1115,6 @@
                         document.getElementById('trendSection').style.display = 'none';
                         document.getElementById('summarySection').style.display = 'none';
                         document.getElementById('chartsSection').style.display = 'none';
-                        document.getElementById('chartToggleBar').style.display = 'none';
                         updateDailyNavLabel();
                         displayDailyTable(data);
                     } else {
@@ -1137,15 +1124,12 @@
                         displayTrendCard(data.trendSummary);
                         displayChartReport(data);
 
-                        chartsLoaded = false;
-                        document.getElementById('chartToggleBar').style.display = 'block';
+                        
                         document.getElementById('patientDownloadPdfBtn').style.display = 'flex';
                         document.getElementById('patientLinePdfBtn').style.display = 'flex';
 
-
-                        if (window.innerWidth > 900) {
-                            toggleCharts();
-                        }
+                        drawCharts(data.charts);
+                        displayMealSummary(data);
                     }
                 }
 
@@ -1157,7 +1141,6 @@
 
                     clearRenderTimeout();
                     document.getElementById('mobileNotice').classList.add('show');
-                    document.getElementById('chartToggleBar').style.display = 'none';
                     document.getElementById('patientDownloadPdfBtn').style.display = 'flex';
                     document.getElementById('patientLinePdfBtn').style.display = 'flex';
                     document.getElementById('mobileNotice').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1165,10 +1148,7 @@
 
                 function forceShowCharts() {
                     document.getElementById('mobileNotice').classList.remove('show');
-                    chartsLoaded = false;
-                    document.getElementById('chartToggleBar').style.display = 'block';
-                    if (currentReport) toggleCharts();
-                }
+                    if (currentReport) { drawCharts(currentReport.charts); displayMealSummary(currentReport); }                }
 
                 function clearRenderTimeout() {
                     if (renderTimeoutId) {
@@ -1583,25 +1563,6 @@
                     finally { btn.disabled = false; btn.innerHTML = originalHtml; }
                 }
                 let chartsLoaded = false;
-
-                function toggleCharts() {
-                    const section = document.getElementById('chartsSection');
-                    const btn = document.getElementById('chartToggleBtn');
-                    const isHidden = section.style.display === 'none';
-                    if (isHidden) {
-                        section.style.display = 'block';
-                        btn.innerHTML = '<i class="bi bi-chevron-up"></i> 收起趨勢圖表';
-                        if (!chartsLoaded && currentReport) {
-                            drawCharts(currentReport.charts);
-                            displayMealSummary(currentReport);
-                            chartsLoaded = true;
-                            clearRenderTimeout(); // 渲染成功，清除超時計時器
-                        }
-                    } else {
-                        section.style.display = 'none';
-                        btn.innerHTML = '<i class="bi bi-bar-chart-line"></i> 展開趨勢圖表';
-                    }
-                }
 
                 function buildPatientReportPayload() {
                     let startDate, endDate;
