@@ -1438,16 +1438,79 @@
                                 },
                                 grid: { display: false }
                             },
-                            y: { beginAtZero: true, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 } } }
+                            y: { min: 0, beginAtZero: true, title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 10 }, precision: 0 } }
+                        }
+                    });
+
+                     const exerciseOpts = {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    maxTicksLimit: 8,
+                                    font: { size: 10 },
+                                    callback: function (val, index) {
+                                        const label = this.getLabelForValue(val);
+                                        return label ? label.substring(5) : '';
+                                    }
+                                },
+                                grid: { display: false }
+                            },
+                            y: { min: 0, suggestedMax: 60, beginAtZero: true, title: { display: true, text: '分鐘', font: { size: 10 } }, ticks: { font: { size: 10 }, stepSize: 10 } }
+                        }
+                    };
+
+                    const waterOpts = {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    maxTicksLimit: 8,
+                                    font: { size: 10 },
+                                    callback: function (val, index) {
+                                        const label = this.getLabelForValue(val);
+                                        return label ? label.substring(5) : '';
+                                    }
+                                },
+                                grid: { display: false }
+                            },
+                            y: { min: 0, suggestedMax: 2000, beginAtZero: true, title: { display: true, text: 'ml', font: { size: 10 } }, ticks: { font: { size: 10 }, stepSize: 500 } }
+                        }
+                    };
+
+                    const intLineOpts = yLabel => ({
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: true, labels: { font: { size: 11 } } } },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    maxTicksLimit: 8,
+                                    font: { size: 10 },
+                                    callback: function (val, index) {
+                                        const label = this.getLabelForValue(val);
+                                        return label ? label.substring(5) : '';
+                                    }
+                                },
+                                grid: { display: false }
+                            },
+                            y: {
+                                min: 0,
+                                suggestedMax: 10,
+                                beginAtZero: true,
+                                title: { display: true, text: yLabel, font: { size: 10 } },
+                                ticks: { font: { size: 10 }, stepSize: 1, precision: 0 }
+                            }
                         }
                     });
 
                     if (cd.bloodPressureData?.length) makeChart('bpChart', { type: 'line', data: { labels: cd.bloodPressureData.map(d => d.date), datasets: [{ label: '收縮壓', data: cd.bloodPressureData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointRadius: 3 }, { label: '舒張壓', data: cd.bloodPressureData.map(d => d.value2), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('mmHg') }, 'bp');
                     if (cd.bloodSugarData?.length) makeChart('bsChart', { type: 'line', data: { labels: cd.bloodSugarData.map(d => d.date), datasets: [{ label: '血糖', data: cd.bloodSugarData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointBackgroundColor: cd.bloodSugarData.map(d => d.isAbnormal ? '#dc2626' : '#16a34a'), pointRadius: 4 }] }, options: lineOpts('mg/dL') }, 'bs');
-                    if (cd.waterIntakeData?.length) makeChart('waterChart', { type: 'bar', data: { labels: cd.waterIntakeData.map(d => d.date), datasets: [{ data: cd.waterIntakeData.map(d => d.value), backgroundColor: cd.waterIntakeData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(6,182,212,0.6)'), borderColor: cd.waterIntakeData.map(d => d.isAbnormal ? '#ea580c' : '#0891b2'), borderWidth: 1 }] }, options: barOpts('ml') }, 'water');
-                    if (cd.exerciseDurationData?.length) makeChart('exerciseChart', { type: 'bar', data: { labels: cd.exerciseDurationData.map(d => d.date), datasets: [{ data: cd.exerciseDurationData.map(d => d.value), backgroundColor: cd.exerciseDurationData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(16,185,129,0.6)'), borderColor: cd.exerciseDurationData.map(d => d.isAbnormal ? '#ea580c' : '#059669'), borderWidth: 1 }] }, options: barOpts('分鐘') }, 'exercise');
-                    if (cd.cigarettesData?.length) makeChart('cigaretteChart', { type: 'line', data: { labels: cd.cigarettesData.map(d => d.date), datasets: [{ label: '抽菸支數', data: cd.cigarettesData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('支') }, 'cigarette');
-                    if (cd.betelNutData?.length) makeChart('betelNutChart', { type: 'line', data: { labels: cd.betelNutData.map(d => d.date), datasets: [{ label: '檳榔次數', data: cd.betelNutData.map(d => d.value), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('顆') }, 'betelNut');
+                    if (cd.waterIntakeData?.length) makeChart('waterChart', { type: 'bar', data: { labels: cd.waterIntakeData.map(d => d.date), datasets: [{ data: cd.waterIntakeData.map(d => d.value), backgroundColor: cd.waterIntakeData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(6,182,212,0.6)'), borderColor: cd.waterIntakeData.map(d => d.isAbnormal ? '#ea580c' : '#0891b2'), borderWidth: 1 }] }, options: waterOpts }, 'water');
+                    if (cd.exerciseDurationData?.length) makeChart('exerciseChart', { type: 'bar', data: { labels: cd.exerciseDurationData.map(d => d.date), datasets: [{ data: cd.exerciseDurationData.map(d => d.value), backgroundColor: cd.exerciseDurationData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(16,185,129,0.6)'), borderColor: cd.exerciseDurationData.map(d => d.isAbnormal ? '#ea580c' : '#059669'), borderWidth: 1 }] }, options: exerciseOpts }, 'exercise');
+                    if (cd.cigarettesData?.length) makeChart('cigaretteChart', { type: 'line', data: { labels: cd.cigarettesData.map(d => d.date), datasets: [{ label: '抽菸支數', data: cd.cigarettesData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: intLineOpts('支') }, 'cigarette');
+                    if (cd.betelNutData?.length) makeChart('betelNutChart', { type: 'line', data: { labels: cd.betelNutData.map(d => d.date), datasets: [{ label: '檳榔次數', data: cd.betelNutData.map(d => d.value), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: intLineOpts('顆') }, 'betelNut');
                 }
 
                 function parseLabelToDate(label, referenceDate) {

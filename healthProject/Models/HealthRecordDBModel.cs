@@ -109,10 +109,20 @@ namespace healthProject.Models
         public List<HealthRecordViewModel> Records { get; set; } = new();
 
         // 當日統計 - 總和
-        public decimal? TotalWater => Records.Sum(r => r.WaterIntake ?? 0);
-        public decimal? TotalExercise => Records.Sum(r => r.ExerciseDuration ?? 0);
-        public decimal? TotalCigarettes => Records.Sum(r => r.Cigarettes ?? 0);
-        public decimal? TotalBetelNut => Records.Sum(r => r.BetelNut ?? 0);
+        public decimal? TotalWater => Records.Any(r => r.WaterIntake.HasValue)
+             ? Records.Sum(r => r.WaterIntake ?? 0)
+             : null;
+
+        public decimal? TotalExercise => Records.Any(r => r.ExerciseDuration.HasValue)
+            ? Records.Sum(r => r.ExerciseDuration ?? 0)
+            : null;
+        public decimal? TotalCigarettes => Records.Any(r => r.Cigarettes.HasValue)
+             ? Records.Sum(r => r.Cigarettes ?? 0)
+             : null;
+
+        public decimal? TotalBetelNut => Records.Any(r => r.BetelNut.HasValue)
+            ? Records.Sum(r => r.BetelNut ?? 0)
+            : null;
 
         // 平均血糖
         public decimal? AvgBloodSugar

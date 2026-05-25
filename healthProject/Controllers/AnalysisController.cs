@@ -354,10 +354,10 @@ namespace healthProject.Controllers
                 BP_First_1_Systolic = d.AvgSystolicBP,
                 BP_First_1_Diastolic = d.AvgDiastolicBP,
                 BloodSugar = d.AvgBloodSugar,
-                WaterIntake = d.TotalWater > 0 ? d.TotalWater : null,
-                ExerciseDuration = d.TotalExercise > 0 ? d.TotalExercise : null,
-                Cigarettes = d.TotalCigarettes > 0 ? d.TotalCigarettes : null,
-                BetelNut = d.TotalBetelNut > 0 ? d.TotalBetelNut : null,
+                WaterIntake = d.TotalWater,
+                ExerciseDuration = d.TotalExercise,
+                Cigarettes = d.TotalCigarettes,
+                BetelNut = d.TotalBetelNut,
                 Meals_Breakfast = d.HasAnyMeals ? CreateDailyMealSummary(d, "Breakfast") : null,
                 Meals_Lunch = d.HasAnyMeals ? CreateDailyMealSummary(d, "Lunch") : null,
                 Meals_Dinner = d.HasAnyMeals ? CreateDailyMealSummary(d, "Dinner") : null,
@@ -384,10 +384,10 @@ namespace healthProject.Controllers
                 BP_First_1_Systolic = d.AvgSystolicBP,
                 BP_First_1_Diastolic = d.AvgDiastolicBP,
                 BloodSugar = d.AvgBloodSugar,
-                WaterIntake = d.TotalWater > 0 ? d.TotalWater : null,
-                ExerciseDuration = d.TotalExercise > 0 ? d.TotalExercise : null,
-                Cigarettes = d.TotalCigarettes > 0 ? d.TotalCigarettes : null,
-                BetelNut = d.TotalBetelNut > 0 ? d.TotalBetelNut : null,
+                WaterIntake = d.TotalWater,
+                ExerciseDuration = d.TotalExercise,
+                Cigarettes = d.TotalCigarettes,
+                BetelNut = d.TotalBetelNut,
                 Meals_Breakfast = d.HasAnyMeals ? CreateDailyMealSummary(d, "Breakfast") : null,
                 Meals_Lunch = d.HasAnyMeals ? CreateDailyMealSummary(d, "Lunch") : null,
                 Meals_Dinner = d.HasAnyMeals ? CreateDailyMealSummary(d, "Dinner") : null,
@@ -465,10 +465,10 @@ namespace healthProject.Controllers
                 BP_First_1_Systolic = d.AvgSystolicBP,
                 BP_First_1_Diastolic = d.AvgDiastolicBP,
                 BloodSugar = d.AvgBloodSugar,
-                WaterIntake = d.TotalWater > 0 ? d.TotalWater : null,
-                ExerciseDuration = d.TotalExercise > 0 ? d.TotalExercise : null,
-                Cigarettes = d.TotalCigarettes > 0 ? d.TotalCigarettes : null,
-                BetelNut = d.TotalBetelNut > 0 ? d.TotalBetelNut : null,
+                WaterIntake = d.TotalWater,
+                ExerciseDuration = d.TotalExercise,
+                Cigarettes = d.TotalCigarettes,
+                BetelNut = d.TotalBetelNut,
             }).ToList();
 
             var prevStats = CalculateStatistics(prevAggregated, goals);
@@ -1183,8 +1183,8 @@ WHERE ""Id"" = @UserId";
                     });
                 }
 
-                if (record.Cigarettes.HasValue && record.Cigarettes.Value > 0)
-                {
+                if (record.Cigarettes.HasValue)
+{
                     charts.CigarettesData.Add(new ChartPoint
                     {
                         Date = dateStr,
@@ -1193,7 +1193,7 @@ WHERE ""Id"" = @UserId";
                     });
                 }
 
-                if (record.BetelNut.HasValue && record.BetelNut.Value > 0)
+                if (record.BetelNut.HasValue)
                 {
                     charts.BetelNutData.Add(new ChartPoint
                     {
