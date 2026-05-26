@@ -352,13 +352,7 @@
         .badge-warn    { background: #fff8e1; color: #e67e22; }
         .badge-nodata  { background: #f4f6f9; color: #8fa0b4; }
 
-        /* ── CHART WRAPPER ── */
-        .chart-wrap {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
+        /* ── CHART WRAPPER ── */       
         .chart-nav-btn {
             background: var(--navy);
             color: white;
@@ -376,7 +370,6 @@
         .chart-nav-btn:hover { background: var(--navy-mid); }
         .chart-nav-btn:disabled { background: var(--border); cursor: not-allowed; }
 
-        .chart-inner { flex: 1; }
 
         /* ── CHARTS GRID ── */
         .charts-grid {
@@ -435,16 +428,25 @@
 
         /* 修正圖表在窄視窗突出問題 */
         .chart-wrap {
+            display: grid;
+            grid-template-columns: 30px minmax(0, 1fr) 30px;
+            align-items: center;
+            gap: 0.5rem;
             min-width: 0;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .chart-inner {
+            position: relative;
+            height: 220px;
             min-width: 0;
             overflow: hidden;
         }
 
-        canvas {
+        .chart-inner canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
             max-width: 100% !important;
         }
 
@@ -665,7 +667,7 @@
                     <div class="chart-wrap">
                         <button class="chart-nav-btn" onclick="navigateChart('bp',-1)">‹</button>
                         <div class="chart-inner">
-                            <canvas id="bpChart" style="max-height:180px;"></canvas>
+                            <canvas id="bpChart"></canvas>
                         </div>
                         <button class="chart-nav-btn" onclick="navigateChart('bp',1)">›</button>
                     </div>
@@ -676,7 +678,7 @@
                     <div class="chart-wrap">
                         <button class="chart-nav-btn" onclick="navigateChart('bs',-1)">‹</button>
                         <div class="chart-inner">
-                            <canvas id="bsChart" style="max-height:180px;"></canvas>
+                            <canvas id="bsChart"></canvas>
                         </div>
                         <button class="chart-nav-btn" onclick="navigateChart('bs',1)">›</button>
                     </div>
@@ -687,7 +689,7 @@
                     <div class="chart-wrap">
                         <button class="chart-nav-btn" onclick="navigateChart('water',-1)">‹</button>
                         <div class="chart-inner">
-                            <canvas id="waterChart" style="max-height:180px;"></canvas>
+                            <canvas id="waterChart"></canvas>    
                         </div>
                         <button class="chart-nav-btn" onclick="navigateChart('water',1)">›</button>
                     </div>
@@ -698,7 +700,7 @@
                     <div class="chart-wrap">
                         <button class="chart-nav-btn" onclick="navigateChart('exercise',-1)">‹</button>
                         <div class="chart-inner">
-                            <canvas id="exerciseChart" style="max-height:180px;"></canvas>
+                            <canvas id="exerciseChart"></canvas>
                         </div>
                         <button class="chart-nav-btn" onclick="navigateChart('exercise',1)">›</button>
                     </div>
@@ -709,7 +711,7 @@
                     <div class="chart-wrap">
                         <button class="chart-nav-btn" onclick="navigateChart('cigarette',-1)">‹</button>
                         <div class="chart-inner">
-                            <canvas id="cigaretteChart" style="max-height:180px;"></canvas>
+                            <canvas id="cigaretteChart"></canvas>
                         </div>
                         <button class="chart-nav-btn" onclick="navigateChart('cigarette',1)">›</button>
                     </div>
@@ -720,7 +722,7 @@
                     <div class="chart-wrap">
                         <button class="chart-nav-btn" onclick="navigateChart('betelNut',-1)">‹</button>
                         <div class="chart-inner">
-                            <canvas id="betelNutChart" style="max-height:180px;"></canvas>
+                            <canvas id="betelNutChart"></canvas>
                         </div>
                         <button class="chart-nav-btn" onclick="navigateChart('betelNut',1)">›</button>
                     </div>
@@ -1138,29 +1140,77 @@
             </tr>
         `;
 
-        drawCharts(data.charts);
-        displayMealSummary(data);
+            renderChartsAfterLayout(data.charts);
+            displayMealSummary(data);
     }
+
+        function renderChartsAfterLayout(chartData) {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    drawCharts(chartData);
+
+                    Object.values(charts).forEach(chart => {
+                        if (chart) chart.resize();
+                    });
+                });
+            });
+        }
+
+        function buildPeriodLabels(startDate, endDate) {
+            const labels = [];
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            if (currentReportType === 3) {
+                for (let m = 0; m < 12; m++) {
+                    labels.push(`${start.getFullYear()}-${String(m + 1).padStart(2, '0')}`);
+                }
+                return labels;
+            }
+
+            const d = new Date(start);
+            while (d <= end) {
+                labels.push(
+                    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                );
+                d.setDate(d.getDate() + 1);
+            }
+
+            return labels;
+        }
 
     // ── 圖表 ─────────────────────────────────────────
         function drawCharts(cd) {
-            Object.values(charts).forEach(c => c && c.destroy()); charts = {}; chartRanges = {};
+                if (!cd) return;
+
+                Object.values(charts).forEach(c => c && c.destroy());
+                charts = {};
+                chartRanges = {};
 
             const makeChart = (id, cfg, name) => {
-                const el = document.getElementById(id); if (!el) return;
+                const el = document.getElementById(id);
+                if (!el) return;
 
-                // 先清除舊的無資料提示
-                const wrapper = el.closest('.chart-wrap');
+                const wrapper = el.closest('.chart-inner');
                 if (wrapper) {
                     const old = wrapper.querySelector('.no-data-overlay');
                     if (old) old.remove();
                     wrapper.style.position = '';
                 }
 
-                charts[name] = new Chart(el.getContext('2d'), cfg);
-                const labels = cfg.data.labels, total = labels.length;
-                let startIdx = 0, endIdx = Math.min(CHART_VISIBLE - 1, total - 1);
+                const labels = cfg.data.labels || [];
+                const total = labels.length;
+                let startIdx = 0;
+                let endIdx = Math.min(CHART_VISIBLE - 1, total - 1);
                 let hasDataInRange = false;
+
+                const originalData = {
+                    labels: [...labels],
+                    datasets: cfg.data.datasets.map(ds => ({
+                        ...ds,
+                        data: [...ds.data]
+                    }))
+                };
 
                 if (currentReport?.startDate && currentReport?.endDate && total > 0) {
                     const start = currentReport.startDate.substring(0, 10);
@@ -1168,62 +1218,103 @@
 
                     let queryStartIdx = -1;
                     for (let i = 0; i < labels.length; i++) {
-                        if (labels[i] >= start) { queryStartIdx = i; break; }
+                        if (labels[i] >= start) {
+                            queryStartIdx = i;
+                            break;
+                        }
                     }
+
                     let queryEndIdx = -1;
                     for (let i = labels.length - 1; i >= 0; i--) {
-                        if (labels[i] <= end) { queryEndIdx = i; break; }
+                        if (labels[i] <= end) {
+                            queryEndIdx = i;
+                            break;
+                        }
                     }
 
                     if (queryStartIdx >= 0 && queryEndIdx >= 0 && queryStartIdx <= queryEndIdx) {
-                        // 查詢範圍內有資料
                         hasDataInRange = true;
                         const rangeCount = queryEndIdx - queryStartIdx + 1;
                         startIdx = queryStartIdx;
                         endIdx = rangeCount >= CHART_VISIBLE
                             ? startIdx + CHART_VISIBLE - 1
                             : queryEndIdx;
-                    } else {
-                        // 查詢範圍內無資料
-                        hasDataInRange = false;
-                        let nearestIdx = 0;
-                        if (queryEndIdx >= 0) nearestIdx = queryEndIdx;
-                        else if (queryStartIdx >= 0) nearestIdx = queryStartIdx;
-                        startIdx = nearestIdx;
-                        endIdx = Math.min(total - 1, nearestIdx + CHART_VISIBLE - 1);
                     }
                 }
 
-                // 只設定一次
-                chartRanges[name] = { min: startIdx, max: endIdx, total };
+                if (!hasDataInRange && currentReport?.startDate && currentReport?.endDate) {
+                    const start = currentReport.startDate.substring(0, 10);
+                    const end = currentReport.endDate.substring(0, 10);
+                    const emptyLabels = buildPeriodLabels(start, end);
 
-                if (!hasDataInRange && currentReport?.startDate) {
-                    charts[name].options.scales.x.min = currentReport.startDate.substring(0, 10);
-                    charts[name].options.scales.x.max = currentReport.endDate.substring(0, 10);
+                    let targetMin = 0;
+                    let targetMax = Math.min(CHART_VISIBLE - 1, total - 1);
+                    let emptySide = 'gap';
+
+                    if (total > 0) {
+                        if (start > labels[total - 1]) {
+                            emptySide = 'after';
+                            targetMax = total - 1;
+                            targetMin = Math.max(0, targetMax - CHART_VISIBLE + 1);
+                        } else if (end < labels[0]) {
+                            emptySide = 'before';
+                            targetMin = 0;
+                            targetMax = Math.min(CHART_VISIBLE - 1, total - 1);
+                        }
+                    }
+
+                    cfg.data = {
+                        labels: emptyLabels,
+                        datasets: cfg.data.datasets.map(ds => ({
+                            ...ds,
+                            data: emptyLabels.map(() => null),
+                            pointRadius: 0
+                        }))
+                    };
+
+                    chartRanges[name] = {
+                        min: 0,
+                        max: Math.min(CHART_VISIBLE - 1, emptyLabels.length - 1),
+                        total: emptyLabels.length,
+                        isEmptyPeriod: true,
+                        emptySide,
+                        targetMin,
+                        targetMax,
+                        originalData
+                    };
                 } else {
-                    charts[name].options.scales.x.min = labels[startIdx];
-                    charts[name].options.scales.x.max = labels[endIdx];
+                    chartRanges[name] = {
+                        min: startIdx,
+                        max: endIdx,
+                        total,
+                        isEmptyPeriod: false,
+                        originalData
+                    };
+
+                    cfg.options.scales.x.min = labels[startIdx];
+                    cfg.options.scales.x.max = labels[endIdx];
                 }
+
+                charts[name] = new Chart(el.getContext('2d'), cfg);
                 charts[name].update('none');
 
-                // 無資料時加上提示浮層
                 if (!hasDataInRange && wrapper) {
                     wrapper.style.position = 'relative';
+
                     const overlay = document.createElement('div');
                     overlay.className = 'no-data-overlay';
                     overlay.style.cssText = `
-                                position:absolute; top:50%; left:50%;
-                                transform:translate(-50%,-50%);
-                                background:rgba(244,246,249,0.92);
-                                border:1px dashed #dde3ea; border-radius:8px;
-                                padding:0.5rem 1.25rem; font-size:0.82rem;
-                                color:#8fa0b4; white-space:nowrap; pointer-events:none; z-index:10;
-                            `;
+                        position:absolute; top:50%; left:50%;
+                        transform:translate(-50%,-50%);
+                        background:rgba(244,246,249,0.92);
+                        border:1px dashed #dde3ea; border-radius:8px;
+                        padding:0.5rem 1.25rem; font-size:0.82rem;
+                        color:#8fa0b4; white-space:nowrap; pointer-events:none; z-index:10;
+                    `;
                     overlay.textContent = '當期無資料';
                     wrapper.appendChild(overlay);
                 }
             };
-
             const lineOpts = yLabel => ({
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: true, labels: { font: { size: 11 } } } },
@@ -1262,7 +1353,7 @@
                 }
             });
 
-            const exerciseOpts = {
+                const exerciseOpts = {
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
@@ -1278,7 +1369,7 @@
                         grid: { display: false }
                     },
                     y: { min: 0, suggestedMax: 60, beginAtZero: true, title: { display: true, text: '分鐘', font: { size: 10 } }, ticks: { font: { size: 10 }, stepSize: 10 } }
-                    }
+                }
             };
 
             const waterOpts = {
@@ -1338,16 +1429,71 @@
             return label;
         }
 
-    // ── 圖表箭頭導航 ─────────────────────────────────
+        function removeNoDataOverlay(name) {
+            const canvasId = {
+                bp: 'bpChart',
+                bs: 'bsChart',
+                water: 'waterChart',
+                exercise: 'exerciseChart',
+                cigarette: 'cigaretteChart',
+                betelNut: 'betelNutChart'
+            }[name];
+
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const wrapper = canvas.closest('.chart-inner');
+            if (!wrapper) return;
+
+            const overlay = wrapper.querySelector('.no-data-overlay');
+            if (overlay) overlay.remove();
+        }
+
+        // ── 圖表箭頭導航 ─────────────────────────────────
         function navigateChart(name, dir) {
-            const chart = charts[name]; if (!chart) return;
-            const r = chartRanges[name]; if (!r) return;
+            const chart = charts[name];
+            if (!chart) return;
+
+            const r = chartRanges[name];
+            if (!r) return;
+
+            if (r.isEmptyPeriod) {
+                if (r.emptySide === 'after' && dir > 0) {
+                    showChartEdgeNotice(name, '已無更新的資料');
+                    return;
+                }
+
+                if (r.emptySide === 'before' && dir < 0) {
+                    showChartEdgeNotice(name, '已無更早的資料');
+                    return;
+                }
+
+                chart.data.labels = r.originalData.labels;
+                chart.data.datasets = r.originalData.datasets;
+
+                chart.options.scales.x.min = r.originalData.labels[r.targetMin];
+                chart.options.scales.x.max = r.originalData.labels[r.targetMax];
+
+                chartRanges[name] = {
+                    ...r,
+                    min: r.targetMin,
+                    max: r.targetMax,
+                    total: r.originalData.labels.length,
+                    isEmptyPeriod: false
+                };
+
+                removeNoDataOverlay(name);
+                chart.update('none');
+                return;
+            }
+
             const labels = chart.data.labels;
 
             if (dir < 0 && r.min === 0) {
                 showChartEdgeNotice(name, '已無更早的資料');
                 return;
             }
+
             if (dir > 0 && r.max >= r.total - 1) {
                 showChartEdgeNotice(name, '已無更新的資料');
                 return;
@@ -1355,29 +1501,28 @@
 
             let newMin = r.min + dir * CHART_STEP;
             let newMax = newMin + CHART_VISIBLE - 1;
-            if (newMin < 0) { newMin = 0; newMax = Math.min(CHART_VISIBLE - 1, r.total - 1); }
-            if (newMax >= r.total) { newMax = r.total - 1; newMin = Math.max(0, newMax - CHART_VISIBLE + 1); }
 
-            chartRanges[name] = { ...r, min: newMin, max: newMax };
+            if (newMin < 0) {
+                newMin = 0;
+                newMax = Math.min(CHART_VISIBLE - 1, r.total - 1);
+            }
 
-            // 翻頁後改回用 label 控制 x 軸（離開「空白查詢期間」模式）
+            if (newMax >= r.total) {
+                newMax = r.total - 1;
+                newMin = Math.max(0, newMax - CHART_VISIBLE + 1);
+            }
+
+            chartRanges[name] = {
+                ...r,
+                min: newMin,
+                max: newMax
+            };
+
             chart.options.scales.x.min = labels[newMin];
             chart.options.scales.x.max = labels[newMax];
-            chart.update('none');
 
-            // 移除「當期無資料」提示
-            const canvasId = {
-                bp: 'bpChart', bs: 'bsChart', water: 'waterChart',
-                exercise: 'exerciseChart', cigarette: 'cigaretteChart', betelNut: 'betelNutChart'
-            }[name];
-            const canvas = document.getElementById(canvasId);
-            if (canvas) {
-                const wrapper = canvas.closest('.chart-wrap');
-                if (wrapper) {
-                    const overlay = wrapper.querySelector('.no-data-overlay');
-                    if (overlay) overlay.remove();
-                }
-            }
+            removeNoDataOverlay(name);
+            chart.update('none');
         }
 
         function showChartEdgeNotice(name, msg) {
