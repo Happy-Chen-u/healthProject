@@ -352,6 +352,25 @@
         .badge-warn    { background: #fff8e1; color: #e67e22; }
         .badge-nodata  { background: #f4f6f9; color: #8fa0b4; }
 
+        .chart-limit-notice {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            background: #eef6ff;
+            border: 1px solid #cfe5ff;
+            color: #255f99;
+            border-radius: 8px;
+            padding: 0.7rem 0.9rem;
+            font-size: 0.82rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+            .chart-limit-notice i {
+                font-size: 0.95rem;
+                flex-shrink: 0;
+            }
+
         /* ── CHART WRAPPER ── */       
         .chart-nav-btn {
             background: var(--navy);
@@ -660,6 +679,10 @@
 
         <!-- 圖表區域 -->
         <div id="chartsSection" style="display:none;">
+            <div class="chart-limit-notice">
+                <i class="bi bi-info-circle"></i>
+                <span>圖表僅顯示最近 90 天內的健康資料，較早的紀錄請改用日期範圍查詢或 PDF 報表查看。</span>
+            </div>            
             <div class="charts-grid">
 
                 <div class="card">

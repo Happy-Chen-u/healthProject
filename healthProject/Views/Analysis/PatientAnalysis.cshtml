@@ -554,6 +554,26 @@
                 background: var(--navy-mid);
             }
 
+
+        .chart-limit-notice {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            background: #eef6ff;
+            border: 1px solid #cfe5ff;
+            color: #255f99;
+            border-radius: 8px;
+            padding: 0.7rem 0.9rem;
+            font-size: 0.82rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+            .chart-limit-notice i {
+                font-size: 0.95rem;
+                flex-shrink: 0;
+            }
+
         .chart-inner {
             flex: 1;
         }
@@ -928,6 +948,10 @@
 
             <!-- 圖表 -->
             <div id="chartsSection" style="display:none;">
+                <div class="chart-limit-notice">
+                    <i class="bi bi-info-circle"></i>
+                    <span>圖表僅顯示最近 90 天內的健康資料，較早的紀錄請改用日期範圍查詢或 PDF 報表查看。</span>
+                </div>                
                 <div class="charts-grid">
                     <div class="card"><div class="card-title"><i class="bi bi-heart-pulse"></i> 血壓趨勢</div><div class="chart-wrap"><button class="chart-nav-btn" onclick="navigateChart('bp',-1)">‹</button><div class="chart-inner"><canvas id="bpChart"></canvas></div><button class="chart-nav-btn" onclick="navigateChart('bp',1)">›</button></div></div>
 
@@ -1870,25 +1894,6 @@
             setTimeout(() => notice.remove(), 2000);
         }
 
-        function removeNoDataOverlay(name) {
-            const canvasId = {
-                bp: 'bpChart',
-                bs: 'bsChart',
-                water: 'waterChart',
-                exercise: 'exerciseChart',
-                cigarette: 'cigaretteChart',
-                betelNut: 'betelNutChart'
-            }[name];
-
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-
-            const wrapper = canvas.closest('.chart-inner');
-            if (!wrapper) return;
-
-            const overlay = wrapper.querySelector('.no-data-overlay');
-            if (overlay) overlay.remove();
-        }
 
         function displayMealSummary(data) {
             const mealDiv = document.getElementById('mealTable');
