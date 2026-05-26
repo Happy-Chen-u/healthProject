@@ -1847,7 +1847,7 @@
 
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `健康報表_${payload.idNumber}_${payload.startDate}_${payload.endDate}.pdf`;
+                a.download = `健康報表_${payload.startDate}_${payload.endDate}.pdf`;
                 document.body.appendChild(a);
                 a.click();
 
