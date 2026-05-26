@@ -264,7 +264,7 @@ namespace healthProject.Services
             var svgStr = GenerateBloodPressureSvg(analysis);
             var pngBytes = SvgToPng(svgStr, 1040, 320);
 
-            container.Column(column =>
+            container.PreventPageBreak().Column(column =>
             {
                 column.Item().PaddingTop(5).PaddingBottom(4).Text("血壓趨勢").FontSize(14).Bold();
                 column.Item().Image(pngBytes).FitWidth();
@@ -386,13 +386,13 @@ namespace healthProject.Services
         // 📊 通用長條圖（SVG → PNG）
         // ========================================
         private void ComposeBarChart(IContainer container, string title,
-            List<ChartPoint> data, string unit, string hintText,
-            float standardLine, string abnormalColor, string normalColor)
+    List<ChartPoint> data, string unit, string hintText,
+    float standardLine, string abnormalColor, string normalColor)
         {
             var svgStr = GenerateBarChartSvg(data, unit, standardLine, abnormalColor, normalColor);
             var pngBytes = SvgToPng(svgStr, 1040, 290);
 
-            container.Column(column =>
+            container.PreventPageBreak().Column(column =>
             {
                 column.Item().PaddingTop(5).PaddingBottom(4).Text(title).FontSize(14).Bold();
                 column.Item().Image(pngBytes).FitWidth();
