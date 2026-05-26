@@ -90,71 +90,129 @@ namespace healthProject.Services
         // ========================================
         private void ComposeContent(IContainer container, AnalysisViewModel analysis)
         {
+            // 過濾圖表資料，只保留查詢範圍內的資料點
+            var start = analysis.StartDate.ToString("yyyy-MM-dd");
+            var end = analysis.EndDate.ToString("yyyy-MM-dd");
+
+            var filteredCharts = new ChartData
+            {
+                BloodPressureData = analysis.Charts.BloodPressureData
+                    .Where(d => string.Compare(d.Date, start) >= 0 && string.Compare(d.Date, end) <= 0).ToList(),
+                BloodSugarData = analysis.Charts.BloodSugarData
+                    .Where(d => string.Compare(d.Date, start) >= 0 && string.Compare(d.Date, end) <= 0).ToList(),
+                WaterIntakeData = analysis.Charts.WaterIntakeData
+                    .Where(d => string.Compare(d.Date, start) >= 0 && string.Compare(d.Date, end) <= 0).ToList(),
+                ExerciseDurationData = analysis.Charts.ExerciseDurationData
+                    .Where(d => string.Compare(d.Date, start) >= 0 && string.Compare(d.Date, end) <= 0).ToList(),
+                CigarettesData = analysis.Charts.CigarettesData
+                    ?.Where(d => string.Compare(d.Date, start) >= 0 && string.Compare(d.Date, end) <= 0).ToList(),
+                BetelNutData = analysis.Charts.BetelNutData
+                    ?.Where(d => string.Compare(d.Date, start) >= 0 && string.Compare(d.Date, end) <= 0).ToList(),
+                MealRecords = analysis.Charts.MealRecords
+    .Where(d => {
+        // MealRecord.Date 可能是 "MM/dd" 或 "yyyy/MM/dd"
+        if (DateTime.TryParse(d.Date, out var dt))
+        {
+            var dateStr = dt.ToString("yyyy-MM-dd");
+            return string.Compare(dateStr, start) >= 0 && string.Compare(dateStr, end) <= 0;
+        }
+        return false;
+    }).ToList(),
+                BeverageRecords = analysis.Charts.BeverageRecords
+    .Where(d => {
+        if (DateTime.TryParse(d.Date, out var dt))
+        {
+            var dateStr = dt.ToString("yyyy-MM-dd");
+            return string.Compare(dateStr, start) >= 0 && string.Compare(dateStr, end) <= 0;
+        }
+        return false;
+    }).ToList(),
+                WeeklyMealSummary = analysis.Charts.WeeklyMealSummary,
+                MonthlyMealSummary = analysis.Charts.MonthlyMealSummary,
+                YearlyMealSummary = analysis.Charts.YearlyMealSummary,
+            };
+
+            var filteredAnalysis = new AnalysisViewModel
+            {
+                PatientName = analysis.PatientName,
+                IDNumber = analysis.IDNumber,
+                PatientGender = analysis.PatientGender,
+                PatientBirthDate = analysis.PatientBirthDate,
+                ReportType = analysis.ReportType,
+                StartDate = analysis.StartDate,
+                EndDate = analysis.EndDate,
+                Statistics = analysis.Statistics,
+                Records = analysis.Records,
+                Charts = filteredCharts,
+                Goals = analysis.Goals,
+                TrendSummary = analysis.TrendSummary
+            };
+
             container.Column(column =>
             {
                 column.Spacing(15);
 
-                column.Item().Element(c => ComposeBasicInfo(c, analysis));
-                column.Item().Element(c => ComposeStatistics(c, analysis));
+                column.Item().Element(c => ComposeBasicInfo(c, filteredAnalysis));
+                column.Item().Element(c => ComposeStatistics(c, filteredAnalysis));
 
-                if (analysis.TrendSummary?.Items?.Any() == true)
-                    column.Item().Element(c => ComposeTrendSummary(c, analysis));
+                if (filteredAnalysis.TrendSummary?.Items?.Any() == true)
+                    column.Item().Element(c => ComposeTrendSummary(c, filteredAnalysis));
 
-                if (analysis.Charts.BloodPressureData.Any())
-                    column.Item().Element(c => ComposeBloodPressureChart(c, analysis));
+                if (filteredAnalysis.Charts.BloodPressureData.Any())
+                    column.Item().Element(c => ComposeBloodPressureChart(c, filteredAnalysis));
 
-                if (analysis.Charts.BloodSugarData.Any())
+                if (filteredAnalysis.Charts.BloodSugarData.Any())
                     column.Item().Element(c => ComposeBarChart(c,
                         "血糖趨勢",
-                        analysis.Charts.BloodSugarData,
+                        filteredAnalysis.Charts.BloodSugarData,
                         "mg/dL",
-                        $"標準值：≤ {analysis.Goals?.FastingGlucoseTarget ?? 100} mg/dL",
-                        (float)(analysis.Goals?.FastingGlucoseTarget ?? 100),
+                        $"標準值：≤ {filteredAnalysis.Goals?.FastingGlucoseTarget ?? 100} mg/dL",
+                        (float)(filteredAnalysis.Goals?.FastingGlucoseTarget ?? 100),
                         "#ef9a9a", "#a5d6a7"));
 
-                if (analysis.Charts.WaterIntakeData.Any())
+                if (filteredAnalysis.Charts.WaterIntakeData.Any())
                     column.Item().Element(c => ComposeBarChart(c,
                         "飲水量趨勢",
-                        analysis.Charts.WaterIntakeData,
+                        filteredAnalysis.Charts.WaterIntakeData,
                         "ml",
                         "建議量：≥ 2000 ml",
                         2000f,
                         "#ffcc80", "#80deea"));
 
-                if (analysis.Charts.ExerciseDurationData.Any())
+                if (filteredAnalysis.Charts.ExerciseDurationData.Any())
                     column.Item().Element(c => ComposeBarChart(c,
                         "運動時間趨勢",
-                        analysis.Charts.ExerciseDurationData,
+                        filteredAnalysis.Charts.ExerciseDurationData,
                         "分鐘",
                         "建議量：≥ 150 分鐘/週",
                         150f,
                         "#ffcc80", "#a5d6a7"));
 
-                if (analysis.Charts.CigarettesData?.Any() == true)
+                if (filteredAnalysis.Charts.CigarettesData?.Any() == true)
                     column.Item().Element(c => ComposeBarChart(c,
                         "抽菸趨勢",
-                        analysis.Charts.CigarettesData,
+                        filteredAnalysis.Charts.CigarettesData,
                         "支",
                         "建議值：0 支（請戒菸）",
                         0f,
                         "#ef9a9a", "#ef9a9a"));
 
-                if (analysis.Charts.BetelNutData?.Any() == true)
+                if (filteredAnalysis.Charts.BetelNutData?.Any() == true)
                     column.Item().Element(c => ComposeBarChart(c,
                         "檳榔趨勢",
-                        analysis.Charts.BetelNutData,
+                        filteredAnalysis.Charts.BetelNutData,
                         "次",
                         "建議值：0 次（請戒除）",
                         0f,
                         "#ef9a9a", "#ef9a9a"));
 
-                if (analysis.Charts.BeverageRecords.Any())
-                    column.Item().Element(c => ComposeBeverageTable(c, analysis));
+                if (filteredAnalysis.Charts.BeverageRecords.Any())
+                    column.Item().Element(c => ComposeBeverageTable(c, filteredAnalysis));
 
-                if (analysis.Charts.MealRecords.Any())
-                    column.Item().Element(c => ComposeMealTable(c, analysis));
+                if (filteredAnalysis.Charts.MealRecords.Any())
+                    column.Item().Element(c => ComposeMealTable(c, filteredAnalysis));
 
-                column.Item().Element(c => ComposeHealthAdvice(c, analysis));
+                column.Item().Element(c => ComposeHealthAdvice(c, filteredAnalysis));
             });
         }
 
@@ -539,7 +597,17 @@ namespace healthProject.Services
                     foreach (var record in analysis.Charts.MealRecords)
                     {
                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(record.Date);
-                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(record.Meals ?? "無記錄");
+                        // 改成從 MealData 組合文字
+                        var mealText = new List<string>();
+                        if (record.MealData?.Vegetables?.Any() == true)
+                            mealText.Add($"蔬菜 {string.Join("+", record.MealData.Vegetables)} 份");
+                        if (record.MealData?.Protein?.Any() == true)
+                            mealText.Add($"蛋白質 {string.Join("+", record.MealData.Protein)} 份");
+                        if (record.MealData?.Carbs?.Any() == true)
+                            mealText.Add($"澱粉 {string.Join("+", record.MealData.Carbs)} 份");
+
+                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5)
+                            .Text(mealText.Any() ? string.Join("　", mealText) : "無記錄");
                     }
                 });
             });
