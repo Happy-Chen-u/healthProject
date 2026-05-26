@@ -1446,14 +1446,14 @@
                     }
                 }
 
-                if (!hasDataInRange && currentReport?.startDate && currentReport?.endDate) {
+                if ((!hasDataInRange || total === 0) && currentReport?.startDate && currentReport?.endDate) {
                     const start = currentReport.startDate.substring(0, 10);
                     const end = currentReport.endDate.substring(0, 10);
                     const emptyLabels = buildPeriodLabels(start, end);
 
                     let targetMin = 0;
-                    let targetMax = Math.min(CHART_VISIBLE - 1, total - 1);
-                    let emptySide = 'gap';
+                    let targetMax = Math.max(0, Math.min(CHART_VISIBLE - 1, total - 1));
+                    let emptySide = total > 0 ? 'gap' : 'none';
 
                     if (total > 0) {
                         if (start > labels[total - 1]) {
@@ -1620,12 +1620,120 @@
                 }
             });
 
-            if (cd.bloodPressureData?.length) makeChart('bpChart', { type: 'line', data: { labels: cd.bloodPressureData.map(d => d.date), datasets: [{ label: '收縮壓', data: cd.bloodPressureData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointRadius: 3 }, { label: '舒張壓', data: cd.bloodPressureData.map(d => d.value2), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: lineOpts('mmHg') }, 'bp');
-            if (cd.bloodSugarData?.length) makeChart('bsChart', { type: 'line', data: { labels: cd.bloodSugarData.map(d => d.date), datasets: [{ label: '血糖', data: cd.bloodSugarData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointBackgroundColor: cd.bloodSugarData.map(d => d.isAbnormal ? '#dc2626' : '#16a34a'), pointRadius: 4 }] }, options: lineOpts('mg/dL') }, 'bs');
-            if (cd.waterIntakeData?.length) makeChart('waterChart', { type: 'bar', data: { labels: cd.waterIntakeData.map(d => d.date), datasets: [{ data: cd.waterIntakeData.map(d => d.value), backgroundColor: cd.waterIntakeData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(6,182,212,0.6)'), borderColor: cd.waterIntakeData.map(d => d.isAbnormal ? '#ea580c' : '#0891b2'), borderWidth: 1 }] }, options: waterOpts }, 'water');
-            if (cd.exerciseDurationData?.length) makeChart('exerciseChart', { type: 'bar', data: { labels: cd.exerciseDurationData.map(d => d.date), datasets: [{ data: cd.exerciseDurationData.map(d => d.value), backgroundColor: cd.exerciseDurationData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(16,185,129,0.6)'), borderColor: cd.exerciseDurationData.map(d => d.isAbnormal ? '#ea580c' : '#059669'), borderWidth: 1 }] }, options: exerciseOpts }, 'exercise');
-            if (cd.cigarettesData?.length) makeChart('cigaretteChart', { type: 'line', data: { labels: cd.cigarettesData.map(d => d.date), datasets: [{ label: '抽菸支數', data: cd.cigarettesData.map(d => d.value), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: intLineOpts('支') }, 'cigarette');
-            if (cd.betelNutData?.length) makeChart('betelNutChart', { type: 'line', data: { labels: cd.betelNutData.map(d => d.date), datasets: [{ label: '檳榔次數', data: cd.betelNutData.map(d => d.value), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.08)', tension: 0.4, fill: true, pointRadius: 3 }] }, options: intLineOpts('顆') }, 'betelNut');
+                    const bpData = cd.bloodPressureData || [];
+                    const bsData = cd.bloodSugarData || [];
+                    const waterData = cd.waterIntakeData || [];
+                    const exerciseData = cd.exerciseDurationData || [];
+                    const cigaretteData = cd.cigarettesData || [];
+                    const betelNutData = cd.betelNutData || [];
+
+                    makeChart('bpChart', {
+                        type: 'line',
+                        data: {
+                            labels: bpData.map(d => d.date),
+                            datasets: [
+                                {
+                                    label: '收縮壓',
+                                    data: bpData.map(d => d.value),
+                                    borderColor: '#dc2626',
+                                    backgroundColor: 'rgba(220,38,38,0.08)',
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointRadius: 3
+                                },
+                                {
+                                    label: '舒張壓',
+                                    data: bpData.map(d => d.value2),
+                                    borderColor: '#2563eb',
+                                    backgroundColor: 'rgba(37,99,235,0.08)',
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointRadius: 3
+                                }
+                            ]
+                        },
+                        options: lineOpts('mmHg')
+                    }, 'bp');
+
+                    makeChart('bsChart', {
+                        type: 'line',
+                        data: {
+                            labels: bsData.map(d => d.date),
+                            datasets: [{
+                                label: '血糖',
+                                data: bsData.map(d => d.value),
+                                borderColor: '#dc2626',
+                                backgroundColor: 'rgba(220,38,38,0.08)',
+                                tension: 0.4,
+                                fill: true,
+                                pointBackgroundColor: bsData.map(d => d.isAbnormal ? '#dc2626' : '#16a34a'),
+                                pointRadius: 4
+                            }]
+                        },
+                        options: lineOpts('mg/dL')
+                    }, 'bs');
+
+                    makeChart('waterChart', {
+                        type: 'bar',
+                        data: {
+                            labels: waterData.map(d => d.date),
+                            datasets: [{
+                                data: waterData.map(d => d.value),
+                                backgroundColor: waterData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(6,182,212,0.6)'),
+                                borderColor: waterData.map(d => d.isAbnormal ? '#ea580c' : '#0891b2'),
+                                borderWidth: 1
+                            }]
+                        },
+                        options: waterOpts
+                    }, 'water');
+
+                    makeChart('exerciseChart', {
+                        type: 'bar',
+                        data: {
+                            labels: exerciseData.map(d => d.date),
+                            datasets: [{
+                                data: exerciseData.map(d => d.value),
+                                backgroundColor: exerciseData.map(d => d.isAbnormal ? 'rgba(234,88,12,0.6)' : 'rgba(16,185,129,0.6)'),
+                                borderColor: exerciseData.map(d => d.isAbnormal ? '#ea580c' : '#059669'),
+                                borderWidth: 1
+                            }]
+                        },
+                        options: exerciseOpts
+                    }, 'exercise');
+
+                    makeChart('cigaretteChart', {
+                        type: 'line',
+                        data: {
+                            labels: cigaretteData.map(d => d.date),
+                            datasets: [{
+                                label: '抽菸支數',
+                                data: cigaretteData.map(d => d.value),
+                                borderColor: '#dc2626',
+                                backgroundColor: 'rgba(220,38,38,0.08)',
+                                tension: 0.4,
+                                fill: true,
+                                pointRadius: 3
+                            }]
+                        },
+                        options: intLineOpts('支')
+                    }, 'cigarette');
+
+                    makeChart('betelNutChart', {
+                        type: 'line',
+                        data: {
+                            labels: betelNutData.map(d => d.date),
+                            datasets: [{
+                                label: '檳榔次數',
+                                data: betelNutData.map(d => d.value),
+                                borderColor: '#16a34a',
+                                backgroundColor: 'rgba(22,163,74,0.08)',
+                                tension: 0.4,
+                                fill: true,
+                                pointRadius: 3
+                            }]
+                        },
+                        options: intLineOpts('顆')
+                    }, 'betelNut');
         }
 
         function parseLabelToDate(label, referenceDate) {
@@ -1662,6 +1770,11 @@
             if (!r) return;
 
             if (r.isEmptyPeriod) {
+                if (r.emptySide === 'none') {
+                    showChartEdgeNotice(name, '尚無歷史資料');
+                    return;
+                }
+
                 if (r.emptySide === 'after' && dir > 0) {
                     showChartEdgeNotice(name, '已無更新的資料');
                     return;
